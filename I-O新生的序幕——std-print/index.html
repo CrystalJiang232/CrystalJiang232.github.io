@@ -16,7 +16,7 @@
 <meta property="og:description" content="函数签名 123456789&#x2F;&#x2F;namepsace stdtemplate&lt;class ...Args&gt;void print(std::format_string fmt,Args&amp;&amp;... args);template&lt;class ...Args&gt;void print(FILE* const stream,std::format_string fmt,A">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2024-12-10T06:01:08.000Z">
-<meta property="article:modified_time" content="2024-12-10T06:23:55.548Z">
+<meta property="article:modified_time" content="2024-12-10T08:44:11.090Z">
 <meta property="article:author" content="Hibiscus">
 <meta property="article:tag" content="C&#x2F;C++ Libraries">
 <meta property="article:tag" content="Modern C++">
@@ -180,6 +180,30 @@ trivial-type的格式化语法上和python的format几乎无二，相当于保�
 C++的template元素，并由此支持自定义类型格式化和类型推导。</li>
 </ol>
 <p>函数签名显然非常的straightforward，第一个重载为基础，后两个只是指定了输出流（可以传<code>FILE*</code>或<code>std::ostream&amp;</code>）。</p>
+<h2 id="stdformatter的特化">std::formatter的特化</h2>
+<p>客观来说，<code>&lt;format&gt;</code>和<code>&lt;print&gt;</code>的自定义实际上门槛相较于<code>&lt;iostream&gt;</code>的重载<code>operator&lt;&lt;</code>还是有些高。<br />
+自定义类型需要通过特化<code>std::formatter</code>来实现自定义输出。<br />
+但其优点在于开发复用上限极高，可以将任意的自定义类的format自由度提至与trivial-types相并论。</p>
+<blockquote>
+<p>关于std::formatter的一切，可以移步天书般的<a
+target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/utility/format/formatter">cppreference</a>。</p>
+</blockquote>
+<p>std::formatter特化用法精选：先从下面的代码出发，自行体会。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">CR</span></span><br><span class="line">&#123; </span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">CR</span>(<span class="type">int</span> v):<span class="built_in">speed</span>(v)&#123;&#125;</span><br><span class="line">    <span class="keyword">friend</span> <span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;CR&gt;;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> speed;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;CR&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="title">parse</span><span class="params">(std::format_parse_context&amp; fpc)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> fpc.<span class="built_in">begin</span>();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">auto</span> <span class="title">format</span><span class="params">(<span class="type">const</span> CR&amp; c,std::format_context&amp; fc)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> std::format_to(fc.<span class="built_in">out</span>(),<span class="string">&quot;Train operating at &#123;&#125; km/h&quot;</span>,c.speed);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>回顾一下：今我们希望将一个对象转化为字符串输出，该任务可以分为两步：</p>
+<p>解析格式串，将format的“需求”存储起来；</p>
+<p>根据这些“需求”，读取对象信息并将之格式化。</p>
+<p>而std::formatter的<code>parse</code>和<code>format</code>函数就分别负责执行这两个任务。</p>
+</blockquote>
+<ul>
+<li><p>第一个函数必须具有签名<code>constexpr auto parse(std::format_parse_context&amp;);</code>（auto类型由<code>decltype(std::format_parse_context::begin())</code>确定）。<br />
+该函数必须声明为constexpr，否则编译不能通过（对于直接的调用std::format/print，C++23要求必须在编译期处理之，同时引出的就是目前格式串必须是string-constant；动态格式串另有他法）。<br />
+该函数接收的<code>std::format_parse_context&amp;</code>实际上是表征format-specifier区间的一个view，调用<code>fpc.begin()</code>会返回一个指向当前处理框'{'的下一个字符的迭代器。<br />
+<strong>简而言之，该函数的任务是通过移动该迭代器来收集format的需求，并将之存储于这个struct的成员变量中，以供后续处理。</strong><br />
+该函数的返回值必须同样是一个迭代器，且该迭代器<strong>必须指向'}'（也就是format-specifier的末尾的下一个字符），否则会抛出std::format_error！</strong></p></li>
+<li><p>第二个函数</p></li>
+</ul>
 
       
 
