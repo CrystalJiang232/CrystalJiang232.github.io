@@ -16,14 +16,15 @@
 <meta property="og:description" content="闻matlab之道，有感而作  Sagemath！ Sagemath是一款基于Python的开源数学软件，其在当代成为了和matlab、mathematica等同样极为竞争力的数学软件之一。 Sage在基础计算速度上虽然由于语言限制略逊于MATLAB，但其基于Python和开源的特性使其拓展性、模块性极强，在开发集成和解决很多问题上强于MATLAB等传统数学软件。 初等&#x2F;高等数论上其">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2024-12-09T00:16:55.000Z">
-<meta property="article:modified_time" content="2024-12-09T05:07:31.230Z">
+<meta property="article:modified_time" content="2024-12-10T01:13:29.066Z">
 <meta property="article:author" content="Hibiscus">
+<meta property="article:tag" content="sage">
 <meta name="twitter:card" content="summary">
   
     <link rel="alternative" href="/atom.xml" title="玲珑" type="application/atom+xml">
   
   
-    <link rel="icon" href="/img/favicon.ico">
+    <link rel="icon" href="/img/CR.png">
   
   <link rel="stylesheet" type="text/css" href="/./main.0cf68a.css">
   <style type="text/css">
@@ -38,11 +39,11 @@
 
 <meta name="generator" content="Hexo 7.3.0"></head>
 
-<!-- <body style="background: url(https://i.loli.net/2019/05/28/5ced114aa07ac64901.jpg) bottom right / cover;background-attachment:fixed"> -->
+<!-- <body style="background: url(/img/std.jpg) bottom right / cover;background-attachment:fixed"> -->
   <body>
   <div id="container" q-class="show:isCtnShow" >
       <div style="
-    background: url(https://i.loli.net/2019/05/28/5ced114aa07ac64901.jpg) bottom right / cover;
+    background: url(/img/std.jpg) bottom right / cover;
     background-attachment:scroll;
     width: 100%;
     height: 100%;
@@ -52,11 +53,11 @@
     <canvas id="anm-canvas" class="anm-canvas"></canvas>
     <div class="left-col" q-class="show:isShow">
       
-<div class="overlay" style="background: #ffffff url(https://i.loli.net/2019/05/09/5cd41b1bc4370.jpg);background-size:cover"></div>
+<div class="overlay" style="background: #ffffff;background-size:cover"></div>
 <div class="intrude-less">
 	<header id="header" class="inner">
 		<a href="/" class="profilepic">
-			<img src="https://i.loli.net/2019/05/09/5cd41a9c81275.jpg" class="js-avatar">
+			<img src="/img/QingShu.jpg" class="js-avatar">
 		</a>
 		<hgroup>
 		  <h1 class="header-author"><a href="/"><b></b></a></h1>
@@ -77,11 +78,7 @@
     			
             
     			
-    			<a q-on="click: openSlider(e, 'friends')" href="javascript:void(0)">友链</a>
-    			
             
-    			
-    			<a q-on="click: openSlider(e, 'aboutme')" href="javascript:void(0)">关于</a>
     			
             
 		</nav>
@@ -89,16 +86,6 @@
 		<nav class="header-nav">
 			<div class="social">
 				
-					<a class="weibo" target="_blank" href="#" title="weibo"><i class="icon-weibo"></i></a>
-		        
-					<a class="segmentfault" target="_blank" href="#" title="segmentfault"><i class="icon-segmentfault"></i></a>
-		        
-					<a class="github" target="_blank" href="#" title="github"><i class="icon-github"></i></a>
-		        
-					<a class="linkedin" target="_blank" href="#" title="linkedin"><i class="icon-linkedin"></i></a>
-		        
-					<a class="mail" target="_blank" href="#" title="mail"><i class="icon-mail"></i></a>
-		        
 			</div>
 		</nav>
 
@@ -109,15 +96,15 @@
     <div class="mid-col" q-class="show:isShow,hide:isShow|isFalse">
       
 <nav id="mobile-nav">
-  		<div class="overlay js-overlay" style="background: #ffffff url(https://i.loli.net/2019/05/09/5cd41b1bc4370.jpg)"></div>
+  		<div class="overlay js-overlay" style="background: #ffffff"></div>
 	<div class="btnctn js-mobile-btnctn">
   		<div class="slider-trigger list" q-on="click: openSlider(e)"><i class="icon icon-sort"></i></div>
 	</div>
 
-	<div class="intrude-less"style="background: #ffffff url(https://i.loli.net/2019/05/09/5cd41b1bc4370.jpg)">
+	<div class="intrude-less"style="background: #ffffff">
 		<header id="header" class="inner">
 			<div class="profilepic">
-				<img src="https://i.loli.net/2019/05/09/5cd41a9c81275.jpg" class="js-avatar">
+				<img src="/img/QingShu.jpg" class="js-avatar">
 			</div>
 			<hgroup>
 			  <h1 class="header-author js-header-author"></h1>
@@ -132,16 +119,6 @@
 			<nav class="header-nav">
 				<div class="social">
 					
-						<a class="weibo" target="_blank" href="#" title="weibo"><i class="icon-weibo"></i></a>
-			        
-						<a class="segmentfault" target="_blank" href="#" title="segmentfault"><i class="icon-segmentfault"></i></a>
-			        
-						<a class="github" target="_blank" href="#" title="github"><i class="icon-github"></i></a>
-			        
-						<a class="linkedin" target="_blank" href="#" title="linkedin"><i class="icon-linkedin"></i></a>
-			        
-						<a class="mail" target="_blank" href="#" title="mail"><i class="icon-mail"></i></a>
-			        
 				</div>
 			</nav>
 
@@ -203,6 +180,17 @@ Sage在基础计算速度上虽然由于语言限制略逊于MATLAB，但其基�
     <div class="article-info article-info-index">
       
       
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">sage</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
       
 
       
@@ -291,19 +279,6 @@ Sage在基础计算速度上虽然由于语言限制略逊于MATLAB，但其基�
         </div>
         
         
-        <div class="toc-container tooltip-left">
-            <i class="icon-font icon-category"></i>
-            <div class="tooltip tooltip-east">
-                <span class="tooltip-item">
-                </span>
-                <span class="tooltip-content">
-                    <div class="toc-article">
-                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#sagemath"><span class="toc-number">1.</span> <span class="toc-text">Sagemath！</span></a></li></ol>
-                    </div>
-                </span>
-            </div>
-        </div>
-        
     </div>
 </aside>
 
@@ -311,19 +286,6 @@ Sage在基础计算速度上虽然由于语言限制略逊于MATLAB，但其基�
 
   
   
-  
-  <div id="cloud-tie-wrapper" class="cloud-tie-wrapper">
-	<!-- 引入光速通行证css代码 -->
-		<link rel="stylesheet" href="//c.fansx.com/tc.css"/>
-	<!-- 评论框 start --> 
-		<div id="tc_s23p202412981655"></div>
-	<!-- 评论框 end -->
-	<!-- 光速公共JS代码 start (一个网页只需插入一次) -->
-		<script src="//c.fansx.com/?m=c1&sid=23&pid=202412981655"></script>
-	<!-- 光速公共JS代码 end -->
-</div>
-
-
   
 
     
@@ -397,7 +359,7 @@ Sage在基础计算速度上虽然由于语言限制略逊于MATLAB，但其基�
 		isArchive: false,
 		isTag: false,
 		isCategory: false,
-		open_in_new: false,
+		open_in_new: true,
 		toc_hide_index: true,
 		root: "/",
 		innerArchive: true,
@@ -442,11 +404,7 @@ MathJax.Hub.Queue(function() {
       
     
       
-      
-      
     
-      
-      
       
     
     
@@ -455,15 +413,11 @@ MathJax.Hub.Queue(function() {
     
     
       
-      <li style="width: 33.333333333333336%" q-on="click: openSlider(e, 'innerArchive')"><a href="javascript:void(0)" q-class="active:innerArchive">所有文章</a></li>
+      <li style="width: 100%" q-on="click: openSlider(e, 'innerArchive')"><a href="javascript:void(0)" q-class="active:innerArchive">所有文章</a></li>
       
         
       
-      <li style="width: 33.333333333333336%" q-on="click: openSlider(e, 'friends')"><a href="javascript:void(0)" q-class="active:friends">友链</a></li>
-      
         
-      
-      <li style="width: 33.333333333333336%" q-on="click: openSlider(e, 'aboutme')"><a href="javascript:void(0)" q-class="active:aboutme">关于</a></li>
       
         
     </ul>
@@ -482,6 +436,26 @@ MathJax.Hub.Queue(function() {
             <input type="checkbox" q-on="click:toggleTag(e)" q-attr="checked:showTags">
           </label>
           <ul class="article-tag-list" q-show="showTags">
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color1">C/C++ Libraries</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color2">Crypto</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">wp</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color2">C Functions</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">sage</a>
+              </li>
             
             <div class="clearfix"></div>
           </ul>
@@ -527,29 +501,7 @@ MathJax.Hub.Queue(function() {
     
 
     
-    	<section class="tools-section tools-section-friends" q-show="friends">
-  		
-        <ul class="search-ul">
-          
-            <li class="search-li">
-              <a href="http://lesliewong.cn/" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>马树菌的博客驿站</a>
-            </li>
-          
-            <li class="search-li">
-              <a href="http://litten.me/" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>Litten的博客</a>
-            </li>
-          
-        </ul>
-  		
-    	</section>
-    
 
-    
-    	<section class="tools-section tools-section-me" q-show="aboutme">
-  	  	
-  	  		<div class="aboutme-wrap" id="js-aboutme">&lt;pre&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;         诗的歌者&lt;br&gt;&lt;br&gt;         代码玩家&lt;br&gt;&lt;br&gt;         赏金猎人&lt;br&gt;&lt;br&gt;      麦田里的守望者&lt;br&gt;&lt;br&gt;       非典型中二病&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;    粤ICP备18106486号&lt;br&gt;&lt;br&gt;粤公网安备44030502003033号&lt;/pre&gt;</div>
-  	  	
-    	</section>
     
   </div>
   
