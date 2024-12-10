@@ -16,7 +16,7 @@
 <meta property="og:description" content="离散对数问题，Discrete Logorithm Problem，简称DLP，是非对称密码学所依赖的极为重要的数学难题之一。 经典DLP问题描述： 给定 \(g^x \equiv c (mod p) （g,x &lt; p）\)，由 \((g,x)\) 计算 \(c\) 很容易（快速幂取模），但由 \((g,c)\) 计算 \(x\) 是困难的。  即使是BSGS等攻击方法，依然必须">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2024-12-10T12:18:00.000Z">
-<meta property="article:modified_time" content="2024-12-10T12:47:33.840Z">
+<meta property="article:modified_time" content="2024-12-10T14:58:08.444Z">
 <meta property="article:author" content="Hibiscus">
 <meta property="article:tag" content="Crypto">
 <meta name="twitter:card" content="summary">
@@ -218,15 +218,54 @@ Giant-step，大步小步法，<del>又名“亦步亦趋”</del>)，通过制�
 </ul>
 <blockquote>
 <p>大步小步法的空间复杂度与时间复杂度均为 <span
-class="math inline">\(O(\log(n))\)</span>。暴力攻击的二者显然分别为
+class="math inline">\(O(\sqrt n)\)</span>。暴力攻击的二者显然分别为
 <span class="math inline">\(O(1)\)</span> 及 <span
 class="math inline">\(O(n)\)</span>。</p>
 </blockquote>
 <ul>
 <li>Pohlig-Hellman攻击<br />
 </li>
-<li>Pollard's Kangaroo Algorithm</li>
+<li>Pollard's kangaroo algorithm<br />
+</li>
+<li>Pollard's rho algorithm</li>
 </ul>
+<blockquote>
+<p>上述是较为通用的解法，对于部分 <span
+class="math inline">\(G_p\)</span>
+存在特有的攻击方法，比如ECDLP下的Smart's Attack、MOV Attack等。</p>
+<p>另外，有一些循环群可能求解 <span class="math inline">\(G_p\)</span>
+上的离散对数问题并不困难，比如 <span
+class="math inline">\(Zmod(p)\)</span> 上的加法运算可以快速求解。</p>
+</blockquote>
+<h1 id="细讲">细讲</h1>
+<blockquote>
+<p>以下内容干货（纸面资料）过多，<del>小心噎着</del></p>
+</blockquote>
+<h2 id="bsgs-亦步亦趋">BSGS —— 亦步亦趋</h2>
+<p>BSGS本质是在试着制造碰撞，利用散列表查找复杂度为常量的优势，以空间换时间。<br />
+具体操作方法如下：设待求解 <span class="math inline">\(C = x \cdot
+G\)</span> 中的x，<br />
+记 <span class="math inline">\(T = \sqrt n\)</span>，<span
+class="math inline">\(R = G \cdot T^{-1}\)</span>；制备一个散列表集合
+<span class="math inline">\(S = {i \cdot G}，i \in [0,C)\)</span><br />
+随后遍历 <span class="math inline">\(j \in [0,C)\)</span>，若 <span
+class="math inline">\(C + j \cdot R \in S\)</span>
+，则说明碰撞成功，得到 <span class="math inline">\(x = jT +
+i\)</span>。<br />
+显然遍历中一定会存在一次碰撞。</p>
+<blockquote>
+<p>“大步小步”的命名之源：</p>
+<p>如上式，<span class="math inline">\(i\)</span> 每增加1，<span
+class="math inline">\(x\)</span> 增加1，所谓一“小步”；<span
+class="math inline">\(j\)</span> 每增加1， <span
+class="math inline">\(x\)</span> 增加 <span class="math inline">\(\sqrt
+n\)</span> ，所谓一“大步”。</p>
+<p>这种攻击思想在轮加密/类轮加密的攻击（含哈希碰撞）中也有较多应用，思路即为将密钥拆为两部分，将中间值进行碰撞。</p>
+</blockquote>
+<p><del>为了便于理解，</del>给出一段示意BSGS求解 <span
+class="math inline">\(GF_p\)</span> 下DLP问题的代码</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">crack</span>(<span class="params">p:<span class="built_in">int</span>,c:<span class="built_in">int</span></span>) -&gt; <span class="built_in">int</span>:</span><br><span class="line">    g = <span class="number">2</span> <span class="comment">#假设目标是求解pow(2,x,p)==c中的p</span></span><br><span class="line">    t = <span class="built_in">int</span>(<span class="built_in">pow</span>(p,<span class="number">1</span>/<span class="number">2</span>))</span><br><span class="line">    r = <span class="built_in">pow</span>(<span class="number">2</span>,-t,p)</span><br><span class="line"></span><br><span class="line">    dc = &#123;&#125;</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(t):</span><br><span class="line">        dc[g] = i</span><br><span class="line">        g = (g * <span class="number">2</span>) % p</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(t):</span><br><span class="line">        <span class="keyword">if</span> c <span class="keyword">in</span> dc: <span class="comment">#找到碰撞</span></span><br><span class="line">            <span class="keyword">return</span> dc[c] + j * t</span><br><span class="line">        c = (c * r) % p</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">None</span></span><br></pre></td></tr></table></figure>
+<h2 id="pohlig-hellman-韩信点兵">Pohlig-Hellman —— 韩信点“兵”</h2>
 
       
 
