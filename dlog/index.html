@@ -16,7 +16,7 @@
 <meta property="og:description" content="离散对数问题，Discrete Logorithm Problem，简称DLP，是非对称密码学所依赖的极为重要的数学难题之一。 经典DLP问题描述： 给定 \(g^x \equiv c (mod p) （g,x &lt; p）\)，由 \((g,x)\) 计算 \(c\) 很容易（快速幂取模），但由 \((g,c)\) 计算 \(x\) 是困难的。  即使是BSGS等攻击方法，依然必须">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2024-12-10T12:18:00.000Z">
-<meta property="article:modified_time" content="2024-12-10T15:05:09.432Z">
+<meta property="article:modified_time" content="2024-12-10T15:31:16.875Z">
 <meta property="article:author" content="Hibiscus">
 <meta property="article:tag" content="Crypto">
 <meta name="twitter:card" content="summary">
@@ -277,6 +277,20 @@ class="math inline">\(GF_p\)</span> 下DLP问题的代码</p>
 - 目标群的阶的全部因子都很小，a.k.a.“光滑数”(smooth-number)；<br />
 - 目标运算数计数 <span class="math inline">\(x\)</span>
 小于目标群的阶的小因子之积（实际上第一种情况可以看作是第二种情况的特例）。</p>
+<p>实现上，我们令 $n = _{i=1}<sup>n{p_i</sup>{e_i}} $。对于每个因子
+<span class="math inline">\(f = p_i^{e_i}\)</span>，考虑 <span
+class="math inline">\(C^{&#39;} = f \cdot C\)</span>，<span
+class="math inline">\(G^{&#39;} = f \cdot G\)</span>。<br />
+此时 <span class="math inline">\(C^{&#39;}\)</span> 在群中的阶为 <span
+class="math inline">\(\frac{n}{f}x\)</span>，<span
+class="math inline">\(G^{&#39;}\)</span> 的阶则为 <span
+class="math inline">\(\frac{n}{f}\)</span>。<br />
+根据拉格朗日定理，此时以 <span class="math inline">\(G^{&#39;}\)</span>
+为生成元的循环群的阶只有 <span class="math inline">\(f\)</span>，且
+<span class="math inline">\(C^{&#39;}\)</span>
+亦在这个群上，故可以在这个新的低阶群上求解DLP。<br />
+依此法求解的 <span class="math inline">\(\{x_i\}\)</span> 满足 <span
+class="math inline">\(x_i \equiv x (mod p_i^{e_i})\)</span>。</p>
 
       
 
