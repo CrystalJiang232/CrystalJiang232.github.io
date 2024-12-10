@@ -263,6 +263,17 @@ n\)</span> ，所谓一“大步”。</p>
 class="math inline">\(GF_p\)</span> 下DLP问题的代码</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">crack</span>(<span class="params">p:<span class="built_in">int</span>,c:<span class="built_in">int</span></span>) -&gt; <span class="built_in">int</span>:</span><br><span class="line">    g = <span class="number">2</span> <span class="comment">#假设目标是求解pow(2,x,p)==c中的p</span></span><br><span class="line">    t = <span class="built_in">int</span>(<span class="built_in">pow</span>(p,<span class="number">1</span>/<span class="number">2</span>))</span><br><span class="line">    r = <span class="built_in">pow</span>(<span class="number">2</span>,-t,p)</span><br><span class="line"></span><br><span class="line">    dc = &#123;&#125;</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(t):</span><br><span class="line">        dc[g] = i</span><br><span class="line">        g = (g * <span class="number">2</span>) % p</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(t):</span><br><span class="line">        <span class="keyword">if</span> c <span class="keyword">in</span> dc: <span class="comment">#找到碰撞</span></span><br><span class="line">            <span class="keyword">return</span> dc[c] + j * t</span><br><span class="line">        c = (c * r) % p</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">None</span></span><br></pre></td></tr></table></figure>
 <h2 id="pohlig-hellman-韩信点兵">Pohlig-Hellman —— 韩信点“兵”</h2>
+<p>Pohlig-Hellman
+利用了<em>群论中的</em>拉格朗日定理和中国剩余定理。<br />
+其攻击对象是<strong>阶的小因子之积</strong>过小的循环群，在这些群上，可以求解(部分)阶比较小的子群的离散对数问题；<br />
+对这些结果应用中国剩余定理，即可获得原群上离散对数问题的结果。</p>
+<blockquote>
+<p>群中的拉格朗日定理：</p>
+</blockquote>
+<p>攻击成立的两个场景：<br />
+- 目标群的阶的全部因子都很小，a.k.a.“光滑数”(smooth-number)；<br />
+- 目标运算数计数 <span class="math inline">\(x\)</span>
+小于目标群的阶的小因子之积（实际上第一种情况可以看作是第二种情况的特例）。</p>
 
       
 
