@@ -8,15 +8,15 @@
   <link rel="dns-prefetch" href="https://crystaljiang232.github.io">
   <title>国城杯CTF Crypto Writeup | 玲珑</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="Curve 题目代码 123456789101112131415161718192021222324252627282930313233343536373839#sagefrom Crypto.Util.number import *def add(P, Q):    (x1, y1) &#x3D; P    (x2, y2) &#x3D; Q    x3 &#x3D; (x1*y2 + y1*x2) * invers">
+  <meta name="description" content="Curve 题目代码 123456789101112131415161718192021222324252627282930313233343536373839#sagefrom Crypto.Util.number import *def add(P, Q):    (x1, y1) &#x3D; P    (x2, y2) &#x3D; Q    x3 &#x3D; (x1*y2 + y1*x2) * inverse(">
 <meta property="og:type" content="article">
 <meta property="og:title" content="国城杯CTF Crypto Writeup">
 <meta property="og:url" content="https://crystaljiang232.github.io/%E5%9B%BD%E5%9F%8E%E6%9D%AFCTF-Crypto-Writeup/index.html">
 <meta property="og:site_name" content="玲珑">
-<meta property="og:description" content="Curve 题目代码 123456789101112131415161718192021222324252627282930313233343536373839#sagefrom Crypto.Util.number import *def add(P, Q):    (x1, y1) &#x3D; P    (x2, y2) &#x3D; Q    x3 &#x3D; (x1*y2 + y1*x2) * invers">
+<meta property="og:description" content="Curve 题目代码 123456789101112131415161718192021222324252627282930313233343536373839#sagefrom Crypto.Util.number import *def add(P, Q):    (x1, y1) &#x3D; P    (x2, y2) &#x3D; Q    x3 &#x3D; (x1*y2 + y1*x2) * inverse(">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2024-12-08T07:37:48.000Z">
-<meta property="article:modified_time" content="2024-12-10T01:13:32.201Z">
+<meta property="article:modified_time" content="2024-12-10T12:17:41.282Z">
 <meta property="article:author" content="Hibiscus">
 <meta property="article:tag" content="Crypto">
 <meta property="article:tag" content="wp">
@@ -162,8 +162,7 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <hr />
-<h1 id="curve">Curve</h1>
+        <h1 id="curve">Curve</h1>
 <h2 id="题目代码">题目代码</h2>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">add</span>(<span class="params">P, Q</span>):</span><br><span class="line">    (x1, y1) = P</span><br><span class="line">    (x2, y2) = Q</span><br><span class="line"></span><br><span class="line">    x3 = (x1*y2 + y1*x2) * inverse(<span class="number">1</span> + d*x1*x2*y1*y2, p) % p</span><br><span class="line">    y3 = (y1*y2 - a*x1*x2) * inverse(<span class="number">1</span> - d*x1*x2*y1*y2, p) % p</span><br><span class="line">    <span class="keyword">return</span> (x3, y3)</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">mul</span>(<span class="params">x, P</span>):</span><br><span class="line">    Q = (<span class="number">0</span>, <span class="number">1</span>)</span><br><span class="line">    <span class="keyword">while</span> x &gt; <span class="number">0</span>:</span><br><span class="line">        <span class="keyword">if</span> x % <span class="number">2</span> == <span class="number">1</span>:</span><br><span class="line">            Q = add(Q, P)</span><br><span class="line">        P = add(P, P)</span><br><span class="line">        x = x &gt;&gt; <span class="number">1</span></span><br><span class="line">    <span class="keyword">return</span> Q</span><br><span class="line"></span><br><span class="line">p = <span class="number">64141017538026690847507665744072764126523219720088055136531450296140542176327</span></span><br><span class="line">a = <span class="number">362</span></span><br><span class="line">d = <span class="number">7</span></span><br><span class="line">e=<span class="number">0x10001</span></span><br><span class="line"></span><br><span class="line">gx=bytes_to_long(<span class="string">b&#x27;D0g3xGC&#123;*****************&#125;&#x27;</span>)</span><br><span class="line"></span><br><span class="line">PR.&lt;y&gt;=PolynomialRing(Zmod(p))</span><br><span class="line">f=(d*gx^<span class="number">2</span>-<span class="number">1</span>)*y^<span class="number">2</span>+(<span class="number">1</span>-a*gx^<span class="number">2</span>)</span><br><span class="line">gy=<span class="built_in">int</span>(f.roots()[<span class="number">0</span>][<span class="number">0</span>])</span><br><span class="line"></span><br><span class="line"><span class="keyword">assert</span> (a*gx^<span class="number">2</span>+gy^<span class="number">2</span>)%p==(<span class="number">1</span>+d*gx^<span class="number">2</span>*gy^<span class="number">2</span>)%p</span><br><span class="line"></span><br><span class="line">G=(gx,gy)</span><br><span class="line"></span><br><span class="line">eG = mul(e, G)</span><br><span class="line"><span class="built_in">print</span>(eG)</span><br><span class="line"></span><br><span class="line"><span class="comment">#eG = (34120664973166619886120801966861368419497948422807175421202190709822232354059, 11301243831592615312624457443883283529467532390028216735072818875052648928463)</span></span><br></pre></td></tr></table></figure>
 <p>题目实现了一个<strong>Twisted
@@ -527,6 +526,10 @@ MathJax.Hub.Queue(function() {
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color1">Modern C++</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color1">C++23</a>
               </li>
             
             <div class="clearfix"></div>

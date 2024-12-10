@@ -6,14 +6,19 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="https://crystaljiang232.github.io">
-  <title>Tag: C/C++ Libraries | 玲珑</title>
+  <title>离散对数——Discrete Logorithm | 玲珑</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="玲珑">
-<meta property="og:url" content="https://crystaljiang232.github.io/tags/C-C-Libraries/index.html">
+  <meta name="description" content="离散对数问题，Discrete Logorithm Problem，简称DLP，是非对称密码学所依赖的极为重要的数学难题之一。 经典DLP问题描述： 给定 \(g^x \equiv c (mod p) （g,x &lt; p）\)，由 \((g,x)\) 计算 \(c\) 很容易（快速幂取模），但由 \((g,c)\) 计算 \(x\) 是困难的。  即使是BSGS等攻击方法，依然必须">
+<meta property="og:type" content="article">
+<meta property="og:title" content="离散对数——Discrete Logorithm">
+<meta property="og:url" content="https://crystaljiang232.github.io/dlog/index.html">
 <meta property="og:site_name" content="玲珑">
+<meta property="og:description" content="离散对数问题，Discrete Logorithm Problem，简称DLP，是非对称密码学所依赖的极为重要的数学难题之一。 经典DLP问题描述： 给定 \(g^x \equiv c (mod p) （g,x &lt; p）\)，由 \((g,x)\) 计算 \(c\) 很容易（快速幂取模），但由 \((g,c)\) 计算 \(x\) 是困难的。  即使是BSGS等攻击方法，依然必须">
 <meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2024-12-10T12:18:00.000Z">
+<meta property="article:modified_time" content="2024-12-10T12:47:33.840Z">
 <meta property="article:author" content="Hibiscus">
+<meta property="article:tag" content="Crypto">
 <meta name="twitter:card" content="summary">
   
     <link rel="alternative" href="/atom.xml" title="玲珑" type="application/atom+xml">
@@ -136,110 +141,215 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
-  
-  
+            <article id="post-dlog" class="article article-type-post " itemscope itemprop="blogPost">
+  <div class="article-inner">
     
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2024" class="archive-year">2024</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/I-O%E6%96%B0%E7%94%9F%E7%9A%84%E5%BA%8F%E5%B9%95%E2%80%94%E2%80%94std-print/" class="archive-article-date">
-  	<time datetime="2024-12-10T06:01:08.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-10</time>
-</a>
-        </div>
-    	 
+      <header class="article-header">
+        
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/I-O%E6%96%B0%E7%94%9F%E7%9A%84%E5%BA%8F%E5%B9%95%E2%80%94%E2%80%94std-print/">I/O新生的序幕——std::print</a>
+    <h1 class="article-title" itemprop="name">
+      离散对数——Discrete Logorithm
     </h1>
   
 
-        <div class="article-info info-on-right">
-          
+        
+        <a href="/dlog/" class="archive-article-date">
+  	<time datetime="2024-12-10T12:18:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-10</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>离散对数问题，Discrete Logorithm
+Problem，简称DLP，是非对称密码学所依赖的极为重要的数学难题之一。<br />
+经典DLP问题描述：<br />
+给定 <span class="math inline">\(g^x \equiv c (mod p) （g,x &lt;
+p）\)</span>，由 <span class="math inline">\((g,x)\)</span> 计算 <span
+class="math inline">\(c\)</span> 很容易（快速幂取模），但由 <span
+class="math inline">\((g,c)\)</span> 计算 <span
+class="math inline">\(x\)</span> 是困难的。</p>
+<blockquote>
+<p>即使是BSGS等攻击方法，依然必须涉及“爆破”一步，即在x的可能范围内逐个数值尝试是否能让等式成立。</p>
+</blockquote>
+<p>离散数学（广义上）DLP问题描述： 设循环群 <span
+class="math inline">\(G_p\)</span> 的阶为 <span
+class="math inline">\(n\)</span>。<br />
+给定群内的任意元素 <span class="math inline">\(A \in G_p\)</span> 及
+<span class="math inline">\(x &lt; n\)</span>，计算 <span
+class="math inline">\(C = x \cdot A\)</span> 很容易，但给定 <span
+class="math inline">\(C\)</span>、<span
+class="math inline">\(A\)</span>，求解 <span
+class="math inline">\(x\)</span> 是困难的。<br />
+这里x代表A执行二元运算的次数，对于经典DLP，其为模p环下的乘法运算；对于ECDLP，其为椭圆曲线上的加法运算。</p>
+<blockquote>
+<p>给定<span class="math inline">\(C,x\)</span>，可以计算 <span
+class="math inline">\(A = x^{-1} \cdot C\)</span>，此时 <span
+class="math inline">\(x^{-1}\)</span> 应理解为 <span
+class="math inline">\(x\)</span> 在 <span
+class="math inline">\(Zmod(n)\)</span> 下的逆元。</p>
+</blockquote>
+<p>由DLP问题衍生出的 <strong><em>Diffle-Hellman</em></strong>
+密钥交换：<br />
+假设Alice和Bob希望在一个不安全的环境下进行密钥交换。他们协商密钥交换在
+<span class="math inline">\(G_p\)</span> 上进行，选定生成元 <span
+class="math inline">\(G\)</span> 并公开。<br />
+Alice和Bob分别产生一个私钥 <span class="math inline">\(d_A\)</span> 和
+<span class="math inline">\(d_B\)</span>，分别计算 <span
+class="math inline">\(A = d_A \cdot G\)</span> 与 <span
+class="math inline">\(B = d_B \cdot G\)</span>，将 <span
+class="math inline">\(A\)</span>、<span class="math inline">\(B\)</span>
+发送给对方并公开。<br />
+随后，他们再分别使用私钥和对方发送的密钥计算 <span
+class="math inline">\(AB = d_A \cdot B = d_B \cdot A\)</span>。
+在阿贝尔群上其正确性显然。<br />
+此时双方就已经完成了密钥交换，共享密钥就是AB。外人即使知道了 <span
+class="math inline">\((G_p,G,A,B)\)</span>，亦很难从中获得<span
+class="math inline">\(d_A\)</span>或<span
+class="math inline">\(d_B\)</span>，进而保证了共享密钥 <span
+class="math inline">\(AB\)</span> 的安全性。</p>
+<h1 id="攻击方法概览">攻击方法概览</h1>
+<ul>
+<li>暴力攻击，在n较小时，攻击者可以枚举所有的 <span
+class="math inline">\(x \in (0,n)\)</span> 逐个校验。<br />
+</li>
+<li>BSGS(Baby-step
+Giant-step，大步小步法，<del>又名“亦步亦趋”</del>)，通过制造碰撞来“用空间换时间”。</li>
+</ul>
+<blockquote>
+<p>大步小步法的空间复杂度与时间复杂度均为 <span
+class="math inline">\(O(\log(n))\)</span>。暴力攻击的二者显然分别为
+<span class="math inline">\(O(1)\)</span> 及 <span
+class="math inline">\(O(n)\)</span>。</p>
+</blockquote>
+<ul>
+<li>Pohlig-Hellman攻击<br />
+</li>
+<li>Pollard's Kangaroo Algorithm</li>
+</ul>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
 	<div class="article-tag tagcloud">
 		<i class="icon-price-tags icon"></i>
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">C/C++ Libraries</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">C++23</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
         		</li>
       		
 		</ul>
 	</div>
 
-          
+      
 
+      
+
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
         </div>
-        <div class="clearfix"></div>
-    </header>
+      </div>
+    </span>
   </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/%E7%BB%86%E7%A9%B6scanf/" class="archive-article-date">
-  	<time datetime="2024-12-08T13:16:43.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-08</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/%E7%BB%86%E7%A9%B6scanf/">细究scanf</a>
-    </h1>
-  
+</div>
 
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">C/C++ Libraries</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">C Functions</a>
-        		</li>
-      		
-		</ul>
-	</div>
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=https://crystaljiang232.github.io/dlog/" alt="微信分享二维码">
+    </div>
+</div>
 
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
+<div class="mask js-mask"></div>
+      
+      <div class="clearfix"></div>
+    </div>
   </div>
+  <div>
 </article>
+
+
+  
+<nav id="article-nav">
   
   
-    </div></section>
+    <a href="/I-O%E6%96%B0%E7%94%9F%E7%9A%84%E5%BA%8F%E5%B9%95%E2%80%94%E2%80%94std-print/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">I/O新生的序幕——std::print</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+  
+  
   
 
     
+
+  
+
+  
+
+  
 
 
           </div>
@@ -300,9 +410,9 @@
 	var yiliaConfig = {
 		mathjax: true,
 		isHome: false,
-		isPost: false,
+		isPost: true,
 		isArchive: false,
-		isTag: true,
+		isTag: false,
 		isCategory: false,
 		open_in_new: true,
 		toc_hide_index: true,

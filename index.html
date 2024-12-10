@@ -138,6 +138,147 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-dlog" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/dlog/">离散对数——Discrete Logorithm</a>
+    </h1>
+  
+
+        
+        <a href="/dlog/" class="archive-article-date">
+  	<time datetime="2024-12-10T12:18:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-10</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>离散对数问题，Discrete Logorithm
+Problem，简称DLP，是非对称密码学所依赖的极为重要的数学难题之一。<br />
+经典DLP问题描述：<br />
+给定 <span class="math inline">\(g^x \equiv c (mod p) （g,x &lt;
+p）\)</span>，由 <span class="math inline">\((g,x)\)</span> 计算 <span
+class="math inline">\(c\)</span> 很容易（快速幂取模），但由 <span
+class="math inline">\((g,c)\)</span> 计算 <span
+class="math inline">\(x\)</span> 是困难的。</p>
+<blockquote>
+<p>即使是BSGS等攻击方法，依然必须涉及“爆破”一步，即在x的可能范围内逐个数值尝试是否能让等式成立。</p>
+</blockquote>
+<p>离散数学（广义上）DLP问题描述： 设循环群 <span
+class="math inline">\(G_p\)</span> 的阶为 <span
+class="math inline">\(n\)</span>。<br />
+给定群内的任意元素 <span class="math inline">\(A \in G_p\)</span> 及
+<span class="math inline">\(x &lt; n\)</span>，计算 <span
+class="math inline">\(C = x \cdot A\)</span> 很容易，但给定 <span
+class="math inline">\(C\)</span>、<span
+class="math inline">\(A\)</span>，求解 <span
+class="math inline">\(x\)</span> 是困难的。<br />
+这里x代表A执行二元运算的次数，对于经典DLP，其为模p环下的乘法运算；对于ECDLP，其为椭圆曲线上的加法运算。</p>
+<blockquote>
+<p>给定<span class="math inline">\(C,x\)</span>，可以计算 <span
+class="math inline">\(A = x^{-1} \cdot C\)</span>，此时 <span
+class="math inline">\(x^{-1}\)</span> 应理解为 <span
+class="math inline">\(x\)</span> 在 <span
+class="math inline">\(Zmod(n)\)</span> 下的逆元。</p>
+</blockquote>
+<p>由DLP问题衍生出的 <strong><em>Diffle-Hellman</em></strong>
+密钥交换：<br />
+假设Alice和Bob希望在一个不安全的环境下进行密钥交换。他们协商密钥交换在
+<span class="math inline">\(G_p\)</span> 上进行，选定生成元 <span
+class="math inline">\(G\)</span> 并公开。<br />
+Alice和Bob分别产生一个私钥 <span class="math inline">\(d_A\)</span> 和
+<span class="math inline">\(d_B\)</span>，分别计算 <span
+class="math inline">\(A = d_A \cdot G\)</span> 与 <span
+class="math inline">\(B = d_B \cdot G\)</span>，将 <span
+class="math inline">\(A\)</span>、<span class="math inline">\(B\)</span>
+发送给对方并公开。<br />
+随后，他们再分别使用私钥和对方发送的密钥计算 <span
+class="math inline">\(AB = d_A \cdot B = d_B \cdot A\)</span>。
+在阿贝尔群上其正确性显然。<br />
+此时双方就已经完成了密钥交换，共享密钥就是AB。外人即使知道了 <span
+class="math inline">\((G_p,G,A,B)\)</span>，亦很难从中获得<span
+class="math inline">\(d_A\)</span>或<span
+class="math inline">\(d_B\)</span>，进而保证了共享密钥 <span
+class="math inline">\(AB\)</span> 的安全性。</p>
+<h1 id="攻击方法概览">攻击方法概览</h1>
+<ul>
+<li>暴力攻击，在n较小时，攻击者可以枚举所有的 <span
+class="math inline">\(x \in (0,n)\)</span> 逐个校验。<br />
+</li>
+<li>BSGS(Baby-step
+Giant-step，大步小步法，<del>又名“亦步亦趋”</del>)，通过制造碰撞来“用空间换时间”。</li>
+</ul>
+<blockquote>
+<p>大步小步法的空间复杂度与时间复杂度均为 <span
+class="math inline">\(O(\log(n))\)</span>。暴力攻击的二者显然分别为
+<span class="math inline">\(O(1)\)</span> 及 <span
+class="math inline">\(O(n)\)</span>。</p>
+</blockquote>
+<ul>
+<li>Pohlig-Hellman攻击<br />
+</li>
+<li>Pollard's Kangaroo Algorithm</li>
+</ul>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/dlog/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+  <div>
+</article>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-I-O新生的序幕——std-print" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -170,7 +311,7 @@ C++ I/O。</p>
 <li><code>&lt;stdio.h&gt;</code>作为经典的输入/输出手段永不过时，其两大特性——高效、便捷堪称遥遥领先。<code>printf</code>提供了高可读性的format方案——<code>%-2d</code>就是输出整型左对齐2格，<code>%.3f</code>就是输出浮点加三位小数，即写即用。其一大缺点是作为C时代的产物，不能支持自定义类型的输出（相当于无法实现一个统一的interface，必须另起炉灶）；另一个缺点是C遗留的va_args是一个不成熟的变参数解决方案（比如没有对format-specifier和参数数量统一的校验，给极大量的segament
 fault和奇奇怪怪的bug留下了空间），且其并不能完美地传递C++的类/object。</li>
 <li><code>&lt;iostream&gt;</code>则代表着一代经典C++。其将C++区别于C的特性发挥到了极致——通过继承树提供了I/O的统一接口，同时令用户可以通过重载<code>operator&lt;&lt;</code>来便捷地自定义类型（这点甚至远胜于<code>print</code>的<code>formatter</code>特化），在OOP上则让I/O流成为对象且支持调用各种方法来对之进行操作。但其冗余过多的副作用就是输出效率远不如<code>&lt;stdio.h&gt;</code>——频繁的函数调用（每一个<code>&lt;&lt;</code>都算调用一次函数，需要不断地将<code>std::ostream&amp;</code>操作和返回，<code>inline</code>亦很难对之有很大改观）；同时格式化输出的便捷性和可读性之差一直是其痛点之一。比较一下三代C/C++格式化输出一个简单的信息：
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">output</span><span class="params">(<span class="type">double</span> temp,<span class="type">int</span> speed)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">//&lt;stdio.h&gt;</span></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Temperature: %.1f ℃. Speed: %d km/h.\n&quot;</span>,temp,speed); </span><br><span class="line"></span><br><span class="line">    <span class="comment">//&lt;iostream&gt;</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Temperature: &quot;</span> &lt;&lt; temp &lt;&lt; <span class="string">&quot; ℃. Speed: &quot;</span> &lt;&lt; speed &lt;&lt; <span class="string">&quot;km/h.&quot;</span> &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//&lt;print&gt;</span></span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;Temperature: &#123;:.1f&#125; ℃. Speed: &#123;&#125; km/h.&quot;</span>,temp,speed);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">output</span><span class="params">(<span class="type">double</span> temp,<span class="type">int</span> speed)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">//&lt;stdio.h&gt;</span></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Temperature: %.1f ℃. Speed: %d km/h.\n&quot;</span>,temp,speed); </span><br><span class="line"></span><br><span class="line">    <span class="comment">//&lt;iostream&gt;</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Temperature: &quot;</span> &lt;&lt; std::<span class="built_in">setpercision</span>(<span class="number">1</span>) &lt;&lt; temp &lt;&lt; <span class="string">&quot; ℃. Speed: &quot;</span> &lt;&lt; speed &lt;&lt; <span class="string">&quot;km/h.&quot;</span> &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//&lt;print&gt;</span></span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;Temperature: &#123;:.1f&#125; ℃. Speed: &#123;&#125; km/h.&quot;</span>,temp,speed);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
 <li><code>&lt;print&gt;</code>则是C++23加入的新成员，其基本继承了既有的较成功库<code>&lt;fmtlib&gt;</code>的实践。<br />
 trivial-type的格式化语法上和python的format几乎无二，相当于保留了<code>printf</code>的高可读性和高效率的同时，融合了Modern
 C++的template元素，并由此支持自定义类型格式化和类型推导。</li>
@@ -222,6 +363,22 @@ library中，调用std::back_inserter(some_container)可以获得一个<em>back
 insert
 iterator</em>，some_container应具有<code>push_back</code>成员函数。</p>
 </blockquote>
+<p>该函数应当通过这个<code>fc.out()</code>来向缓冲字符串中写入字符，并返回<code>fc.out()</code>。<br />
+写入方法相对就比较五花八门了：
+最“老土”的方式无疑是直接对这个iterator逐个字符地赋值（注意右操作数只能是<code>char</code>）；<br />
+现代C++中同样有很多函数可以高效地进行此项任务，对于潜在自由度较高的object，可以先建立一个string缓存并操作之，最后再copy过去。<br />
+两个比较常用的、更为简洁的方法为复用<code>std::ranges::copy</code>和<code>std::format_to</code></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//方法1：利用ranges库，集复制返回于一体</span></span><br><span class="line">std::string buf&#123;&#125;;</span><br><span class="line"><span class="comment">//...对buf进行操作</span></span><br><span class="line"><span class="comment">//优势在于可以按需较为灵活地截取/操作buf（ranges上分ing）</span></span><br><span class="line"><span class="keyword">return</span> std::ranges::<span class="built_in">copy</span>(buf,fc.<span class="built_in">out</span>()).out; <span class="comment">//注意返回值是一个含有in/out迭代器的struct，需要取其out</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//方法2：std::format_to直接格式化至迭代器（相应地，std::format相当于格式化至字符串，对标sprintf）</span></span><br><span class="line"><span class="keyword">return</span> std::format_to(fc.<span class="built_in">out</span>(),<span class="string">&quot;&#123;&#125;&quot;</span>,...); <span class="comment">//函数返回值就是迭代器本身</span></span><br></pre></td></tr></table></figure>
+<h3
+id="奇技淫巧既有formatter的复用"><del>奇技淫巧</del>：既有Formatter的复用</h3>
+<p>对于很多较简单的class/object，一视同仁start-from-scratch显然不是明智之举，此时对formatter的复用可令你在format间游走自如。<br />
+复用方式有二：继承复用/成员复用<br />
+还是直接看代码： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//还是以上文的CR类为例</span></span><br><span class="line"><span class="keyword">namespace</span> inheritance</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">template</span>&lt;&gt;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;CR&gt; : std::formatter&lt;<span class="type">int</span>&gt;</span><br><span class="line">    &#123;   </span><br><span class="line">        <span class="function"><span class="keyword">auto</span> <span class="title">format</span><span class="params">(<span class="type">const</span> CR&amp; c,std::format_context&amp; fc)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">        </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> std::formatter&lt;<span class="type">int</span>&gt;::format(c.speed,fc);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;; <span class="comment">//相当于用std::formatter&lt;int&gt;部分覆写了自身，parse遵循int的format-specifier</span></span><br><span class="line">    <span class="comment">//而format时需要调用父类的format方法</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">namespace</span> member</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">template</span>&lt;&gt;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;CR&gt;</span><br><span class="line">    &#123;</span><br><span class="line">        std::formatter&lt;<span class="type">int</span>&gt; fmt&#123;&#125;;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="title">parse</span><span class="params">(std::format_parse_context&amp; fpc)</span></span></span><br><span class="line"><span class="function">        </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> fmt.<span class="built_in">parse</span>(fpc);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">auto</span> <span class="title">format</span><span class="params">(<span class="type">const</span> CR&amp; c,std::format_context&amp; fc)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">        </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> fmt.format(c.speed,fc);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>显然inheritance对于较小的类（最好是只有一个需要格式化的量）来说比较友好，格式化进行更高效；<br />
+且若<code>std::convertible_to&lt;const A&amp;, B&gt;</code>（A为待格式化的类，B为继承类的<code>format</code>函数第一参数）为<code>true</code>，则可以完全继承之，<strong>比如自定义许多容器的format。</strong><br />
+member法的灵活度会更高些，甚至可以在<code>parse</code>中让迭代器在<code>format_parse_context</code>里游走来实现更高的自由度，适合于每个参数的输出格式都希望独立控制的类，如时间。<br />
+下面再附上一例应用了concepts、<code>std::span</code>等来实现<code>std::vector</code>的通用格式化方法：
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;algorithm&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;print&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;span&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;std::default_formattable&lt;<span class="type">char</span>&gt; Ty&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;std::span&lt;Ty&gt;&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="title">parse</span><span class="params">(std::format_parse_context&amp; fpc)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> fpc.<span class="built_in">begin</span>();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">auto</span> <span class="title">format</span><span class="params">(std::span&lt;Ty&gt; sp,std::format_context&amp; fc)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="comment">//我们希望实现一个类似python的list的效果，即[1,2,3]这样，此处尚未加入自定义分隔符等功能</span></span><br><span class="line">        std::string buf&#123;<span class="string">&quot;[&quot;</span>&#125;;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">const</span> <span class="keyword">auto</span>&amp; i : sp)</span><br><span class="line">        &#123;</span><br><span class="line">            buf += std::format(<span class="string">&quot;&#123;&#125;,&quot;</span>,i);</span><br><span class="line">        &#125;</span><br><span class="line">        buf.<span class="built_in">back</span>() = <span class="string">&#x27;]&#x27;</span>;</span><br><span class="line">        <span class="keyword">return</span> std::ranges::<span class="built_in">copy</span>(buf,fc.<span class="built_in">out</span>()).out;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;std::default_formattable&lt;<span class="type">char</span>&gt; Ty&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;std::vector&lt;Ty&gt;&gt; : std::formatter&lt;std::span&lt;Ty&gt;&gt;</span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">//现在可以直接格式化所有（元素类型可以被默认格式化的）vector</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::vector&lt;<span class="type">int</span>&gt; vc&#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>&#125;;</span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,vc); <span class="comment">//[1,2,3]</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 
       
 
@@ -240,6 +397,10 @@ iterator</em>，some_container应具有<code>push_back</code>成员函数。</p>
       		 
         		<li class="article-tag-list-item">
         			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">C++23</a>
         		</li>
       		
 		</ul>
@@ -705,8 +866,7 @@ exception guarantee</del>若失败则不会产生其它影响。</p></li>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <hr />
-<h1 id="curve">Curve</h1>
+        <h1 id="curve">Curve</h1>
 <h2 id="题目代码">题目代码</h2>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">add</span>(<span class="params">P, Q</span>):</span><br><span class="line">    (x1, y1) = P</span><br><span class="line">    (x2, y2) = Q</span><br><span class="line"></span><br><span class="line">    x3 = (x1*y2 + y1*x2) * inverse(<span class="number">1</span> + d*x1*x2*y1*y2, p) % p</span><br><span class="line">    y3 = (y1*y2 - a*x1*x2) * inverse(<span class="number">1</span> - d*x1*x2*y1*y2, p) % p</span><br><span class="line">    <span class="keyword">return</span> (x3, y3)</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">mul</span>(<span class="params">x, P</span>):</span><br><span class="line">    Q = (<span class="number">0</span>, <span class="number">1</span>)</span><br><span class="line">    <span class="keyword">while</span> x &gt; <span class="number">0</span>:</span><br><span class="line">        <span class="keyword">if</span> x % <span class="number">2</span> == <span class="number">1</span>:</span><br><span class="line">            Q = add(Q, P)</span><br><span class="line">        P = add(P, P)</span><br><span class="line">        x = x &gt;&gt; <span class="number">1</span></span><br><span class="line">    <span class="keyword">return</span> Q</span><br><span class="line"></span><br><span class="line">p = <span class="number">64141017538026690847507665744072764126523219720088055136531450296140542176327</span></span><br><span class="line">a = <span class="number">362</span></span><br><span class="line">d = <span class="number">7</span></span><br><span class="line">e=<span class="number">0x10001</span></span><br><span class="line"></span><br><span class="line">gx=bytes_to_long(<span class="string">b&#x27;D0g3xGC&#123;*****************&#125;&#x27;</span>)</span><br><span class="line"></span><br><span class="line">PR.&lt;y&gt;=PolynomialRing(Zmod(p))</span><br><span class="line">f=(d*gx^<span class="number">2</span>-<span class="number">1</span>)*y^<span class="number">2</span>+(<span class="number">1</span>-a*gx^<span class="number">2</span>)</span><br><span class="line">gy=<span class="built_in">int</span>(f.roots()[<span class="number">0</span>][<span class="number">0</span>])</span><br><span class="line"></span><br><span class="line"><span class="keyword">assert</span> (a*gx^<span class="number">2</span>+gy^<span class="number">2</span>)%p==(<span class="number">1</span>+d*gx^<span class="number">2</span>*gy^<span class="number">2</span>)%p</span><br><span class="line"></span><br><span class="line">G=(gx,gy)</span><br><span class="line"></span><br><span class="line">eG = mul(e, G)</span><br><span class="line"><span class="built_in">print</span>(eG)</span><br><span class="line"></span><br><span class="line"><span class="comment">#eG = (34120664973166619886120801966861368419497948422807175421202190709822232354059, 11301243831592615312624457443883283529467532390028216735072818875052648928463)</span></span><br></pre></td></tr></table></figure>
 <p>题目实现了一个<strong>Twisted
@@ -999,6 +1159,10 @@ MathJax.Hub.Queue(function() {
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color1">Modern C++</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color1">C++23</a>
               </li>
             
             <div class="clearfix"></div>
