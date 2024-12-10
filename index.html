@@ -198,8 +198,30 @@ target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/utility/f
 该函数接收的<code>std::format_parse_context&amp;</code>实际上是表征format-specifier区间的一个view，调用<code>fpc.begin()</code>会返回一个指向当前处理框'{'的下一个字符的迭代器。<br />
 <strong>简而言之，该函数的任务是通过移动该迭代器来收集format的需求，并将之存储于这个struct的成员变量中，以供后续处理。</strong><br />
 该函数的返回值必须同样是一个迭代器，且该迭代器<strong>必须指向'}'（也就是format-specifier的末尾的下一个字符），否则会抛出std::format_error！</strong></p></li>
-<li><p>第二个函数</p></li>
+<li><p>第二个函数必须具有签名<code>auto format(const Ty&amp;,std::format_context&amp;) const;</code>（auto类型由<code>decltype(std::format_context::out())</code>确定）。<br />
+该函数必须被声明为常成员函数（后缀<code>const</code>不要漏）；对于trivial-types，const
+Ty&amp;可以被改为Ty（更改原则和其它函数的const
+int&amp;/int一类相同）。<br />
+该函数接收的<code>std::format_context&amp;</code>是一个缓存输出格式串的字符串，调用<code>fc.out()</code>会返回一个<em>back
+insert iterator</em>。</p></li>
 </ul>
+<blockquote>
+<p><em>back insert
+iterator</em>是一类简单的迭代器，其仅定义了以下的<code>public</code>成员函数：</p>
+<ul>
+<li><code>operator*()</code>，返回<code>*this</code>；</li>
+<li><code>operator++()</code>（含<code>operator++(int)</code>），返回<code>*this</code>且什么也不做；</li>
+<li><code>operator=(const Ty&amp;)</code>（含<code>operator=(Ty&amp;&amp;)</code>），将给定元素copy(或move)追加到容器末尾（相当于调用了<code>push_back(const Ty&amp;)</code>/<code>push_back(Ty&amp;&amp;)</code>）。</li>
+</ul>
+<blockquote>
+<p>事实上这些<em>iterator</em>的<code>operator=</code>有四个重载，还有两个是类的基本成员函数（即copy/move
+assignment operator）</p>
+</blockquote>
+<p>在C++ Standard
+library中，调用std::back_inserter(some_container)可以获得一个<em>back
+insert
+iterator</em>，some_container应具有<code>push_back</code>成员函数。</p>
+</blockquote>
 
       
 
