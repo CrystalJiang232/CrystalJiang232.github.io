@@ -8,12 +8,10 @@
   <link rel="dns-prefetch" href="https://crystaljiang232.github.io">
   <title>玲珑</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="心似玲珑怀九野，剑歌飒沓访云屋">
-<meta property="og:type" content="website">
+  <meta property="og:type" content="website">
 <meta property="og:title" content="玲珑">
 <meta property="og:url" content="https://crystaljiang232.github.io/index.html">
 <meta property="og:site_name" content="玲珑">
-<meta property="og:description" content="心似玲珑怀九野，剑歌飒沓访云屋">
 <meta property="og:locale" content="en_US">
 <meta property="article:author" content="Hibiscus">
 <meta name="twitter:card" content="summary">
@@ -64,7 +62,7 @@
 		<nav class="header-menu">
 			<ul>
 			
-				<li><a href="/">主页</a></li>
+				<li><a href="/index/">主页</a></li>
 	        
 			</ul>
 		</nav>
@@ -123,7 +121,7 @@
 				<ul style="width: 50%">
 				
 				
-					<li style="width: 100%"><a href="/">主页</a></li>
+					<li style="width: 100%"><a href="/index/">主页</a></li>
 		        
 				</ul>
 			</nav>
@@ -139,6 +137,206 @@
           </div>
           <div id="js-content" class="content-ll">
             
+  
+    <article id="post-I-O新生的序幕——std-print" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/I-O%E6%96%B0%E7%94%9F%E7%9A%84%E5%BA%8F%E5%B9%95%E2%80%94%E2%80%94std-print/">I/O新生的序幕——std::print</a>
+    </h1>
+  
+
+        
+        <a href="/I-O%E6%96%B0%E7%94%9F%E7%9A%84%E5%BA%8F%E5%B9%95%E2%80%94%E2%80%94std-print/" class="archive-article-date">
+  	<time datetime="2024-12-10T06:01:08.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-10</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="函数签名">函数签名</h2>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//namepsace std</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Args&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(std::format_string fmt,Args&amp;&amp;... args)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Args&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(FILE* <span class="type">const</span> stream,std::format_string fmt,Args&amp;&amp;... args)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Args&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(std::ostream&amp; stream,std::format_string fmt,Args&amp;&amp;... args)</span></span>;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>其中前两个在<code>&lt;print&gt;</code>中被定义，第三个在<code>&lt;ostream&gt;</code>中被定义。</p>
+</blockquote>
+<p>std::print相当于补全了现代C++在输出内容上的一大缺憾。
+C/C++传统的输入/输出至今已经历了三代：以<code>&lt;stdio.h&gt;</code>为代表的传统C样式I/O、以<code>&lt;iostream&gt;</code>为代表的C++98时代的I/O及如今<code>&lt;print&gt;</code>打头的Modern
+C++ I/O。</p>
+<ol type="1">
+<li><code>&lt;stdio.h&gt;</code>作为经典的输入/输出手段永不过时，其两大特性——高效、便捷堪称遥遥领先。<code>printf</code>提供了高可读性的format方案——<code>%-2d</code>就是输出整型左对齐2格，<code>%.3f</code>就是输出浮点加三位小数，即写即用。其一大缺点是作为C时代的产物，不能支持自定义类型的输出（相当于无法实现一个统一的interface，必须另起炉灶）；另一个缺点是C遗留的va_args是一个不成熟的变参数解决方案（比如没有对format-specifier和参数数量统一的校验，给极大量的segament
+fault和奇奇怪怪的bug留下了空间），且其并不能完美地传递C++的类/object。</li>
+<li><code>&lt;iostream&gt;</code>则代表着一代经典C++。其将C++区别于C的特性发挥到了极致——通过继承树提供了I/O的统一接口，同时令用户可以通过重载<code>operator&lt;&lt;</code>来便捷地自定义类型（这点甚至远胜于<code>print</code>的<code>formatter</code>特化），在OOP上则让I/O流成为对象且支持调用各种方法来对之进行操作。但其冗余过多的副作用就是输出效率远不如<code>&lt;stdio.h&gt;</code>——频繁的函数调用（每一个<code>&lt;&lt;</code>都算调用一次函数，需要不断地将<code>std::ostream&amp;</code>操作和返回，<code>inline</code>亦很难对之有很大改观）；同时格式化输出的便捷性和可读性之差一直是其痛点之一。比较一下三代C/C++格式化输出一个简单的信息：
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">output</span><span class="params">(<span class="type">double</span> temp,<span class="type">int</span> speed)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">//&lt;stdio.h&gt;</span></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Temperature: %.1f ℃. Speed: %d km/h.\n&quot;</span>,temp,speed); </span><br><span class="line"></span><br><span class="line">    <span class="comment">//&lt;iostream&gt;</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Temperature: &quot;</span> &lt;&lt; temp &lt;&lt; <span class="string">&quot; ℃. Speed: &quot;</span> &lt;&lt; speed &lt;&lt; <span class="string">&quot;km/h.&quot;</span> &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//&lt;print&gt;</span></span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;Temperature: &#123;:.1f&#125; ℃. Speed: &#123;&#125; km/h.&quot;</span>,temp,speed);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><code>&lt;print&gt;</code>则是C++23加入的新成员，其基本继承了既有的较成功库<code>&lt;fmtlib&gt;</code>的实践。<br />
+trivial-type的格式化语法上和python的format几乎无二，相当于保留了<code>printf</code>的高可读性和高效率的同时，融合了Modern
+C++的template元素，并由此支持自定义类型格式化和类型推导。</li>
+</ol>
+<p>函数签名显然非常的straightforward，第一个重载为基础，后两个只是指定了输出流（可以传<code>FILE*</code>或<code>std::ostream&amp;</code>）。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">C/C++ Libraries</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/I-O%E6%96%B0%E7%94%9F%E7%9A%84%E5%BA%8F%E5%B9%95%E2%80%94%E2%80%94std-print/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+  <div>
+</article>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-index" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/index/">玲珑</a>
+    </h1>
+  
+
+        
+        <a href="/index/" class="archive-article-date">
+  	<time datetime="2024-12-10T03:39:35.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-10</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <blockquote>
+<p><del>欢迎您乘坐燕归号列车，本次列车全列禁烟，下一站绮云南站。</del></p>
+<p><del>Welcome to the YanGui Train, smoking is not allowed on the
+train. The next stop is QiYunNan station.</del></p>
+</blockquote>
+<p>ni hao！<br />
+这是一位'Crystal-operator'的Blog，可以称我为小姜、Hibiscus、玲珑、Crystal，whatever:)</p>
+<p>在这里您将看到： - CTF-Crypto的部分wp、精华笔记<br />
+- C/C++相关<del>稍显无聊</del>的探究内容<br />
+- 中学化学的一些<del>奇技淫巧</del>和wp（？）</p>
+<p>其它感兴趣的领域：<br />
+- 古文&amp;古诗词&amp;古风歌<br />
+- 民用航空<br />
+- 中国高速铁路(CR/CRH)<br />
+- 钢琴<br />
+- 户外运动（以骑行/爬山为主）</p>
+<p>This is a blog created by a 'Crystal-operator'. You can call me
+Jiang, Hibiscus, LingLong, Crystal, whatever:)</p>
+<p>In this blog you can explore contents as follows:<br />
+- Writeups &amp; selected notes of CTF-Crypto<br />
+- Arbitrary <del>boring</del> researches on C/C++ language<br />
+- Some materials on middle school Chemistry</p>
+<p>Some other field of interests of mine are:<br />
+- Chinese antiquitous articles, poetry and songs<br />
+- Civil aviation<br />
+- China Railway(high speed in particular)<br />
+- Piano<br />
+- Outdoor sports, especially cycling and mountain climbing</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">玲珑</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/index/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+  <div>
+</article>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
   
     <article id="post-parallel-sage" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
@@ -293,18 +491,24 @@ double则请使用<code>%llf</code>。</strong></p></li>
 <p>有效的浮点数实例： 3；3.14；+6.24e5；-9e-7。</p>
 </blockquote>
 <ul>
-<li>x，X:
-十六进制整数，除字符集合改为所有的十六进制字符（大小写均有效）外行为与d相似。<br />
-函数的对应预期变量是一个<code>int*</code>，修饰规则与前述相同。<br />
-</li>
-<li>o： 八进制整数，不再赘述。<br />
-</li>
-<li>i：</li>
+<li><p>x，X:
+十六进制整数，除字符集合改为所有的十六进制字符（大小写均有效）外行为与d相似。十六进制数前的'0x'/'0X'前缀是可选的。
+函数的对应预期变量是一个<code>int*</code>，修饰规则与前述相同。</p></li>
+<li><p>o： 八进制整数，不再赘述。</p></li>
+<li><p>i：
+读取一个整数，行为类似于python中的<code>int(x,0)</code>（即自动根据前缀判断进制），0-八进制，0x/0X-十六进制，其它-十进制（参考C中的numeric
+constants规则）。</p></li>
+<li><p>[]：扫描字符集合，集成了一个弱化版的正则表达式。<br />
+具体地，[]内部可以放置扫描字符的集合，集合的表达方式有逐个列出/横杠表示范围，并支持'^'表示'否'。<br />
+举例：<code>%[a-zA-Z]</code>扫描所有字母；<code>%[^\n]</code>扫描直至换行符（相当于获取一整行）；<code>%1[x]</code>获取至多一个x字符。</p></li>
 </ul>
+<blockquote>
+<p>'^'的转义字符为'^'，但在C的源代码中应写作<code>\\^</code>（因为''自身会被预处理转义）。</p>
+</blockquote>
 <p>返回值：赋值成功的变量数，若到达文件末尾则返回EOF（负数宏，在许多平台上通常为-1）。<br />
 <strong>当且仅当赋值成功的变量数为0且到达文件尾时，返回EOF（亦即只要存在赋值成功的变量，即不会返回负数）。</strong></p>
 <h2 id="底层逻辑">底层逻辑</h2>
-<p>假设scanf的目标流为in。scanf<strong>首先会跳过in中所有的空白字符</strong>，随后从左往右扫描format-string，遇到以下字符时分别采取对应的措施：<br />
+<p>假设scanf的目标流为in。scanf从左往右扫描format-string，遇到以下字符时分别采取对应的措施：<br />
 -
 specifier（如上）：尝试根据specifier的规则处理in中的下一段符合要求的字符；<br />
 若specifier没有加星号(*)，则取va_arg（不定参数列表）中的下一个参数，对之解引用并将数据写入其中。<br />
@@ -315,9 +519,11 @@ specifier（如上）：尝试根据specifier的规则处理in中的下一段符
 <code>%*1[(char)]</code>。</p>
 <blockquote>
 <p><strong><em>重点来咯！！！</em></strong></p>
-<p>对于上述的第1、3种情况（即扫描format-string需要处理的是specifier/其它非空白字符），一旦读取失败，<strong>则对format-string的扫描终止，读取结束。</strong></p>
-<p>第2种情况（处理空白字符）时，即使流中没有空白字符，依然继续。</p>
-<p>需要注意的是每次调用scanf时，如果specifier不是<code>%c</code>或扫描字符合集<code>%[]</code>，则会<strong>自动先跳过所有的空白字符一次</strong>。</p>
+<ul>
+<li><p>对于上述的第1、3种情况（即扫描format-string需要处理的是specifier/其它非空白字符），一旦读取失败，<strong>则对format-string的扫描终止，读取结束。</strong></p></li>
+<li><p>第2种情况（处理空白字符）时，即使流中没有空白字符，依然继续。</p></li>
+<li><p>每次调用scanf时，如果specifier不是<code>%c</code>或扫描字符合集<code>%[]</code>，则会<strong>自动先跳过所有的空白字符一次</strong>。</p></li>
+</ul>
 </blockquote>
 <p>假设待读取流形如 <code>1  2\n34abc d</code>，代码及读取效果示例：</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">input1</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span> a=<span class="number">0</span>,b=<span class="number">0</span>;</span><br><span class="line">    <span class="type">char</span> c=<span class="number">0</span>;</span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%d%d&quot;</span>,&amp;a,&amp;b); <span class="comment">//a=1,b=2,返回值2，流的下一个字符是\n</span></span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%c&quot;</span>,&amp;c); <span class="comment">//c=&#x27;\n&#x27;,返回值1</span></span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%da%d&quot;</span>,&amp;a,&amp;b); <span class="comment">//a=34，返回值1，流的下一个字符是c，b未更改(b=2)</span></span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%*[^d]&quot;</span>); <span class="comment">//返回值0，流的下一个字符是d</span></span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%x&quot;</span>,&amp;a); <span class="comment">//a=13，返回值1</span></span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%c&quot;</span>,&amp;c); <span class="comment">//返回值-1（假设EOF的宏常量是-1）</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
@@ -691,6 +897,14 @@ MathJax.Hub.Queue(function() {
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">sage</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">玲珑</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color1">Modern C++</a>
               </li>
             
             <div class="clearfix"></div>

@@ -6,14 +6,20 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="https://crystaljiang232.github.io">
-  <title>Archives: 2024 | 玲珑</title>
+  <title>I/O新生的序幕——std::print | 玲珑</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="玲珑">
-<meta property="og:url" content="https://crystaljiang232.github.io/archives/2024/index.html">
+  <meta name="description" content="函数签名 123456789&#x2F;&#x2F;namepsace stdtemplate&lt;class ...Args&gt;void print(std::format_string fmt,Args&amp;&amp;... args);template&lt;class ...Args&gt;void print(FILE* const stream,std::format_string fmt,A">
+<meta property="og:type" content="article">
+<meta property="og:title" content="I&#x2F;O新生的序幕——std::print">
+<meta property="og:url" content="https://crystaljiang232.github.io/I-O%E6%96%B0%E7%94%9F%E7%9A%84%E5%BA%8F%E5%B9%95%E2%80%94%E2%80%94std-print/index.html">
 <meta property="og:site_name" content="玲珑">
+<meta property="og:description" content="函数签名 123456789&#x2F;&#x2F;namepsace stdtemplate&lt;class ...Args&gt;void print(std::format_string fmt,Args&amp;&amp;... args);template&lt;class ...Args&gt;void print(FILE* const stream,std::format_string fmt,A">
 <meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2024-12-10T06:01:08.000Z">
+<meta property="article:modified_time" content="2024-12-10T06:23:55.548Z">
 <meta property="article:author" content="Hibiscus">
+<meta property="article:tag" content="C&#x2F;C++ Libraries">
+<meta property="article:tag" content="Modern C++">
 <meta name="twitter:card" content="summary">
   
     <link rel="alternative" href="/atom.xml" title="玲珑" type="application/atom+xml">
@@ -136,36 +142,52 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
-  
-  
+            <article id="post-I-O新生的序幕——std-print" class="article article-type-post " itemscope itemprop="blogPost">
+  <div class="article-inner">
     
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2024" class="archive-year">2024</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/I-O%E6%96%B0%E7%94%9F%E7%9A%84%E5%BA%8F%E5%B9%95%E2%80%94%E2%80%94std-print/" class="archive-article-date">
-  	<time datetime="2024-12-10T06:01:08.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-10</time>
-</a>
-        </div>
-    	 
+      <header class="article-header">
+        
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/I-O%E6%96%B0%E7%94%9F%E7%9A%84%E5%BA%8F%E5%B9%95%E2%80%94%E2%80%94std-print/">I/O新生的序幕——std::print</a>
+    <h1 class="article-title" itemprop="name">
+      I/O新生的序幕——std::print
     </h1>
   
 
-        <div class="article-info info-on-right">
-          
+        
+        <a href="/I-O%E6%96%B0%E7%94%9F%E7%9A%84%E5%BA%8F%E5%B9%95%E2%80%94%E2%80%94std-print/" class="archive-article-date">
+  	<time datetime="2024-12-10T06:01:08.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-10</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="函数签名">函数签名</h2>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//namepsace std</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Args&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(std::format_string fmt,Args&amp;&amp;... args)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Args&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(FILE* <span class="type">const</span> stream,std::format_string fmt,Args&amp;&amp;... args)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Args&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(std::ostream&amp; stream,std::format_string fmt,Args&amp;&amp;... args)</span></span>;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>其中前两个在<code>&lt;print&gt;</code>中被定义，第三个在<code>&lt;ostream&gt;</code>中被定义。</p>
+</blockquote>
+<p>std::print相当于补全了现代C++在输出内容上的一大缺憾。
+C/C++传统的输入/输出至今已经历了三代：以<code>&lt;stdio.h&gt;</code>为代表的传统C样式I/O、以<code>&lt;iostream&gt;</code>为代表的C++98时代的I/O及如今<code>&lt;print&gt;</code>打头的Modern
+C++ I/O。</p>
+<ol type="1">
+<li><code>&lt;stdio.h&gt;</code>作为经典的输入/输出手段永不过时，其两大特性——高效、便捷堪称遥遥领先。<code>printf</code>提供了高可读性的format方案——<code>%-2d</code>就是输出整型左对齐2格，<code>%.3f</code>就是输出浮点加三位小数，即写即用。其一大缺点是作为C时代的产物，不能支持自定义类型的输出（相当于无法实现一个统一的interface，必须另起炉灶）；另一个缺点是C遗留的va_args是一个不成熟的变参数解决方案（比如没有对format-specifier和参数数量统一的校验，给极大量的segament
+fault和奇奇怪怪的bug留下了空间），且其并不能完美地传递C++的类/object。</li>
+<li><code>&lt;iostream&gt;</code>则代表着一代经典C++。其将C++区别于C的特性发挥到了极致——通过继承树提供了I/O的统一接口，同时令用户可以通过重载<code>operator&lt;&lt;</code>来便捷地自定义类型（这点甚至远胜于<code>print</code>的<code>formatter</code>特化），在OOP上则让I/O流成为对象且支持调用各种方法来对之进行操作。但其冗余过多的副作用就是输出效率远不如<code>&lt;stdio.h&gt;</code>——频繁的函数调用（每一个<code>&lt;&lt;</code>都算调用一次函数，需要不断地将<code>std::ostream&amp;</code>操作和返回，<code>inline</code>亦很难对之有很大改观）；同时格式化输出的便捷性和可读性之差一直是其痛点之一。比较一下三代C/C++格式化输出一个简单的信息：
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">output</span><span class="params">(<span class="type">double</span> temp,<span class="type">int</span> speed)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">//&lt;stdio.h&gt;</span></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Temperature: %.1f ℃. Speed: %d km/h.\n&quot;</span>,temp,speed); </span><br><span class="line"></span><br><span class="line">    <span class="comment">//&lt;iostream&gt;</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Temperature: &quot;</span> &lt;&lt; temp &lt;&lt; <span class="string">&quot; ℃. Speed: &quot;</span> &lt;&lt; speed &lt;&lt; <span class="string">&quot;km/h.&quot;</span> &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//&lt;print&gt;</span></span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;Temperature: &#123;:.1f&#125; ℃. Speed: &#123;&#125; km/h.&quot;</span>,temp,speed);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><code>&lt;print&gt;</code>则是C++23加入的新成员，其基本继承了既有的较成功库<code>&lt;fmtlib&gt;</code>的实践。<br />
+trivial-type的格式化语法上和python的format几乎无二，相当于保留了<code>printf</code>的高可读性和高效率的同时，融合了Modern
+C++的template元素，并由此支持自定义类型格式化和类型推导。</li>
+</ol>
+<p>函数签名显然非常的straightforward，第一个重载为基础，后两个只是指定了输出流（可以传<code>FILE*</code>或<code>std::ostream&amp;</code>）。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
 	<div class="article-tag tagcloud">
 		<i class="icon-price-tags icon"></i>
 		<ul class="article-tag-list">
@@ -181,179 +203,110 @@
 		</ul>
 	</div>
 
-          
+      
 
+      
+
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
         </div>
-        <div class="clearfix"></div>
-    </header>
+      </div>
+    </span>
   </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/index/" class="archive-article-date">
-  	<time datetime="2024-12-10T03:39:35.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-10</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/index/">玲珑</a>
-    </h1>
-  
+</div>
 
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">玲珑</a>
-        		</li>
-      		
-		</ul>
-	</div>
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=https://crystaljiang232.github.io/I-O%E6%96%B0%E7%94%9F%E7%9A%84%E5%BA%8F%E5%B9%95%E2%80%94%E2%80%94std-print/" alt="微信分享二维码">
+    </div>
+</div>
 
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
+<div class="mask js-mask"></div>
+      
+      <div class="clearfix"></div>
+    </div>
   </div>
+  <div>
 </article>
+
+
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/parallel-sage/" class="archive-article-date">
-  	<time datetime="2024-12-09T00:16:55.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-09</time>
-</a>
+<nav id="article-nav">
+  
+  
+    <a href="/index/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">玲珑</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
         </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/parallel-sage/">Sage_Basics</a>
-    </h1>
-  
+        
+        
+    </div>
+</aside>
 
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">sage</a>
-        		</li>
-      		
-		</ul>
-	</div>
 
-          
 
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/%E7%BB%86%E7%A9%B6scanf/" class="archive-article-date">
-  	<time datetime="2024-12-08T13:16:43.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-08</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/%E7%BB%86%E7%A9%B6scanf/">细究scanf</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">C/C++ Libraries</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">C Functions</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/%E5%9B%BD%E5%9F%8E%E6%9D%AFCTF-Crypto-Writeup/" class="archive-article-date">
-  	<time datetime="2024-12-08T07:37:48.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-08</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/%E5%9B%BD%E5%9F%8E%E6%9D%AFCTF-Crypto-Writeup/">国城杯CTF Crypto Writeup</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">wp</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
   
   
-    </div></section>
   
 
     
+
+  
+
+  
+
+  
 
 
           </div>
@@ -414,8 +367,8 @@
 	var yiliaConfig = {
 		mathjax: true,
 		isHome: false,
-		isPost: false,
-		isArchive: true,
+		isPost: true,
+		isArchive: false,
 		isTag: false,
 		isCategory: false,
 		open_in_new: true,
