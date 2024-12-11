@@ -54,7 +54,7 @@
     <canvas id="anm-canvas" class="anm-canvas"></canvas>
     <div class="left-col" q-class="show:isShow">
       
-<div class="overlay" style="background: #ffffff;background-size:cover"></div>
+<div class="overlay" style="background: #ffffff url(/img/bkg.jpg);background-size:cover"></div>
 <div class="intrude-less">
 	<header id="header" class="inner">
 		<a href="/" class="profilepic">
@@ -79,6 +79,8 @@
     			
             
     			
+    			<a q-on="click: openSlider(e, 'friends')" href="javascript:void(0)">友链</a>
+    			
             
     			
             
@@ -97,12 +99,12 @@
     <div class="mid-col" q-class="show:isShow,hide:isShow|isFalse">
       
 <nav id="mobile-nav">
-  		<div class="overlay js-overlay" style="background: #ffffff"></div>
+  		<div class="overlay js-overlay" style="background: #ffffff url(/img/bkg.jpg)"></div>
 	<div class="btnctn js-mobile-btnctn">
   		<div class="slider-trigger list" q-on="click: openSlider(e)"><i class="icon icon-sort"></i></div>
 	</div>
 
-	<div class="intrude-less"style="background: #ffffff">
+	<div class="intrude-less"style="background: #ffffff url(/img/bkg.jpg)">
 		<header id="header" class="inner">
 			<div class="profilepic">
 				<img src="/img/QingShu.jpg" class="js-avatar">
@@ -426,7 +428,7 @@ data-cites="nd_C0mplex_QAQ">@nd_C0mplex_QAQ</span>}</p>
 		toc_hide_index: true,
 		root: "/",
 		innerArchive: true,
-		showTags: true
+		showTags: false
 	}
 </script>
 
@@ -467,6 +469,8 @@ MathJax.Hub.Queue(function() {
       
     
       
+      
+      
     
       
     
@@ -476,9 +480,11 @@ MathJax.Hub.Queue(function() {
     
     
       
-      <li style="width: 100%" q-on="click: openSlider(e, 'innerArchive')"><a href="javascript:void(0)" q-class="active:innerArchive">所有文章</a></li>
+      <li style="width: 50%" q-on="click: openSlider(e, 'innerArchive')"><a href="javascript:void(0)" q-class="active:innerArchive">所有文章</a></li>
       
         
+      
+      <li style="width: 50%" q-on="click: openSlider(e, 'friends')"><a href="javascript:void(0)" q-class="active:friends">友链</a></li>
       
         
       
@@ -575,6 +581,18 @@ MathJax.Hub.Queue(function() {
     	</section>
     
 
+    
+    	<section class="tools-section tools-section-friends" q-show="friends">
+  		
+        <ul class="search-ul">
+          
+            <li class="search-li">
+              <a href="https://ctf.njupt.edu.cn/" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>X1ct34m</a>
+            </li>
+          
+        </ul>
+  		
+    	</section>
     
 
     

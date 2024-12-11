@@ -53,7 +53,7 @@
     <canvas id="anm-canvas" class="anm-canvas"></canvas>
     <div class="left-col" q-class="show:isShow">
       
-<div class="overlay" style="background: #ffffff;background-size:cover"></div>
+<div class="overlay" style="background: #ffffff url(/img/bkg.jpg);background-size:cover"></div>
 <div class="intrude-less">
 	<header id="header" class="inner">
 		<a href="/" class="profilepic">
@@ -78,6 +78,8 @@
     			
             
     			
+    			<a q-on="click: openSlider(e, 'friends')" href="javascript:void(0)">友链</a>
+    			
             
     			
             
@@ -96,12 +98,12 @@
     <div class="mid-col" q-class="show:isShow,hide:isShow|isFalse">
       
 <nav id="mobile-nav">
-  		<div class="overlay js-overlay" style="background: #ffffff"></div>
+  		<div class="overlay js-overlay" style="background: #ffffff url(/img/bkg.jpg)"></div>
 	<div class="btnctn js-mobile-btnctn">
   		<div class="slider-trigger list" q-on="click: openSlider(e)"><i class="icon icon-sort"></i></div>
 	</div>
 
-	<div class="intrude-less"style="background: #ffffff">
+	<div class="intrude-less"style="background: #ffffff url(/img/bkg.jpg)">
 		<header id="header" class="inner">
 			<div class="profilepic">
 				<img src="/img/QingShu.jpg" class="js-avatar">
@@ -411,6 +413,15 @@ class="math inline">\(x&gt;2\)</span>，即可确保其最大限度地抵抗Pohl
   
 <nav id="article-nav">
   
+    <a href="/LFSR-temp/" id="article-nav-newer" class="article-nav-link-wrap">
+      <i class="icon-circle-left"></i>
+      <div class="article-nav-title">
+        
+          LFSR_temp
+        
+      </div>
+    </a>
+  
   
     <a href="/I-O%E6%96%B0%E7%94%9F%E7%9A%84%E5%BA%8F%E5%B9%95%E2%80%94%E2%80%94std-print/" id="article-nav-older" class="article-nav-link-wrap">
       <div class="article-nav-title">I/O新生的序幕——std::print</div>
@@ -517,7 +528,7 @@ class="math inline">\(x&gt;2\)</span>，即可确保其最大限度地抵抗Pohl
 		toc_hide_index: true,
 		root: "/",
 		innerArchive: true,
-		showTags: true
+		showTags: false
 	}
 </script>
 
@@ -558,6 +569,8 @@ MathJax.Hub.Queue(function() {
       
     
       
+      
+      
     
       
     
@@ -567,9 +580,11 @@ MathJax.Hub.Queue(function() {
     
     
       
-      <li style="width: 100%" q-on="click: openSlider(e, 'innerArchive')"><a href="javascript:void(0)" q-class="active:innerArchive">所有文章</a></li>
+      <li style="width: 50%" q-on="click: openSlider(e, 'innerArchive')"><a href="javascript:void(0)" q-class="active:innerArchive">所有文章</a></li>
       
         
+      
+      <li style="width: 50%" q-on="click: openSlider(e, 'friends')"><a href="javascript:void(0)" q-class="active:friends">友链</a></li>
       
         
       
@@ -666,6 +681,18 @@ MathJax.Hub.Queue(function() {
     	</section>
     
 
+    
+    	<section class="tools-section tools-section-friends" q-show="friends">
+  		
+        <ul class="search-ul">
+          
+            <li class="search-li">
+              <a href="https://ctf.njupt.edu.cn/" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>X1ct34m</a>
+            </li>
+          
+        </ul>
+  		
+    	</section>
     
 
     

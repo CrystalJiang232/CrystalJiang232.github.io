@@ -48,7 +48,7 @@
     <canvas id="anm-canvas" class="anm-canvas"></canvas>
     <div class="left-col" q-class="show:isShow">
       
-<div class="overlay" style="background: #ffffff;background-size:cover"></div>
+<div class="overlay" style="background: #ffffff url(/img/bkg.jpg);background-size:cover"></div>
 <div class="intrude-less">
 	<header id="header" class="inner">
 		<a href="/" class="profilepic">
@@ -73,6 +73,8 @@
     			
             
     			
+    			<a q-on="click: openSlider(e, 'friends')" href="javascript:void(0)">友链</a>
+    			
             
     			
             
@@ -91,12 +93,12 @@
     <div class="mid-col" q-class="show:isShow,hide:isShow|isFalse">
       
 <nav id="mobile-nav">
-  		<div class="overlay js-overlay" style="background: #ffffff"></div>
+  		<div class="overlay js-overlay" style="background: #ffffff url(/img/bkg.jpg)"></div>
 	<div class="btnctn js-mobile-btnctn">
   		<div class="slider-trigger list" q-on="click: openSlider(e)"><i class="icon icon-sort"></i></div>
 	</div>
 
-	<div class="intrude-less"style="background: #ffffff">
+	<div class="intrude-less"style="background: #ffffff url(/img/bkg.jpg)">
 		<header id="header" class="inner">
 			<div class="profilepic">
 				<img src="/img/QingShu.jpg" class="js-avatar">
@@ -137,6 +139,87 @@
           </div>
           <div id="js-content" class="content-ll">
             
+  
+    <article id="post-LFSR-temp" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/LFSR-temp/">LFSR_temp</a>
+    </h1>
+  
+
+        
+        <a href="/LFSR-temp/" class="archive-article-date">
+  	<time datetime="2024-12-11T01:00:30.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-11</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>LFSR，Linear Feedback Shifted
+Register，即“线性反馈寄存移位器”，是一种非常便捷的密钥流的生成方式。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">sage</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/LFSR-temp/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+  <div>
+</article>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
   
     <article id="post-dlog" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
@@ -438,12 +521,12 @@ target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/utility/f
 该函数接收的<code>std::format_parse_context&amp;</code>实际上是表征format-specifier区间的一个view，调用<code>fpc.begin()</code>会返回一个指向当前处理域':'的下一个字符的迭代器。</li>
 </ul>
 <blockquote>
-<p>插播一下“处理域”的定义：每个框或可为全空<code>&#123;&#125;</code>，或应形如<code>&#123;A:B&#125;</code>，<strong><em>其中A为一部分，':B'为一部分，可以理解为两侧分别都是可选的，用法见下</em></strong></p>
-<p>其中，A是索引，<strong>若不指定A，则该格式字符串采用的是“自动索引”(auto-indexing)</strong>，即每遇到一个框就把下一个参数丢进去；</p>
-<p>否则为手动索引（manual-indexing），即可以控制每个框用哪个index的参数（可以复用），如<code>std::println("&#123;0&#125; &#123;1&#125; &#123;0&#125;",1,2);</code>输出<code>1 2 1</code>。</p>
+<p>插播一下“处理域”的定义：每个框或可为全空<code>&#123;&#125;</code>，或应形如<code>&#123;A:B&#125;</code>，<strong><em>其中A为一部分，':B'为一部分，可以理解为两侧分别都是可选的，用法见下：</em></strong></p>
+<p>A是index，<strong>若不指定A，则该格式字符串采用的是“自动索引”(auto-indexing)</strong>，即每遇到一个框就把下一个参数丢进去；</p>
+<p>否则为手动索引（manual-indexing），指定每个框所用参数的index（可以复用），如<code>std::println("&#123;0&#125; &#123;1&#125; &#123;0&#125;",1,2);</code>输出<code>1 2 1</code>。</p>
 <blockquote>
-<p><strong>不允许使用混合索引（即要么全自动，要么全手动）。</strong>
-<strong>索引不允许越界，比如<code>std::println("&#123;&#125; &#123;&#125;",1)</code>不能通过编译。</strong></p>
+<p><strong>不允许使用混合索引（即要么全自动，要么全手动）。</strong></p>
+<p><strong>索引不允许越界，比如<code>std::println("&#123;&#125; &#123;&#125;",1)</code>不能通过编译。</strong></p>
 </blockquote>
 <p>:B是format-specifier，形式和python/C的类似，每个框都可以自定义，不再赘述。</p>
 <p>应用实例：将一个浮点数输出两次，精度分别为4位、2位：<code>std::println("&#123;0:.4f&#125; -&gt; &#123;0:.2f&#125;",some_float);</code>。</p>
@@ -1171,7 +1254,7 @@ data-cites="nd_C0mplex_QAQ">@nd_C0mplex_QAQ</span>}</p>
 		toc_hide_index: true,
 		root: "/",
 		innerArchive: true,
-		showTags: true
+		showTags: false
 	}
 </script>
 
@@ -1212,6 +1295,8 @@ MathJax.Hub.Queue(function() {
       
     
       
+      
+      
     
       
     
@@ -1221,9 +1306,11 @@ MathJax.Hub.Queue(function() {
     
     
       
-      <li style="width: 100%" q-on="click: openSlider(e, 'innerArchive')"><a href="javascript:void(0)" q-class="active:innerArchive">所有文章</a></li>
+      <li style="width: 50%" q-on="click: openSlider(e, 'innerArchive')"><a href="javascript:void(0)" q-class="active:innerArchive">所有文章</a></li>
       
         
+      
+      <li style="width: 50%" q-on="click: openSlider(e, 'friends')"><a href="javascript:void(0)" q-class="active:friends">友链</a></li>
       
         
       
@@ -1320,6 +1407,18 @@ MathJax.Hub.Queue(function() {
     	</section>
     
 
+    
+    	<section class="tools-section tools-section-friends" q-show="friends">
+  		
+        <ul class="search-ul">
+          
+            <li class="search-li">
+              <a href="https://ctf.njupt.edu.cn/" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>X1ct34m</a>
+            </li>
+          
+        </ul>
+  		
+    	</section>
     
 
     
