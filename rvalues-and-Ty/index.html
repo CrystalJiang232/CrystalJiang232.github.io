@@ -16,7 +16,7 @@
 <meta property="og:description" content="右值(rvalues)和右值引用(rvalue references)是支撑Modern C++的中流砥柱、构筑C++效率极限的基石之一。  右值、右值引用简介 值和变量类型（补票） 在开始探索这片“天柱城”前，需要先明确C++中值和变量的类型。 值和变量的类型和定义等不要混淆！ 变量(variables)有fundamental-types、struct&#x2F;class-types">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2024-12-11T02:37:23.000Z">
-<meta property="article:modified_time" content="2024-12-11T10:25:29.046Z">
+<meta property="article:modified_time" content="2024-12-11T14:44:09.849Z">
 <meta property="article:author" content="Hibiscus">
 <meta property="article:tag" content="Modern C++">
 <meta name="twitter:card" content="summary">
@@ -171,10 +171,9 @@ C++</em>的中流砥柱、构筑C++效率极限的基石之一。</p>
 <h2 id="值和变量类型补票">值和变量类型（补票）</h2>
 <p>在开始探索这片“天柱城”前，需要先明确C++中值和变量的类型。<br />
 <strong>值和变量的类型和定义等不要混淆！</strong></p>
-<p>变量(variables)有<em>fundamental-types</em>、<em>struct/class-types</em>和<em>reference-types</em>三种：
--
-第一种亦名<em>trivial-types</em>，内置/基本数据类型，包括普通的<code>int</code>,<code>double</code>,<code>char</code>,<code>float</code>及其<code>short</code>/<code>long</code>/<code>long long</code>/<code>unsigned</code>修饰版，以及所有的指针类型（如<code>int*</code>），和上述类型的<code>typedef</code>。</p>
+<p>变量(variables)有<em>fundamental-types</em>、<em>struct/class-types</em>和<em>reference-types</em>三种：</p>
 <ul>
+<li><p>第一种亦名<em>trivial-types</em>，内置/基本数据类型，包括普通的<code>int</code>,<code>double</code>,<code>char</code>,<code>float</code>及其<code>short</code>/<code>long</code>/<code>long long</code>/<code>unsigned</code>修饰版，以及所有的指针类型（如<code>int*</code>），和上述类型的<code>typedef</code>。</p></li>
 <li><p>第二种亦名<em>complex-types</em>，其实就是各种<code>struct</code>和<code>class</code>及其<code>typedef</code>。</p></li>
 <li><p>第三种单开一类的主要原因是引用不属于<code>object</code>的范畴，其包括左值引用(经典引用，如<code>int&amp;</code>)和C++11加入的右值引用(形如<code>int&amp;&amp;</code>)。</p></li>
 </ul>
@@ -193,9 +192,12 @@ used.</p>
 </blockquote>
 <p>（记住这个'moved-from'，后面会考）</p>
 <p>C++11以及此前的C语言则提供了一个更加简单（但放在Modern
-C++语境中稍显implicit）的分类，放在很多其它语言中也适用：<br />
-- 具名变量是左值(lvalues)，其可以出现在赋值号'='的左侧/右侧；<br />
-- 不具名的常量等是右值(rvalues)，其只能出现在赋值号'='的右侧。</p>
+C++语境中稍显implicit）的分类，放在很多其它语言中也适用：</p>
+<ul>
+<li>具名变量是左值(lvalues)，其可以出现在赋值号'='的左侧/右侧；<br />
+</li>
+<li>不具名的常量等是右值(rvalues)，其只能出现在赋值号'='的右侧。</li>
+</ul>
 <p>这一点是比较显然的，比如<code>int x=3;</code>或<code>y = x;</code>是合法的语句，而<code>3 = y;</code>或<code>3 = 4;</code>显然是非法的，现代计算机编程语言皆然。</p>
 <blockquote>
 <p>C++11以前（下称<em>经典C++</em>），函数的返回值是右值（除非函数返回了一个引用）。</p>
@@ -323,11 +325,60 @@ lvalue</em>作为值，初始化<em>lref/rref/cref</em>的重载优先级如下�
 <li>同时，<em>rref</em> 胜过 <em>cref</em>
 的一点在于前者可以通过引用更改指向对象的状态（“拆迁队”），而后者不能（需要遵守<code>const</code>语义）</li>
 </ul>
-<p>放在类中的实例效果：</p>
+<p>放在类中，移动语义的实践载体就是函数重载——常见于<strong>构造函数</strong>和<strong>赋值运算符</strong>的重载。<br />
+对于一个类<code>Ty</code>，在传统C++的复制构造<code>Ty(const Ty&amp;)</code>/复制赋值运算符<code>Ty&amp; operator=(const Ty&amp;)</code>的基础上，<br />
+C++11向其中新增了移动构造<code>Ty(Ty&amp;&amp;)</code>/移动赋值运算符</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">CR</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">CR</span>()&#123;&#125;</span><br><span class="line">    <span class="built_in">CR</span>(<span class="type">const</span> CR&amp;)&#123;&#125; <span class="comment">//#1</span></span><br><span class="line">    <span class="built_in">CR</span>(CR&amp;&amp;)&#123;&#125; <span class="comment">//#2</span></span><br><span class="line">    ~<span class="built_in">CR</span>()&#123;&#125;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">modify</span><span class="params">()</span></span>&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    CR c&#123;&#125;;</span><br><span class="line">    CR d&#123;c&#125;; <span class="comment">//Invokes overload #1</span></span><br><span class="line">    CR e&#123;std::<span class="built_in">move</span>(c)&#125;; <span class="comment">//Invokes overload #2</span></span><br><span class="line">    </span><br><span class="line">    <span class="type">const</span> CR&amp; ref1 = std::<span class="built_in">move</span>(d); <span class="comment">//binding rvalue to cref</span></span><br><span class="line">    <span class="comment">//ref1.modify(); //Not Compile: const</span></span><br><span class="line"></span><br><span class="line">    CR&amp;&amp; ref2 = std::<span class="built_in">move</span>(e); <span class="comment">//binding rvalue to rref</span></span><br><span class="line">    ref<span class="number">2.</span><span class="built_in">modify</span>(); <span class="comment">//OK: non-const</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h2 id="善后之被移动对象的处理">“善后”之被移动对象的处理</h2>
+<p>“移动”相较传统的“复制-销毁”模式，提出的一个新课题就是如何处理被移动的对象。</p>
 <h2
 id="不可复制资源的移动语义归一化">不可复制资源的移动——语义归一化</h2>
+<p><strong>并不是所有的资源/对象都可以被移动/复制。</strong></p>
+<p>例如一个<code>thread</code>，线程就不应被移动/复制，一旦开始后只能要么<code>.join()</code>，要么<code>.detach()</code>。<br />
+再比如智能指针中的<code>unique_ptr</code>，一个独占型指针的所有权显然不能复制，只能转移。</p>
+<blockquote>
+<p>C++11中，函数的主体可以被声明为<code>= delete;</code>，部分函数（主要是类的6个特殊成员函数，即(默认/复制/移动)构造+(复制/移动)赋值+析构）主体可以被声明为<code>= default;</code>。</p>
+<p>若一个函数被声明为<code>= delete;</code>，则该函数不能被调用，否则不能通过编译。一般用于<strong>特定参数的函数重载</strong>来阻止一些特定参数对函数的调用（一般涉及到隐式转换和重载决议的问题）。</p>
+<p>若一个函数被声明为<code>= default;</code>，则编译器将为之生成一个默认的函数。</p>
+<blockquote>
+<p>类的特殊成员函数的默认形式为：</p>
+<ul>
+<li>默认构造函数，默认构造(<em>default-initialize</em>)每一个数据成员；</li>
+<li>复制构造函数，复制构造(<em>copy-initialize</em>)每一个数据成员；</li>
+<li>移动构造函数，移动构造(<em>move-initialize</em>)每一个数据成员；</li>
+<li>复制赋值运算符，为每一个数据成员进行复制赋值(<em>copy-assignment</em>);</li>
+<li>移动赋值运算符，为每一个数据成员进行移动赋值(<em>move-assignment</em>);</li>
+<li>析构函数，析构每一个数据成员。</li>
+</ul>
+</blockquote>
+</blockquote>
+<p>利用C++11中的语法特性，现在我们可以显式地声明禁用一些默认生成的函数，以此来约束一个类，使之不能被复制/移动/默认构造。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">MoveOnly</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">MoveOnly</span>() &#123;&#125;</span><br><span class="line">    ~<span class="built_in">MoveOnly</span>() &#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">MoveOnly</span>(<span class="type">const</span> MoveOnly&amp;) = <span class="keyword">delete</span>;</span><br><span class="line">    <span class="built_in">MoveOnly</span>(MoveOnly&amp;&amp;) <span class="keyword">noexcept</span> &#123;&#125;</span><br><span class="line"></span><br><span class="line">    MoveOnly&amp; <span class="keyword">operator</span>=(<span class="type">const</span> MoveOnly&amp;) = <span class="keyword">delete</span>;</span><br><span class="line">    MoveOnly&amp; <span class="keyword">operator</span>=(MoveOnly&amp;&amp;) <span class="keyword">noexcept</span> &#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    MoveOnly a&#123;&#125;;</span><br><span class="line">    <span class="comment">//MoveOnly b&#123;a&#125;; //Not Compile</span></span><br><span class="line">    MoveOnly c&#123;std::<span class="built_in">move</span>(a)&#125;; <span class="comment">//OK</span></span><br><span class="line"></span><br><span class="line">    MoveOnly d&#123;&#125;;</span><br><span class="line">    <span class="comment">//d = c; //Not Compile</span></span><br><span class="line">    d = std::<span class="built_in">move</span>(c); <span class="comment">//OK</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>C++的名言之一：<em>Rule of Zero/Three/Five</em>
+就和默认生成的类的特殊成员函数有关。</p>
+<p>其作用对象是
+类的<strong>默认构造、复制构造、复制赋值、移动构造、移动赋值</strong>五个函数。</p>
+<ul>
+<li><em>Rule of Zero</em>:
+若一个类没有定义上述五个函数中的任何一个，那么编译器会为之生成这五个函数的默认形式（见上）。</li>
+<li><em>Rule of
+Three</em>：若一个类定义了至少一个构造函数，则应该一鼓作气给出全部三个构造函数的定义。</li>
+<li><em>Rule of
+Five</em>：若一个类定义了至少一个构造函数和至少一个赋值运算符，则应当一鼓作气给出全部五个函数的定义。</li>
+</ul>
+<blockquote>
+<p>从编译器的角度出发，考虑(<em>三个构造函数</em>/<em>两个赋值运算符</em>)，只要一个类定义了这3(2)个中的一个，该类就不会自动生成剩下2个(1个)构造函数(运算符)。</p>
+<p>例外是，若<strong>只声明了</strong>构造函数（不需是默认构造函数），那么编译器不会再生成默认（无参）构造函数，但依然会生成默认的复制/移动构造函数。</p>
+<p>参考以下的代码： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">A</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">A</span>(<span class="type">int</span>)&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun1</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">//A a; //Not Compile: not default constructible</span></span><br><span class="line">    A a&#123;<span class="number">1</span>&#125;;</span><br><span class="line">    A b&#123;a&#125;; <span class="comment">//OK, copy ctor still available(default generated)</span></span><br><span class="line">    A c&#123;std::<span class="built_in">move</span>(a)&#125;; <span class="comment">//Same with move ctor</span></span><br><span class="line">    b = c; <span class="comment">//Same with copy assignment operator</span></span><br><span class="line">    b = std::<span class="built_in">move</span>(c);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">B</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">B</span>(<span class="type">const</span> B&amp;) = <span class="keyword">default</span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun2</span><span class="params">(B&amp; l,B&amp; r)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">//B b; //Not Compile(Surprise!)</span></span><br><span class="line">    <span class="comment">//Upon definition of move/copy ctor, even if the main body is declared as =default, </span></span><br><span class="line">    <span class="comment">//Default ctor/move ctor is still disabled.</span></span><br><span class="line">    <span class="comment">//However, assignment operators are still available.</span></span><br><span class="line">    l = r; <span class="comment">//OK</span></span><br><span class="line">    r = std::<span class="built_in">move</span>(l); <span class="comment">//OK</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">C</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">C</span>(C&amp;&amp;) = <span class="keyword">delete</span>;</span><br><span class="line">    C&amp; <span class="keyword">operator</span>=(<span class="type">const</span> C&amp;) = <span class="keyword">delete</span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">//Now C is a wasted class that is not constructible nor assignable in any means.</span></span><br><span class="line"><span class="comment">//This deprecates the need of defining a fun3():)</span></span><br></pre></td></tr></table></figure></p>
+</blockquote>
+</blockquote>
+<h1
+id="移动语义配套语法引用折叠与完美转发">移动语义配套语法——引用折叠与完美转发</h1>
+<h2 id="section"></h2>
+<h1 id="移动语义实践中的易错点">移动语义实践中的易错点</h1>
+<h2
+id="离开函数前错误地移走了局部变量">离开函数前，错误地“移走”了局部变量</h2>
 
       
 
@@ -442,7 +493,7 @@ id="不可复制资源的移动语义归一化">不可复制资源的移动—�
                 </span>
                 <span class="tooltip-content">
                     <div class="toc-article">
-                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%B3%E5%80%BC%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8%E7%AE%80%E4%BB%8B"><span class="toc-number">1.</span> <span class="toc-text">右值、右值引用简介</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%80%BC%E5%92%8C%E5%8F%98%E9%87%8F%E7%B1%BB%E5%9E%8B%E8%A1%A5%E7%A5%A8"><span class="toc-number">1.1.</span> <span class="toc-text">值和变量类型（补票）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c98%E5%89%8D%E5%B0%98%E5%BE%80%E4%BA%8B"><span class="toc-number">1.2.</span> <span class="toc-text">C++98——前尘往事</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c11%E9%A3%8E%E8%B5%B7%E4%BA%91%E6%B6%8C"><span class="toc-number">1.3.</span> <span class="toc-text">C++11——风起云涌</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8%E5%BA%94%E7%94%A8%E4%B9%8B%E7%A7%BB%E5%8A%A8%E8%AF%AD%E4%B9%89"><span class="toc-number">2.</span> <span class="toc-text">右值引用应用之移动语义</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%95%E4%B8%BA%E4%BD%95%E4%BB%A5%E7%A7%BB%E5%8A%A8%E8%AF%AD%E4%B9%89"><span class="toc-number">2.1.</span> <span class="toc-text">何为，何以“移动语义”</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c11%E5%AF%B9%E5%B7%A6%E5%8F%B3%E5%80%BC%E6%A6%82%E5%BF%B5%E7%9A%84%E5%BC%BA%E5%8C%96%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8%E7%9A%84%E5%8A%A0%E5%85%A5"><span class="toc-number">2.2.</span> <span class="toc-text">C++11对左右值概念的强化+右值引用的加入</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%96%84%E5%90%8E%E4%B9%8B%E8%A2%AB%E7%A7%BB%E5%8A%A8%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%A4%84%E7%90%86"><span class="toc-number">2.3.</span> <span class="toc-text">“善后”之被移动对象的处理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8D%E5%8F%AF%E5%A4%8D%E5%88%B6%E8%B5%84%E6%BA%90%E7%9A%84%E7%A7%BB%E5%8A%A8%E8%AF%AD%E4%B9%89%E5%BD%92%E4%B8%80%E5%8C%96"><span class="toc-number">2.4.</span> <span class="toc-text">不可复制资源的移动——语义归一化</span></a></li></ol></li></ol>
+                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%B3%E5%80%BC%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8%E7%AE%80%E4%BB%8B"><span class="toc-number">1.</span> <span class="toc-text">右值、右值引用简介</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%80%BC%E5%92%8C%E5%8F%98%E9%87%8F%E7%B1%BB%E5%9E%8B%E8%A1%A5%E7%A5%A8"><span class="toc-number">1.1.</span> <span class="toc-text">值和变量类型（补票）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c98%E5%89%8D%E5%B0%98%E5%BE%80%E4%BA%8B"><span class="toc-number">1.2.</span> <span class="toc-text">C++98——前尘往事</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c11%E9%A3%8E%E8%B5%B7%E4%BA%91%E6%B6%8C"><span class="toc-number">1.3.</span> <span class="toc-text">C++11——风起云涌</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8%E5%BA%94%E7%94%A8%E4%B9%8B%E7%A7%BB%E5%8A%A8%E8%AF%AD%E4%B9%89"><span class="toc-number">2.</span> <span class="toc-text">右值引用应用之移动语义</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%95%E4%B8%BA%E4%BD%95%E4%BB%A5%E7%A7%BB%E5%8A%A8%E8%AF%AD%E4%B9%89"><span class="toc-number">2.1.</span> <span class="toc-text">何为，何以“移动语义”</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c11%E5%AF%B9%E5%B7%A6%E5%8F%B3%E5%80%BC%E6%A6%82%E5%BF%B5%E7%9A%84%E5%BC%BA%E5%8C%96%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8%E7%9A%84%E5%8A%A0%E5%85%A5"><span class="toc-number">2.2.</span> <span class="toc-text">C++11对左右值概念的强化+右值引用的加入</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%96%84%E5%90%8E%E4%B9%8B%E8%A2%AB%E7%A7%BB%E5%8A%A8%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%A4%84%E7%90%86"><span class="toc-number">2.3.</span> <span class="toc-text">“善后”之被移动对象的处理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8D%E5%8F%AF%E5%A4%8D%E5%88%B6%E8%B5%84%E6%BA%90%E7%9A%84%E7%A7%BB%E5%8A%A8%E8%AF%AD%E4%B9%89%E5%BD%92%E4%B8%80%E5%8C%96"><span class="toc-number">2.4.</span> <span class="toc-text">不可复制资源的移动——语义归一化</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%A7%BB%E5%8A%A8%E8%AF%AD%E4%B9%89%E9%85%8D%E5%A5%97%E8%AF%AD%E6%B3%95%E5%BC%95%E7%94%A8%E6%8A%98%E5%8F%A0%E4%B8%8E%E5%AE%8C%E7%BE%8E%E8%BD%AC%E5%8F%91"><span class="toc-number">3.</span> <span class="toc-text">移动语义配套语法——引用折叠与完美转发</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#section"><span class="toc-number">3.1.</span> <span class="toc-text"></span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%A7%BB%E5%8A%A8%E8%AF%AD%E4%B9%89%E5%AE%9E%E8%B7%B5%E4%B8%AD%E7%9A%84%E6%98%93%E9%94%99%E7%82%B9"><span class="toc-number">4.</span> <span class="toc-text">移动语义实践中的易错点</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%A6%BB%E5%BC%80%E5%87%BD%E6%95%B0%E5%89%8D%E9%94%99%E8%AF%AF%E5%9C%B0%E7%A7%BB%E8%B5%B0%E4%BA%86%E5%B1%80%E9%83%A8%E5%8F%98%E9%87%8F"><span class="toc-number">4.1.</span> <span class="toc-text">离开函数前，错误地“移走”了局部变量</span></a></li></ol></li></ol>
                     </div>
                 </span>
             </div>
