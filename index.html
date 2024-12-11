@@ -377,11 +377,79 @@ rvalues</em>这一问题的理解也能水到渠成。</p>
 先来看眼不同引用的绑定规则：</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> x=<span class="number">1</span>;</span><br><span class="line">    <span class="type">int</span>&amp; r1_1 = x; <span class="comment">//OK</span></span><br><span class="line">    <span class="type">const</span> <span class="type">int</span>&amp; r1_2 =x; <span class="comment">//OK</span></span><br><span class="line">    <span class="comment">//int&amp;&amp; r1_3 = x; //Not Compile</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//int&amp; r2_1 = 1; //Not Compile</span></span><br><span class="line">    <span class="type">const</span> <span class="type">int</span>&amp; r2_2 = <span class="number">1</span>; <span class="comment">//OK</span></span><br><span class="line">    <span class="type">int</span>&amp;&amp; r2_3 = <span class="number">1</span>; <span class="comment">//OK</span></span><br><span class="line"></span><br><span class="line">    <span class="type">int</span>&amp;&amp; r3_3 = std::<span class="built_in">move</span>(<span class="number">1</span>); <span class="comment">//OK</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h1 id="右值引用应用之移动语义">右值引用应用之移动语义</h1>
+<h2 id="何为何以移动语义">何为，何以“移动语义”</h2>
 <p>移动语义(<em>move sematics</em>)其实不难理解：<br />
 类比于现实世界中，我们在搬家时，会希望将自己的很多大件家具都搬到新家，而非在新家购置完全相同的家具并将原家的家具悉数丢弃。<br />
 对于C++的对象来说，很多对象都会在创建/运行过程中拥有一些资源（堆内存、文件句柄、线程等等）。<br />
 有些时候这些资源的“所有权”可以被直接从一个对象被“转移”至另一个对象，或者用于另一个对象的初始化。而在程序设计中，显然我们会希望区分“允许转移”和“需要复制”这两种情况。</p>
-<p>通俗些的例子： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">MyVector</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span>* data;</span><br><span class="line">    <span class="type">size_t</span> size;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">//转移数据（相当于转移了堆内存的所有权）</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">transfer</span><span class="params">(MyVector&amp; prev,MyVector&amp; cur)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    cur.data = prev.data;</span><br><span class="line">    cur.size = prev.size;</span><br><span class="line">    prev.data = <span class="literal">nullptr</span>;</span><br><span class="line">    prev.size = <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//复制数据</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">copy</span><span class="params">(MyVector&amp; prev,MyVector&amp; cur)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    cur.size = prev.size;</span><br><span class="line">    cur.data = <span class="keyword">new</span> <span class="type">int</span>&#123;prev.size&#125;;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">size_t</span> i=<span class="number">0</span>;i&lt;prev.size;++i)</span><br><span class="line">    &#123;</span><br><span class="line">        cur.data[i] = prev.data[i];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">MyVector</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span>* data;</span><br><span class="line">    <span class="type">size_t</span> size;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">//转移数据（相当于转移了堆内存的所有权）</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">transfer</span><span class="params">(MyVector&amp; prev,MyVector&amp; cur)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    cur.data = prev.data;</span><br><span class="line">    cur.size = prev.size;</span><br><span class="line">    prev.data = <span class="literal">nullptr</span>;</span><br><span class="line">    prev.size = <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//复制数据</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">copy</span><span class="params">(MyVector&amp; prev,MyVector&amp; cur)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    cur.size = prev.size;</span><br><span class="line">    cur.data = <span class="keyword">new</span> <span class="type">int</span>&#123;prev.size&#125;;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">size_t</span> i=<span class="number">0</span>;i&lt;prev.size;++i)</span><br><span class="line">    &#123;</span><br><span class="line">        cur.data[i] = prev.data[i];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在大型程序设计中，我们期望有一个统一的“接口”或“规范”来描述这种语义，即帮助程序设计者解决以下的问题：</p>
+<ul>
+<li>什么时候一个对象的资源<strong>允许被转移</strong>？（也就是所谓的<em>can
+be
+moved-from</em>，正常情况下一个对象的资源肯定不能被转移，故需要一种统一的“标记”）<br />
+</li>
+<li>让一个对象被另一个同类对象初始化时，或一个对象被另一个同类对象赋值时（对应的就是特殊的构造函数/赋值运算符），如何决策采取更高效的执行策略（能移动就不要复制一份销毁一份）？<br />
+</li>
+<li>有些具备“独占性”的对象能否从编译层面来禁止其复制/移动（其占有的资源并不能被复制，如线程或一些大整数/内存的管理类）？</li>
+</ul>
+<blockquote>
+<p>上述问题在C++11前并非无解：比如(3)，C++11前禁止一个对象的复制/移动，可以通过定义一个<code>private</code>的<code>operator=(const Ty&amp;)</code>并不给出实现，在类访问权限/链接设两道“哨兵”。</p>
+<p>但显然这种实现方法既不稳妥（如友元类+误定义等等），也有悖于<code>private</code>和不给定义的初衷，且语义不够明确。</p>
+<p>移动语义亦然，需要明确的是移动语义只是一个概念，右值及右值引用等为之提供支持（通过重载优先级等帮助在统一的interface下实现），但C++11前并不是无法实现，对于较有限的场景无非是手搓一个函数而已。</p>
+<p>C++多用于大型程序编写，开发阶段的要点之一在于保证较高的易读性、可维护性与语义的明确性，这就是右值及右值引用对于移动语义实现的意义。</p>
+</blockquote>
+<h2
+id="c11对左右值概念的强化右值引用的加入">C++11对左右值概念的强化+右值引用的加入</h2>
+<p>回到正题，语言层面上规定了对于不同的值(values)，三种不同引用的重载优先级（及可行性）不同。</p>
+<blockquote>
+<p>在任何变量的初始化/赋值操作/函数调用等等中，被传递的永远是<strong>值(values)</strong>，被操作的（比如赋值符号左侧的、新定义的变量）永远是<strong>变量(variables)</strong>。</p>
+</blockquote>
+<p>对于 <em>lvalue/rvalue/const
+lvalue</em>作为值，初始化<em>lref/rref/cref</em>的重载优先级如下：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;"></th>
+<th style="text-align: center;">lref</th>
+<th style="text-align: center;">rref</th>
+<th style="text-align: center;">cref</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">lvalue</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">2</td>
+</tr>
+<tr>
+<td style="text-align: center;">rvalue</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">2</td>
+</tr>
+<tr>
+<td style="text-align: center;">const lvalue</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">1</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>数字越低，优先级越高；若数字不存在，则重载失败。</li>
+<li>可以发现右值引用生效的核心在于 <strong><em>rvalue</em> 和
+<em>rref</em> 的结合优先级高于 <em>cref</em></strong>
+，即在遇到接受<code>const Ty&amp;</code>和<code>Ty&amp;&amp;</code>的函数重载时，优先选择后者（即“能移动就不复制”）。</li>
+<li>同时，<em>rref</em> 胜过 <em>cref</em>
+的一点在于前者可以通过引用更改指向对象的状态（“拆迁队”），而后者不能（需要遵守<code>const</code>语义）</li>
+</ul>
+<p>放在类中的实例效果：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">CR</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">CR</span>()&#123;&#125;</span><br><span class="line">    <span class="built_in">CR</span>(<span class="type">const</span> CR&amp;)&#123;&#125; <span class="comment">//#1</span></span><br><span class="line">    <span class="built_in">CR</span>(CR&amp;&amp;)&#123;&#125; <span class="comment">//#2</span></span><br><span class="line">    ~<span class="built_in">CR</span>()&#123;&#125;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">modify</span><span class="params">()</span></span>&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    CR c&#123;&#125;;</span><br><span class="line">    CR d&#123;c&#125;; <span class="comment">//Invokes overload #1</span></span><br><span class="line">    CR e&#123;std::<span class="built_in">move</span>(c)&#125;; <span class="comment">//Invokes overload #2</span></span><br><span class="line">    </span><br><span class="line">    <span class="type">const</span> CR&amp; ref1 = std::<span class="built_in">move</span>(d); <span class="comment">//binding rvalue to cref</span></span><br><span class="line">    <span class="comment">//ref1.modify(); //Not Compile: const</span></span><br><span class="line"></span><br><span class="line">    CR&amp;&amp; ref2 = std::<span class="built_in">move</span>(e); <span class="comment">//binding rvalue to rref</span></span><br><span class="line">    ref<span class="number">2.</span><span class="built_in">modify</span>(); <span class="comment">//OK: non-const</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="善后之被移动对象的处理">“善后”之被移动对象的处理</h2>
+<h2
+id="不可复制资源的移动语义归一化">不可复制资源的移动——语义归一化</h2>
 
       
 
