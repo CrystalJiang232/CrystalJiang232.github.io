@@ -265,28 +265,93 @@ Jiang, Hibiscus, LingLong, Crystal, whatever:)</p>
 
 
   
-    <article id="post-LFSR-temp" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-rvalues-and-Ty" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/LFSR-temp/">LFSR_temp</a>
+      <a class="article-title" href="/rvalues-and-Ty/">C++天柱城——右值引用和移动语义</a>
     </h1>
   
 
         
-        <a href="/LFSR-temp/" class="archive-article-date">
-  	<time datetime="2024-12-11T01:00:30.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-11</time>
+        <a href="/rvalues-and-Ty/" class="archive-article-date">
+  	<time datetime="2024-12-11T02:37:23.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-11</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>LFSR，Linear Feedback Shifted
-Register，即“线性反馈寄存移位器”，是一种非常便捷的密钥流的生成方式。</p>
+        <blockquote>
+<p>右值(rvalues)和右值引用(rvalue references)是支撑<em>Modern
+C++</em>的中流砥柱、构筑C++效率极限的基石之一。</p>
+</blockquote>
+<h1 id="右值右值引用简介">右值、右值引用简介</h1>
+<h2 id="值和变量类型补票">值和变量类型（补票）</h2>
+<p>在开始探索这片“天柱城”前，需要先明确C++中值和变量的类型。<br />
+<strong>值和变量的类型和定义等不要混淆！</strong></p>
+<p>变量(variables)有<em>trivial-types</em>、<em>custom-types</em>和<em>reference-types</em>三种：
+-
+第一种亦名<em>builtin-types</em>，内置/基本数据类型，包括普通的<code>int</code>,<code>double</code>,<code>char</code>,<code>float</code>及其<code>short</code>/<code>long</code>/<code>long long</code>/<code>unsigned</code>修饰版，以及所有的指针类型（如<code>int*</code>），和上述类型的<code>typedef</code>。</p>
+<ul>
+<li><p>第二种亦名<em>complex-types</em>，其实就是各种<code>struct</code>和<code>class</code>及其<code>typedef</code>。</p></li>
+<li><p>第三种单开一类的主要原因是引用不属于<code>object</code>的范畴，其包括左值引用(经典引用，如<code>int&amp;</code>)和C++11加入的右值引用(形如<code>int&amp;&amp;</code>)。</p></li>
+</ul>
+<p>C++17对值(values)的分类做了比较明确的说明：<br />
+每个值应是
+<em>lvalue</em>（左值）、<em>xvalue</em>（将亡值）或<em>prvalue</em>（纯右值）的其一。<br />
+辨别一个值属于哪个类型，直接看<a href="">cppreference</a>上的说明：</p>
+<blockquote>
+<p>Values that are named and can be <em>moved-from</em> are xvalues;</p>
+<p>Values that are named and cannot be <em>moved-from</em> are
+lvalues;</p>
+<p>Values that are unnamed and can be <em>moved-from</em> are
+prvalues;</p>
+<p>Values that are unnamed and cannot be <em>moved-from</em> are not
+used.</p>
+</blockquote>
+<p>（记住这个'moved-from'，后面会考）</p>
+<p>C++11以及此前的C语言则提供了一个更加简单（但放在Modern
+C++语境中稍显implicit）的分类，放在很多其它语言中也适用：<br />
+- 具名变量是左值(lvalues)，其可以出现在赋值号'='的左侧/右侧；<br />
+- 不具名的常量等是右值(rvalues)，其只能出现在赋值号'='的右侧。</p>
+<p>这一点是比较显然的，比如<code>int x=3;</code>或<code>y = x;</code>是合法的语句，而<code>3 = y;</code>或<code>3 = 4;</code>显然是非法的，现代计算机编程语言皆然。</p>
+<blockquote>
+<p>C++11以前（下称<em>经典C++</em>），函数的返回值是右值（除非函数返回了一个引用）。</p>
+</blockquote>
+<h2 id="c中引用的前世今生">C++中“引用”的前世今生</h2>
+<p>C++中引用是一种特殊的变量，和多数语言一样，其相当于是一个其它变量的别名(alias)，指向的对象使用的是既有的内存空间。<br />
+与Java、Python等语言中的“引用”稍显不同的是：</p>
+<ul>
+<li>C++的引用变量必须建立时就被初始化且绑定到一个对象上，不存在空引用(Null
+reference)。相比之下Java等允许初始化一个空的引用变量<del>NullPointerException警告</del><br />
+</li>
+<li>C++的引用变量一旦初始化，则不能再指向其它对象（作为一个compile-time
+language，<del>好像你也没办法让它指向其它对象，</del>毕竟<code>operator=</code>接下来都直接作用在对象本身身上了），相比之下Python等就支持<del>引用乱窜</del></li>
+</ul>
+<blockquote>
+<p>引用的可变性也是Python等语言中初学者常容易感到困惑的地方，尤其是python弱类型的特性导致难以判断到底是创建了一个新的对象，还是只是引用改指向另一个对象等等。</p>
+<p>C++中，虽然没有<em>null
+references</em>，但其存在<strong>极大量的</strong>悬挂引用(<em>dangaling
+references</em>)，且悬挂引用的处理时至今日依然是C++
+Languages的一个核心议题之一。</p>
+</blockquote>
+<p>C++中引用和指针的小比较：</p>
+<ul>
+<li>C++中引用必须被初始化，而指针可以不被初始化<del>野指针</del>；引用必须指向一个对象，指针可以指向NULL(C++11请改用<code>nullptr</code>)；引用不能更改指向，指针不被底层const约束者可以更改指向。<br />
+</li>
+<li>C++中引用不是对象（<em>References are not
+objects</em>），所以不存在“引用的数组”、“指向引用的指针”和“指向引用的引用”(<em>There
+are no arrays of references, no pointeres to references and no
+references of
+references</em>)；<strong>（注意指向引用的指针不要和指向指针的引用混淆，指向引用的引用不要和右值引用混淆，引用符号永远后置，比如一个指向指针的引用：<code>int* ptr=new int&#123;3&#125;;int*&amp; rptr = ptr</code>是合法的。）</strong></li>
+</ul>
+<blockquote>
+<p>其实C++引用在编译阶段（底层）的实现原理依然是指针，引用宏观上可以视为一个被自动解引用的、被底层<code>const</code>约束的指针(形如<code>int* const</code>)，毕竟建立即必须初始化等特性与之同样相衬。</p>
+</blockquote>
 
       
 
@@ -300,11 +365,7 @@ Register，即“线性反馈寄存移位器”，是一种非常便捷的密钥
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">sage</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
         		</li>
       		
 		</ul>
@@ -314,7 +375,7 @@ Register，即“线性反馈寄存移位器”，是一种非常便捷的密钥
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/LFSR-temp/">展开全文 >></a>
+          <a class="article-more-a" href="/rvalues-and-Ty/">展开全文 >></a>
         </p>
       
 

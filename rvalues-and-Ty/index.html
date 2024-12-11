@@ -6,14 +6,19 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="https://crystaljiang232.github.io">
-  <title>玲珑</title>
+  <title>C++天柱城——右值引用和移动语义 | 玲珑</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="玲珑">
-<meta property="og:url" content="https://crystaljiang232.github.io/page/2/index.html">
+  <meta name="description" content="右值(rvalues)和右值引用(rvalue references)是支撑Modern C++的中流砥柱、构筑C++效率极限的基石之一。  右值、右值引用简介 值和变量类型（补票） 在开始探索这片“天柱城”前，需要先明确C++中值和变量的类型。 值和变量的类型和定义等不要混淆！ 变量(variables)有trivial-types、custom-types和reference">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C++天柱城——右值引用和移动语义">
+<meta property="og:url" content="https://crystaljiang232.github.io/rvalues-and-Ty/index.html">
 <meta property="og:site_name" content="玲珑">
+<meta property="og:description" content="右值(rvalues)和右值引用(rvalue references)是支撑Modern C++的中流砥柱、构筑C++效率极限的基石之一。  右值、右值引用简介 值和变量类型（补票） 在开始探索这片“天柱城”前，需要先明确C++中值和变量的类型。 值和变量的类型和定义等不要混淆！ 变量(variables)有trivial-types、custom-types和reference">
 <meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2024-12-11T02:37:23.000Z">
+<meta property="article:modified_time" content="2024-12-11T03:27:11.304Z">
 <meta property="article:author" content="Hibiscus">
+<meta property="article:tag" content="Modern C++">
 <meta name="twitter:card" content="summary">
   
     <link rel="alternative" href="/atom.xml" title="玲珑" type="application/atom+xml">
@@ -138,30 +143,93 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
-  
-    <article id="post-LFSR-temp" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+            <article id="post-rvalues-and-Ty" class="article article-type-post " itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/LFSR-temp/">LFSR_temp</a>
+    <h1 class="article-title" itemprop="name">
+      C++天柱城——右值引用和移动语义
     </h1>
   
 
         
-        <a href="/LFSR-temp/" class="archive-article-date">
-  	<time datetime="2024-12-11T01:00:30.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-11</time>
+        <a href="/rvalues-and-Ty/" class="archive-article-date">
+  	<time datetime="2024-12-11T02:37:23.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-11</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>LFSR，Linear Feedback Shifted
-Register，即“线性反馈寄存移位器”，是一种非常便捷的密钥流的生成方式。</p>
+        <blockquote>
+<p>右值(rvalues)和右值引用(rvalue references)是支撑<em>Modern
+C++</em>的中流砥柱、构筑C++效率极限的基石之一。</p>
+</blockquote>
+<h1 id="右值右值引用简介">右值、右值引用简介</h1>
+<h2 id="值和变量类型补票">值和变量类型（补票）</h2>
+<p>在开始探索这片“天柱城”前，需要先明确C++中值和变量的类型。<br />
+<strong>值和变量的类型和定义等不要混淆！</strong></p>
+<p>变量(variables)有<em>trivial-types</em>、<em>custom-types</em>和<em>reference-types</em>三种：
+-
+第一种亦名<em>builtin-types</em>，内置/基本数据类型，包括普通的<code>int</code>,<code>double</code>,<code>char</code>,<code>float</code>及其<code>short</code>/<code>long</code>/<code>long long</code>/<code>unsigned</code>修饰版，以及所有的指针类型（如<code>int*</code>），和上述类型的<code>typedef</code>。</p>
+<ul>
+<li><p>第二种亦名<em>complex-types</em>，其实就是各种<code>struct</code>和<code>class</code>及其<code>typedef</code>。</p></li>
+<li><p>第三种单开一类的主要原因是引用不属于<code>object</code>的范畴，其包括左值引用(经典引用，如<code>int&amp;</code>)和C++11加入的右值引用(形如<code>int&amp;&amp;</code>)。</p></li>
+</ul>
+<p>C++17对值(values)的分类做了比较明确的说明：<br />
+每个值应是
+<em>lvalue</em>（左值）、<em>xvalue</em>（将亡值）或<em>prvalue</em>（纯右值）的其一。<br />
+辨别一个值属于哪个类型，直接看<a href="">cppreference</a>上的说明：</p>
+<blockquote>
+<p>Values that are named and can be <em>moved-from</em> are xvalues;</p>
+<p>Values that are named and cannot be <em>moved-from</em> are
+lvalues;</p>
+<p>Values that are unnamed and can be <em>moved-from</em> are
+prvalues;</p>
+<p>Values that are unnamed and cannot be <em>moved-from</em> are not
+used.</p>
+</blockquote>
+<p>（记住这个'moved-from'，后面会考）</p>
+<p>C++11以及此前的C语言则提供了一个更加简单（但放在Modern
+C++语境中稍显implicit）的分类，放在很多其它语言中也适用：<br />
+- 具名变量是左值(lvalues)，其可以出现在赋值号'='的左侧/右侧；<br />
+- 不具名的常量等是右值(rvalues)，其只能出现在赋值号'='的右侧。</p>
+<p>这一点是比较显然的，比如<code>int x=3;</code>或<code>y = x;</code>是合法的语句，而<code>3 = y;</code>或<code>3 = 4;</code>显然是非法的，现代计算机编程语言皆然。</p>
+<blockquote>
+<p>C++11以前（下称<em>经典C++</em>），函数的返回值是右值（除非函数返回了一个引用）。</p>
+</blockquote>
+<h2 id="c中引用的前世今生">C++中“引用”的前世今生</h2>
+<p>C++中引用是一种特殊的变量，和多数语言一样，其相当于是一个其它变量的别名(alias)，指向的对象使用的是既有的内存空间。<br />
+与Java、Python等语言中的“引用”稍显不同的是：</p>
+<ul>
+<li>C++的引用变量必须建立时就被初始化且绑定到一个对象上，不存在空引用(Null
+reference)。相比之下Java等允许初始化一个空的引用变量<del>NullPointerException警告</del><br />
+</li>
+<li>C++的引用变量一旦初始化，则不能再指向其它对象（作为一个compile-time
+language，<del>好像你也没办法让它指向其它对象，</del>毕竟<code>operator=</code>接下来都直接作用在对象本身身上了），相比之下Python等就支持<del>引用乱窜</del></li>
+</ul>
+<blockquote>
+<p>引用的可变性也是Python等语言中初学者常容易感到困惑的地方，尤其是python弱类型的特性导致难以判断到底是创建了一个新的对象，还是只是引用改指向另一个对象等等。</p>
+<p>C++中，虽然没有<em>null
+references</em>，但其存在<strong>极大量的</strong>悬挂引用(<em>dangaling
+references</em>)，且悬挂引用的处理时至今日依然是C++
+Languages的一个核心议题之一。</p>
+</blockquote>
+<p>C++中引用和指针的小比较：</p>
+<ul>
+<li>C++中引用必须被初始化，而指针可以不被初始化<del>野指针</del>；引用必须指向一个对象，指针可以指向NULL(C++11请改用<code>nullptr</code>)；引用不能更改指向，指针不被底层const约束者可以更改指向。<br />
+</li>
+<li>C++中引用不是对象（<em>References are not
+objects</em>），所以不存在“引用的数组”、“指向引用的指针”和“指向引用的引用”(<em>There
+are no arrays of references, no pointeres to references and no
+references of
+references</em>)；<strong>（注意指向引用的指针不要和指向指针的引用混淆，指向引用的引用不要和右值引用混淆，引用符号永远后置，比如一个指向指针的引用：<code>int* ptr=new int&#123;3&#125;;int*&amp; rptr = ptr</code>是合法的。）</strong></li>
+</ul>
+<blockquote>
+<p>其实C++引用在编译阶段（底层）的实现原理依然是指针，引用宏观上可以视为一个被自动解引用的、被底层<code>const</code>约束的指针(形如<code>int* const</code>)，毕竟建立即必须初始化等特性与之同样相衬。</p>
+</blockquote>
 
       
 
@@ -175,11 +243,7 @@ Register，即“线性反馈寄存移位器”，是一种非常便捷的密钥
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">sage</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
         		</li>
       		
 		</ul>
@@ -188,17 +252,76 @@ Register，即“线性反馈寄存移位器”，是一种非常便捷的密钥
       
 
       
-        <p class="article-more-link">
-          <a class="article-more-a" href="/LFSR-temp/">展开全文 >></a>
-        </p>
-      
 
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
+        </div>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=https://crystaljiang232.github.io/rvalues-and-Ty/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
       
       <div class="clearfix"></div>
     </div>
   </div>
   <div>
 </article>
+
+
+  
+<nav id="article-nav">
+  
+  
+    <a href="/LFSR-temp/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">LFSR_temp</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
 
 
 <aside class="wrap-side-operation">
@@ -219,252 +342,16 @@ Register，即“线性反馈寄存移位器”，是一种非常便捷的密钥
 
 
 
-
   
-    <article id="post-dlog" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
+  
+  
+
     
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/dlog/">离散对数——Discrete Logorithm</a>
-    </h1>
-  
-
-        
-        <a href="/dlog/" class="archive-article-date">
-  	<time datetime="2024-12-10T12:18:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-10</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>离散对数问题，Discrete Logorithm
-Problem，简称DLP，是非对称密码学所依赖的极为重要的数学难题之一。<br />
-经典DLP问题描述：<br />
-给定 <span class="math inline">\(g^x \equiv c (mod p) （g,x &lt;
-p）\)</span>，由 <span class="math inline">\((g,x)\)</span> 计算 <span
-class="math inline">\(c\)</span> 很容易（快速幂取模），但由 <span
-class="math inline">\((g,c)\)</span> 计算 <span
-class="math inline">\(x\)</span> 是困难的。</p>
-<blockquote>
-<p>即使是BSGS等攻击方法，依然必须涉及“爆破”一步，即在x的可能范围内逐个数值尝试是否能让等式成立。</p>
-</blockquote>
-<p>离散数学（广义上）DLP问题描述： 设循环群 <span
-class="math inline">\(G_p\)</span> 的阶为 <span
-class="math inline">\(n\)</span>。<br />
-给定群内的任意元素 <span class="math inline">\(A \in G_p\)</span> 及
-<span class="math inline">\(x &lt; n\)</span>，计算 <span
-class="math inline">\(C = x \cdot A\)</span> 很容易，但给定 <span
-class="math inline">\(C\)</span>、<span
-class="math inline">\(A\)</span>，求解 <span
-class="math inline">\(x\)</span> 是困难的。<br />
-这里x代表A执行二元运算的次数，对于经典DLP，其为模p环下的乘法运算；对于ECDLP，其为椭圆曲线上的加法运算。</p>
-<blockquote>
-<p>给定<span class="math inline">\(C,x\)</span>，可以计算 <span
-class="math inline">\(A = x^{-1} \cdot C\)</span>，此时 <span
-class="math inline">\(x^{-1}\)</span> 应理解为 <span
-class="math inline">\(x\)</span> 在 <span
-class="math inline">\(Zmod(n)\)</span> 下的逆元。</p>
-</blockquote>
-<p>由DLP问题衍生出的 <strong><em>Diffle-Hellman</em></strong>
-密钥交换：<br />
-假设Alice和Bob希望在一个不安全的环境下进行密钥交换。他们协商密钥交换在
-<span class="math inline">\(G_p\)</span> 上进行，选定生成元 <span
-class="math inline">\(G\)</span> 并公开。<br />
-Alice和Bob分别产生一个私钥 <span class="math inline">\(d_A\)</span> 和
-<span class="math inline">\(d_B\)</span>，分别计算 <span
-class="math inline">\(A = d_A \cdot G\)</span> 与 <span
-class="math inline">\(B = d_B \cdot G\)</span>，将 <span
-class="math inline">\(A\)</span>、<span class="math inline">\(B\)</span>
-发送给对方并公开。<br />
-随后，他们再分别使用私钥和对方发送的密钥计算 <span
-class="math inline">\(AB = d_A \cdot B = d_B \cdot A\)</span>。
-在阿贝尔群上其正确性显然。<br />
-此时双方就已经完成了密钥交换，共享密钥就是AB。外人即使知道了 <span
-class="math inline">\((G_p,G,A,B)\)</span>，亦很难从中获得<span
-class="math inline">\(d_A\)</span>或<span
-class="math inline">\(d_B\)</span>，进而保证了共享密钥 <span
-class="math inline">\(AB\)</span> 的安全性。</p>
-<h1 id="攻击方法概览">攻击方法概览</h1>
-<ul>
-<li>暴力攻击，在n较小时，攻击者可以枚举所有的 <span
-class="math inline">\(x \in (0,n)\)</span> 逐个校验。<br />
-</li>
-<li>BSGS(Baby-step
-Giant-step，大步小步法，<del>又名“亦步亦趋”</del>)，通过制造碰撞来“用空间换时间”。</li>
-</ul>
-<blockquote>
-<p>大步小步法的空间复杂度与时间复杂度均为 <span
-class="math inline">\(O(\sqrt n)\)</span>。暴力攻击的二者显然分别为
-<span class="math inline">\(O(1)\)</span> 及 <span
-class="math inline">\(O(n)\)</span>。</p>
-</blockquote>
-<ul>
-<li>Pohlig-Hellman攻击<br />
-</li>
-<li>Pollard's kangaroo algorithm<br />
-</li>
-<li>Pollard's rho algorithm</li>
-</ul>
-<blockquote>
-<p>上述是较为通用的解法，对于部分 <span
-class="math inline">\(G_p\)</span>
-存在特有的攻击方法，比如ECDLP下的Smart's Attack、MOV Attack等。</p>
-<p>另外，有一些循环群可能求解 <span class="math inline">\(G_p\)</span>
-上的离散对数问题并不困难，比如 <span
-class="math inline">\(Zmod(p)\)</span> 上的加法运算可以快速求解。</p>
-</blockquote>
-<h1 id="细讲">细讲</h1>
-<blockquote>
-<p>以下内容干货（纸面资料）过多，<del>小心噎着</del></p>
-</blockquote>
-<h2 id="bsgs-亦步亦趋">BSGS —— 亦步亦趋</h2>
-<p>BSGS本质是在试着制造碰撞，利用散列表查找复杂度为常量的优势，以空间换时间。<br />
-具体操作方法如下：设待求解 <span class="math inline">\(C = x \cdot
-G\)</span> 中的x，<br />
-记 <span class="math inline">\(T = \sqrt n\)</span>，<span
-class="math inline">\(R = G \cdot T^{-1}\)</span>；制备一个散列表集合
-<span class="math inline">\(S = {i \cdot G}，i \in [0,C)\)</span><br />
-随后遍历 <span class="math inline">\(j \in [0,C)\)</span>，若 <span
-class="math inline">\(C + j \cdot R \in S\)</span>
-，则说明碰撞成功，得到 <span class="math inline">\(x = jT +
-i\)</span>。<br />
-显然遍历中一定会存在一次碰撞。</p>
-<blockquote>
-<p>“大步小步”的命名之源：</p>
-<p>如上式，<span class="math inline">\(i\)</span> 每增加1，<span
-class="math inline">\(x\)</span> 增加1，所谓一“小步”；<span
-class="math inline">\(j\)</span> 每增加1， <span
-class="math inline">\(x\)</span> 增加 <span class="math inline">\(\sqrt
-n\)</span> ，所谓一“大步”。</p>
-<p>这种攻击思想在轮加密/类轮加密的攻击（含哈希碰撞）中也有较多应用，思路即为将密钥拆为两部分，将中间值进行碰撞。</p>
-</blockquote>
-<p><del>为了便于理解，</del>给出一段示意BSGS求解 <span
-class="math inline">\(GF_p\)</span> 下DLP问题的代码</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">dlog</span>(<span class="params">p:<span class="built_in">int</span>,c:<span class="built_in">int</span></span>) -&gt; <span class="built_in">int</span>:</span><br><span class="line">    g = <span class="number">2</span> <span class="comment">#假设目标是求解pow(2,x,p)==c中的p</span></span><br><span class="line">    t = <span class="built_in">int</span>(<span class="built_in">pow</span>(p,<span class="number">1</span>/<span class="number">2</span>))</span><br><span class="line">    r = <span class="built_in">pow</span>(<span class="number">2</span>,-t,p)</span><br><span class="line"></span><br><span class="line">    dc = &#123;&#125;</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(t):</span><br><span class="line">        dc[g] = i</span><br><span class="line">        g = (g * <span class="number">2</span>) % p</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(t):</span><br><span class="line">        <span class="keyword">if</span> c <span class="keyword">in</span> dc: <span class="comment">#找到碰撞</span></span><br><span class="line">            <span class="keyword">return</span> dc[c] + j * t</span><br><span class="line">        c = (c * r) % p</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">None</span></span><br></pre></td></tr></table></figure>
-<h2 id="pohlig-hellman-韩信点兵">Pohlig-Hellman —— 韩信点“兵”</h2>
-<p>Pohlig-Hellman
-利用了<em>群论中的</em>拉格朗日定理和中国剩余定理。<br />
-其攻击对象是<strong>阶的小因子之积</strong>过小的循环群，在这些群上，可以求解(部分)阶比较小的子群的离散对数问题；<br />
-对这些结果应用中国剩余定理，即可获得原群上离散对数问题的结果。</p>
-<blockquote>
-<p>群中的拉格朗日定理：</p>
-</blockquote>
-<p>攻击成立的两个场景：<br />
-- 目标群的阶的全部因子都很小，a.k.a.“光滑数”(smooth-number)；<br />
-- 目标运算数计数 <span class="math inline">\(x\)</span>
-小于目标群的阶的小因子之积（实际上第一种情况可以看作是第二种情况的特例）。</p>
-<p>实现上，我们令 $n = $ <span
-class="math inline">\(\prod_{i=1}^m{p_i^{e_i}}\)</span>。对于每个因子
-<span class="math inline">\(f = p_i^{e_i}\)</span>，考虑 <span
-class="math inline">\(C^{&#39;} = f \cdot C\)</span>，<span
-class="math inline">\(G^{&#39;} = f \cdot G\)</span>。<br />
-此时 <span class="math inline">\(C^{&#39;}\)</span> 在群中的阶为 <span
-class="math inline">\(\frac{n}{f}x\)</span>，<span
-class="math inline">\(G^{&#39;}\)</span> 的阶则为 <span
-class="math inline">\(\frac{n}{f}\)</span>。<br />
-根据拉格朗日定理，此时以 <span class="math inline">\(G^{&#39;}\)</span>
-为生成元的子群的阶只有 <span class="math inline">\(f\)</span>，且 <span
-class="math inline">\(C^{&#39;}\)</span>
-亦在这个群上，故可以在这个低阶子群上求解DLP。<br />
-依此法求解的 <span class="math inline">\(\{x_i\}\)</span> 满足 <span
-class="math inline">\(x_i \equiv x (mod p_i^{e_i})\)</span>。</p>
-<ul>
-<li>对于第一种情况，显然 <span
-class="math inline">\({p_i^{e_i}}\)</span>
-互素，故将所有等式联立至CRT中，求出通解 <span
-class="math inline">\(x^{&#39;} = x_0 + kn&#39;\)</span>，令 <span
-class="math inline">\(k=0\)</span> 即可获得 <span
-class="math inline">\(x\)</span>。<br />
-</li>
-<li>对于第二种情况，假设存在 <span class="math inline">\(x &lt;
-r\)</span>，则可以升序求解模 <span
-class="math inline">\(p_i^{e_i}\)</span> 下的DLP，只需要求解出的 <span
-class="math inline">\(\prod_{i=1}^m{p_i^{e_i}} &gt; r\)</span>
-，即可令CRT求解出的 <span class="math inline">\(x^{&#39;}\)</span>
-模数大于 <span class="math inline">\(r\)</span>，进而获得 <span
-class="math inline">\(x\)</span>。</li>
-</ul>
-<p>还是直接上代码：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">ph_attack</span>(<span class="params">p:<span class="built_in">int</span>,c:<span class="built_in">int</span>,intact: <span class="built_in">bool</span> = <span class="literal">True</span></span>) -&gt; <span class="built_in">int</span>: <span class="comment">#仍旧是pow(2,x,p) == c</span></span><br><span class="line">    g = <span class="number">2</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">#约定，factor(x)返回一个list，每个元素是形如(prime,factor)的tuple</span></span><br><span class="line">    <span class="comment">#约定，预置了discrete_log(a,g)返回int，作用为给定(g,a)，求解群中满足a = x * g的x，其可以采用暴力攻击、BSGS等方法进行</span></span><br><span class="line">    <span class="comment">#约定，函数crt(r,m)可以对给定两个等长的列表，且m各元素互质时，求CRT问题的基础解(k=0)</span></span><br><span class="line">    rls = []</span><br><span class="line">    mls = []</span><br><span class="line"></span><br><span class="line">    n = p - <span class="number">1</span> <span class="comment">#Zmod(p)的阶</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">#对于第一种情况的攻击，即不知道x的额外信息，完全攻击每个子群</span></span><br><span class="line">    <span class="keyword">if</span> intact:</span><br><span class="line">        <span class="keyword">for</span> pm,exp <span class="keyword">in</span> factor(n):</span><br><span class="line">            cur = <span class="built_in">pow</span>(pm,exp)</span><br><span class="line">            fc = n // cur</span><br><span class="line">            temp_g = <span class="built_in">pow</span>(g,fc,p)</span><br><span class="line">            temp_c = <span class="built_in">pow</span>(c,fc,p)</span><br><span class="line">            mls.append(cur)</span><br><span class="line">            rls.append(discrete_log(temp_c,temp_g))</span><br><span class="line"></span><br><span class="line">    <span class="comment">#对于第二种情况的攻击，攻击部分子群，其实只需要记录已经求解的模数之积，伺机break</span></span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        Sentinel = <span class="built_in">pow</span>(<span class="number">2</span>,<span class="number">32</span>) <span class="comment">#x的上界</span></span><br><span class="line">        mul = <span class="number">1</span></span><br><span class="line">        <span class="keyword">for</span> pm,exp <span class="keyword">in</span> factor(n):</span><br><span class="line">            cur = <span class="built_in">pow</span>(pm,exp)</span><br><span class="line">            fc = n // cur</span><br><span class="line">            temp_g = <span class="built_in">pow</span>(g,fc,p)</span><br><span class="line">            temp_c = <span class="built_in">pow</span>(c,fc,p)</span><br><span class="line">            mls.append(cur)</span><br><span class="line">            rls.append(discrete_log(temp_c,temp_g))</span><br><span class="line">            mul *= cur</span><br><span class="line">            <span class="keyword">if</span> mul &gt; Sentinel:</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> crt(rls,mls)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>因此，为使任意场景实例化的DLP问题抵抗Pohlig-Hellman攻击，该群的阶或应没有小因子（最好阶自身就是大质数），或其小因子极少且乘积极小。</p>
-<p>对于 <span class="math inline">\(Zmod(p)\)</span>
-上的离散对数问题，一般会要求p是质数的同时，<span
-class="math inline">\(\frac{p-1}{2}\)</span>
-为质数（或没有小因子）。</p>
-<blockquote>
-<p><span class="math inline">\(p\)</span> 是质数时，其阶 <span
-class="math inline">\(\phi(p) = p-1\)</span>，显然此时 <span
-class="math inline">\(2\)</span>
-是其阶的一个因子，令其阶的另一个因子是质数，同时约束 <span
-class="math inline">\(x&gt;2\)</span>，即可确保其最大限度地抵抗Pohlig-Hellman攻击。</p>
-</blockquote>
-<p><strong>只要一个群的阶不是质数，那么Pohlig-Hellman总能通过转而攻击子群，降低求解该群上DLP问题的复杂度。</strong></p>
-</blockquote>
-<p>sagemath中内置了求解离散对数相关的工具： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line">p = <span class="number">7</span></span><br><span class="line">E = EllipticCurve(Zmod(p),[<span class="number">0</span>,<span class="number">2</span>])</span><br><span class="line">A = E.random_point()</span><br><span class="line">G = E.gens()[<span class="number">0</span>]</span><br><span class="line"></span><br><span class="line"><span class="comment">#经典调用方法，discrete_log是一个通用化的函数，第一参数为结果，第二参数为底，内置方法就是Pohlig-Hellman和BSGS</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#指定operation相当于约定了特定的运算（对于EllipticCurve默认为&#x27;+&#x27;，对于Zmod(p)默认为&#x27;*&#x27;）</span></span><br><span class="line"><span class="built_in">print</span>(discrete_log(A,G,operation=<span class="string">&#x27;+&#x27;</span>)) </span><br><span class="line"></span><br><span class="line"><span class="comment">#还可以指定bounds=(a,b)来引导sage来利用上述Pohlig-Hellman攻击中的第二种情况</span></span><br><span class="line"><span class="built_in">print</span>(discrete_log(A,G,operation=<span class="string">&#x27;+&#x27;</span>,bounds=(<span class="number">0</span>,<span class="number">5</span>))) <span class="comment">#假设x的上界为5</span></span><br></pre></td></tr></table></figure></p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/dlog/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-  <div>
-</article>
-
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
 
   
+
   
-    <nav id="page-nav">
-      <a class="extend prev" rel="prev" href="/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/3/">Next &raquo;</a>
-    </nav>
+
   
 
 
@@ -525,8 +412,8 @@ class="math inline">\(x&gt;2\)</span>，即可确保其最大限度地抵抗Pohl
     <script>
 	var yiliaConfig = {
 		mathjax: true,
-		isHome: true,
-		isPost: false,
+		isHome: false,
+		isPost: true,
 		isArchive: false,
 		isTag: false,
 		isCategory: false,
