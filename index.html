@@ -261,7 +261,7 @@ n\)</span> ，所谓一“大步”。</p>
 </blockquote>
 <p><del>为了便于理解，</del>给出一段示意BSGS求解 <span
 class="math inline">\(GF_p\)</span> 下DLP问题的代码</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">crack</span>(<span class="params">p:<span class="built_in">int</span>,c:<span class="built_in">int</span></span>) -&gt; <span class="built_in">int</span>:</span><br><span class="line">    g = <span class="number">2</span> <span class="comment">#假设目标是求解pow(2,x,p)==c中的p</span></span><br><span class="line">    t = <span class="built_in">int</span>(<span class="built_in">pow</span>(p,<span class="number">1</span>/<span class="number">2</span>))</span><br><span class="line">    r = <span class="built_in">pow</span>(<span class="number">2</span>,-t,p)</span><br><span class="line"></span><br><span class="line">    dc = &#123;&#125;</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(t):</span><br><span class="line">        dc[g] = i</span><br><span class="line">        g = (g * <span class="number">2</span>) % p</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(t):</span><br><span class="line">        <span class="keyword">if</span> c <span class="keyword">in</span> dc: <span class="comment">#找到碰撞</span></span><br><span class="line">            <span class="keyword">return</span> dc[c] + j * t</span><br><span class="line">        c = (c * r) % p</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">None</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">dlog</span>(<span class="params">p:<span class="built_in">int</span>,c:<span class="built_in">int</span></span>) -&gt; <span class="built_in">int</span>:</span><br><span class="line">    g = <span class="number">2</span> <span class="comment">#假设目标是求解pow(2,x,p)==c中的p</span></span><br><span class="line">    t = <span class="built_in">int</span>(<span class="built_in">pow</span>(p,<span class="number">1</span>/<span class="number">2</span>))</span><br><span class="line">    r = <span class="built_in">pow</span>(<span class="number">2</span>,-t,p)</span><br><span class="line"></span><br><span class="line">    dc = &#123;&#125;</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(t):</span><br><span class="line">        dc[g] = i</span><br><span class="line">        g = (g * <span class="number">2</span>) % p</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(t):</span><br><span class="line">        <span class="keyword">if</span> c <span class="keyword">in</span> dc: <span class="comment">#找到碰撞</span></span><br><span class="line">            <span class="keyword">return</span> dc[c] + j * t</span><br><span class="line">        c = (c * r) % p</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">None</span></span><br></pre></td></tr></table></figure>
 <h2 id="pohlig-hellman-韩信点兵">Pohlig-Hellman —— 韩信点“兵”</h2>
 <p>Pohlig-Hellman
 利用了<em>群论中的</em>拉格朗日定理和中国剩余定理。<br />
@@ -274,7 +274,8 @@ class="math inline">\(GF_p\)</span> 下DLP问题的代码</p>
 - 目标群的阶的全部因子都很小，a.k.a.“光滑数”(smooth-number)；<br />
 - 目标运算数计数 <span class="math inline">\(x\)</span>
 小于目标群的阶的小因子之积（实际上第一种情况可以看作是第二种情况的特例）。</p>
-<p>实现上，我们令 $n = _{i=1}<sup>n{p_i</sup>{e_i}} $。对于每个因子
+<p>实现上，我们令 $n = $ <span
+class="math inline">\(\prod_{i=1}^m{p_i^{e_i}}\)</span>。对于每个因子
 <span class="math inline">\(f = p_i^{e_i}\)</span>，考虑 <span
 class="math inline">\(C^{&#39;} = f \cdot C\)</span>，<span
 class="math inline">\(G^{&#39;} = f \cdot G\)</span>。<br />
@@ -283,11 +284,45 @@ class="math inline">\(\frac{n}{f}x\)</span>，<span
 class="math inline">\(G^{&#39;}\)</span> 的阶则为 <span
 class="math inline">\(\frac{n}{f}\)</span>。<br />
 根据拉格朗日定理，此时以 <span class="math inline">\(G^{&#39;}\)</span>
-为生成元的循环群的阶只有 <span class="math inline">\(f\)</span>，且
-<span class="math inline">\(C^{&#39;}\)</span>
-亦在这个群上，故可以在这个新的低阶群上求解DLP。<br />
+为生成元的子群的阶只有 <span class="math inline">\(f\)</span>，且 <span
+class="math inline">\(C^{&#39;}\)</span>
+亦在这个群上，故可以在这个低阶子群上求解DLP。<br />
 依此法求解的 <span class="math inline">\(\{x_i\}\)</span> 满足 <span
 class="math inline">\(x_i \equiv x (mod p_i^{e_i})\)</span>。</p>
+<ul>
+<li>对于第一种情况，显然 <span
+class="math inline">\({p_i^{e_i}}\)</span>
+互素，故将所有等式联立至CRT中，求出通解 <span
+class="math inline">\(x^{&#39;} = x_0 + kn&#39;\)</span>，令 <span
+class="math inline">\(k=0\)</span> 即可获得 <span
+class="math inline">\(x\)</span>。<br />
+</li>
+<li>对于第二种情况，假设存在 <span class="math inline">\(x &lt;
+r\)</span>，则可以升序求解模 <span
+class="math inline">\(p_i^{e_i}\)</span> 下的DLP，只需要求解出的 <span
+class="math inline">\(\prod_{i=1}^m{p_i^{e_i}} &gt; r\)</span>
+，即可令CRT求解出的 <span class="math inline">\(x^{&#39;}\)</span>
+模数大于 <span class="math inline">\(r\)</span>，进而获得 <span
+class="math inline">\(x\)</span>。</li>
+</ul>
+<p>还是直接上代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">ph_attack</span>(<span class="params">p:<span class="built_in">int</span>,c:<span class="built_in">int</span>,intact: <span class="built_in">bool</span> = <span class="literal">True</span></span>) -&gt; <span class="built_in">int</span>: <span class="comment">#仍旧是pow(2,x,p) == c</span></span><br><span class="line">    g = <span class="number">2</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">#约定，factor(x)返回一个list，每个元素是形如(prime,factor)的tuple</span></span><br><span class="line">    <span class="comment">#约定，预置了discrete_log(a,g)返回int，作用为给定(g,a)，求解群中满足a = x * g的x，其可以采用暴力攻击、BSGS等方法进行</span></span><br><span class="line">    <span class="comment">#约定，函数crt(r,m)可以对给定两个等长的列表，且m各元素互质时，求CRT问题的基础解(k=0)</span></span><br><span class="line">    rls = []</span><br><span class="line">    mls = []</span><br><span class="line"></span><br><span class="line">    n = p - <span class="number">1</span> <span class="comment">#Zmod(p)的阶</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">#对于第一种情况的攻击，即不知道x的额外信息，完全攻击每个子群</span></span><br><span class="line">    <span class="keyword">if</span> intact:</span><br><span class="line">        <span class="keyword">for</span> pm,exp <span class="keyword">in</span> factor(n):</span><br><span class="line">            cur = <span class="built_in">pow</span>(pm,exp)</span><br><span class="line">            fc = n // cur</span><br><span class="line">            temp_g = <span class="built_in">pow</span>(g,fc,p)</span><br><span class="line">            temp_c = <span class="built_in">pow</span>(c,fc,p)</span><br><span class="line">            mls.append(cur)</span><br><span class="line">            rls.append(discrete_log(temp_c,temp_g))</span><br><span class="line"></span><br><span class="line">    <span class="comment">#对于第二种情况的攻击，攻击部分子群，其实只需要记录已经求解的模数之积，伺机break</span></span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        Sentinel = <span class="built_in">pow</span>(<span class="number">2</span>,<span class="number">32</span>) <span class="comment">#x的上界</span></span><br><span class="line">        mul = <span class="number">1</span></span><br><span class="line">        <span class="keyword">for</span> pm,exp <span class="keyword">in</span> factor(n):</span><br><span class="line">            cur = <span class="built_in">pow</span>(pm,exp)</span><br><span class="line">            fc = n // cur</span><br><span class="line">            temp_g = <span class="built_in">pow</span>(g,fc,p)</span><br><span class="line">            temp_c = <span class="built_in">pow</span>(c,fc,p)</span><br><span class="line">            mls.append(cur)</span><br><span class="line">            rls.append(discrete_log(temp_c,temp_g))</span><br><span class="line">            mul *= cur</span><br><span class="line">            <span class="keyword">if</span> mul &gt; Sentinel:</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> crt(rls,mls)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>因此，为使任意场景实例化的DLP问题抵抗Pohlig-Hellman攻击，该群的阶或应没有小因子（最好阶自身就是大质数），或其小因子极少且乘积极小。</p>
+<p>对于 <span class="math inline">\(Zmod(p)\)</span>
+上的离散对数问题，一般会要求p是质数的同时，<span
+class="math inline">\(\frac{p-1}{2}\)</span>
+为质数（或没有小因子）。</p>
+<blockquote>
+<p><span class="math inline">\(p\)</span> 是质数时，其阶 <span
+class="math inline">\(\phi(p) = p-1\)</span>，显然此时 <span
+class="math inline">\(2\)</span>
+是其阶的一个因子，令其阶的另一个因子是质数，同时约束 <span
+class="math inline">\(x&gt;2\)</span>，即可确保其最大限度地抵抗Pohlig-Hellman攻击。</p>
+</blockquote>
+<p><strong>只要一个群的阶不是质数，那么Pohlig-Hellman总能通过转而攻击子群，降低求解该群上DLP问题的复杂度。</strong></p>
+</blockquote>
+<p>sagemath中内置了求解离散对数相关的工具： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line">p = <span class="number">7</span></span><br><span class="line">E = EllipticCurve(Zmod(p),[<span class="number">0</span>,<span class="number">2</span>])</span><br><span class="line">A = E.random_point()</span><br><span class="line">G = E.gens()[<span class="number">0</span>]</span><br><span class="line"></span><br><span class="line"><span class="comment">#经典调用方法，discrete_log是一个通用化的函数，第一参数为结果，第二参数为底，内置方法就是Pohlig-Hellman和BSGS</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#指定operation相当于约定了特定的运算（对于EllipticCurve默认为&#x27;+&#x27;，对于Zmod(p)默认为&#x27;*&#x27;）</span></span><br><span class="line"><span class="built_in">print</span>(discrete_log(A,G,operation=<span class="string">&#x27;+&#x27;</span>)) </span><br><span class="line"></span><br><span class="line"><span class="comment">#还可以指定bounds=(a,b)来引导sage来利用上述Pohlig-Hellman攻击中的第二种情况</span></span><br><span class="line"><span class="built_in">print</span>(discrete_log(A,G,operation=<span class="string">&#x27;+&#x27;</span>,bounds=(<span class="number">0</span>,<span class="number">5</span>))) <span class="comment">#假设x的上界为5</span></span><br></pre></td></tr></table></figure></p>
 
       
 
@@ -398,17 +433,30 @@ target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/utility/f
 <p>而std::formatter的<code>parse</code>和<code>format</code>函数就分别负责执行这两个任务。</p>
 </blockquote>
 <ul>
-<li><p>第一个函数必须具有签名<code>constexpr auto parse(std::format_parse_context&amp;);</code>（auto类型由<code>decltype(std::format_parse_context::begin())</code>确定）。<br />
+<li>第一个函数必须具有签名<code>constexpr auto parse(std::format_parse_context&amp;);</code>（auto类型由<code>decltype(std::format_parse_context::begin())</code>确定）。<br />
 该函数必须声明为constexpr，否则编译不能通过（对于直接的调用std::format/print，C++23要求必须在编译期处理之，同时引出的就是目前格式串必须是string-constant；动态格式串另有他法）。<br />
-该函数接收的<code>std::format_parse_context&amp;</code>实际上是表征format-specifier区间的一个view，调用<code>fpc.begin()</code>会返回一个指向当前处理框'{'的下一个字符的迭代器。<br />
-<strong>简而言之，该函数的任务是通过移动该迭代器来收集format的需求，并将之存储于这个struct的成员变量中，以供后续处理。</strong><br />
-该函数的返回值必须同样是一个迭代器，且该迭代器<strong>必须指向'}'（也就是format-specifier的末尾的下一个字符），否则会抛出std::format_error！</strong></p></li>
-<li><p>第二个函数必须具有签名<code>auto format(const Ty&amp;,std::format_context&amp;) const;</code>（auto类型由<code>decltype(std::format_context::out())</code>确定）。<br />
+该函数接收的<code>std::format_parse_context&amp;</code>实际上是表征format-specifier区间的一个view，调用<code>fpc.begin()</code>会返回一个指向当前处理域':'的下一个字符的迭代器。</li>
+</ul>
+<blockquote>
+<p>插播一下“处理域”的定义：每个框或可为全空<code>&#123;&#125;</code>，或应形如<code>&#123;A:B&#125;</code>，<strong><em>其中A为一部分，':B'为一部分，可以理解为两侧分别都是可选的，用法见下</em></strong></p>
+<p>其中，A是索引，<strong>若不指定A，则该格式字符串采用的是“自动索引”(auto-indexing)</strong>，即每遇到一个框就把下一个参数丢进去；</p>
+<p>否则为手动索引（manual-indexing），即可以控制每个框用哪个index的参数（可以复用），如<code>std::println("&#123;0&#125; &#123;1&#125; &#123;0&#125;",1,2);</code>输出<code>1 2 1</code>。</p>
+<blockquote>
+<p><strong>不允许使用混合索引（即要么全自动，要么全手动）。</strong>
+<strong>索引不允许越界，比如<code>std::println("&#123;&#125; &#123;&#125;",1)</code>不能通过编译。</strong></p>
+</blockquote>
+<p>:B是format-specifier，形式和python/C的类似，每个框都可以自定义，不再赘述。</p>
+<p>应用实例：将一个浮点数输出两次，精度分别为4位、2位：<code>std::println("&#123;0:.4f&#125; -&gt; &#123;0:.2f&#125;",some_float);</code>。</p>
+</blockquote>
+<p><strong>简而言之，该函数的任务是通过移动该迭代器来收集format的需求，并将之存储于这个struct的成员变量中，以供后续处理。</strong><br />
+该函数的返回值必须同样是一个迭代器，且该迭代器<strong>必须指向'}'（也就是format-specifier的末尾的下一个字符），否则会抛出std::format_error！</strong></p>
+<ul>
+<li>第二个函数必须具有签名<code>auto format(const Ty&amp;,std::format_context&amp;) const;</code>（auto类型由<code>decltype(std::format_context::out())</code>确定）。<br />
 该函数必须被声明为常成员函数（后缀<code>const</code>不要漏）；对于trivial-types，const
 Ty&amp;可以被改为Ty（更改原则和其它函数的const
 int&amp;/int一类相同）。<br />
 该函数接收的<code>std::format_context&amp;</code>是一个缓存输出格式串的字符串，调用<code>fc.out()</code>会返回一个<em>back
-insert iterator</em>。</p></li>
+insert iterator</em>。</li>
 </ul>
 <blockquote>
 <p><em>back insert
