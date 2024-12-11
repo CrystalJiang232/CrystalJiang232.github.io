@@ -452,7 +452,28 @@ lvalue</em>作为值，初始化<em>lref/rref/cref</em>的重载优先级如下�
 C++11向其中新增了移动构造<code>Ty(Ty&amp;&amp;)</code>/移动赋值运算符</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">CR</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">CR</span>()&#123;&#125;</span><br><span class="line">    <span class="built_in">CR</span>(<span class="type">const</span> CR&amp;)&#123;&#125; <span class="comment">//#1</span></span><br><span class="line">    <span class="built_in">CR</span>(CR&amp;&amp;)&#123;&#125; <span class="comment">//#2</span></span><br><span class="line">    ~<span class="built_in">CR</span>()&#123;&#125;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">modify</span><span class="params">()</span></span>&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    CR c&#123;&#125;;</span><br><span class="line">    CR d&#123;c&#125;; <span class="comment">//Invokes overload #1</span></span><br><span class="line">    CR e&#123;std::<span class="built_in">move</span>(c)&#125;; <span class="comment">//Invokes overload #2</span></span><br><span class="line">    </span><br><span class="line">    <span class="type">const</span> CR&amp; ref1 = std::<span class="built_in">move</span>(d); <span class="comment">//binding rvalue to cref</span></span><br><span class="line">    <span class="comment">//ref1.modify(); //Not Compile: const</span></span><br><span class="line"></span><br><span class="line">    CR&amp;&amp; ref2 = std::<span class="built_in">move</span>(e); <span class="comment">//binding rvalue to rref</span></span><br><span class="line">    ref<span class="number">2.</span><span class="built_in">modify</span>(); <span class="comment">//OK: non-const</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h2 id="善后之被移动对象的处理">“善后”之被移动对象的处理</h2>
-<p>“移动”相较传统的“复制-销毁”模式，提出的一个新课题就是如何处理被移动的对象。</p>
+<p>“移动”相较传统的“复制-销毁”模式，提出的一个新课题就是如何处理被移动的对象。
+一般而言，C++对象在“被移动”后的语义要求分为三层：</p>
+<ul>
+<li>基本要求：该对象被移动后，调用该对象的析构函数不会抛出异常。<strong>在C++这一涉及大量普通变量自动析构的编译期语言中，这点尤为重要。</strong><br />
+一般来说，需要特别明确移动语义的对象都会占有一些资源，为践行
+<em>RAII</em>
+之原则，其应在析构函数中将获得的资源释放，以防止资源泄露。<br />
+但这时就可能出现资源重复释放的问题，因此基本要求是一个对象被移动后，会将自身的资源标记为“已释放”，从而不会在该对象的生命周期结束时再释放一次，造成异常。<br />
+比如，<code>std::vector&lt;int&gt;</code>
+在被移动后会将自己的指针<code>data</code>置为<code>nullptr</code>，如此，在析构函数中执行<code>delete[] nullptr;</code>时就不会发生异常。</li>
+</ul>
+<blockquote>
+<p>热知识：<code>delete</code>
+一个空指针是合法的语句（什么也不会发生）。</p>
+</blockquote>
+<ul>
+<li><p>标准要求：该对象被移动后，可以被赋值重新使用。<strong>C++标准库的容器、对象等均满足这一条件。</strong></p></li>
+<li><p>更高要求：该对象被移动后，其状态恢复至默认值（犹如被默认构造过一样）。比如<code>std::string</code>被移动后，其将变为一个空字符串；<code>std::thread</code>被移动后将不管理任何线程，与其默认构造后的结果相同。</p></li>
+</ul>
+<blockquote>
+<p>其实上述要求对于复制构造/复制赋值/移动赋值函数亦然。在传统C++的学习中应当也有涉及到关于编写恰当的复制构造函数，以避免重复释放的相关内容。</p>
+</blockquote>
 <h2
 id="不可复制资源的移动语义归一化">不可复制资源的移动——语义归一化</h2>
 <p><strong>并不是所有的资源/对象都可以被移动/复制。</strong></p>
@@ -497,7 +518,22 @@ Five</em>：若一个类定义了至少一个构造函数和至少一个赋值�
 </blockquote>
 <h1
 id="移动语义配套语法引用折叠与完美转发">移动语义配套语法——引用折叠与完美转发</h1>
-<h2 id="section"></h2>
+<blockquote>
+<p>还是回到那句话：移动语义自身只是一个概念，最终实现在编译期进行，依赖的是函数重载决议。</p>
+</blockquote>
+<h2 id="引用折叠">引用折叠</h2>
+<p>C++引入右值引用后，template programming中就很可能出现template
+parameter也是左/右值引用的情况，但C++中又不允许出现引用的引用。<br />
+为了保证编程习惯和语义一致，并为后续的移动转发/完美转发做铺垫，提出了<strong>引用折叠(reference-collasping)</strong>的概念。<br />
+具体规则很简单：<br />
+考虑一个template参数<code>Ty</code>，其带引用的使用方式可能为左值<code>Ty&amp;</code>及右值<code>Ty&amp;&amp;</code>。<br />
+<strong>当且仅当<code>Ty</code>是右值引用，且其引用方式也是右值引用<code>Ty&amp;&amp;</code>时，解析结果是右值引用，否则是左值引用。</strong></p>
+<blockquote>
+<p>注意此规则仅在template
+parameter/using代换中生效，直接写出<code>int&amp;&amp; &amp;&amp;</code>一类的语句仍为非法。</p>
+</blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> x = <span class="number">1</span>;</span><br><span class="line"><span class="keyword">using</span> lref = <span class="type">int</span>&amp;;</span><br><span class="line"><span class="keyword">using</span> rref = <span class="type">int</span>&amp;&amp;;</span><br><span class="line"></span><br><span class="line">lref&amp; a = x; <span class="comment">//a is l-ref</span></span><br><span class="line">lref&amp;&amp; b = x; <span class="comment">//b is l-ref</span></span><br><span class="line">rref&amp; c = x; <span class="comment">//c is l-ref</span></span><br><span class="line">rref&amp;&amp; d = std::<span class="built_in">move</span>(x); <span class="comment">//d is r-ref</span></span><br></pre></td></tr></table></figure>
+<h2 id="右值转发和完美转发">右值转发和完美转发</h2>
 <h1 id="移动语义实践中的易错点">移动语义实践中的易错点</h1>
 <h2
 id="离开函数前错误地移走了局部变量">离开函数前，错误地“移走”了局部变量</h2>
