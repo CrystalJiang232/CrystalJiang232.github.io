@@ -8,15 +8,15 @@
   <link rel="dns-prefetch" href="https://crystaljiang232.github.io">
   <title>Cryptohack打本手记 | 玲珑</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="ECB Orcale">
+  <meta name="description" content="ECB Orcale ECB Orcale属于选择明文攻击，需要拥有对明文的一定加密权限。 其利用了ECB加密模式不能抵抗 Replay Attacks（重放攻击）的特点。 攻击原理 目标Orcale常形如固定后缀，对于攻击者传递的字符串m，该Orcale会将(m+flag)填充后加密之。 此时，攻击者可以先爆破出flag的长度，随后通过控制m，将待加密的明文（填充后的）制备为形如“">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Cryptohack打本手记">
 <meta property="og:url" content="https://crystaljiang232.github.io/cryptohack-wps/index.html">
 <meta property="og:site_name" content="玲珑">
-<meta property="og:description" content="ECB Orcale">
+<meta property="og:description" content="ECB Orcale ECB Orcale属于选择明文攻击，需要拥有对明文的一定加密权限。 其利用了ECB加密模式不能抵抗 Replay Attacks（重放攻击）的特点。 攻击原理 目标Orcale常形如固定后缀，对于攻击者传递的字符串m，该Orcale会将(m+flag)填充后加密之。 此时，攻击者可以先爆破出flag的长度，随后通过控制m，将待加密的明文（填充后的）制备为形如“">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2024-12-12T07:38:02.000Z">
-<meta property="article:modified_time" content="2024-12-12T07:41:06.293Z">
+<meta property="article:modified_time" content="2024-12-12T10:55:59.550Z">
 <meta property="article:author" content="Hibiscus">
 <meta property="article:tag" content="Crypto">
 <meta property="article:tag" content="wp">
@@ -165,6 +165,22 @@
     <div class="article-entry" itemprop="articleBody">
       
         <h1 id="ecb-orcale">ECB Orcale</h1>
+<p>ECB
+Orcale属于<strong>选择明文攻击</strong>，需要拥有对明文的一定加密权限。<br />
+其利用了ECB加密模式不能抵抗 <em>Replay
+Attacks</em>（重放攻击）的特点。</p>
+<h2 id="攻击原理">攻击原理</h2>
+<p>目标Orcale常形如<strong>固定后缀</strong>，对于攻击者传递的字符串m，该Orcale会将(m+flag)填充后加密之。<br />
+此时，攻击者可以先爆破出flag的长度，随后通过控制m，将待加密的明文（填充后的）制备为形如“控制域+填充域+待解域”的形式。
+以block大小为16为例，各个域的说明如下：</p>
+<blockquote>
+<p>控制域：大小为16，每次爆破控制域中的第i位，使之遍历 <span
+class="math inline">\((0,255)\)</span>。该位其前的内容应为已解密内容，其后的内容应与“待解域”的填充部分全等。</p>
+<p>填充域：大小为16*k(<span class="math inline">\(k \in
+Z_+\)</span>)，通过调整m，该域内容应为任意内容 +
+flag的待解密其它部分。</p>
+<p>待解域：大小为16，</p>
+</blockquote>
 
       
 
