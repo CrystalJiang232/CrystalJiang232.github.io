@@ -374,7 +374,7 @@ rvalues</em>这一问题的理解也能水到渠成。</p>
 <p>然而C++11以前的右值只有部分constants(常量)和函数返回值，显然其面向对象和应用范围过窄。<br />
 由此，C++11起<code>static_cast</code>增加了一项功能——“移动”，即将一个左值cast成右值引用，形如<code>static_cast&lt;int&amp;&amp;&gt;(x);</code>就可以获得一个<code>int</code>的<em>rvalue</em>。<br />
 同时新增了一个函数std::move，其有一项重载提供了编译期的更加直观的代码转换（“套皮”）：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="keyword">constexpr</span> Ty&amp;&amp; <span class="title">std::move</span><span class="params">(Ty&amp; arg)</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">static_cast</span>&lt;Ty&amp;&amp;&gt;(arg);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="keyword">constexpr</span> std::<span class="type">remove_reference_t</span>&lt;Ty&gt;&amp;&amp; <span class="title">std::move</span><span class="params">(Ty&amp;&amp; arg)</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">static_cast</span>&lt;std::<span class="type">remove_reference_t</span>&lt;Ty&gt;&amp;&amp;&gt;(arg);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>（哈，一不小心又挖到了C++11的两个新坑：<code>constexpr</code>和<code>noexcept</code>！<del>等等，是不是还踩了万能引用和引用折叠的坑？不，你什么都没看到</del>）<br />
 先来看眼不同引用的绑定规则：</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> x=<span class="number">1</span>;</span><br><span class="line">    <span class="type">int</span>&amp; r1_1 = x; <span class="comment">//OK</span></span><br><span class="line">    <span class="type">const</span> <span class="type">int</span>&amp; r1_2 =x; <span class="comment">//OK</span></span><br><span class="line">    <span class="comment">//int&amp;&amp; r1_3 = x; //Not Compile</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//int&amp; r2_1 = 1; //Not Compile</span></span><br><span class="line">    <span class="type">const</span> <span class="type">int</span>&amp; r2_2 = <span class="number">1</span>; <span class="comment">//OK</span></span><br><span class="line">    <span class="type">int</span>&amp;&amp; r2_3 = <span class="number">1</span>; <span class="comment">//OK</span></span><br><span class="line"></span><br><span class="line">    <span class="type">int</span>&amp;&amp; r3_3 = std::<span class="built_in">move</span>(<span class="number">1</span>); <span class="comment">//OK</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -465,7 +465,7 @@ state（有效但未指定状态）</em>，具体来说，C++对象在“被移�
 在被移动后会将自己的指针<code>data</code>置为<code>nullptr</code>，如此，在析构函数中执行<code>delete[] nullptr;</code>时就不会发生异常。</li>
 </ul>
 <blockquote>
-<p>热知识：<code>delete</code>
+<p>热知识：<code>delete</code>/<code>delete[]</code>
 一个空指针是合法的语句（什么也不会发生）。</p>
 </blockquote>
 <ul>
@@ -586,13 +586,41 @@ rvalues</em>)的地址： <figure class="highlight c++"><table><tr><td class="gu
 </blockquote>
 <p>类似地可以实现移动转发（将收入的所有参数全部用右值转发出去）：
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Tys&gt;</span></span><br><span class="line"><span class="function"><span class="keyword">constexpr</span> <span class="type">void</span> <span class="title">mov</span><span class="params">(Tys&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">func</span>(std::forward&lt;Tys&gt;(args)...); <span class="comment">//完美转发，保留左/右值属性</span></span><br><span class="line">    <span class="built_in">func</span>(std::<span class="built_in">move</span>&lt;Tys&gt;(args)...); <span class="comment">//移动转发，全部转化为右值</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="萍水过客之trivial-types">萍水过客之trivial-types</h2>
+<p>C++11提出并规范的移动语义，针对的是<code>class</code>/<code>struct</code>的对象。
+在此乱世之外，所有的基本数据类型( <em>fundamental types</em> )都是
+<em>trivial</em>
+(“平凡”)的；所有的<strong>仅存在平凡数据成员的<code>struct</code>/<code>class</code></strong>也是平凡的。</p>
+<blockquote>
+<p>C++中，<code>&lt;type_traits&gt;</code>中提供了<code>std::is_trivial</code>家族的大量traits用于检验一个类到底有多“平凡”。</p>
+<p>定义一个后缀集合 $S = $
+{<code>default_constructible</code>,<code>copy_constructible</code>,<code>move_constructible</code>,<code>copy_assignable</code>,<code>move_assignable</code>,<code>destructible</code>}；</p>
+<p><code>std::is_trivially</code> + <span class="math inline">\(i \in
+S\)</span>
+的traits用于测试一个类是否可以平凡地(默认/复制/移动)构造/(复制/移动)赋值/析构。</p>
+</blockquote>
+<p><em>trivial</em> 类的特征：</p>
+<ul>
+<li>其移动语义和复制相同，即移动一个变量后不会改变原对象的数值/状态。<br />
+</li>
+<li>其构造函数除了初始化数据成员外什么都不做，且其数据成员的初始化也是
+<em>trivial</em>
+的（递归定义，直至基本数据类型）；复制/移动构造函数同理（只根据原值初始化，不改变其状态）。<br />
+</li>
+<li>其析构函数除了析构自身数据成员外什么都不做，且其数据成员的初始化也是
+<em>trivial</em> 的（同样可以递归定义）。</li>
+</ul>
+<p>基本数据类型显然符合这些特点，比如一个<code>int</code>，<code>int</code>的复制/移动只是将自身的值赋予另一个变量，不会影响自身的值；析构一个<code>int</code>什么也不会发生，等等。<br />
+显然平凡类的运算是极为高效的（只需要非常“简单”地<code>memset</code>即可完成一切操作，<del>远离移动语义的浮尘喧嚣</del>）。<br />
+其引出的问题就是程序的参数设计中<strong>传值和传引用之争</strong><del>(挖坑+1)</del>。</p>
 <h1 id="移动语义实践中的易错点">移动语义实践中的易错点</h1>
 <h2
 id="手搓了不恰当的移动构造函数赋值运算符">“手搓”了不恰当的移动构造函数/赋值运算符</h2>
 <blockquote>
-<p>If you can avoid defining any default operations, do Use
-<code>= default</code> if you want to be explicit on using the default
-sematics Make move operations <code>noexcept</code>.</p>
+<p>If you can avoid defining any default operations, do</p>
+<p>Use <code>= default</code> if you want to be explicit on using the
+default sematics</p>
+<p>Make move operations <code>noexcept</code>.</p>
 </blockquote>
 <ul>
 <li>实践中，对于<strong>不直接管理资源</strong>的类，尽量避免定义四项默认函数（遵循<em>rule
@@ -638,8 +666,35 @@ exception guarantee</em>： <figure class="highlight c++"><table><tr><td class="
 <li>若函数的复制/移动构造函数均不可用，则编译失败</li>
 </ul>
 <p>故若自定义类的移动构造函数没有被声明为<code>noexcept</code>，则容易导致<code>std::vector</code>在扩容时执行了无用的复制操作，不易发现。</p>
+<hr />
+<p>同时，<strong>移动语义终究只是一个概念</strong>（百听不厌的<strong>基本哲学</strong>）；最终实现上，依然依靠编写右值引用为参数的代码。<br />
+作为反例，我们完全可以实现一个不遵守移动语义的<code>vector</code>，其移动构造函数执行了复制语义：<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">bad_vec</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">//其它构造函数等省略</span></span><br><span class="line">    <span class="built_in">bad_vec</span>(bad_vec&amp;&amp; from):data&#123;<span class="keyword">new</span> Ty[from.size]&#125;,size&#123;from.size&#125;</span><br><span class="line">    &#123;</span><br><span class="line">        std::<span class="built_in">copy</span>(from.data,from.data+from.size,<span class="keyword">this</span>-&gt;data);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    bad_vec&amp; <span class="keyword">operator</span>=(bad_vec&amp;&amp; from)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">this</span>-&gt;data = <span class="keyword">new</span> Ty[from-&gt;size];</span><br><span class="line">        <span class="keyword">this</span>-&gt;size = from.size;</span><br><span class="line">        std::<span class="built_in">copy</span>(from.data,from.data+from.size,<span class="keyword">this</span>-&gt;data);</span><br><span class="line">    &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    Ty* data;</span><br><span class="line">    <span class="type">size_t</span> size;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p>虽然代码可以如此写，编译也没有问题；但如此做进行了复制操作，违背了移动语义的初衷。</p>
 <h2
 id="从函数return前误移动了局部变量">从函数<code>return</code>前误移动了局部变量</h2>
+<p>有时候函数的部分执行分支中，会将某些变量<code>std::move</code>传参到其它函数中，导致了该变量进入了<em>unspecified
+state</em>。</p>
+<blockquote>
+<p>不能忘记<code>std::move</code>、移动语义、右值引用的初衷：其本质的本质，还是只是一个"tag"，将一个<em>lvalue</em>转化为<em>xvalue</em>。</p>
+<p>至于其如何发落，悉数依赖于<em>通过函数签名（形参）重载决策、接受或约束</em>
+这些参数的<strong>函数</strong>。</p>
+<p>因此，一行上单纯的<code>std::move(val);</code>语句没有任何意义，不会对val产生任何影响。</p>
+</blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">log</span><span class="params">(std::vector&lt;<span class="type">int</span>&gt;&amp;&amp; vec)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i : vec)</span><br><span class="line">    &#123;</span><br><span class="line">        std::clog &lt;&lt; i;</span><br><span class="line">    &#125;</span><br><span class="line">    vec.<span class="built_in">clear</span>();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::vector&lt;<span class="type">int</span>&gt; status&#123;&#125;;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(status.<span class="built_in">size</span>() &gt; <span class="number">10</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">log</span>(std::<span class="built_in">move</span>(status));</span><br><span class="line">    &#125; </span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; status.<span class="built_in">back</span>() &lt;&lt; std::endl; <span class="comment">//status may be moved-from</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上述代码中，<code>log()</code>出于语义约束等考虑选择了只接受右值引用的<code>vector</code>，其在执行后会将<code>vector</code>的内容清空（此操作符合移动语义对被移动对象处理的“更高要求”）。<br />
+但<code>func()</code>中，如果不慎进入了<code>if</code>分支，则<code>status</code>将被清空，直接导致其后输出<code>status.back()</code>时抛出异常。<br />
+此类调用者的设计“失误”颇为常见（有时是无意为之，有时频繁的<code>move</code>和再赋值/再初始化操作又不可避免）；我们希望避免的是“误移动”而在再初始化前不慎复用之。</p>
+<p>防御措施：</p>
+<ul>
+<li>编译阶段，利用<code>clang-format</code>等静态检查器来标记<code>moved-from</code>变量，对变量潜在的“移动后使用”做好标记；</li>
+<li>运行阶段，遵循<em>move
+sematics</em>，每次接受右值引用后将变量的值标记为无效值（比如<code>string</code>的<code>length</code>置零，<code>unique_ptr</code>管理指针赋<code>nullptr</code>），且每次使用一个（潜在的）<em>moved-from</em>变量前检查有效性，
+如“官方”教材（摘自<a
+target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/utility/move">cppreference</a>）：
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::vector&lt;std::string&gt; v;</span><br><span class="line">    std::string str = <span class="string">&quot;example&quot;</span>;</span><br><span class="line">    v.<span class="built_in">push_back</span>(std::<span class="built_in">move</span>(str)); <span class="comment">// str is now valid but unspecified</span></span><br><span class="line">    str.<span class="built_in">back</span>(); <span class="comment">// undefined behavior if size() == 0: back() has a precondition !empty()</span></span><br><span class="line">    <span class="keyword">if</span> (!str.<span class="built_in">empty</span>())</span><br><span class="line">        str.<span class="built_in">back</span>(); <span class="comment">// OK, empty() has no precondition and back() precondition is met</span></span><br><span class="line">    str.<span class="built_in">clear</span>(); <span class="comment">// OK, clear() has no preconditions</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<p>其操作原理也非常简单，亦为鲁棒性较好的程序的必备之物：不断地检查<em>preconditions</em>（前置条件）。</p>
 <h2
 id="return时对返回值是否该stdmove辨别失误"><code>return</code>时对返回值是否该<code>std::move</code>辨别失误</h2>
 <blockquote>
@@ -658,11 +713,15 @@ duration)的非左值引用变量都是<em>move-eligible</em>的。可以简记�
 <p>这点细讲起来特别麻烦，<del>就当提前挖个坑</del></p>
 </blockquote>
 <p>如下函数在C++23前返回<em>悬挂引用(dangaling
-reference)</em>，C++23起其非良构(<em>ill-formed</em>)而不能通过编译。<br />
-<del>如果需要返回悬挂引用，请返回</del><code>int&amp;&amp;</code>
+reference)</em>，C++23起其非良构(<em>ill-formed</em>)而不能通过编译。<del>当然你如果把返回值改成rref那还是可以返回悬挂引用的</del>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span>&amp; <span class="title">ret</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> x = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">return</span> x; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <p>下面这个函数在C++20前不能通过编译（需要修改为<code>return std::move(ref);</code>，C++20起定义右值引用变量<em>move-eligible</em>因而可以通过。
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">std::unique_ptr&lt;<span class="type">int</span>&gt; <span class="title">fun</span><span class="params">(std::unique_ptr&amp;&amp; ref)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> ref; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h1 id="结语">结语</h1>
+<p>C++11作为现代C++的开山之作，其带来的极大量新语法、新关键字、新概念等极为庞大，移动语义即为其间数“巨头”之一。<br />
+学习移动语义，理论学习的吸收难度已然颇大；但更难、同时也让学习之变得更有意义的是在现代C++的编程实践中积极运用，使自身程序设计的质量、效率更高。<br />
+同时，尝试理解、融会贯通其间涉及C++的诸多设计哲学，亦会对学习、生活、工作受益匪浅。</p>
+<p>望能与各位道友在求道之路上共勉。</p>
 
       
 
