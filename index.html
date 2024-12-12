@@ -452,8 +452,9 @@ lvalue</em>作为值，初始化<em>lref/rref/cref</em>的重载优先级如下�
 C++11向其中新增了移动构造<code>Ty(Ty&amp;&amp;)</code>/移动赋值运算符</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">CR</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">CR</span>()&#123;&#125;</span><br><span class="line">    <span class="built_in">CR</span>(<span class="type">const</span> CR&amp;)&#123;&#125; <span class="comment">//#1</span></span><br><span class="line">    <span class="built_in">CR</span>(CR&amp;&amp;)&#123;&#125; <span class="comment">//#2</span></span><br><span class="line">    ~<span class="built_in">CR</span>()&#123;&#125;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">modify</span><span class="params">()</span></span>&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    CR c&#123;&#125;;</span><br><span class="line">    CR d&#123;c&#125;; <span class="comment">//Invokes overload #1</span></span><br><span class="line">    CR e&#123;std::<span class="built_in">move</span>(c)&#125;; <span class="comment">//Invokes overload #2</span></span><br><span class="line">    </span><br><span class="line">    <span class="type">const</span> CR&amp; ref1 = std::<span class="built_in">move</span>(d); <span class="comment">//binding rvalue to cref</span></span><br><span class="line">    <span class="comment">//ref1.modify(); //Not Compile: const</span></span><br><span class="line"></span><br><span class="line">    CR&amp;&amp; ref2 = std::<span class="built_in">move</span>(e); <span class="comment">//binding rvalue to rref</span></span><br><span class="line">    ref<span class="number">2.</span><span class="built_in">modify</span>(); <span class="comment">//OK: non-const</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h2 id="善后之被移动对象的处理">“善后”之被移动对象的处理</h2>
-<p>“移动”相较传统的“复制-销毁”模式，提出的一个新课题就是如何处理被移动的对象。
-一般而言，C++对象在“被移动”后的语义要求分为三层：</p>
+<p>“移动”相较传统的“复制-销毁”模式，提出的一个新课题就是如何处理被移动的对象。<br />
+C++标准要求被移动的对象应当进入一个<em>valid but unspecified
+state（有效但未指定状态）</em>，具体来说，C++对象在“被移动”后的语义要求分为三层：</p>
 <ul>
 <li>基本要求：该对象被移动后，调用该对象的析构函数不会抛出异常。<strong>在C++这一涉及大量普通变量自动析构的编译期语言中，这点尤为重要。</strong><br />
 一般来说，需要特别明确移动语义的对象都会占有一些资源，为践行
@@ -468,7 +469,7 @@ C++11向其中新增了移动构造<code>Ty(Ty&amp;&amp;)</code>/移动赋值运
 一个空指针是合法的语句（什么也不会发生）。</p>
 </blockquote>
 <ul>
-<li><p>标准要求：该对象被移动后，可以被赋值重新使用。<strong>C++标准库的容器、对象等均满足这一条件。</strong></p></li>
+<li><p>标准要求：该对象被移动后，可以被赋值重新使用。<strong>C++标准库的容器、对象等均满足这一条件，且标准库对自定义类的封装操作也基于这一假设。</strong></p></li>
 <li><p>更高要求：该对象被移动后，其状态恢复至默认值（犹如被默认构造过一样）。比如<code>std::string</code>被移动后，其将变为一个空字符串；<code>std::thread</code>被移动后将不管理任何线程，与其默认构造后的结果相同。</p></li>
 </ul>
 <blockquote>
@@ -574,9 +575,51 @@ reference</em>)的概念，亦即看到<code>&amp;&amp;</code>不一定就代表
 <p>（有关<code>type_traits</code>和<em>SFINAE</em>的坑<del>改天再填.sage</del>）</p>
 </blockquote>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="keyword">constexpr</span> std::<span class="type">remove_reference_t</span>&lt;Ty&gt;&amp; <span class="title">forward</span><span class="params">(std::<span class="type">remove_reference_t</span>&lt;Ty&gt;&amp; arg)</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> arg;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="keyword">constexpr</span> std::<span class="type">remove_reference_t</span>&lt;Ty&gt;&amp;&amp; <span class="title">forward</span><span class="params">(std::<span class="type">remove_reference_t</span>&lt;Ty&gt;&amp;&amp; arg)</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">static_assert</span>(!std::<span class="type">is_lvalue_reference_t</span>&lt;Ty&gt;,<span class="string">&quot;Bad forward call&quot;</span>); <span class="comment">//Cannot forward lvalue as rvalue</span></span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">static_cast</span>&lt;Ty&amp;&amp;&gt;(arg);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>此处即可看到，<code>std::forward</code>利用了<strong>类型信息（所谓<code>Ty</code>）于函数签名中被保留</strong>的特点，实现了针对不同左/右值参数的转发——<strong>完美转发</strong>。</p>
+<p>同样地，如果希望实现其它的语义约束，也可以利用引用折叠的规则进行；结合<code>&lt;type_traits&gt;</code>里的各种小组件，搭配自由度更高。<br />
+如，C++标准库内置了<code>addressof</code>函数，用于稳定地获取一个对象的地址（即使该类重载了<code>operator&amp;()</code>）。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="keyword">constexpr</span> Ty* <span class="title">addressof</span><span class="params">(Ty&amp; arg)</span> <span class="keyword">noexcept</span></span>;</span><br></pre></td></tr></table></figure>
+<p>通过将参数设置为<code>Ty&amp;</code>，无论Ty取原始类、左值引用还是右值引用，Ty&amp;均会解析为左值引用，使之只能接受左值引用的参数。</p>
+<blockquote>
+<p>实际上这个函数并不完美，标准库实现中还有如下声明以确保不会获取到常右值(<em>const
+rvalues</em>)的地址： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="keyword">constexpr</span> Ty* <span class="title">addressof</span><span class="params">(<span class="type">const</span> Ty&amp;)</span> </span>= <span class="keyword">delete</span>;</span><br></pre></td></tr></table></figure></p>
+</blockquote>
+<p>类似地可以实现移动转发（将收入的所有参数全部用右值转发出去）：
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Tys&gt;</span></span><br><span class="line"><span class="function"><span class="keyword">constexpr</span> <span class="type">void</span> <span class="title">mov</span><span class="params">(Tys&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">func</span>(std::forward&lt;Tys&gt;(args)...); <span class="comment">//完美转发，保留左/右值属性</span></span><br><span class="line">    <span class="built_in">func</span>(std::<span class="built_in">move</span>&lt;Tys&gt;(args)...); <span class="comment">//移动转发，全部转化为右值</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <h1 id="移动语义实践中的易错点">移动语义实践中的易错点</h1>
 <h2
-id="离开函数前错误地移走了局部变量">离开函数前，错误地“移走”了局部变量</h2>
+id="手搓了不恰当的移动构造函数赋值运算符">“手搓”了不恰当的移动构造函数/赋值运算符</h2>
+<h2
+id="未将移动构造函数移动赋值运算符声明为noexcept">未将移动构造函数/移动赋值运算符声明为<code>noexcept</code></h2>
+<blockquote>
+<p>Make move operations <code>noexcept</code>.</p>
+</blockquote>
+<p><code>noexcept</code>也是C++11的新语法特性之一（不愧为现代C++之始，全是影响深远的特性），</p>
+<h2
+id="从函数return前误移动了局部变量">从函数<code>return</code>前误移动了局部变量</h2>
+<h2
+id="return时对返回值是否该stdmove辨别失误"><code>return</code>时对返回值是否该<code>std::move</code>辨别失误</h2>
+<blockquote>
+<p>一个简单的<code>return</code>语句是整个C++中出现频率最高的语句之一。</p>
+<p>为了将其效率发挥到极致，<code>return</code>之争也持续了将近30年，最终在C++23中才勉强画上分号<del>（surprise！连句号都算不上！）</del>。</p>
+</blockquote>
+<p><strong>以下法则仅适用于C++23：</strong></p>
+<p>返回<em>move-eligible（可移动）</em>都不应该主动调用<code>std::move</code>，因为这些返回值会被自动视为<em>xvalue</em>（世称<em>implicit
+move</em>）。<br />
+调用<code>std::move</code>将阻碍<strong>NRVO(Named return value
+optimization)</strong>。<br />
+简而言之，C++23中绝大多数情况下默认不需要<code>std::move</code>。</p>
+<blockquote>
+<p>简单来说，具有自动存储周期(automatic storage
+duration)的非左值引用变量都是<em>move-eligible</em>的。可以简记为除了<code>static</code>,<code>thread_local</code>以外常用的变量都是（含右值引用变量）。</p>
+<p>这点细讲起来特别麻烦，<del>就当提前挖个坑</del></p>
+</blockquote>
+<p>如下函数在C++23前返回<em>悬挂引用(dangaling
+reference)</em>，C++23起其非良构(<em>ill-formed</em>)而不能通过编译。<br />
+<del>如果需要返回悬挂引用，请返回</del><code>int&amp;&amp;</code>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span>&amp; <span class="title">ret</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> x = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">return</span> x; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>下面这个函数在C++20前不能通过编译（需要修改为<code>return std::move(ref);</code>，C++20起定义右值引用变量<em>move-eligible</em>因而可以通过。
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">std::unique_ptr&lt;<span class="type">int</span>&gt; <span class="title">fun</span><span class="params">(std::unique_ptr&amp;&amp; ref)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> ref; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 
       
 
