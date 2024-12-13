@@ -64,6 +64,10 @@
 			
 				<li><a href="/">主页</a></li>
 	        
+				<li><a href="/categories">分类</a></li>
+	        
+				<li><a href="/archives">归档</a></li>
+	        
 			</ul>
 		</nav>
 		<nav class="header-smart-menu">
@@ -111,6 +115,10 @@
 			
 				
 			
+				
+			
+				
+			
 			
 			
 			<nav class="header-nav">
@@ -120,10 +128,14 @@
 			</nav>
 
 			<nav class="header-menu js-header-menu">
-				<ul style="width: 50%">
+				<ul style="width: 70%">
 				
 				
-					<li style="width: 100%"><a href="/">主页</a></li>
+					<li style="width: 33.333333333333336%"><a href="/">主页</a></li>
+		        
+					<li style="width: 33.333333333333336%"><a href="/categories">分类</a></li>
+		        
+					<li style="width: 33.333333333333336%"><a href="/archives">归档</a></li>
 		        
 				</ul>
 			</nav>
@@ -265,43 +277,56 @@ Jiang, Hibiscus, LingLong, Crystal, whatever:)</p>
 
 
   
-    <article id="post-cryptohack-wps" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-cpp20-arkdoom-p1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/cryptohack-wps/">Cryptohack打本手记</a>
+      <a class="article-title" href="/cpp20-arkdoom-p1/">C++20四大金刚之青龙concepts</a>
     </h1>
   
 
         
-        <a href="/cryptohack-wps/" class="archive-article-date">
-  	<time datetime="2024-12-12T07:38:02.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-12</time>
+        <a href="/cpp20-arkdoom-p1/" class="archive-article-date">
+  	<time datetime="2024-12-12T13:37:44.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-12</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h1 id="ecb-orcale">ECB Orcale</h1>
-<p>ECB
-Orcale属于<strong>选择明文攻击</strong>，需要拥有对明文的一定加密权限。<br />
-其利用了ECB加密模式不能抵抗 <em>Replay
-Attacks</em>（重放攻击）的特点。</p>
-<h2 id="攻击原理">攻击原理</h2>
-<p>目标Orcale常形如<strong>固定后缀</strong>，对于攻击者传递的字符串m，该Orcale会将(m+flag)填充后加密之。<br />
-此时，攻击者可以先爆破出flag的长度，随后通过控制m，将待加密的明文（填充后的）制备为形如“控制域+填充域+待解域”的形式。
-以block大小为16为例，各个域的说明如下：</p>
-<blockquote>
-<p>控制域：大小为16，每次爆破控制域中的第i位，使之遍历 <span
-class="math inline">\((0,255)\)</span>。该位其前的内容应为已解密内容，其后的内容应与“待解域”的填充部分全等。</p>
-<p>填充域：大小为16*k(<span class="math inline">\(k \in
-Z_+\)</span>)，通过调整m，该域内容应为任意内容 +
-flag的待解密其它部分。</p>
-<p>待解域：大小为16，</p>
+        <blockquote>
+<p>东方青龙，<code>concepts</code>龙腾四海。</p>
 </blockquote>
+<p>C++20的更新量级极大：其开创了大量新的编程模式，引入了大量语法点、标准库等等，对C++体系的影响可以与C++11相提并论。<br />
+其中更有“四大金刚”——<code>concepts</code>、<code>modules</code>、<code>ranges</code>和<code>coroutines</code>。本篇将深入浅出地探讨<code>concepts</code>这一大特性。<br />
+<del>其实concepts是C++20最“简单”的大特性之一了</del></p>
+<h1 id="pastsfinae">Past——SFINAE</h1>
+<p>concepts其实并不是一个新的“概念”(???)。</p>
+<p>模板（泛型）编程的课题可以占据C++的半壁江山。极高的设计自由度、一望无际的复用可能性、牵扯到的语法之繁杂、相关库的多样性使其一直以来都是C++语言的最重要课题，几乎没有之一。<br />
+所谓“C++其实是两门语言，带<code>template</code>的是一种，不带<code>template</code>的是另一种”的说法丝毫不为夸张。</p>
+<p>而作为一门编译型语言，在Metaprogramming中我们自然希望对模板的参数有一定约束，让函数按设计者期望的方式进行调用。<br />
+而在传统C++中，除了一些语言上的小“华点”被复用，并没有太好的办法对模板参数进行高可读性、易于维护/复用、明确的约束。</p>
+<p>C++11中提出了SFINAE(Substitution Failure Is Not An
+Error)的概念。<br />
+SFINAE在模板编程中的应用在于完成模板参数替换（即将实例化）时，如果代入<code>Ty = ...</code>会产生一些非法的表达式，则编译器会放弃这个重载（而不是继续试图<del>在绝路上狂奔</del>编译错误），转而试着寻找下一个重载进行匹配。<br />
+与SFINAE相搭配的内容还有：<br />
+- 对于全特化(<em>full specialization</em>)/偏特化(<em>partial
+specialization</em>)的模板类，其与满足条件（可自动推导）的模板参数匹配优先级很高，且绑定后<strong>不会受SFINAE影响放弃</strong>。<br />
+-
+C++中，对于自动模板参数，其推导遵循最简原则（即优先尝试将令参数不带任何
+<em>cvref</em> 修饰来实例化）。</p>
+<p><del>（感觉又噎着了，赶紧上代码润润嗓子）</del> 最简推导原则：
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//完美转发的场景</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(Ty&amp;&amp; arg)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> x = <span class="number">2</span>;</span><br><span class="line"></span><br><span class="line"><span class="built_in">fun</span>(<span class="number">1</span>); <span class="comment">//Ty = int，虽然Ty = int&amp;&amp;同样“能用”，但最简原则，不加引用优先</span></span><br><span class="line"><span class="built_in">fun</span>(x); <span class="comment">//Ty = int&amp;（比较显然，毕竟int就不能编译了）</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//一些其它的函数调用</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">bar</span><span class="params">(Ty arg)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="built_in">bar</span>(<span class="number">1</span>); <span class="comment">//Ty = int，虽然Ty确实可以是int&amp;&amp;，依然是“避重就轻”</span></span><br><span class="line"><span class="built_in">bar</span>(x); <span class="comment">//Ty仍然是int，虽然Ty依然可以是int&amp;，但毕竟int arg&#123;x&#125;;是合法的，所以编译器不会“闲着没事干”</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//std::forward</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function">std::<span class="type">remove_reference_t</span>&lt;Ty&gt;&amp; <span class="title">forward</span><span class="params">(std::<span class="type">remove_reference_t</span>&lt;Ty&gt;&amp; arg)</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> arg;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure></p>
+<blockquote>
+<p>常见的非法表达式： - （实例化代码中）建立了对void的引用； -
+试图对<code>void</code>或其它 <em>不完整的类型</em>
+计算<code>sizeof</code>； -
+<strong>试图访问类的某个<code>typedef</code>或静态成员等，但该成员不存在</strong>；（SFINAE中最为常用之者）</p>
+</blockquote>
+<p>比如</p>
 
       
 
@@ -315,11 +340,7 @@ flag的待解密其它部分。</p>
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">wp</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
         		</li>
       		
 		</ul>
@@ -329,7 +350,7 @@ flag的待解密其它部分。</p>
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/cryptohack-wps/">展开全文 >></a>
+          <a class="article-more-a" href="/cpp20-arkdoom-p1/">展开全文 >></a>
         </p>
       
 
