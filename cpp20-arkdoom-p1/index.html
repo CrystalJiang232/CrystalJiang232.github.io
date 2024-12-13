@@ -16,7 +16,7 @@
 <meta property="og:description" content="东方青龙，concepts龙腾四海。  C++20的更新量级极大：其开创了大量新的编程模式，引入了大量语法点、标准库等等，对C++体系的影响可以与C++11相提并论。 其中更有“四大金刚”——concepts、modules、ranges和coroutines。本篇将深入浅出地探讨concepts这一大特性。 其实concepts是C++20最“简单”的大特性之一了 Past——SF">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2024-12-12T13:37:44.000Z">
-<meta property="article:modified_time" content="2024-12-12T14:39:07.457Z">
+<meta property="article:modified_time" content="2024-12-13T03:31:59.598Z">
 <meta property="article:author" content="Hibiscus">
 <meta property="article:tag" content="Modern C++">
 <meta name="twitter:card" content="summary">
@@ -190,19 +190,24 @@
 <p>C++11中提出了SFINAE(Substitution Failure Is Not An
 Error)的概念。<br />
 SFINAE在模板编程中的应用在于完成模板参数替换（即将实例化）时，如果代入<code>Ty = ...</code>会产生一些非法的表达式，则编译器会放弃这个重载（而不是继续试图<del>在绝路上狂奔</del>编译错误），转而试着寻找下一个重载进行匹配。<br />
-与SFINAE相搭配的内容还有：<br />
-- 对于全特化(<em>full specialization</em>)/偏特化(<em>partial
+与SFINAE相搭配的内容还有：</p>
+<ul>
+<li>对于全特化(<em>full specialization</em>)/偏特化(<em>partial
 specialization</em>)的模板类，其与满足条件（可自动推导）的模板参数匹配优先级很高，且绑定后<strong>不会受SFINAE影响放弃</strong>。<br />
--
-C++中，对于自动模板参数，其推导遵循最简原则（即优先尝试将令参数不带任何
-<em>cvref</em> 修饰来实例化）。</p>
-<p><del>（感觉又噎着了，赶紧上代码润润嗓子）</del> 最简推导原则：
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//完美转发的场景</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(Ty&amp;&amp; arg)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> x = <span class="number">2</span>;</span><br><span class="line"></span><br><span class="line"><span class="built_in">fun</span>(<span class="number">1</span>); <span class="comment">//Ty = int，虽然Ty = int&amp;&amp;同样“能用”，但最简原则，不加引用优先</span></span><br><span class="line"><span class="built_in">fun</span>(x); <span class="comment">//Ty = int&amp;（比较显然，毕竟int就不能编译了）</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//一些其它的函数调用</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">bar</span><span class="params">(Ty arg)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="built_in">bar</span>(<span class="number">1</span>); <span class="comment">//Ty = int，虽然Ty确实可以是int&amp;&amp;，依然是“避重就轻”</span></span><br><span class="line"><span class="built_in">bar</span>(x); <span class="comment">//Ty仍然是int，虽然Ty依然可以是int&amp;，但毕竟int arg&#123;x&#125;;是合法的，所以编译器不会“闲着没事干”</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//std::forward</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function">std::<span class="type">remove_reference_t</span>&lt;Ty&gt;&amp; <span class="title">forward</span><span class="params">(std::<span class="type">remove_reference_t</span>&lt;Ty&gt;&amp; arg)</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> arg;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure></p>
+</li>
+<li>C++中，对于自动模板参数，其推导遵循最简原则（即优先尝试将令参数不带任何
+<em>cvref</em> 修饰来实例化）。</li>
+</ul>
+<p><del>（感觉又噎着了，赶紧上代码润润嗓子）</del><br />
+最简推导原则： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//完美转发的场景</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(Ty&amp;&amp; arg)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> x = <span class="number">2</span>;</span><br><span class="line"></span><br><span class="line"><span class="built_in">fun</span>(<span class="number">1</span>); <span class="comment">//Ty = int，虽然Ty = int&amp;&amp;同样“能用”，但最简原则，不加引用优先</span></span><br><span class="line"><span class="built_in">fun</span>(x); <span class="comment">//Ty = int&amp;（比较显然，毕竟int就不能编译了）</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//一些其它的函数调用</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">bar</span><span class="params">(Ty arg)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="built_in">bar</span>(<span class="number">1</span>); <span class="comment">//Ty = int，虽然Ty确实可以是int&amp;&amp;，依然是“避重就轻”</span></span><br><span class="line"><span class="built_in">bar</span>(x); <span class="comment">//Ty仍然是int，虽然Ty依然可以是int&amp;，但毕竟int arg&#123;x&#125;;是合法的，所以编译器不会“闲着没事干”</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//std::forward</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function">std::<span class="type">remove_reference_t</span>&lt;Ty&gt;&amp; <span class="title">forward</span><span class="params">(std::<span class="type">remove_reference_t</span>&lt;Ty&gt;&amp; arg)</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> arg;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure></p>
 <blockquote>
-<p>常见的非法表达式： - （实例化代码中）建立了对void的引用； -
-试图对<code>void</code>或其它 <em>不完整的类型</em>
-计算<code>sizeof</code>； -
-<strong>试图访问类的某个<code>typedef</code>或静态成员等，但该成员不存在</strong>；（SFINAE中最为常用之者）</p>
+<p>常见的非法表达式：</p>
+<ul>
+<li>（实例化代码中）建立了对void的引用；</li>
+<li>试图对<code>void</code>或其它 <em>不完整的类型</em>
+计算<code>sizeof</code>；</li>
+<li><strong>试图访问类的某个<code>typedef</code>或静态成员等，但该成员不存在</strong>；（SFINAE中最为常用之者）</li>
+</ul>
 </blockquote>
 <p>比如</p>
 
@@ -289,6 +294,15 @@ C++中，对于自动模板参数，其推导遵循最简原则（即优先尝�
 
   
 <nav id="article-nav">
+  
+    <a href="/ret/" id="article-nav-newer" class="article-nav-link-wrap">
+      <i class="icon-circle-left"></i>
+      <div class="article-nav-title">
+        
+          “事了拂衣去” —— 关于return的无尽缠绵
+        
+      </div>
+    </a>
   
   
     <a href="/cryptohack-wps/" id="article-nav-older" class="article-nav-link-wrap">

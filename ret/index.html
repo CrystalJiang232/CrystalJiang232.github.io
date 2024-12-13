@@ -6,14 +6,19 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="https://crystaljiang232.github.io">
-  <title>玲珑</title>
+  <title>“事了拂衣去” —— 关于return的无尽缠绵 | 玲珑</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="玲珑">
-<meta property="og:url" content="https://crystaljiang232.github.io/page/4/index.html">
+  <meta name="description" content="一个最为简单的return语句是C++中出现频率最高的语句之一。为了将这一语句的效率发挥到极致，无数学者为之前仆后继……  不就是一个return嘛？ 是的，确实就是一个return。 C语言的所有变量都符合现代C++的trivial types的定义，即当一个变量被赋值时，只需要将该值对应内存空间的数据简单地copy到当前变量对应的内存空间。 对于 trivial 的类来说，r">
+<meta property="og:type" content="article">
+<meta property="og:title" content="“事了拂衣去” —— 关于return的无尽缠绵">
+<meta property="og:url" content="https://crystaljiang232.github.io/ret/index.html">
 <meta property="og:site_name" content="玲珑">
+<meta property="og:description" content="一个最为简单的return语句是C++中出现频率最高的语句之一。为了将这一语句的效率发挥到极致，无数学者为之前仆后继……  不就是一个return嘛？ 是的，确实就是一个return。 C语言的所有变量都符合现代C++的trivial types的定义，即当一个变量被赋值时，只需要将该值对应内存空间的数据简单地copy到当前变量对应的内存空间。 对于 trivial 的类来说，r">
 <meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2024-12-13T02:36:00.000Z">
+<meta property="article:modified_time" content="2024-12-13T02:49:46.522Z">
 <meta property="article:author" content="Hibiscus">
+<meta property="article:tag" content="Modern C++">
 <meta name="twitter:card" content="summary">
   
     <link rel="alternative" href="/atom.xml" title="玲珑" type="application/atom+xml">
@@ -150,121 +155,43 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
-  
-    <article id="post-std-print" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+            <article id="post-ret" class="article article-type-post " itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/std-print/">I/O新生的序幕——std::print</a>
+    <h1 class="article-title" itemprop="name">
+      “事了拂衣去” —— 关于return的无尽缠绵
     </h1>
   
 
         
-        <a href="/std-print/" class="archive-article-date">
-  	<time datetime="2024-12-10T06:01:08.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-10</time>
+        <a href="/ret/" class="archive-article-date">
+  	<time datetime="2024-12-13T02:36:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-13</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h2 id="函数签名">函数签名</h2>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//namepsace std</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Args&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(std::format_string fmt,Args&amp;&amp;... args)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Args&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(FILE* <span class="type">const</span> stream,std::format_string fmt,Args&amp;&amp;... args)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Args&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(std::ostream&amp; stream,std::format_string fmt,Args&amp;&amp;... args)</span></span>;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>其中前两个在<code>&lt;print&gt;</code>中被定义，第三个在<code>&lt;ostream&gt;</code>中被定义。</p>
+        <blockquote>
+<p>一个最为简单的<code>return</code>语句是C++中出现频率最高的语句之一。为了将这一语句的效率发挥到极致，无数学者为之前仆后继……</p>
 </blockquote>
-<p>std::print相当于补全了现代C++在输出内容上的一大缺憾。
-C/C++传统的输入/输出至今已经历了三代：以<code>&lt;stdio.h&gt;</code>为代表的传统C样式I/O、以<code>&lt;iostream&gt;</code>为代表的C++98时代的I/O及如今<code>&lt;print&gt;</code>打头的Modern
-C++ I/O。</p>
-<ol type="1">
-<li><code>&lt;stdio.h&gt;</code>作为经典的输入/输出手段永不过时，其两大特性——高效、便捷堪称遥遥领先。<code>printf</code>提供了高可读性的format方案——<code>%-2d</code>就是输出整型左对齐2格，<code>%.3f</code>就是输出浮点加三位小数，即写即用。其一大缺点是作为C时代的产物，不能支持自定义类型的输出（相当于无法实现一个统一的interface，必须另起炉灶）；另一个缺点是C遗留的va_args是一个不成熟的变参数解决方案（比如没有对format-specifier和参数数量统一的校验，给极大量的segament
-fault和奇奇怪怪的bug留下了空间），且其并不能完美地传递C++的类/object。</li>
-<li><code>&lt;iostream&gt;</code>则代表着一代经典C++。其将C++区别于C的特性发挥到了极致——通过继承树提供了I/O的统一接口，同时令用户可以通过重载<code>operator&lt;&lt;</code>来便捷地自定义类型（这点甚至远胜于<code>print</code>的<code>formatter</code>特化），在OOP上则让I/O流成为对象且支持调用各种方法来对之进行操作。但其冗余过多的副作用就是输出效率远不如<code>&lt;stdio.h&gt;</code>——频繁的函数调用（每一个<code>&lt;&lt;</code>都算调用一次函数，需要不断地将<code>std::ostream&amp;</code>操作和返回，<code>inline</code>亦很难对之有很大改观）；同时格式化输出的便捷性和可读性之差一直是其痛点之一。比较一下三代C/C++格式化输出一个简单的信息：
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">output</span><span class="params">(<span class="type">double</span> temp,<span class="type">int</span> speed)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">//&lt;stdio.h&gt;</span></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Temperature: %.1f ℃. Speed: %d km/h.\n&quot;</span>,temp,speed); </span><br><span class="line"></span><br><span class="line">    <span class="comment">//&lt;iostream&gt;</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Temperature: &quot;</span> &lt;&lt; std::<span class="built_in">setpercision</span>(<span class="number">1</span>) &lt;&lt; temp &lt;&lt; <span class="string">&quot; ℃. Speed: &quot;</span> &lt;&lt; speed &lt;&lt; <span class="string">&quot;km/h.&quot;</span> &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//&lt;print&gt;</span></span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;Temperature: &#123;:.1f&#125; ℃. Speed: &#123;&#125; km/h.&quot;</span>,temp,speed);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
-<li><code>&lt;print&gt;</code>则是C++23加入的新成员，其基本继承了既有的较成功库<code>&lt;fmtlib&gt;</code>的实践。<br />
-trivial-type的格式化语法上和python的format几乎无二，相当于保留了<code>printf</code>的高可读性和高效率的同时，融合了Modern
-C++的template元素，并由此支持自定义类型格式化和类型推导。</li>
-</ol>
-<p>函数签名显然非常的straightforward，第一个重载为基础，后两个只是指定了输出流（可以传<code>FILE*</code>或<code>std::ostream&amp;</code>）。</p>
-<h2 id="stdformatter的特化">std::formatter的特化</h2>
-<p>客观来说，<code>&lt;format&gt;</code>和<code>&lt;print&gt;</code>的自定义实际上门槛相较于<code>&lt;iostream&gt;</code>的重载<code>operator&lt;&lt;</code>还是有些高。<br />
-自定义类型需要通过特化<code>std::formatter</code>来实现自定义输出。<br />
-但其优点在于开发复用上限极高，可以将任意的自定义类的format自由度提至与trivial-types相并论。</p>
+<h1 id="不就是一个return嘛">不就是一个return嘛？</h1>
+<p>是的，确实就是一个<code>return</code>。</p>
+<p>C语言的所有变量都符合现代C++的<em>trivial
+types</em>的定义，即当一个变量被赋值时，只需要将该值对应内存空间的数据简单地copy到当前变量对应的内存空间。<br />
+对于 <em>trivial</em>
+的类来说，return确实只是将变量的值丢回到函数栈存储返回值之处（随后再销毁其它局部变量等等）。</p>
+<p>但C++作为一门面向对象的编译期语言，其揭示了一点——这一表面风平浪静的过程实则暗藏汹涌。<br />
+因为某一片具备数据、可使用的内存距离C++中的“对象”概念完全不能相提并论。</p>
 <blockquote>
-<p>关于std::formatter的一切，可以移步天书般的<a
-target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/utility/format/formatter">cppreference</a>。</p>
+<p>这也是C/C++对于堆内存分配的“看法”迥异之处：C的<code>malloc</code>/<code>free</code>实际上不会对内存做任何事情（只是“申请”并获得使用权），顶多算上<code>calloc</code>的零初始化；</p>
+<p>而C++中的<code>new</code>实际上涉及分配内存-&gt;调用构造函数两步，具体地，你可以认为<code>operator new</code>就是一个<code>calloc</code>加上一个<code>thiscall</code>函数的调用：
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function">Ty* <span class="keyword">operator</span> <span class="title">new</span><span class="params">(<span class="type">size_t</span> size)</span> <span class="comment">//C++中operator new的最常用函数重载，在隐式调用时size_t会自动传递</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Ty* ptr = <span class="built_in">static_cast</span>&lt;Ty*&gt;(<span class="built_in">malloc</span>(size));</span><br><span class="line"></span><br><span class="line">    <span class="comment">//随后，我们假设一个函数的ctor在调用时实际上具备Ty::Ty(Ty* where,...)的形式。</span></span><br><span class="line">    <span class="comment">//其就是将本来隐式传递的this写成了显式的形式，参考python中的self和C++23的deducing this。</span></span><br><span class="line">    Ty::<span class="built_in">Ty</span>(ptr);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> ptr;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 </blockquote>
-<p>std::formatter特化用法精选：先从下面的代码出发，自行体会。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">CR</span></span><br><span class="line">&#123; </span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">CR</span>(<span class="type">int</span> v):<span class="built_in">speed</span>(v)&#123;&#125;</span><br><span class="line">    <span class="keyword">friend</span> <span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;CR&gt;;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> speed;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;CR&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="title">parse</span><span class="params">(std::format_parse_context&amp; fpc)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> fpc.<span class="built_in">begin</span>();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">auto</span> <span class="title">format</span><span class="params">(<span class="type">const</span> CR&amp; c,std::format_context&amp; fc)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> std::format_to(fc.<span class="built_in">out</span>(),<span class="string">&quot;Train operating at &#123;&#125; km/h&quot;</span>,c.speed);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>回顾一下：今我们希望将一个对象转化为字符串输出，该任务可以分为两步：</p>
-<p>解析格式串，将format的“需求”存储起来；</p>
-<p>根据这些“需求”，读取对象信息并将之格式化。</p>
-<p>而std::formatter的<code>parse</code>和<code>format</code>函数就分别负责执行这两个任务。</p>
-</blockquote>
-<ul>
-<li>第一个函数必须具有签名<code>constexpr auto parse(std::format_parse_context&amp;);</code>（auto类型由<code>decltype(std::format_parse_context::begin())</code>确定）。<br />
-该函数必须声明为constexpr，否则编译不能通过（对于直接的调用std::format/print，C++23要求必须在编译期处理之，同时引出的就是目前格式串必须是string-constant；动态格式串另有他法）。<br />
-该函数接收的<code>std::format_parse_context&amp;</code>实际上是表征format-specifier区间的一个view，调用<code>fpc.begin()</code>会返回一个指向当前处理域':'的下一个字符的迭代器。</li>
-</ul>
-<blockquote>
-<p>插播一下“处理域”的定义：每个框或可为全空<code>&#123;&#125;</code>，或应形如<code>&#123;A:B&#125;</code>，<strong><em>其中A为一部分，':B'为一部分，可以理解为两侧分别都是可选的，用法见下：</em></strong></p>
-<p>A是index，<strong>若不指定A，则该格式字符串采用的是“自动索引”(auto-indexing)</strong>，即每遇到一个框就把下一个参数丢进去；</p>
-<p>否则为手动索引（manual-indexing），指定每个框所用参数的index（可以复用），如<code>std::println("&#123;0&#125; &#123;1&#125; &#123;0&#125;",1,2);</code>输出<code>1 2 1</code>。</p>
-<blockquote>
-<p><strong>不允许使用混合索引（即要么全自动，要么全手动）。</strong></p>
-<p><strong>索引不允许越界，比如<code>std::println("&#123;&#125; &#123;&#125;",1)</code>不能通过编译。</strong></p>
-</blockquote>
-<p>:B是format-specifier，形式和python/C的类似，每个框都可以自定义，不再赘述。</p>
-<p>应用实例：将一个浮点数输出两次，精度分别为4位、2位：<code>std::println("&#123;0:.4f&#125; -&gt; &#123;0:.2f&#125;",some_float);</code>。</p>
-</blockquote>
-<p><strong>简而言之，该函数的任务是通过移动该迭代器来收集format的需求，并将之存储于这个struct的成员变量中，以供后续处理。</strong><br />
-该函数的返回值必须同样是一个迭代器，且该迭代器<strong>必须指向'}'（也就是format-specifier的末尾的下一个字符），否则会抛出std::format_error！</strong></p>
-<ul>
-<li>第二个函数必须具有签名<code>auto format(const Ty&amp;,std::format_context&amp;) const;</code>（auto类型由<code>decltype(std::format_context::out())</code>确定）。<br />
-该函数必须被声明为常成员函数（后缀<code>const</code>不要漏）；对于trivial-types，const
-Ty&amp;可以被改为Ty（更改原则和其它函数的const
-int&amp;/int一类相同）。<br />
-该函数接收的<code>std::format_context&amp;</code>是一个缓存输出格式串的字符串，调用<code>fc.out()</code>会返回一个<em>back
-insert iterator</em>。</li>
-</ul>
-<blockquote>
-<p><em>back insert
-iterator</em>是一类简单的迭代器，其仅定义了以下的<code>public</code>成员函数：</p>
-<ul>
-<li><code>operator*()</code>，返回<code>*this</code>；</li>
-<li><code>operator++()</code>（含<code>operator++(int)</code>），返回<code>*this</code>且什么也不做；</li>
-<li><code>operator=(const Ty&amp;)</code>（含<code>operator=(Ty&amp;&amp;)</code>），将给定元素copy(或move)追加到容器末尾（相当于调用了<code>push_back(const Ty&amp;)</code>/<code>push_back(Ty&amp;&amp;)</code>）。</li>
-</ul>
-<blockquote>
-<p>事实上这些<em>iterator</em>的<code>operator=</code>有四个重载，还有两个是类的基本成员函数（即copy/move
-assignment operator）</p>
-</blockquote>
-<p>在C++ Standard
-library中，调用std::back_inserter(some_container)可以获得一个<em>back
-insert
-iterator</em>，some_container应具有<code>push_back</code>成员函数。</p>
-</blockquote>
-<p>该函数应当通过这个<code>fc.out()</code>来向缓冲字符串中写入字符，并返回<code>fc.out()</code>。<br />
-写入方法相对就比较五花八门了：
-最“老土”的方式无疑是直接对这个iterator逐个字符地赋值（注意右操作数只能是<code>char</code>）；<br />
-现代C++中同样有很多函数可以高效地进行此项任务，对于潜在自由度较高的object，可以先建立一个string缓存并操作之，最后再copy过去。<br />
-两个比较常用的、更为简洁的方法为复用<code>std::ranges::copy</code>和<code>std::format_to</code></p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//方法1：利用ranges库，集复制返回于一体</span></span><br><span class="line">std::string buf&#123;&#125;;</span><br><span class="line"><span class="comment">//...对buf进行操作</span></span><br><span class="line"><span class="comment">//优势在于可以按需较为灵活地截取/操作buf（ranges上分ing）</span></span><br><span class="line"><span class="keyword">return</span> std::ranges::<span class="built_in">copy</span>(buf,fc.<span class="built_in">out</span>()).out; <span class="comment">//注意返回值是一个含有in/out迭代器的struct，需要取其out</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//方法2：std::format_to直接格式化至迭代器（相应地，std::format相当于格式化至字符串，对标sprintf）</span></span><br><span class="line"><span class="keyword">return</span> std::format_to(fc.<span class="built_in">out</span>(),<span class="string">&quot;&#123;&#125;&quot;</span>,...); <span class="comment">//函数返回值就是迭代器本身</span></span><br></pre></td></tr></table></figure>
-<h3
-id="奇技淫巧既有formatter的复用"><del>奇技淫巧</del>：既有Formatter的复用</h3>
-<p>对于很多较简单的class/object，一视同仁start-from-scratch显然不是明智之举，此时对formatter的复用可令你在format间游走自如。<br />
-复用方式有二：继承复用/成员复用<br />
-还是直接看代码： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//还是以上文的CR类为例</span></span><br><span class="line"><span class="keyword">namespace</span> inheritance</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">template</span>&lt;&gt;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;CR&gt; : std::formatter&lt;<span class="type">int</span>&gt;</span><br><span class="line">    &#123;   </span><br><span class="line">        <span class="function"><span class="keyword">auto</span> <span class="title">format</span><span class="params">(<span class="type">const</span> CR&amp; c,std::format_context&amp; fc)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">        </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> std::formatter&lt;<span class="type">int</span>&gt;::format(c.speed,fc);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;; <span class="comment">//相当于用std::formatter&lt;int&gt;部分覆写了自身，parse遵循int的format-specifier</span></span><br><span class="line">    <span class="comment">//而format时需要调用父类的format方法</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">namespace</span> member</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">template</span>&lt;&gt;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;CR&gt;</span><br><span class="line">    &#123;</span><br><span class="line">        std::formatter&lt;<span class="type">int</span>&gt; fmt&#123;&#125;;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="title">parse</span><span class="params">(std::format_parse_context&amp; fpc)</span></span></span><br><span class="line"><span class="function">        </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> fmt.<span class="built_in">parse</span>(fpc);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">auto</span> <span class="title">format</span><span class="params">(<span class="type">const</span> CR&amp; c,std::format_context&amp; fc)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">        </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> fmt.format(c.speed,fc);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>显然inheritance对于较小的类（最好是只有一个需要格式化的量）来说比较友好，格式化进行更高效；<br />
-且若<code>std::convertible_to&lt;const A&amp;, B&gt;</code>（A为待格式化的类，B为继承类的<code>format</code>函数第一参数）为<code>true</code>，则可以完全继承之，<strong>比如自定义许多容器的format。</strong><br />
-member法的灵活度会更高些，甚至可以在<code>parse</code>中让迭代器在<code>format_parse_context</code>里游走来实现更高的自由度，适合于每个参数的输出格式都希望独立控制的类，如时间。<br />
-下面再附上一例应用了concepts、<code>std::span</code>等来实现<code>std::vector</code>的通用格式化方法：
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;algorithm&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;print&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;span&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;std::default_formattable&lt;<span class="type">char</span>&gt; Ty&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;std::span&lt;Ty&gt;&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="title">parse</span><span class="params">(std::format_parse_context&amp; fpc)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> fpc.<span class="built_in">begin</span>();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">auto</span> <span class="title">format</span><span class="params">(std::span&lt;Ty&gt; sp,std::format_context&amp; fc)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="comment">//我们希望实现一个类似python的list的效果，即[1,2,3]这样，此处尚未加入自定义分隔符等功能</span></span><br><span class="line">        std::string buf&#123;<span class="string">&quot;[&quot;</span>&#125;;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">const</span> <span class="keyword">auto</span>&amp; i : sp)</span><br><span class="line">        &#123;</span><br><span class="line">            buf += std::format(<span class="string">&quot;&#123;&#125;,&quot;</span>,i);</span><br><span class="line">        &#125;</span><br><span class="line">        buf.<span class="built_in">back</span>() = <span class="string">&#x27;]&#x27;</span>;</span><br><span class="line">        <span class="keyword">return</span> std::ranges::<span class="built_in">copy</span>(buf,fc.<span class="built_in">out</span>()).out;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;std::default_formattable&lt;<span class="type">char</span>&gt; Ty&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;std::vector&lt;Ty&gt;&gt; : std::formatter&lt;std::span&lt;Ty&gt;&gt;</span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">//现在可以直接格式化所有（元素类型可以被默认格式化的）vector</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::vector&lt;<span class="type">int</span>&gt; vc&#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>&#125;;</span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,vc); <span class="comment">//[1,2,3]</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>现在我们假设希望去</p>
 
       
 
@@ -277,46 +204,86 @@ member法的灵活度会更高些，甚至可以在<code>parse</code>中让迭�
 		<i class="icon-price-tags icon"></i>
 		<ul class="article-tag-list">
 			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">C/C++ Libraries</a>
-        		</li>
-      		 
         		<li class="article-tag-list-item">
         			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
         		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">C++23</a>
-        		</li>
       		
 		</ul>
 	</div>
 
       
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
 
       
-        <p class="article-more-link">
-          <a class="article-more-a" href="/std-print/">展开全文 >></a>
-        </p>
-      
 
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
+        </div>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=https://crystaljiang232.github.io/ret/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
       
       <div class="clearfix"></div>
     </div>
   </div>
   <div>
 </article>
+
+
+  
+<nav id="article-nav">
+  
+  
+    <a href="/cpp20-arkdoom-p1/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">C++20四大金刚之青龙concepts</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
 
 
 <aside class="wrap-side-operation">
@@ -332,219 +299,34 @@ member法的灵活度会更高些，甚至可以在<code>parse</code>中让迭�
         </div>
         
         
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-explore-scanf" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/explore-scanf/">细究scanf</a>
-    </h1>
-  
-
-        
-        <a href="/explore-scanf/" class="archive-article-date">
-  	<time datetime="2024-12-08T13:16:43.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-08</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="scanf简明精干之美">scanf，简明精干之美</h1>
-<h2 id="基本语法">基本语法</h2>
-<p>scanf的函数签名为：
-<code>int scanf(const char* format, ...);</code><br />
-其中format为格式字符串，后跟不定参数传递待赋值变量的地址。</p>
-<blockquote>
-<p>较高级的C语言提倡使用scanf_s代替scanf以确保内存安全，其函数签名为
-<code>int scanf_s(const char* format, ...)</code>。</p>
-<p>用法区别为，不定参数列表需要传递待赋值变量的地址和<strong>最大写入内存大小</strong>，如：<code>scanf_s("%d", &amp;var, sizeof(int));</code></p>
-</blockquote>
-<p>scanf()的核心在于格式字符串上。<br />
-format-string的说明符形式为：
-<code>[=%[*][width][modifiers]type=]</code><br />
-其中，%标志说明符的开始（"%%"符号的escape-character是"%%"）；<br />
-*是一个可选字符，任何被指定了*的format-string均不会被赋值至对应的变量中（相当于这一段scan后被舍弃）。
-width表示了该说明符读取的最大字符数；<br />
-modifiers表示一个对变量类型的修饰符（“长”“短”一类，比如ll表示long
-long，s表示short，用于修饰%d,%u,%f）；<br />
-type的“全解”如下。<br />
-<strong>以下部分内容可能会因编译器不同而有所不同，仅供MSVC
-19.3参考。</strong></p>
-<ul>
-<li><p>d:
-表示读入一个十进制整数。<strong>使用之时会优先读取前置负号，如果负号后没有十进制字符，则该次读取失败（变量不会被赋值），但负号已经从流中被读取（“取出”）。</strong><br />
-函数的对应预期变量是一个<code>int*</code>，并将以"1+31"的方式将读取的数值写入该地址（第一位符号，后31位是数值，表示范围<span
-class="math inline">\(-2^{31} ~ 2^{31} - 1\)</span>。<br />
-如果需要读取long/long
-long/short整型，请将modifiers指定为l/ll/s（应用形如<code>%lld</code>）。long
-long的范围自然扩展至<span class="math inline">\(-2^{63} ~ 2^{63} -
-1\)</span>。 如果发生溢出，则结果为未定义行为(Undefined
-Behavior)。</p></li>
-<li><p>s:
-表示读入一个字符串。<strong>此处“字符串”的定义是连续的任意字符，直至终止字符('\0')或空白字符（换行、水平/垂直制表符、空格）。读取时，%s不会读取这些终止符（亦不会将之从流中取出）。</strong><br />
-函数的对应预期变量是一个<code>char*</code>，并将读取到的所有字符（最大数目由width指定）依次写入其中，<strong>并在最后追加一个'\0'，所以需要预留的内存空间至少是(width+1)*<code>sizeof(char)</code></strong>。</p></li>
-<li><p>c：表示读入单个字符。<strong>如果指定了width，则会连续读取width个字符，存储在该对应地址开始的连续位置（增量为<code>sizeof(char)</code>），且末尾不会追加'\0'。</strong>
-函数的对应预期变量是一个<code>char*</code>。</p></li>
-<li><p>u：表示读入一个无符号十进制整数。
-函数的对应预期变量是一个<code>unsigned int*</code>。</p></li>
-<li><p>f：表示读入一个浮点数。
-函数的对应预期变量是一个<code>float*</code>。<strong>如需读取至</strong><code>double*</code><strong>，请使用<code>%lf</code>；long
-double则请使用<code>%llf</code>。</strong></p></li>
-</ul>
-<blockquote>
-<p>浮点数应形如：[符号]十进制数[.十进制数][e[符号]十进制数]。</p>
-<p>有效的浮点数实例： 3；3.14；+6.24e5；-9e-7。</p>
-</blockquote>
-<ul>
-<li><p>x，X:
-十六进制整数，除字符集合改为所有的十六进制字符（大小写均有效）外行为与d相似。十六进制数前的'0x'/'0X'前缀是可选的。
-函数的对应预期变量是一个<code>int*</code>，修饰规则与前述相同。</p></li>
-<li><p>o： 八进制整数，不再赘述。</p></li>
-<li><p>i：
-读取一个整数，行为类似于python中的<code>int(x,0)</code>（即自动根据前缀判断进制），0-八进制，0x/0X-十六进制，其它-十进制（参考C中的numeric
-constants规则）。</p></li>
-<li><p>[]：扫描字符集合，集成了一个弱化版的正则表达式。<br />
-具体地，[]内部可以放置扫描字符的集合，集合的表达方式有逐个列出/横杠表示范围，并支持'^'表示'否'。<br />
-举例：<code>%[a-zA-Z]</code>扫描所有字母；<code>%[^\n]</code>扫描直至换行符（相当于获取一整行）；<code>%1[x]</code>获取至多一个x字符。</p></li>
-</ul>
-<blockquote>
-<p>'^'的转义字符为'^'，但在C的源代码中应写作<code>\\^</code>（因为''自身会被预处理转义）。</p>
-</blockquote>
-<p>返回值：赋值成功的变量数，若到达文件末尾则返回EOF（负数宏，在许多平台上通常为-1）。<br />
-<strong>当且仅当赋值成功的变量数为0且到达文件尾时，返回EOF（亦即只要存在赋值成功的变量，即不会返回负数）。</strong></p>
-<h2 id="底层逻辑">底层逻辑</h2>
-<p>假设scanf的目标流为in。scanf从左往右扫描format-string，遇到以下字符时分别采取对应的措施：<br />
--
-specifier（如上）：尝试根据specifier的规则处理in中的下一段符合要求的字符；<br />
-若specifier没有加星号(*)，则取va_arg（不定参数列表）中的下一个参数，对之解引用并将数据写入其中。<br />
--
-任意空白字符：将format-string读取点前进至下一个非空白字符，同时跳过流in中所有的空白字符。<strong>即，任意数目的连续空白字符对于scanf而言是等效的。</strong><br />
--
-其它字符：scanf将从流中尝试取走一个给定的字符<code>(char)</code>，行为类似于给定形如
-<code>%*1[(char)]</code>。</p>
-<blockquote>
-<p><strong><em>重点来咯！！！</em></strong></p>
-<ul>
-<li><p>对于上述的第1、3种情况（即扫描format-string需要处理的是specifier/其它非空白字符），一旦读取失败，<strong>则对format-string的扫描终止，读取结束。</strong></p></li>
-<li><p>第2种情况（处理空白字符）时，即使流中没有空白字符，依然继续。</p></li>
-<li><p>每次调用scanf时，如果specifier不是<code>%c</code>或扫描字符合集<code>%[]</code>，则会<strong>自动先跳过所有的空白字符一次</strong>。</p></li>
-</ul>
-</blockquote>
-<p>假设待读取流形如 <code>1  2\n34abc d</code>，代码及读取效果示例：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">input1</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span> a=<span class="number">0</span>,b=<span class="number">0</span>;</span><br><span class="line">    <span class="type">char</span> c=<span class="number">0</span>;</span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%d%d&quot;</span>,&amp;a,&amp;b); <span class="comment">//a=1,b=2,返回值2，流的下一个字符是\n</span></span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%c&quot;</span>,&amp;c); <span class="comment">//c=&#x27;\n&#x27;,返回值1</span></span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%da%d&quot;</span>,&amp;a,&amp;b); <span class="comment">//a=34，返回值1，流的下一个字符是c，b未更改(b=2)</span></span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%*[^d]&quot;</span>); <span class="comment">//返回值0，流的下一个字符是d</span></span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%x&quot;</span>,&amp;a); <span class="comment">//a=13，返回值1</span></span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%c&quot;</span>,&amp;c); <span class="comment">//返回值-1（假设EOF的宏常量是-1）</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h2 id="实战示例">实战示例</h2>
-<blockquote>
-<p>Talk is cheap. Show me the code.</p>
-</blockquote>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">//逐位读取整数（比如输入12345，存储于数组[1,2,3,4,5]）</span></span><br><span class="line">    <span class="type">int</span>* data = <span class="built_in">calloc</span>(<span class="number">100</span>,<span class="keyword">sizeof</span>(<span class="type">int</span>));</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;<span class="number">100</span>;++i)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">scanf</span>(<span class="string">&quot;%1d&quot;</span>,data+i);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//读取一整行字符</span></span><br><span class="line">    <span class="type">char</span>* str = <span class="built_in">calloc</span>(<span class="number">255</span>,<span class="keyword">sizeof</span>(<span class="type">char</span>));</span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%[^\n]&quot;</span>,str); <span class="comment">//虽然这种用法不是非常memory-safe</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//只读取十六进制字符，并舍弃前缀的非十六进制字符</span></span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%*[^0-9A-Fa-f]%[0-9A-Fa-f]&quot;</span>,str);</span><br><span class="line"></span><br><span class="line">    <span class="comment">//试探下一个字符是否为&quot;x&quot;，且若是则读取之</span></span><br><span class="line">    <span class="comment">//注意！！绝对不允许将扫描字符集合直接读至单个char中，必须分配至少为两个char的内存空间（数组/堆内存均可），因为其会要求写入一个&#x27;\0&#x27;！</span></span><br><span class="line">    <span class="type">char</span>* temp = <span class="built_in">calloc</span>(<span class="number">2</span>,<span class="keyword">sizeof</span>(<span class="type">char</span>));</span><br><span class="line">    <span class="type">int</span> status = <span class="built_in">scanf</span>(<span class="string">&quot;%1[x]&quot;</span>,temp);</span><br><span class="line">    <span class="keyword">if</span>(status==<span class="number">1</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;x received!&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//连续读取全部字符，直至下一个&#x27;*&#x27;（像不像消除全部注释？）</span></span><br><span class="line">    (<span class="type">void</span>)<span class="built_in">scanf</span>(<span class="string">&quot;%*[^*]&quot;</span>);</span><br><span class="line">    <span class="keyword">if</span>(<span class="built_in">scanf</span>(<span class="string">&quot;%1[/]&quot;</span>,temp) == <span class="number">1</span>) </span><br><span class="line">    <span class="comment">//结合上述，进入这个if分支说明碰到&quot;*/&quot;了，也就是注释结束的意思</span></span><br><span class="line">    <span class="comment">//同时如果下一个字符不是&quot;/&quot;，则其会保留在流中，不会影响后续while操作等。</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">//...</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="pta与巧用scanf有关的题目示例">PTA与巧用scanf有关的题目示例</h2>
-<h3 id="一元多项式函数求导强化版">一元多项式函数求导（强化版）</h3>
-<blockquote>
-<p>给出一个一元多项式函数 (形如<span
-class="math inline">\(f(x)=ax^b+cx^d+...\)</span>)，求出其导函数，结果用标准书写格式输出，必须合并同类项，降幂排列。如果结果多项式为空，仅输出0。</p>
-<p>每一项的系数绝对值小于100，指数为小于100的非负整数。输入字符串长度不超过3000。变量用字母
-x 表示。题目保证输入的多项式均合法。</p>
-<p>输入格式:<br />
-在一行中输入一个多项式字符串。</p>
-<p>输出格式:<br />
-在一行中按照标准书写格式输出字符串。</p>
-<p>输入样例： <code>x^4-3x^2+4</code></p>
-<p>输出样例： <code>4x^3-6x</code></p>
-</blockquote>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">int</span> out[<span class="number">100</span>] = &#123; <span class="number">0</span> &#125;, flag = <span class="number">0</span>;</span><br><span class="line">	<span class="type">char</span> <span class="built_in">string</span>[<span class="number">21</span>] = &#123; <span class="string">&#x27;+&#x27;</span> &#125;, temp[<span class="number">2</span>] = &#123; <span class="number">0</span> &#125;;</span><br><span class="line">	<span class="keyword">while</span> (!feof(<span class="built_in">stdin</span>))</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="type">int</span> factor = <span class="number">0</span>, exponent = <span class="number">0</span>;</span><br><span class="line">		(<span class="type">void</span>)<span class="built_in">scanf</span>(<span class="string">&quot;%1[+-]&quot;</span>, <span class="built_in">string</span>);</span><br><span class="line">		<span class="keyword">if</span> (<span class="built_in">scanf</span>(<span class="string">&quot;%19[0-9]&quot;</span>, <span class="built_in">string</span> + <span class="number">1</span>) == <span class="number">0</span>)</span><br><span class="line">		&#123;</span><br><span class="line">			<span class="built_in">string</span>[<span class="number">1</span>] = <span class="string">&#x27;1&#x27;</span>;</span><br><span class="line">		&#125;</span><br><span class="line">		factor = atoi(<span class="built_in">string</span>);</span><br><span class="line">		<span class="keyword">if</span> (<span class="built_in">scanf</span>(<span class="string">&quot;%1[x]&quot;</span>, temp) == <span class="number">0</span>)</span><br><span class="line">		&#123;</span><br><span class="line">			<span class="keyword">continue</span>;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> (<span class="built_in">scanf</span>(<span class="string">&quot;%1[\\^]&quot;</span>, temp) == <span class="number">1</span>)</span><br><span class="line">		&#123;</span><br><span class="line">			(<span class="type">void</span>)<span class="built_in">scanf</span>(<span class="string">&quot;%d&quot;</span>, &amp;exponent);</span><br><span class="line">			<span class="keyword">if</span> (exponent &gt;= <span class="number">1</span>)</span><br><span class="line">			&#123;</span><br><span class="line">				out[exponent - <span class="number">1</span>] += factor * exponent;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">else</span></span><br><span class="line">		&#123;</span><br><span class="line">			out[<span class="number">0</span>] += factor;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">    <span class="type">char</span>* output = <span class="built_in">calloc</span>(<span class="number">1000</span>,<span class="keyword">sizeof</span>(<span class="type">char</span>));</span><br><span class="line">    <span class="type">int</span> putloc = <span class="number">0</span>;</span><br><span class="line">	<span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">99</span>;i &gt;= <span class="number">2</span>;--i)</span><br><span class="line">	&#123;</span><br><span class="line">        putloc += (out[i] ? <span class="built_in">sprintf</span>(output + putloc, <span class="string">&quot;%+dx^%d&quot;</span>,out[i],i) : <span class="number">0</span>);</span><br><span class="line">	&#125;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&gt;=<span class="number">0</span>;--i)</span><br><span class="line">    &#123;</span><br><span class="line">        putloc += (out[i] ? <span class="built_in">sprintf</span>(output + putloc, i ? <span class="string">&quot;%+dx&quot;</span> : <span class="string">&quot;%+d&quot;</span>,out[<span class="number">1</span>]) : <span class="number">0</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span>(putloc)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%s&quot;</span>,output[<span class="number">0</span>]==<span class="string">&#x27;+&#x27;</span> ? output+<span class="number">1</span> : output);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;0&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">free</span>(output);</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>注释：</p>
-<ul>
-<li><p>在scan前置系数上，采用了统一interface的策略（即在接收string的第一个字符设置为'+'，规避开第一项的'+'缺失问题）。</p></li>
-<li><p><code>&lt;stdlib.h&gt;</code>中的<code>atoi</code>可以帮助处理数字字符。</p></li>
-<li><p>每一步都是借助弱化的regex来“步步为营”，<br />
-比如<code>scanf("%1[x]",temp)</code>试探有无'x'，若无则<code>continue</code>；<br />
-<code>scanf("%1[\\^]",temp)</code>试探有无'^'，若无则确定为一次幂。<code>[]</code>的优点体现在<del>strong
-exception guarantee</del>若失败则不会产生其它影响。</p></li>
-</ul>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">C/C++ Libraries</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">C Functions</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/explore-scanf/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-  <div>
-</article>
-
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
+        <div class="toc-container tooltip-left">
+            <i class="icon-font icon-category"></i>
+            <div class="tooltip tooltip-east">
+                <span class="tooltip-item">
+                </span>
+                <span class="tooltip-content">
+                    <div class="toc-article">
+                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%8D%E5%B0%B1%E6%98%AF%E4%B8%80%E4%B8%AAreturn%E5%98%9B"><span class="toc-number">1.</span> <span class="toc-text">不就是一个return嘛？</span></a></li></ol>
+                    </div>
+                </span>
             </div>
         </div>
         
-        
     </div>
 </aside>
 
 
 
+  
+  
+  
+
+    
 
   
+
   
-    <nav id="page-nav">
-      <a class="extend prev" rel="prev" href="/page/3/">&laquo; Prev</a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><span class="page-number current">4</span><a class="page-number" href="/page/5/">5</a><a class="extend next" rel="next" href="/page/5/">Next &raquo;</a>
-    </nav>
+
   
 
 
@@ -605,8 +387,8 @@ exception guarantee</del>若失败则不会产生其它影响。</p></li>
     <script>
 	var yiliaConfig = {
 		mathjax: true,
-		isHome: true,
-		isPost: false,
+		isHome: false,
+		isPost: true,
 		isArchive: false,
 		isTag: false,
 		isCategory: false,

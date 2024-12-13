@@ -277,20 +277,20 @@ Jiang, Hibiscus, LingLong, Crystal, whatever:)</p>
 
 
   
-    <article id="post-cpp20-arkdoom-p1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-ret" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/cpp20-arkdoom-p1/">C++20四大金刚之青龙concepts</a>
+      <a class="article-title" href="/ret/">“事了拂衣去” —— 关于return的无尽缠绵</a>
     </h1>
   
 
         
-        <a href="/cpp20-arkdoom-p1/" class="archive-article-date">
-  	<time datetime="2024-12-12T13:37:44.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-12</time>
+        <a href="/ret/" class="archive-article-date">
+  	<time datetime="2024-12-13T02:36:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-13</time>
 </a>
         
       </header>
@@ -298,35 +298,22 @@ Jiang, Hibiscus, LingLong, Crystal, whatever:)</p>
     <div class="article-entry" itemprop="articleBody">
       
         <blockquote>
-<p>东方青龙，<code>concepts</code>龙腾四海。</p>
+<p>一个最为简单的<code>return</code>语句是C++中出现频率最高的语句之一。为了将这一语句的效率发挥到极致，无数学者为之前仆后继……</p>
 </blockquote>
-<p>C++20的更新量级极大：其开创了大量新的编程模式，引入了大量语法点、标准库等等，对C++体系的影响可以与C++11相提并论。<br />
-其中更有“四大金刚”——<code>concepts</code>、<code>modules</code>、<code>ranges</code>和<code>coroutines</code>。本篇将深入浅出地探讨<code>concepts</code>这一大特性。<br />
-<del>其实concepts是C++20最“简单”的大特性之一了</del></p>
-<h1 id="pastsfinae">Past——SFINAE</h1>
-<p>concepts其实并不是一个新的“概念”(???)。</p>
-<p>模板（泛型）编程的课题可以占据C++的半壁江山。极高的设计自由度、一望无际的复用可能性、牵扯到的语法之繁杂、相关库的多样性使其一直以来都是C++语言的最重要课题，几乎没有之一。<br />
-所谓“C++其实是两门语言，带<code>template</code>的是一种，不带<code>template</code>的是另一种”的说法丝毫不为夸张。</p>
-<p>而作为一门编译型语言，在Metaprogramming中我们自然希望对模板的参数有一定约束，让函数按设计者期望的方式进行调用。<br />
-而在传统C++中，除了一些语言上的小“华点”被复用，并没有太好的办法对模板参数进行高可读性、易于维护/复用、明确的约束。</p>
-<p>C++11中提出了SFINAE(Substitution Failure Is Not An
-Error)的概念。<br />
-SFINAE在模板编程中的应用在于完成模板参数替换（即将实例化）时，如果代入<code>Ty = ...</code>会产生一些非法的表达式，则编译器会放弃这个重载（而不是继续试图<del>在绝路上狂奔</del>编译错误），转而试着寻找下一个重载进行匹配。<br />
-与SFINAE相搭配的内容还有：<br />
-- 对于全特化(<em>full specialization</em>)/偏特化(<em>partial
-specialization</em>)的模板类，其与满足条件（可自动推导）的模板参数匹配优先级很高，且绑定后<strong>不会受SFINAE影响放弃</strong>。<br />
--
-C++中，对于自动模板参数，其推导遵循最简原则（即优先尝试将令参数不带任何
-<em>cvref</em> 修饰来实例化）。</p>
-<p><del>（感觉又噎着了，赶紧上代码润润嗓子）</del> 最简推导原则：
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//完美转发的场景</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(Ty&amp;&amp; arg)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> x = <span class="number">2</span>;</span><br><span class="line"></span><br><span class="line"><span class="built_in">fun</span>(<span class="number">1</span>); <span class="comment">//Ty = int，虽然Ty = int&amp;&amp;同样“能用”，但最简原则，不加引用优先</span></span><br><span class="line"><span class="built_in">fun</span>(x); <span class="comment">//Ty = int&amp;（比较显然，毕竟int就不能编译了）</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//一些其它的函数调用</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">bar</span><span class="params">(Ty arg)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="built_in">bar</span>(<span class="number">1</span>); <span class="comment">//Ty = int，虽然Ty确实可以是int&amp;&amp;，依然是“避重就轻”</span></span><br><span class="line"><span class="built_in">bar</span>(x); <span class="comment">//Ty仍然是int，虽然Ty依然可以是int&amp;，但毕竟int arg&#123;x&#125;;是合法的，所以编译器不会“闲着没事干”</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//std::forward</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function">std::<span class="type">remove_reference_t</span>&lt;Ty&gt;&amp; <span class="title">forward</span><span class="params">(std::<span class="type">remove_reference_t</span>&lt;Ty&gt;&amp; arg)</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> arg;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure></p>
+<h1 id="不就是一个return嘛">不就是一个return嘛？</h1>
+<p>是的，确实就是一个<code>return</code>。</p>
+<p>C语言的所有变量都符合现代C++的<em>trivial
+types</em>的定义，即当一个变量被赋值时，只需要将该值对应内存空间的数据简单地copy到当前变量对应的内存空间。<br />
+对于 <em>trivial</em>
+的类来说，return确实只是将变量的值丢回到函数栈存储返回值之处（随后再销毁其它局部变量等等）。</p>
+<p>但C++作为一门面向对象的编译期语言，其揭示了一点——这一表面风平浪静的过程实则暗藏汹涌。<br />
+因为某一片具备数据、可使用的内存距离C++中的“对象”概念完全不能相提并论。</p>
 <blockquote>
-<p>常见的非法表达式： - （实例化代码中）建立了对void的引用； -
-试图对<code>void</code>或其它 <em>不完整的类型</em>
-计算<code>sizeof</code>； -
-<strong>试图访问类的某个<code>typedef</code>或静态成员等，但该成员不存在</strong>；（SFINAE中最为常用之者）</p>
+<p>这也是C/C++对于堆内存分配的“看法”迥异之处：C的<code>malloc</code>/<code>free</code>实际上不会对内存做任何事情（只是“申请”并获得使用权），顶多算上<code>calloc</code>的零初始化；</p>
+<p>而C++中的<code>new</code>实际上涉及分配内存-&gt;调用构造函数两步，具体地，你可以认为<code>operator new</code>就是一个<code>calloc</code>加上一个<code>thiscall</code>函数的调用：
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function">Ty* <span class="keyword">operator</span> <span class="title">new</span><span class="params">(<span class="type">size_t</span> size)</span> <span class="comment">//C++中operator new的最常用函数重载，在隐式调用时size_t会自动传递</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Ty* ptr = <span class="built_in">static_cast</span>&lt;Ty*&gt;(<span class="built_in">malloc</span>(size));</span><br><span class="line"></span><br><span class="line">    <span class="comment">//随后，我们假设一个函数的ctor在调用时实际上具备Ty::Ty(Ty* where,...)的形式。</span></span><br><span class="line">    <span class="comment">//其就是将本来隐式传递的this写成了显式的形式，参考python中的self和C++23的deducing this。</span></span><br><span class="line">    Ty::<span class="built_in">Ty</span>(ptr);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> ptr;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 </blockquote>
-<p>比如</p>
+<p>现在我们假设希望去</p>
 
       
 
@@ -350,7 +337,7 @@ C++中，对于自动模板参数，其推导遵循最简原则（即优先尝�
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/cpp20-arkdoom-p1/">展开全文 >></a>
+          <a class="article-more-a" href="/ret/">展开全文 >></a>
         </p>
       
 
@@ -384,7 +371,7 @@ C++中，对于自动模板参数，其推导遵循最简原则（即优先尝�
   
   
     <nav id="page-nav">
-      <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/2/">Next &raquo;</a>
+      <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/5/">5</a><a class="extend next" rel="next" href="/page/2/">Next &raquo;</a>
     </nav>
   
 
