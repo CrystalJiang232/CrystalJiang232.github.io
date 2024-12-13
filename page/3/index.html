@@ -479,7 +479,12 @@ reference</em>)的概念，亦即看到<code>&amp;&amp;</code>不一定就代表
 <p>通过将参数设置为<code>Ty&amp;</code>，无论Ty取原始类、左值引用还是右值引用，Ty&amp;均会解析为左值引用，使之只能接受左值引用的参数。</p>
 <blockquote>
 <p>实际上这个函数并不完美，标准库实现中还有如下声明以确保不会获取到常右值(<em>const
-rvalues</em>)的地址： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="keyword">constexpr</span> Ty* <span class="title">addressof</span><span class="params">(<span class="type">const</span> Ty&amp;)</span> </span>= <span class="keyword">delete</span>;</span><br></pre></td></tr></table></figure></p>
+rvalues</em>)的地址： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="keyword">constexpr</span> Ty* <span class="title">addressof</span><span class="params">(<span class="type">const</span> Ty&amp;&amp;)</span> </span>= <span class="keyword">delete</span>;</span><br></pre></td></tr></table></figure> 同时，这也是极为少见的 <em>const
+rvalues/const rrefs</em>
+真正地有用武之地的地方（特定场景下的语义/语法约束）。</p>
+<p>有关<em>const rvalues</em> 更多探讨可以参考<a
+target="_blank" rel="noopener" href="https://codesynthesis.com/~boris/blog/2012/07/24/const-rvalue-references/">"What
+are const rvalue references good for?"</a></p>
 </blockquote>
 <p>类似地可以实现移动转发（将收入的所有参数全部用右值转发出去）：
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Tys&gt;</span></span><br><span class="line"><span class="function"><span class="keyword">constexpr</span> <span class="type">void</span> <span class="title">mov</span><span class="params">(Tys&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">func</span>(std::forward&lt;Tys&gt;(args)...); <span class="comment">//完美转发，保留左/右值属性</span></span><br><span class="line">    <span class="built_in">func</span>(std::<span class="built_in">move</span>&lt;Tys&gt;(args)...); <span class="comment">//移动转发，全部转化为右值</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
@@ -639,10 +644,6 @@ reference)</em>，C++23起其非良构(<em>ill-formed</em>)而不能通过编译
 			 
         		<li class="article-tag-list-item">
         			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">C++ Languages & concepts</a>
         		</li>
       		
 		</ul>
@@ -900,6 +901,17 @@ class="math inline">\(x&gt;2\)</span>，即可确保其最大限度地抵抗Pohl
 	</div>
 
       
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/闲笔//" class="article-tag-list-link color3">闲笔</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
 
       
         <p class="article-more-link">
@@ -1087,19 +1099,11 @@ MathJax.Hub.Queue(function() {
           <ul class="article-tag-list" q-show="showTags">
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color1">C/C++ Libraries</a>
-              </li>
-             
-              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color2">Crypto</a>
               </li>
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color3">wp</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color2">C Functions</a>
               </li>
              
               <li class="article-tag-list-item">
@@ -1115,7 +1119,11 @@ MathJax.Hub.Queue(function() {
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">C++ Languages & concepts</a>
+                <a href="javascript:void(0)" class="js-tag color2">C Libraries</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">C++ Libraries</a>
               </li>
             
             <div class="clearfix"></div>
