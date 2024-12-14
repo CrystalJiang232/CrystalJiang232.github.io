@@ -648,10 +648,14 @@ S\)</span>
 <h2
 id="手搓了不恰当的移动构造函数赋值运算符">“手搓”了不恰当的移动构造函数/赋值运算符</h2>
 <blockquote>
-<p>If you can avoid defining any default operations, do</p>
-<p>Use <code>= default</code> if you want to be explicit on using the
-default sematics</p>
-<p>Make move operations <code>noexcept</code>.</p>
+<ul>
+<li>If you can avoid defining any default operations, do<br />
+</li>
+<li>Use <code>= default</code> if you want to be explicit on using the
+default sematics<br />
+</li>
+<li>Make move operations <code>noexcept</code>.</li>
+</ul>
 </blockquote>
 <ul>
 <li>实践中，对于<strong>不直接管理资源</strong>的类，尽量避免定义四项默认函数（遵循<em>rule
