@@ -16,7 +16,7 @@
 <meta property="og:description" content="右值(rvalues)和右值引用(rvalue references)是支撑Modern C++的中流砥柱、构筑C++效率极限的基石之一。  右值、右值引用简介 值和变量类型基础知识 在开始探索这片“天柱城”前，需要先明确C++中值和变量的类型。 值和变量的类型和定义等不要混淆！ 每个C++表达式（一个操作符(operator)和若干操作符(operands)、一个字面量、一个变">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2024-12-11T02:37:23.000Z">
-<meta property="article:modified_time" content="2024-12-14T00:14:05.205Z">
+<meta property="article:modified_time" content="2024-12-14T02:24:23.316Z">
 <meta property="article:author" content="Hibiscus">
 <meta property="article:tag" content="Modern C++">
 <meta name="twitter:card" content="summary">
@@ -372,7 +372,39 @@ value,简称xvalue)的概念在C++17中从“右值”的混沌中区分开来�
 </li>
 <li>可移动（<em>move-eligible</em>）的表达式；</li>
 </ul>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">T</span>&#123;<span class="type">int</span> x;&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function">T <span class="title">func</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> a&#123;&#125;;</span><br><span class="line">    <span class="type">int</span> b&#123;std::<span class="built_in">move</span>(a)&#125;; <span class="comment">//std::move(a)产生了一个xvalue表达式</span></span><br><span class="line"></span><br><span class="line">    a = T&#123;&#125;.x; <span class="comment">//T&#123;&#125;.x这个表达式整体应视为一个xvalue</span></span><br><span class="line">    <span class="built_in">static_cast</span>&lt;<span class="type">int</span>&amp;&amp;&gt;(a); <span class="comment">//其实和std::move(a)互为等效</span></span><br><span class="line"></span><br><span class="line">    T b&#123;a&#125;;</span><br><span class="line">    <span class="keyword">return</span> b; <span class="comment">//b是move-eligible的（C++23提出的概念），因而这个表达式中b也是xvalue</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h3 id="混合类型">混合类型</h3>
+<p>“泛左值”和“右值”是两个混合类型（定义见上）。<br />
+泛左值(glvalue)的性质有：<del>纯右值性质取反</del></p>
+<ul>
+<li>泛左值都可以被转化为纯右值（通过cast等实现）；<br />
+</li>
+<li>泛左值可以有不完全类型(<em>incomplete
+type</em>)，并且可以是多态(<em>polymorphic</em>)的；</li>
+</ul>
+<blockquote>
+
+</blockquote>
+<p>“右值”(rvalue)的性质有：<del>左值性质取反</del></p>
+<ul>
+<li>右值都不能被取地址（与左值对立，也是判定的充分必要条件）；<br />
+</li>
+<li>右值都不能被<strong>内置的</strong>（复合）赋值运算符赋值；（同样地，只看赋值运算符的话既不充分也不必要）<br />
+</li>
+<li>右值可以用于初始化一个常左值引用/右值引用，此时其生命周期将被延长至与该引用的scope一致(<em>lifetime
+extension</em>)；<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span>* ptr = &amp;<span class="number">1</span>; <span class="comment">//Not compile: cannot take address of rvalues</span></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;&quot;</span>) = <span class="number">3</span>; <span class="comment">//Not compile: cannot use rvalues as left operand of builtin assignment operators</span></span><br><span class="line"></span><br><span class="line">    <span class="type">int</span>&amp;&amp; rref = <span class="built_in">scanf</span>(<span class="string">&quot;&quot;</span>); <span class="comment">//OK, rvalue initializes rvalue references</span></span><br><span class="line">    rref = <span class="number">5</span>; <span class="comment">//OK, lifetime of the return value of scanf() is extended    </span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li>回顾：右值作为函数参数时，面对rvalue reference和const lvalue
+reference的重载会优先选择前者（移动语义的实现基础）。</li>
+</ul>
+<blockquote>
+<p>类似地，非const的左值作为函数参数时，面对lvalue reference和const
+lvalue reference的重载依然会优先选择前者。</p>
+</blockquote>
+<blockquote>
+<p>const lvalue
+reference堪称“万金油”，因其可以绑定至任何类型的值上。</p>
+</blockquote>
 <h1 id="右值引用应用之移动语义">右值引用应用之移动语义</h1>
 <h2 id="何为何以移动语义">何为，何以“移动语义”</h2>
 <p>移动语义(<em>move sematics</em>)其实不难理解：<br />
