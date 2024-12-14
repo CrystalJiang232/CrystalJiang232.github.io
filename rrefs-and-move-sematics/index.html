@@ -8,15 +8,15 @@
   <link rel="dns-prefetch" href="https://crystaljiang232.github.io">
   <title>C++天柱城——右值引用和移动语义 | 玲珑</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="右值(rvalues)和右值引用(rvalue references)是支撑Modern C++的中流砥柱、构筑C++效率极限的基石之一。  右值、右值引用简介 值和变量类型（补票） 在开始探索这片“天柱城”前，需要先明确C++中值和变量的类型。 值和变量的类型和定义等不要混淆！ 变量(variables)可以分为fundamental types和compound types">
+  <meta name="description" content="右值(rvalues)和右值引用(rvalue references)是支撑Modern C++的中流砥柱、构筑C++效率极限的基石之一。  右值、右值引用简介 值和变量类型基础知识 在开始探索这片“天柱城”前，需要先明确C++中值和变量的类型。 值和变量的类型和定义等不要混淆！ 每个C++表达式（一个操作符(operator)和若干操作符(operands)、一个字面量、一个变">
 <meta property="og:type" content="article">
 <meta property="og:title" content="C++天柱城——右值引用和移动语义">
 <meta property="og:url" content="https://crystaljiang232.github.io/rrefs-and-move-sematics/index.html">
 <meta property="og:site_name" content="玲珑">
-<meta property="og:description" content="右值(rvalues)和右值引用(rvalue references)是支撑Modern C++的中流砥柱、构筑C++效率极限的基石之一。  右值、右值引用简介 值和变量类型（补票） 在开始探索这片“天柱城”前，需要先明确C++中值和变量的类型。 值和变量的类型和定义等不要混淆！ 变量(variables)可以分为fundamental types和compound types">
+<meta property="og:description" content="右值(rvalues)和右值引用(rvalue references)是支撑Modern C++的中流砥柱、构筑C++效率极限的基石之一。  右值、右值引用简介 值和变量类型基础知识 在开始探索这片“天柱城”前，需要先明确C++中值和变量的类型。 值和变量的类型和定义等不要混淆！ 每个C++表达式（一个操作符(operator)和若干操作符(operands)、一个字面量、一个变">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2024-12-11T02:37:23.000Z">
-<meta property="article:modified_time" content="2024-12-13T09:31:19.423Z">
+<meta property="article:modified_time" content="2024-12-14T00:14:05.205Z">
 <meta property="article:author" content="Hibiscus">
 <meta property="article:tag" content="Modern C++">
 <meta name="twitter:card" content="summary">
@@ -180,9 +180,15 @@
 C++</em>的中流砥柱、构筑C++效率极限的基石之一。</p>
 </blockquote>
 <h1 id="右值右值引用简介">右值、右值引用简介</h1>
-<h2 id="值和变量类型补票">值和变量类型（补票）</h2>
+<h2 id="值和变量类型基础知识">值和变量类型基础知识</h2>
 <p>在开始探索这片“天柱城”前，需要先明确C++中值和变量的类型。<br />
-<strong>值和变量的类型和定义等不要混淆！</strong></p>
+<strong>值和变量的类型和定义等不要混淆！</strong><br />
+每个C++表达式（一个操作符(operator)和若干操作符(operands)、一个字面量、一个变量名等等）都可以视为一个值。<br />
+值依照其是否named/can be <em>moved-from</em> 只有
+<em>左值、将亡值、纯右值</em> 类型(types)之分；<br />
+变量(variables)
+只有各种类型(categories)之分；变量一定是具名的，值可能不具名。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> x = <span class="number">3</span>; <span class="comment">//声明了一个变量x，使用数字常量值3初始化之，3是纯右值</span></span><br><span class="line"><span class="type">int</span> y = x; <span class="comment">//声明了一个变量y，将变量x作值并初始化之，x是左值</span></span><br><span class="line">x = std::<span class="built_in">move</span>(y); <span class="comment">//此时std::move(y)是将亡值</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">fun</span><span class="params">()</span></span>&#123;<span class="keyword">return</span> <span class="number">1</span>;&#125; <span class="comment">//1是纯右值，但fun()的返回值是将亡值（传统意义上的“右值”）</span></span><br><span class="line"><span class="function"><span class="type">int</span>&amp; <span class="title">bar</span><span class="params">(<span class="type">int</span>&amp; ref,<span class="type">int</span> add)</span></span>&#123;ref += add;<span class="keyword">return</span> ref;&#125; <span class="comment">//bar()的返回值是左值</span></span><br></pre></td></tr></table></figure>
 <p>变量(variables)可以分为<em>fundamental types</em>和<em>compound
 types</em>二大类。</p>
 <ul>
@@ -197,21 +203,7 @@ types</em>主要包括<code>float</code>、<code>double</code>及它们的<code>
 <em>arthimetic types</em>（算术类型）。</strong></p></li>
 <li><p>第二种包括reference、pointer、pointer-to-member、array、function、enumeration和class。其中，reference不占有独立的内存空间。</p></li>
 </ul>
-<p>C++17对值(values)的分类做了比较明确的说明：<br />
-每个值应是
-<em>lvalue</em>（左值）、<em>xvalue</em>（将亡值）或<em>prvalue</em>（纯右值）的其一。<br />
-辨别一个值属于哪个类型，直接看<a href="">cppreference</a>上的说明：</p>
-<blockquote>
-<p>Values that are named and can be <em>moved-from</em> are xvalues;</p>
-<p>Values that are named and cannot be <em>moved-from</em> are
-lvalues;</p>
-<p>Values that are unnamed and can be <em>moved-from</em> are
-prvalues;</p>
-<p>Values that are unnamed and cannot be <em>moved-from</em> are not
-used.</p>
-</blockquote>
-<p>（记住这个'moved-from'，后面会考）</p>
-<p>C++11以及此前的C语言则提供了一个更加简单（但放在Modern
+<p>C++11以及此前的C语言提供了一个比较简单（但放在Modern
 C++语境中稍显implicit）的分类，放在很多其它语言中也适用：</p>
 <ul>
 <li>具名变量是左值(lvalues)，其可以出现在赋值号'='的左侧/右侧；<br />
@@ -249,7 +241,7 @@ Languages的一个核心议题之一。</p>
 objects</em>），所以不存在“引用的数组”、“指向引用的指针”和“指向引用的引用”(<em>There
 are no arrays of references, no pointeres to references and no
 references of
-references</em>)；<strong>（注意指向引用的指针不要和指向指针的引用混淆，指向引用的引用不要和右值引用混淆，引用符号永远后置，比如一个指向指针的引用：<code>int* ptr=new int&#123;3&#125;;int*&amp; rptr = ptr</code>是合法的。）</strong></li>
+references</em>)；<strong>（注意指向引用的指针不要和指向指针的引用混淆，指向引用的引用不要和右值引用混淆，引用符号永远后置）</strong></li>
 </ul>
 <blockquote>
 <p>其实C++引用在编译阶段（底层）的实现原理依然是指针，引用宏观上可以视为一个被自动解引用的、被底层<code>const</code>约束的指针(形如<code>int* const</code>)，毕竟建立即必须初始化等特性与之同样相衬。</p>
@@ -276,8 +268,111 @@ rvalues</em>这一问题的理解也能水到渠成。</p>
 同时新增了一个函数std::move，其有一项重载提供了编译期的更加直观的代码转换（“套皮”）：</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="keyword">constexpr</span> std::<span class="type">remove_reference_t</span>&lt;Ty&gt;&amp;&amp; <span class="title">std::move</span><span class="params">(Ty&amp;&amp; arg)</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">static_cast</span>&lt;std::<span class="type">remove_reference_t</span>&lt;Ty&gt;&amp;&amp;&gt;(arg);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>（哈，一不小心又挖到了C++11的两个新坑：<code>constexpr</code>和<code>noexcept</code>！<del>等等，是不是还踩了万能引用和引用折叠的坑？不，你什么都没看到</del>）<br />
-先来看眼不同引用的绑定规则：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> x=<span class="number">1</span>;</span><br><span class="line">    <span class="type">int</span>&amp; r1_1 = x; <span class="comment">//OK</span></span><br><span class="line">    <span class="type">const</span> <span class="type">int</span>&amp; r1_2 =x; <span class="comment">//OK</span></span><br><span class="line">    <span class="comment">//int&amp;&amp; r1_3 = x; //Not Compile</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//int&amp; r2_1 = 1; //Not Compile</span></span><br><span class="line">    <span class="type">const</span> <span class="type">int</span>&amp; r2_2 = <span class="number">1</span>; <span class="comment">//OK</span></span><br><span class="line">    <span class="type">int</span>&amp;&amp; r2_3 = <span class="number">1</span>; <span class="comment">//OK</span></span><br><span class="line"></span><br><span class="line">    <span class="type">int</span>&amp;&amp; r3_3 = std::<span class="built_in">move</span>(<span class="number">1</span>); <span class="comment">//OK</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+简单地看看左值引用、常引用和右值引用的绑定规则：<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> x=<span class="number">1</span>;</span><br><span class="line">    <span class="type">int</span>&amp; r1_1 = x; <span class="comment">//OK</span></span><br><span class="line">    <span class="type">const</span> <span class="type">int</span>&amp; r1_2 =x; <span class="comment">//OK</span></span><br><span class="line">    <span class="comment">//int&amp;&amp; r1_3 = x; //Not compile: invalid binding</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//int&amp; r2_1 = 1; //Not compile: invalid binding</span></span><br><span class="line">    <span class="type">const</span> <span class="type">int</span>&amp; r2_2 = <span class="number">1</span>; <span class="comment">//OK</span></span><br><span class="line">    <span class="type">int</span>&amp;&amp; r2_3 = <span class="number">1</span>; <span class="comment">//OK</span></span><br><span class="line">    <span class="type">int</span>&amp;&amp; r3_3 = std::<span class="built_in">move</span>(x); <span class="comment">//OK</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="c17惊鸿照影">C++17——惊鸿照影</h2>
+<p>C++17中对左右值进行了进一步细分、归类。具体来说，</p>
+<ul>
+<li>每一个值一定是 {左值(lvalue)、将亡值(xvalue)、纯右值(prvalue)}
+中的一种；<br />
+</li>
+<li>lvalue和xvalue并称为“泛左值”(glvalue)，xvalue和prvalue并称为“右值”(rvalue)。</li>
+</ul>
+<blockquote>
+<p>冰知识：lvalue的全称应为 <em>locator
+value</em>（而非"left-value"）。</p>
+</blockquote>
+<p>辨别一个值属于哪个类型，<a
+href="">cppreference</a>上有一段非常简明扼要的分类原则：</p>
+<blockquote>
+<p>Values that are named and can be <em>moved-from</em> are xvalues;</p>
+<p>Values that are named and cannot be <em>moved-from</em> are
+lvalues;</p>
+<p>Values that are unnamed and can be <em>moved-from</em> are
+prvalues;</p>
+<p>Values that are unnamed and cannot be <em>moved-from</em> are not
+used.</p>
+</blockquote>
+<p><del>预告：下面“悉数言之”信息量极大</del></p>
+<h3 id="左值">左值</h3>
+<p>下述表达式是左值(lvalues)：</p>
+<ul>
+<li>所有的具名变量<strong>本体</strong>、函数名、模板参数对象(template
+parameter
+object)和类内的数据成员；引用类型的变量<strong>无视其引用类型，均为左值</strong>（点名"rvalue
+references are lvalues"）；<br />
+</li>
+<li>返回左值引用的函数/重载运算符的返回值；<br />
+</li>
+<li>所有<strong>内置的</strong>赋值运算符和复合赋值、前置自增/减、解引用、取下标、取成员、解引用成员、取成员/解引用成员指针(<code>.*</code>、<code>-&gt;*</code>)运算符；<br />
+</li>
+<li><strong>字符串字面量(string literal)</strong>；<br />
+</li>
+<li>向左值引用的类型转换（<code>cast</code>）；</li>
+<li>左值引用作为模板参数(non-type template parameter of lvalue reference
+type)；<br />
+</li>
+<li>对函数的右值引用(???)；<br />
+</li>
+<li>特定条件下的内置逗号(<code>,</code>)、三元条件运算符(<code>a ? b : c</code>)（一般要求运算符右侧的一个/两个参数都是左值）；</li>
+</ul>
+<p>下面代码中出现了大量左值： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> a = <span class="number">0</span>; <span class="comment">//a是左值</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">b</span><span class="params">()</span> <span class="comment">//b是左值</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    a += <span class="number">1</span>; <span class="comment">//表达式是左值</span></span><br><span class="line">    ++a; <span class="comment">//左值</span></span><br><span class="line">    <span class="type">int</span> c[<span class="number">5</span>]&#123;&#125;; <span class="comment">//左值</span></span><br><span class="line">    c[<span class="number">3</span>]; <span class="comment">//左值</span></span><br><span class="line">    a = <span class="number">5</span>; <span class="comment">//左值（表达式整体）</span></span><br><span class="line">    <span class="string">&quot;Hello, World!&quot;</span> <span class="comment">//左值</span></span><br><span class="line">    <span class="type">int</span>* ptr = &amp;a;</span><br><span class="line">    *ptr; <span class="comment">//左值</span></span><br><span class="line">    *ptr ? a : c[<span class="number">2</span>]; <span class="comment">//左值</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">T</span>&#123;<span class="type">int</span> x;&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    T a;</span><br><span class="line">    T* b = &amp;a;</span><br><span class="line">    a.x; <span class="comment">//左值</span></span><br><span class="line">    b-&gt;x; <span class="comment">//左值</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>分类的作用自然是帮助我们更好地辨别其性质。左值的<strong>独有</strong>性质如下（充分必要条件）：</p>
+<ul>
+<li>左值（未重载<code>operator&amp;()</code>）可以被内置取地址运算符获得其地址。如<code>&amp;std::endl;</code>、<code>&amp;++i;</code>、<code>&amp;"Hello, World!"</code>均为合法的表达式。<br />
+</li>
+<li>可更改的左值（含引用）可以被内置的（复合）赋值运算符赋值。<br />
+</li>
+<li>左值可用于初始化一个左值引用(lvalue reference)（const
+lvalue约束另计）。</li>
+</ul>
+<blockquote>
+<p>划重点：</p>
+<ul>
+<li>唯一一个“永远”正确的区分左右值的标志是能否被<strong>取其地址</strong>。</li>
+<li>作为（复合）赋值运算符的左操作数 是 其为左值
+的<strong>既不充分也不必要条件</strong>，因为常左值不能被赋值，且<code>operator=</code>可以提供面向右值的重载。</li>
+</ul>
+</blockquote>
+<h3 id="纯右值">纯右值</h3>
+<p>纯右值(pure rvalue,简称prvalue)是一种更偏向“传统”观念上的右值。<br />
+下述表达式是纯右值：</p>
+<ul>
+<li>除字符串字面量外的字面量（常量），含枚举类型；<br />
+</li>
+<li>返回非引用类型的函数/重载运算符的返回值；<br />
+</li>
+<li>内置的后缀自增/减、算术、逻辑、比较、取地址运算符；</li>
+<li><code>this</code>指针；<br />
+</li>
+<li>向非引用类型的类型转换（<code>cast</code>）；<br />
+</li>
+<li>lambda表达式；<br />
+</li>
+<li>概念(concepts)；<br />
+</li>
+<li>模板参数列表中的非类型的、<em>scalar-type</em> 的参数；
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="type">size_t</span> v&gt;</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">fun</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    &amp;v; <span class="comment">//Not compile: cannot take address of prvalue &quot;v&quot;(template non-type scalar parameter)</span></span><br><span class="line">    &amp;<span class="number">1</span>; <span class="comment">//Not compile: cannot take address of prvalue 1(numeric constant/literal)</span></span><br><span class="line"></span><br><span class="line">    v = <span class="number">1</span>; <span class="comment">//ill-formed: lvalue required as left operand of builtin assignment operator</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">fun</span>&lt;<span class="number">1</span>&gt;() = <span class="number">2</span>; <span class="comment">//Not compile</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<blockquote>
+<p>C++17提出了复制省略(copy elision)（又名 <em>prvalue
+sematics</em>），<strong>要求</strong>编译器对纯右值进行复制省略优化，史称"URVO"(Unnamed
+Return Value Optimization)。</p>
+</blockquote>
+<h3 id="将亡值">将亡值</h3>
+<p>将亡值(eXpiring
+value,简称xvalue)的概念在C++17中从“右值”的混沌中区分开来（不过二者仍有诸多共性）。
+下述表达式是将亡值：</p>
+<ul>
+<li>返回右值引用类型的函数/重载运算符的返回值；<br />
+</li>
+<li>向右值引用类型的类型转换（<code>cast</code>）；<br />
+</li>
+<li><strong>涉及到临时构造一个对象的表达式</strong>；<br />
+</li>
+<li>可移动（<em>move-eligible</em>）的表达式；</li>
+</ul>
+<h3 id="混合类型">混合类型</h3>
 <h1 id="右值引用应用之移动语义">右值引用应用之移动语义</h1>
 <h2 id="何为何以移动语义">何为，何以“移动语义”</h2>
 <p>移动语义(<em>move sematics</em>)其实不难理解：<br />
@@ -767,7 +862,7 @@ reference)</em>，C++23起其非良构(<em>ill-formed</em>)而不能通过编译
                 </span>
                 <span class="tooltip-content">
                     <div class="toc-article">
-                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%B3%E5%80%BC%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8%E7%AE%80%E4%BB%8B"><span class="toc-number">1.</span> <span class="toc-text">右值、右值引用简介</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%80%BC%E5%92%8C%E5%8F%98%E9%87%8F%E7%B1%BB%E5%9E%8B%E8%A1%A5%E7%A5%A8"><span class="toc-number">1.1.</span> <span class="toc-text">值和变量类型（补票）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c98%E5%89%8D%E5%B0%98%E5%BE%80%E4%BA%8B"><span class="toc-number">1.2.</span> <span class="toc-text">C++98——前尘往事</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c11%E9%A3%8E%E8%B5%B7%E4%BA%91%E6%B6%8C"><span class="toc-number">1.3.</span> <span class="toc-text">C++11——风起云涌</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8%E5%BA%94%E7%94%A8%E4%B9%8B%E7%A7%BB%E5%8A%A8%E8%AF%AD%E4%B9%89"><span class="toc-number">2.</span> <span class="toc-text">右值引用应用之移动语义</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%95%E4%B8%BA%E4%BD%95%E4%BB%A5%E7%A7%BB%E5%8A%A8%E8%AF%AD%E4%B9%89"><span class="toc-number">2.1.</span> <span class="toc-text">何为，何以“移动语义”</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c11%E5%AF%B9%E5%B7%A6%E5%8F%B3%E5%80%BC%E6%A6%82%E5%BF%B5%E7%9A%84%E5%BC%BA%E5%8C%96%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8%E7%9A%84%E5%8A%A0%E5%85%A5"><span class="toc-number">2.2.</span> <span class="toc-text">C++11对左右值概念的强化+右值引用的加入</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%96%84%E5%90%8E%E4%B9%8B%E8%A2%AB%E7%A7%BB%E5%8A%A8%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%A4%84%E7%90%86"><span class="toc-number">2.3.</span> <span class="toc-text">“善后”之被移动对象的处理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8D%E5%8F%AF%E5%A4%8D%E5%88%B6%E8%B5%84%E6%BA%90%E7%9A%84%E7%A7%BB%E5%8A%A8%E8%AF%AD%E4%B9%89%E5%BD%92%E4%B8%80%E5%8C%96"><span class="toc-number">2.4.</span> <span class="toc-text">不可复制资源的移动——语义归一化</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%A7%BB%E5%8A%A8%E8%AF%AD%E4%B9%89%E9%85%8D%E5%A5%97%E8%AF%AD%E6%B3%95%E5%BC%95%E7%94%A8%E6%8A%98%E5%8F%A0%E4%B8%8E%E5%AE%8C%E7%BE%8E%E8%BD%AC%E5%8F%91"><span class="toc-number">3.</span> <span class="toc-text">移动语义配套语法——引用折叠与完美转发</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%95%E7%94%A8%E6%8A%98%E5%8F%A0"><span class="toc-number">3.1.</span> <span class="toc-text">引用折叠</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%80%9A%E7%94%A8%E5%BC%95%E7%94%A8%E5%92%8C%E5%AE%8C%E7%BE%8E%E8%BD%AC%E5%8F%91"><span class="toc-number">3.2.</span> <span class="toc-text">通用引用和完美转发</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%90%8D%E6%B0%B4%E8%BF%87%E5%AE%A2%E4%B9%8Btrivial-types"><span class="toc-number">3.3.</span> <span class="toc-text">萍水过客之trivial-types</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%A7%BB%E5%8A%A8%E8%AF%AD%E4%B9%89%E5%AE%9E%E8%B7%B5%E4%B8%AD%E7%9A%84%E6%98%93%E9%94%99%E7%82%B9"><span class="toc-number">4.</span> <span class="toc-text">移动语义实践中的易错点</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%8B%E6%90%93%E4%BA%86%E4%B8%8D%E6%81%B0%E5%BD%93%E7%9A%84%E7%A7%BB%E5%8A%A8%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0%E8%B5%8B%E5%80%BC%E8%BF%90%E7%AE%97%E7%AC%A6"><span class="toc-number">4.1.</span> <span class="toc-text">“手搓”了不恰当的移动构造函数&#x2F;赋值运算符</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8E%E5%87%BD%E6%95%B0return%E5%89%8D%E8%AF%AF%E7%A7%BB%E5%8A%A8%E4%BA%86%E5%B1%80%E9%83%A8%E5%8F%98%E9%87%8F"><span class="toc-number">4.2.</span> <span class="toc-text">从函数return前误移动了局部变量</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#return%E6%97%B6%E5%AF%B9%E8%BF%94%E5%9B%9E%E5%80%BC%E6%98%AF%E5%90%A6%E8%AF%A5stdmove%E8%BE%A8%E5%88%AB%E5%A4%B1%E8%AF%AF"><span class="toc-number">4.3.</span> <span class="toc-text">return时对返回值是否该std::move辨别失误</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%BB%93%E8%AF%AD"><span class="toc-number">5.</span> <span class="toc-text">结语</span></a></li></ol>
+                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%B3%E5%80%BC%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8%E7%AE%80%E4%BB%8B"><span class="toc-number">1.</span> <span class="toc-text">右值、右值引用简介</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%80%BC%E5%92%8C%E5%8F%98%E9%87%8F%E7%B1%BB%E5%9E%8B%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86"><span class="toc-number">1.1.</span> <span class="toc-text">值和变量类型基础知识</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c98%E5%89%8D%E5%B0%98%E5%BE%80%E4%BA%8B"><span class="toc-number">1.2.</span> <span class="toc-text">C++98——前尘往事</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c11%E9%A3%8E%E8%B5%B7%E4%BA%91%E6%B6%8C"><span class="toc-number">1.3.</span> <span class="toc-text">C++11——风起云涌</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c17%E6%83%8A%E9%B8%BF%E7%85%A7%E5%BD%B1"><span class="toc-number">1.4.</span> <span class="toc-text">C++17——惊鸿照影</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B7%A6%E5%80%BC"><span class="toc-number">1.4.1.</span> <span class="toc-text">左值</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BA%AF%E5%8F%B3%E5%80%BC"><span class="toc-number">1.4.2.</span> <span class="toc-text">纯右值</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B0%86%E4%BA%A1%E5%80%BC"><span class="toc-number">1.4.3.</span> <span class="toc-text">将亡值</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B7%B7%E5%90%88%E7%B1%BB%E5%9E%8B"><span class="toc-number">1.4.4.</span> <span class="toc-text">混合类型</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8%E5%BA%94%E7%94%A8%E4%B9%8B%E7%A7%BB%E5%8A%A8%E8%AF%AD%E4%B9%89"><span class="toc-number">2.</span> <span class="toc-text">右值引用应用之移动语义</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%95%E4%B8%BA%E4%BD%95%E4%BB%A5%E7%A7%BB%E5%8A%A8%E8%AF%AD%E4%B9%89"><span class="toc-number">2.1.</span> <span class="toc-text">何为，何以“移动语义”</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c11%E5%AF%B9%E5%B7%A6%E5%8F%B3%E5%80%BC%E6%A6%82%E5%BF%B5%E7%9A%84%E5%BC%BA%E5%8C%96%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8%E7%9A%84%E5%8A%A0%E5%85%A5"><span class="toc-number">2.2.</span> <span class="toc-text">C++11对左右值概念的强化+右值引用的加入</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%96%84%E5%90%8E%E4%B9%8B%E8%A2%AB%E7%A7%BB%E5%8A%A8%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%A4%84%E7%90%86"><span class="toc-number">2.3.</span> <span class="toc-text">“善后”之被移动对象的处理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8D%E5%8F%AF%E5%A4%8D%E5%88%B6%E8%B5%84%E6%BA%90%E7%9A%84%E7%A7%BB%E5%8A%A8%E8%AF%AD%E4%B9%89%E5%BD%92%E4%B8%80%E5%8C%96"><span class="toc-number">2.4.</span> <span class="toc-text">不可复制资源的移动——语义归一化</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%A7%BB%E5%8A%A8%E8%AF%AD%E4%B9%89%E9%85%8D%E5%A5%97%E8%AF%AD%E6%B3%95%E5%BC%95%E7%94%A8%E6%8A%98%E5%8F%A0%E4%B8%8E%E5%AE%8C%E7%BE%8E%E8%BD%AC%E5%8F%91"><span class="toc-number">3.</span> <span class="toc-text">移动语义配套语法——引用折叠与完美转发</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%95%E7%94%A8%E6%8A%98%E5%8F%A0"><span class="toc-number">3.1.</span> <span class="toc-text">引用折叠</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%80%9A%E7%94%A8%E5%BC%95%E7%94%A8%E5%92%8C%E5%AE%8C%E7%BE%8E%E8%BD%AC%E5%8F%91"><span class="toc-number">3.2.</span> <span class="toc-text">通用引用和完美转发</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%90%8D%E6%B0%B4%E8%BF%87%E5%AE%A2%E4%B9%8Btrivial-types"><span class="toc-number">3.3.</span> <span class="toc-text">萍水过客之trivial-types</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%A7%BB%E5%8A%A8%E8%AF%AD%E4%B9%89%E5%AE%9E%E8%B7%B5%E4%B8%AD%E7%9A%84%E6%98%93%E9%94%99%E7%82%B9"><span class="toc-number">4.</span> <span class="toc-text">移动语义实践中的易错点</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%8B%E6%90%93%E4%BA%86%E4%B8%8D%E6%81%B0%E5%BD%93%E7%9A%84%E7%A7%BB%E5%8A%A8%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0%E8%B5%8B%E5%80%BC%E8%BF%90%E7%AE%97%E7%AC%A6"><span class="toc-number">4.1.</span> <span class="toc-text">“手搓”了不恰当的移动构造函数&#x2F;赋值运算符</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8E%E5%87%BD%E6%95%B0return%E5%89%8D%E8%AF%AF%E7%A7%BB%E5%8A%A8%E4%BA%86%E5%B1%80%E9%83%A8%E5%8F%98%E9%87%8F"><span class="toc-number">4.2.</span> <span class="toc-text">从函数return前误移动了局部变量</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#return%E6%97%B6%E5%AF%B9%E8%BF%94%E5%9B%9E%E5%80%BC%E6%98%AF%E5%90%A6%E8%AF%A5stdmove%E8%BE%A8%E5%88%AB%E5%A4%B1%E8%AF%AF"><span class="toc-number">4.3.</span> <span class="toc-text">return时对返回值是否该std::move辨别失误</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%BB%93%E8%AF%AD"><span class="toc-number">5.</span> <span class="toc-text">结语</span></a></li></ol>
                     </div>
                 </span>
             </div>
