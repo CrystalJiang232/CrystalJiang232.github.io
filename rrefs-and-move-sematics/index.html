@@ -16,7 +16,7 @@
 <meta property="og:description" content="右值(rvalues)和右值引用(rvalue references)是支撑Modern C++的中流砥柱、构筑C++效率极限的基石之一。  右值、右值引用简介 值和变量类型基础知识 在开始探索这片“天柱城”前，需要先明确C++中值和变量的类型。 值和变量的类型和定义等不要混淆！ 每个C++表达式（一个操作符(operator)和若干操作符(operands)、一个字面量、一个变">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2024-12-11T02:37:23.000Z">
-<meta property="article:modified_time" content="2024-12-14T02:24:23.316Z">
+<meta property="article:modified_time" content="2024-12-14T05:28:13.222Z">
 <meta property="article:author" content="Hibiscus">
 <meta property="article:tag" content="Modern C++">
 <meta name="twitter:card" content="summary">
@@ -383,7 +383,10 @@ value,简称xvalue)的概念在C++17中从“右值”的混沌中区分开来�
 type</em>)，并且可以是多态(<em>polymorphic</em>)的；</li>
 </ul>
 <blockquote>
-
+<p>不完全类：<code>void</code>以及任何未完全定义的类（给出声明但未定义的<code>class</code>、<code>enum (class)</code>、未知长度的数组等）；详见<a
+target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/language/type#Incomplete_type">cppreference</a></p>
+<p>多态对象：定义虚函数的类/继承上述类的类
+的实例，其特点是会保有一个虚指针(vptr)来实现动态多态性（虚函数调用）以及RTII（运行时类型数据）来辨别其构造时的类型。</p>
 </blockquote>
 <p>“右值”(rvalue)的性质有：<del>左值性质取反</del></p>
 <ul>
@@ -468,15 +471,15 @@ lvalue</em>作为值，初始化<em>lref/rref/cref</em>的重载优先级如下�
 </table>
 <ul>
 <li>数字越低，优先级越高；若数字不存在，则重载失败。</li>
-<li>可以发现右值引用生效的核心在于 <strong><em>rvalue</em> 和
-<em>rref</em> 的结合优先级高于 <em>cref</em></strong>
+<li>右值引用的核心在于 <strong><em>rvalue</em> 和 <em>rref</em>
+的结合优先级高于 <em>cref</em></strong>
 ，即在遇到接受<code>const Ty&amp;</code>和<code>Ty&amp;&amp;</code>的函数重载时，优先选择后者（即“能移动就不复制”）。</li>
 <li>同时，<em>rref</em> 胜过 <em>cref</em>
-的一点在于前者可以通过引用更改指向对象的状态（“拆迁队”），而后者不能（需要遵守<code>const</code>语义）</li>
+的一点在于前者可以通过引用更改指向对象的状态，而后者不能（需要遵守<code>const</code>语义）</li>
 </ul>
 <p>放在类中，移动语义的实践载体就是函数重载——常见于<strong>构造函数</strong>和<strong>赋值运算符</strong>的重载。<br />
 对于一个类<code>Ty</code>，在传统C++的复制构造<code>Ty(const Ty&amp;)</code>/复制赋值运算符<code>Ty&amp; operator=(const Ty&amp;)</code>的基础上，<br />
-C++11向其中新增了移动构造<code>Ty(Ty&amp;&amp;)</code>/移动赋值运算符</p>
+C++11向其中新增了移动构造<code>Ty(Ty&amp;&amp;)</code>/移动赋值运算符<code>Ty&amp; operator=(Ty&amp;&amp;)</code>：</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">CR</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">CR</span>()&#123;&#125;</span><br><span class="line">    <span class="built_in">CR</span>(<span class="type">const</span> CR&amp;)&#123;&#125; <span class="comment">//#1</span></span><br><span class="line">    <span class="built_in">CR</span>(CR&amp;&amp;)&#123;&#125; <span class="comment">//#2</span></span><br><span class="line">    ~<span class="built_in">CR</span>()&#123;&#125;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">modify</span><span class="params">()</span></span>&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    CR c&#123;&#125;;</span><br><span class="line">    CR d&#123;c&#125;; <span class="comment">//Invokes overload #1</span></span><br><span class="line">    CR e&#123;std::<span class="built_in">move</span>(c)&#125;; <span class="comment">//Invokes overload #2</span></span><br><span class="line">    </span><br><span class="line">    <span class="type">const</span> CR&amp; ref1 = std::<span class="built_in">move</span>(d); <span class="comment">//binding rvalue to cref</span></span><br><span class="line">    <span class="comment">//ref1.modify(); //Not Compile: const</span></span><br><span class="line"></span><br><span class="line">    CR&amp;&amp; ref2 = std::<span class="built_in">move</span>(e); <span class="comment">//binding rvalue to rref</span></span><br><span class="line">    ref<span class="number">2.</span><span class="built_in">modify</span>(); <span class="comment">//OK: non-const</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h2 id="善后之被移动对象的处理">“善后”之被移动对象的处理</h2>
 <p>“移动”相较传统的“复制-销毁”模式，提出的一个新课题就是如何处理被移动的对象。<br />
@@ -532,9 +535,12 @@ id="不可复制资源的移动语义归一化">不可复制资源的移动—�
 类的<strong>默认构造、复制构造、复制赋值、移动构造、移动赋值</strong>五个函数。</p>
 <ul>
 <li><em>Rule of Zero</em>:
-若一个类没有定义上述五个函数中的任何一个，那么编译器会为之生成这五个函数的默认形式（见上）。</li>
+若一个类没有定义上述五个函数中的任何一个，那么编译器会为之生成这五个函数的默认形式（见上），亦为我们自定义类时的优先之选。<br />
+</li>
 <li><em>Rule of
-Three</em>：若一个类定义了至少一个构造函数，则应该一鼓作气给出全部三个构造函数的定义。</li>
+Three</em>：若一个类定义了至少一个构造函数，则应该一鼓作气给出全部三个构造函数的定义（所谓的"It
+almost certainly requires all of three"）。<br />
+</li>
 <li><em>Rule of
 Five</em>：若一个类定义了至少一个构造函数和至少一个赋值运算符，则应当一鼓作气给出全部五个函数的定义。</li>
 </ul>
