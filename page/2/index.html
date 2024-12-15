@@ -152,6 +152,109 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-ret" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/ret/">“事了拂衣去” —— 关于return的无尽缠绵</a>
+    </h1>
+  
+
+        
+        <a href="/ret/" class="archive-article-date">
+  	<time datetime="2024-12-13T02:36:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-13</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <blockquote>
+<p>一个最为简单的<code>return</code>语句是C++中出现频率最高的语句之一。为了将这一语句的效率发挥到极致，无数学者为之前仆后继……</p>
+</blockquote>
+<h1 id="不就是一个return嘛">不就是一个return嘛？</h1>
+<p>是的，确实就是一个<code>return</code>。</p>
+<p>C语言的所有变量都符合现代C++的<em>trivial
+types</em>的定义，即当一个变量被赋值时，只需要将该值对应内存空间的数据简单地copy到当前变量对应的内存空间。<br />
+对于 <em>trivial</em>
+的类来说，return确实只是将变量的值丢回到函数栈存储返回值之处（随后再销毁其它局部变量等等）。</p>
+<p>但C++作为一门面向对象的编译期语言，其揭示了一点——这一表面风平浪静的过程实则暗藏汹涌。<br />
+因为某一片具备数据、可使用的内存距离C++中的“对象”概念完全不能相提并论。</p>
+<blockquote>
+<p>这也是C/C++对于堆内存分配的“看法”迥异之处：C的<code>malloc</code>/<code>free</code>实际上不会对内存做任何事情（只是“申请”并获得使用权），顶多算上<code>calloc</code>的零初始化；</p>
+<p>而C++中的<code>new</code>实际上涉及分配内存-&gt;调用构造函数两步，具体地，你可以认为<code>operator new</code>就是一个<code>calloc</code>加上一个<code>thiscall</code>函数的调用：
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function">Ty* <span class="keyword">operator</span> <span class="title">new</span><span class="params">(<span class="type">size_t</span> size)</span> <span class="comment">//C++中operator new的最常用函数重载，在隐式调用时size_t会自动传递</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Ty* ptr = <span class="built_in">static_cast</span>&lt;Ty*&gt;(<span class="built_in">malloc</span>(size));</span><br><span class="line"></span><br><span class="line">    <span class="comment">//随后，我们假设一个函数的ctor在调用时实际上具备Ty::Ty(Ty* where,...)的形式。</span></span><br><span class="line">    <span class="comment">//其就是将本来隐式传递的this写成了显式的形式，参考python中的self和C++23的deducing this。</span></span><br><span class="line">    Ty::<span class="built_in">Ty</span>(ptr);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> ptr;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+</blockquote>
+<p>现在我们假设希望去</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/ret/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+  <div>
+</article>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-cpp20-arkdoom-p1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -242,130 +345,6 @@ specialization</em>)的模板类，其与满足条件（可自动推导）的模
       
         <p class="article-more-link">
           <a class="article-more-a" href="/cpp20-arkdoom-p1/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-  <div>
-</article>
-
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-cryptohack-wps" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/cryptohack-wps/">Cryptohack打本手记</a>
-    </h1>
-  
-
-        
-        <a href="/cryptohack-wps/" class="archive-article-date">
-  	<time datetime="2024-12-12T07:38:02.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-12</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="ecb-orcale">ECB Orcale</h1>
-<p>ECB
-Orcale属于<strong>选择明文攻击</strong>，需要拥有对明文的一定加密权限。<br />
-其利用了ECB加密模式不能抵抗 <em>Replay
-Attacks</em>（重放攻击）的特点。</p>
-<h2 id="攻击原理">攻击原理</h2>
-<p>目标Orcale常形如<strong>固定后缀</strong>，对于攻击者传递的字符串m，该Orcale会将(m+flag)填充后加密之。<br />
-此时，攻击者可以先爆破出flag的长度，随后通过控制m，将待加密的明文（填充后的）制备为形如“控制域+填充域+待解域”的形式。
-以block大小为16为例，各个域的说明如下：</p>
-<blockquote>
-<p>控制域：大小为16，每次爆破控制域中的第i位，使之遍历 <span
-class="math inline">\((0,255)\)</span>。该位其前的内容应为已解密内容，其后的内容应与“待解域”的填充部分全等。</p>
-<p>填充域：大小为16*k(<span class="math inline">\(k \in
-Z_+\)</span>)，通过调整m，该域内容应为任意内容 +
-flag的待解密其它部分。</p>
-<p>待解域：大小为16，该域内容中应为待解密的一位c + 已解密的flag +
-填充部分。</p>
-</blockquote>
-<p>核心是利用ECB加密<strong>各部分相独立</strong>的特性，让控制域和待解域的内容进行碰撞；一旦加密得到的密文相同，说明明文也一定相同，此时就碰撞得到了flag的一位。</p>
-<h2 id="攻击实现">攻击实现</h2>
-<p>假设加密orcale形如下文：<br />
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> Crypto.Cipher <span class="keyword">import</span> AES</span><br><span class="line"><span class="keyword">from</span> Crypto.Util.Padding <span class="keyword">import</span> pad</span><br><span class="line"><span class="keyword">from</span> secret <span class="keyword">import</span> flag,key</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">encrypt</span>(<span class="params">msg:<span class="built_in">bytes</span></span>):</span><br><span class="line">    aes = AES.new(key,AES.MODE_ECB)</span><br><span class="line">    plain = pad(msg+flag,<span class="number">16</span>)</span><br><span class="line">    <span class="keyword">return</span> aes.encrypt(plain).<span class="built_in">hex</span>()</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__==<span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        ipt = <span class="built_in">bytes</span>.fromhex(<span class="built_in">input</span>(<span class="string">&#x27;encrypt :&#x27;</span>))</span><br><span class="line">        cipher = encrypt(ipt)</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&#x27;result : <span class="subst">&#123;cipher&#125;</span>&#x27;</span>)</span><br></pre></td></tr></table></figure></p>
-<p>我们的攻击思路：<br />
-1.
-爆破出flag的长度（或，构造临界点，即让我们知道初始状态下应如何做才能控制“待解域”的填充部分已知）。<br />
-2. 对于第i位，构造明文（控制域+填充域+待解域的非填充部分），传递之<br />
-3.
-若加密结果第一组和最后一组相同，说明得到碰撞，即获得了flag的一位。如此重复，直至明文全部解密完成</p>
-<blockquote>
-<p>“临界点”：当添加一个<code>byte</code>的明文后，发现得到cipher的长度增加了16(<code>BLOCK_SIZE</code>)，这是因为<code>pad</code>的规则要求填充位数不能为0。</p>
-<p>因此，此时实际被加密的明文恰好就是(<code>msg + flag + b'\x10' * 16</code>)。</p>
-<p>如果再给msg添加1位，就可以把flag的一位“挤”到后面（当然，相应的填充内容也会变成<code>b'\x0f'</code>）。（为了保证控制域的内容完全可控，msg应当从16位开始，或者在临界点后再向msg添加17位开始爆破）</p>
-</blockquote>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">getcipher</span>():</span><br><span class="line">    io.recvuntil(<span class="string">b&#x27;:&#x27;</span>)</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">bytes</span>.fromhex(io.recvline().strip().decode())</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__==<span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    io = process([<span class="string">&#x27;python&#x27;</span>,<span class="string">&#x27;task.py&#x27;</span>])</span><br><span class="line"></span><br><span class="line">    <span class="comment">#第一步</span></span><br><span class="line"></span><br><span class="line">    teststr = <span class="string">&#x27;&#x27;</span></span><br><span class="line">    lastlen = <span class="number">0</span></span><br><span class="line">    io.sendlineafter(<span class="string">b&#x27;:&#x27;</span>,teststr.encode())</span><br><span class="line">    start = <span class="built_in">len</span>(getcipher())</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">16</span>):</span><br><span class="line">        teststr += <span class="string">&#x27;0f&#x27;</span> <span class="comment">#内容随意，此处0f为考虑到后续碰撞需要提前准备</span></span><br><span class="line">        io.sendlineafter(<span class="string">b&#x27;:&#x27;</span>,teststr.encode())</span><br><span class="line">        <span class="keyword">if</span> <span class="built_in">len</span>(getcipher()) != start: </span><br><span class="line">            teststr += <span class="string">&#x27;0f&#x27;</span> * <span class="number">17</span></span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">    bt = <span class="built_in">bytearray</span>.fromhex(teststr)</span><br><span class="line">    decrypted = <span class="string">b&#x27;&#x27;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">#理论上可以不断assert len(decrypted) == i</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">16</span>):</span><br><span class="line">        padval = <span class="number">15</span> - i</span><br><span class="line">        bt = <span class="built_in">bytearray</span>(decrypted + [<span class="number">0</span>] + [padval] * padval + bt[<span class="number">16</span>:])</span><br><span class="line">        <span class="keyword">for</span> t <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">255</span>):</span><br><span class="line">            bt[i] = t</span><br><span class="line">            io.sendlineafter(<span class="string">b&#x27;:&#x27;</span>,bt.<span class="built_in">hex</span>().encode())</span><br><span class="line">            dealer = getcipher()</span><br><span class="line">            <span class="keyword">if</span> dealer[-<span class="number">16</span>:] == dealer[:<span class="number">16</span>]: <span class="comment">#碰撞成功，说明获得了一位密文</span></span><br><span class="line">                decrypted += t</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">raise</span> Exception(<span class="string">&quot;Something Wrong?&quot;</span>) <span class="comment">#Error</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">print</span>(decrypted)</span><br></pre></td></tr></table></figure>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">wp</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/闲笔//" class="article-tag-list-link color3">闲笔</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/cryptohack-wps/">展开全文 >></a>
         </p>
       
 

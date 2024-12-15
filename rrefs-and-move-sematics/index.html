@@ -16,7 +16,7 @@
 <meta property="og:description" content="右值(rvalues)和右值引用(rvalue references)是支撑Modern C++的中流砥柱、构筑C++效率极限的基石之一。  右值、右值引用简介 值和变量类型基础知识 在开始探索这片“天柱城”前，需要先明确C++中值和变量的类型。 值和变量的类型和定义等不要混淆！ 每个C++表达式（一个操作符(operator)和若干操作符(operands)、一个字面量、一个变">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2024-12-11T02:37:23.000Z">
-<meta property="article:modified_time" content="2024-12-14T12:05:00.856Z">
+<meta property="article:modified_time" content="2024-12-14T12:06:59.637Z">
 <meta property="article:author" content="Hibiscus">
 <meta property="article:tag" content="Modern C++">
 <meta name="twitter:card" content="summary">
@@ -753,7 +753,8 @@ optimization)</strong>。<br />
 简而言之，除非已经深得其道，否则可以认为C++23中返回值不需要（也不应该）<code>std::move(local_variable)</code>。</p>
 <blockquote>
 <p>简单来说，具有自动存储周期(automatic storage
-duration)的非<code>volatile</code>、非左值引用变量都是<em>move-eligible</em>的。可以简记为除了<code>static</code>,<code>thread_local</code>以外常用的变量都是（含右值引用变量）。</p>
+duration)的非<code>volatile</code>、非左值引用变量都是<em>move-eligible</em>
+的。除了<code>static</code>,<code>thread_local</code>以外常用的变量皆然（<strong>含右值引用变量</strong>）。</p>
 </blockquote>
 <p>如下函数在C++23前返回<em>悬挂引用(dangaling
 reference)</em>，C++23起其非良构(<em>ill-formed</em>)而不能通过编译。<del>当然你如果把返回值改成rref那还是可以返回悬挂引用的</del>
