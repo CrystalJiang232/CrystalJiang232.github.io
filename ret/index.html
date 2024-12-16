@@ -16,7 +16,7 @@
 <meta property="og:description" content="一个最为简单的return语句是C++中出现频率最高的语句之一。为了将这一语句的效率发挥到极致，无数学者为之前仆后继……  不就是一个return嘛？ 是的，确实就是一个return。 C语言的所有变量都符合现代C++的trivial types的定义，即当一个变量被赋值时，只需要将该值对应内存空间的数据简单地copy到当前变量对应的内存空间。 对于 trivial 的类来说，r">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2024-12-13T02:36:00.000Z">
-<meta property="article:modified_time" content="2024-12-13T09:24:03.394Z">
+<meta property="article:modified_time" content="2024-12-16T14:04:02.912Z">
 <meta property="article:author" content="Hibiscus">
 <meta property="article:tag" content="Modern C++">
 <meta name="twitter:card" content="summary">
@@ -191,7 +191,43 @@ types</em>的定义，即当一个变量被赋值时，只需要将该值对应�
 <p>而C++中的<code>new</code>实际上涉及分配内存-&gt;调用构造函数两步，具体地，你可以认为<code>operator new</code>就是一个<code>calloc</code>加上一个<code>thiscall</code>函数的调用：
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function">Ty* <span class="keyword">operator</span> <span class="title">new</span><span class="params">(<span class="type">size_t</span> size)</span> <span class="comment">//C++中operator new的最常用函数重载，在隐式调用时size_t会自动传递</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Ty* ptr = <span class="built_in">static_cast</span>&lt;Ty*&gt;(<span class="built_in">malloc</span>(size));</span><br><span class="line"></span><br><span class="line">    <span class="comment">//随后，我们假设一个函数的ctor在调用时实际上具备Ty::Ty(Ty* where,...)的形式。</span></span><br><span class="line">    <span class="comment">//其就是将本来隐式传递的this写成了显式的形式，参考python中的self和C++23的deducing this。</span></span><br><span class="line">    Ty::<span class="built_in">Ty</span>(ptr);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> ptr;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 </blockquote>
-<p>现在我们假设希望去</p>
+<h1
+id="return背后的风云及传统c的应付之策">return背后的风云及传统C++的“应付”之策</h1>
+<p>现在我们假设希望去返回一个值，在C语言中由于并没有明确的“对象”概念——即使是<code>struct</code>也无异于具有特殊内存layout的fundamental
+types而已；<br />
+因此在返回时，可以直接从源内存块复制数据到目标内存块，随后释放源内存块的内存占用（栈/堆皆然）。以一个对应用途的、比较知名的C函数来说就是可以单纯地<code>memcpy</code>。</p>
+<blockquote>
+<p>C语言中确实有<code>memmove</code>这一函数，但其与C++的移动语义云云无关——其只是提供了在源内存和目标内存重叠时，保证数据可以正确覆写的保证。</p>
+</blockquote>
+<p>而在C++中却不是这样：对象可以认为是内存之上的上层建筑，获得对象时要先分配内存再调用构造函数，销毁对象时需要先调用析构函数再释放内存。<br />
+由此，直观的<code>return</code>解决方案就应运而生：以<code>return</code>的值作为参数，分配新内存并构造新对象，随后析构原对象、释放原内存即可。<br />
+但对于存在大型类的C++，如此做的弊端也非常明显：</p>
+<ul>
+<li>（复制）构造函数、析构函数可能会涉及到大量的其它操作，时间、资源开销较大；<br />
+</li>
+<li>C++的OOP思想决定了资源是由对象所“拥有”的，涉及到保有资源对象的相关操作时，或存在大量不必要的复制-析构操作（如堆内存），或很难/无法依此法安全地完成资源所有权的转移（如文件句柄）。</li>
+</ul>
+<h1 id="c11move-sematics-comes-to-the-rescue吗">C++11："move sematics
+comes to the rescue"吗？</h1>
+<p>其中，第二条也是C++的一大痛点，因而C++11提出了右值引用和移动语义的概念，语言层面上支持了我们通过函数等来完成转移资源的操作。<br />
+作为配套，C++11提出了 <em>move-eligible</em>
+这一概念，通过它来规范一种"Automatic Move"。</p>
+<blockquote>
+<p>以下标志着一个具有<strong>自动存储周期(automatic storage
+duration)变量</strong>的表达式都是 <em>move-eligible</em> （可移动）的：
+-
+其为一个非易失(non-<code>volatile</code>)对象类型，<strong>或一个非易失对象的右值引用（此项C++20中加入）</strong>；<br />
+- 且其在函数体内被声明/作为函数体内的参数出现。</p>
+</blockquote>
+<h1 id="c23终究利落地斩断万缕过往">C++23：终究利落地斩断万缕过往</h1>
+<p>对于二次重载决议的纷争不休，C++23最终选择给出了一个干净利落的解决方案：移除此前搭建的诸多为了保证兼容性而留下的设施，最大化"Automatic
+move"的适用范围。<br />
+C++23起，只要<code>return exp;</code>中的exp是 <em>move-eligible</em>
+的， 那么该表达式就会被视为 <strong><em>xvalue</em></strong> 。
+当然，如此做也有一定的副作用：<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span>&amp; <span class="title">fun</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> x = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">return</span> x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 这段代码一直以来都是C++中演示悬挂引用(<em>dangling
+reference</em>)的完美示范，而C++23起这段代码将不能通过编译（因为x将被视作xvalue）。<br />
+<del>（当然，如果你执意要创造一个悬挂引用，可以把返回值类型改成<code>int&amp;&amp;</code>）</del></p>
 
       
 
@@ -292,7 +328,7 @@ types</em>的定义，即当一个变量被赋值时，只需要将该值对应�
       <i class="icon-circle-left"></i>
       <div class="article-nav-title">
         
-          Wp(temp)
+          第二届长城杯CTF Crypto wp(partial)
         
       </div>
     </a>
@@ -326,7 +362,8 @@ types</em>的定义，即当一个变量被赋值时，只需要将该值对应�
                 </span>
                 <span class="tooltip-content">
                     <div class="toc-article">
-                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%8D%E5%B0%B1%E6%98%AF%E4%B8%80%E4%B8%AAreturn%E5%98%9B"><span class="toc-number">1.</span> <span class="toc-text">不就是一个return嘛？</span></a></li></ol>
+                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%8D%E5%B0%B1%E6%98%AF%E4%B8%80%E4%B8%AAreturn%E5%98%9B"><span class="toc-number">1.</span> <span class="toc-text">不就是一个return嘛？</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#return%E8%83%8C%E5%90%8E%E7%9A%84%E9%A3%8E%E4%BA%91%E5%8F%8A%E4%BC%A0%E7%BB%9Fc%E7%9A%84%E5%BA%94%E4%BB%98%E4%B9%8B%E7%AD%96"><span class="toc-number">2.</span> <span class="toc-text">return背后的风云及传统C++的“应付”之策</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#c11move-sematics-comes-to-the-rescue%E5%90%97"><span class="toc-number">3.</span> <span class="toc-text">C++11：&quot;move sematics
+comes to the rescue&quot;吗？</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#c23%E7%BB%88%E7%A9%B6%E5%88%A9%E8%90%BD%E5%9C%B0%E6%96%A9%E6%96%AD%E4%B8%87%E7%BC%95%E8%BF%87%E5%BE%80"><span class="toc-number">4.</span> <span class="toc-text">C++23：终究利落地斩断万缕过往</span></a></li></ol>
                     </div>
                 </span>
             </div>
