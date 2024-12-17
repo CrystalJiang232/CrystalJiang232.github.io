@@ -16,7 +16,7 @@
 <meta property="og:description" content="离散对数问题，Discrete Logorithm Problem，简称DLP，是非对称密码学所依赖的极为重要的数学难题之一。 经典DLP问题描述： 给定 \(g^x \equiv c (mod p) （g,x &lt; p）\)，由 \((g,x)\) 计算 \(c\) 很容易（快速幂取模），但由 \((g,c)\) 计算 \(x\) 是困难的。  即使是BSGS等攻击方法，依然必须">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2024-12-10T12:18:00.000Z">
-<meta property="article:modified_time" content="2024-12-13T09:24:22.675Z">
+<meta property="article:modified_time" content="2024-12-16T14:17:31.135Z">
 <meta property="article:author" content="Hibiscus">
 <meta property="article:tag" content="Crypto">
 <meta name="twitter:card" content="summary">
@@ -285,7 +285,10 @@ class="math inline">\(GF_p\)</span> 下DLP问题的代码</p>
 其攻击对象是<strong>阶的小因子之积</strong>过小的循环群，在这些群上，可以求解(部分)阶比较小的子群的离散对数问题；<br />
 对这些结果应用中国剩余定理，即可获得原群上离散对数问题的结果。</p>
 <blockquote>
-<p>群中的拉格朗日定理：</p>
+<p>群中的拉格朗日定理：如果 <span class="math inline">\(G_P\)</span> 是
+<span class="math inline">\(G\)</span> 的一个子群，则 <span
+class="math inline">\(ord(G_P)\)</span> 一定整除 <span
+class="math inline">\(ord(G)\)</span>。</p>
 </blockquote>
 <p>攻击成立的两个场景：<br />
 - 目标群的阶的全部因子都很小，a.k.a.“光滑数”(smooth-number)；<br />

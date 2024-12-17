@@ -16,7 +16,7 @@
 <meta property="og:description" content="一个最为简单的return语句是C++中出现频率最高的语句之一。为了将这一语句的效率发挥到极致，无数学者为之前仆后继……  不就是一个return嘛？ 是的，确实就是一个return。 C语言的所有变量都符合现代C++的trivial types的定义，即当一个变量被赋值时，只需要将该值对应内存空间的数据简单地copy到当前变量对应的内存空间。 对于 trivial 的类来说，r">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2024-12-13T02:36:00.000Z">
-<meta property="article:modified_time" content="2024-12-16T14:04:02.912Z">
+<meta property="article:modified_time" content="2024-12-17T07:33:00.308Z">
 <meta property="article:author" content="Hibiscus">
 <meta property="article:tag" content="Modern C++">
 <meta name="twitter:card" content="summary">
@@ -207,6 +207,18 @@ types而已；<br />
 </li>
 <li>C++的OOP思想决定了资源是由对象所“拥有”的，涉及到保有资源对象的相关操作时，或存在大量不必要的复制-析构操作（如堆内存），或很难/无法依此法安全地完成资源所有权的转移（如文件句柄）。</li>
 </ul>
+<p>举个有趣的实例：不知各位在初学C++，观察复制构造函数的作用时，是否有思索——即使是一念间，下面这段函数有些蹊跷？<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">S</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">S</span>(<span class="type">int</span> _x):<span class="built_in">x</span>(_x)&#123;&#125;</span><br><span class="line">    <span class="built_in">S</span>(<span class="type">const</span> S&amp; from):<span class="built_in">x</span>(from.x * <span class="number">2</span>)&#123;&#125;</span><br><span class="line">    <span class="built_in">S</span>(S&amp;&amp; from):<span class="built_in">x</span>(from.x*<span class="number">3</span>)&#123;&#125;</span><br><span class="line">    ~<span class="built_in">S</span>()&#123;std::cout &lt;&lt; x &lt;&lt; <span class="string">&#x27; &#x27;</span>;&#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> x;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">S <span class="title">single</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> S&#123;<span class="number">1</span>&#125;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">S <span class="title">transfer</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    S w&#123;<span class="built_in">single</span>()&#125;;</span><br><span class="line">    <span class="keyword">return</span> w;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    S a&#123;<span class="built_in">transfer</span>()&#125;;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>事实上，即使到了C++23，依然无法绝对把握地预测上述代码的输出——（在遵循标准下）不同的编译器给出的不同优化结果都会导致输出不同。<br />
+这也是纷争来源之始端：只要拥有non-trivial的复制/移动构造函数（甚至不涉及赋值，涉及赋值更麻烦），就有很多的<del>胡来</del>优化空间。<br />
+比如，<code>single()</code>返回的S到底是要copy一次返回（传统C++）还是move一次返回（C++11）？（剧透：C++17起，<code>single()</code>必须遵循
+<em>prvalue sematics</em>
+,意即其既不会copy也不会move<del>(surprise!)</del><br />
+再比如，<code>transfer()</code>明明初始化w后啥都没干，返回的时候是copy，还是move，还是都不调用？</p>
+<p>从C++98的观点来看（忽略移动构造函数），<code>single()</code>返回时需要复制构造一次，<code>transfer()</code>返回时亦然，故<code>std::cout</code>应当输出<code>1 2 4</code>。</p>
+<blockquote>
+<p>但其实即使是C++98的编译器编译运行之，依然不一定会输出上述结果。</p>
+</blockquote>
 <h1 id="c11move-sematics-comes-to-the-rescue吗">C++11："move sematics
 comes to the rescue"吗？</h1>
 <p>其中，第二条也是C++的一大痛点，因而C++11提出了右值引用和移动语义的概念，语言层面上支持了我们通过函数等来完成转移资源的操作。<br />
@@ -214,11 +226,31 @@ comes to the rescue"吗？</h1>
 这一概念，通过它来规范一种"Automatic Move"。</p>
 <blockquote>
 <p>以下标志着一个具有<strong>自动存储周期(automatic storage
-duration)变量</strong>的表达式都是 <em>move-eligible</em> （可移动）的：
+duration)变量</strong>的表达式都是 <em>move-eligible</em>
+（可移动）的：<br />
 -
 其为一个非易失(non-<code>volatile</code>)对象类型，<strong>或一个非易失对象的右值引用（此项C++20中加入）</strong>；<br />
 - 且其在函数体内被声明/作为函数体内的参数出现。</p>
 </blockquote>
+<p>从C++11开始，对于<code>return x;</code>这条语句用于初始化一个临时对象时，其规定调用构造函数的重载决议会执行两次：<br />
+-
+第一次决议将x视为一个右值(rvalue?)；但若第一轮重载决议<strong>失败</strong>，或其成功但未选择移动构造函数（所谓选择函数的形参不是纯粹的“右值引用”），则继续执行第二轮<br />
+- 第二次决议时，x就会被视为一个左值(lvalue)。</p>
+<p>这里可见的最大的疑点就在第一轮重载决议的“失败”定义。比如，选到<code>= delete;</code>的函数算不算失败？若有多个函数的形参复合要求且优先级相同（即制造了歧义(ambiguity)），是遵循此条规则进行第二轮重载决议还是直接报错？<br />
+不同版本中，不同编译器都给出了诸多不同的实现、决策方式。</p>
+<blockquote>
+<p>关于C++11——C++20的规则细讲，可以参考<a
+target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/language/return">cppreference</a>。<br />
+两轮重载决议带来的最大问题就是很多奇特的现象，主要出在所谓“未选择移动构造函数”上。</p>
+</blockquote>
+<p>下述代码中，f1()在C++23前不能通过编译，f2()则通过隐式转换“逃过一劫”：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">T</span>&#123;&#125;;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">U</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">U</span>(T&amp;&amp;)&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function">T&amp;&amp; <span class="title">f1</span><span class="params">()</span></span>&#123;<span class="keyword">return</span> T&#123;&#125;;&#125;</span><br><span class="line"><span class="function">U <span class="title">f2</span><span class="params">()</span></span>&#123;<span class="keyword">return</span> T&#123;&#125;;&#125; </span><br></pre></td></tr></table></figure>
+<p>C++11起，由于第一轮重载决议会先将up看作右值，因此可以调用移动构造函数初始化返回值。<br />
+C++11以前，若通过一些其它方式禁用了up的复制构造，则其将不能被返回：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">std::unique_ptr&lt;<span class="type">int</span>&gt; <span class="title">f3</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::unique_ptr&lt;<span class="type">int</span>&gt; up&#123;&#125;;</span><br><span class="line">    <span class="keyword">return</span> up;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>C++20前若第一轮重载决议没有选择移动构造函数（必须是“move
+constructor”），则会回退到传统C++的重载决策(rr视为左值)进而无法使该段程序ill-formed：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">std::unique_ptr&lt;<span class="type">int</span>&gt; <span class="title">f4</span><span class="params">(std::unique_ptr&lt;<span class="type">int</span>&gt;&amp;&amp; rr)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> rr;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h1 id="c23终究利落地斩断万缕过往">C++23：终究利落地斩断万缕过往</h1>
 <p>对于二次重载决议的纷争不休，C++23最终选择给出了一个干净利落的解决方案：移除此前搭建的诸多为了保证兼容性而留下的设施，最大化"Automatic
 move"的适用范围。<br />
@@ -228,6 +260,33 @@ C++23起，只要<code>return exp;</code>中的exp是 <em>move-eligible</em>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span>&amp; <span class="title">fun</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> x = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">return</span> x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 这段代码一直以来都是C++中演示悬挂引用(<em>dangling
 reference</em>)的完美示范，而C++23起这段代码将不能通过编译（因为x将被视作xvalue）。<br />
 <del>（当然，如果你执意要创造一个悬挂引用，可以把返回值类型改成<code>int&amp;&amp;</code>）</del></p>
+<blockquote>
+<p>预告：C++26中对于上述悬挂引用的规定作出了更新，现在若一个函数返回的引用值绑定至临时对象上，则该程序非良构(ill-formed)。<del>相当于悬挂引用return渐渐成为历史</del></p>
+</blockquote>
+<h1 id="nrvourvoc优化之谜">NRVO/URVO：C++优化之谜</h1>
+<p>回到最开始的那个函数套娃传递的实例（不要笑——这种套娃传递初始化构造是非常常见的），在许多场景下其编译结果依然有优化空间：<br />
+与其让编译器调用几次移动构造函数，不如甚至直接略去这个过程，让最上层的栈函数直接控制最底层函数构造的对象栈空间。<br />
+事实上，早在移动语义提出之前的C++98，就已经允许了编译器执行这样的优化（“优化”掉部分<code>return</code>函数中对<strong>可能带副作用</strong>的复制构造函数的调用）。</p>
+<p>这样的优化场景有两种：<br />
+- 返回值的表达式是一个纯右值(<em>prvalue</em>)表达式，称为"URVO"(Unnamed
+Return Value Optimization)；<br />
+-
+返回值的表达式是一个本地变量的表达式，但编译器可以预知该变量在一定代码块内不会变化（相当于可以“预判”其返回值/状态），称为"NRVO"(Named
+Return Value Optimization)。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">std::string <span class="title">getstr</span><span class="params">(<span class="type">int</span> var)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> std::format(<span class="string">&quot;&#123;0&#125; &#123;0&#125; &#123;0&#125;&quot;</span>,var);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">std::string <span class="title">process</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::string base = <span class="built_in">getstr</span>(<span class="number">3</span>);</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">    <span class="keyword">return</span> base;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,<span class="built_in">process</span>());</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如上，C++23中在没有任何优化的情况下，至少需要调用<code>std::string</code>的移动构造函数两次。<br />
+但实际上<code>getstr(int)</code>函数中初始化一个对象后直接<code>return</code>了，显然它的栈空间是可以复用的；同时<code>process()</code>中并没有对<code>base</code>进行任何其它操作就直接返回，因而其移动也可以省略。</p>
+<p>C++17提出了 <em>prvalue sematics</em>
+的概念，要求编译器对纯右值表达式（包括潜在需要隐式调用转换构造函数的返回值）进行复制省略优化（<strong>一定不会</strong>调用移动/复制构造函数）。
+对于以下代码： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Test</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Test</span>()&#123;&#125;</span><br><span class="line">    <span class="built_in">Test</span>(<span class="type">const</span> Test&amp;)&#123;std::<span class="built_in">println</span>(<span class="string">&quot;copy ctor&quot;</span>);&#125;</span><br><span class="line">    <span class="built_in">Test</span>(Test&amp;&amp;) <span class="keyword">noexcept</span> &#123;std::<span class="built_in">println</span>(<span class="string">&quot;move ctor&quot;</span>);&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">auto</span> v = []&#123;<span class="keyword">return</span> Test&#123;&#125;;&#125;();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> C++17的 <em>prvalue sematics</em> (a.k.a.
+guaranteed copy elision) 保证了上述代码不会有任何输出。</p>
+<p>但注意，对于NRVO，C++只是允许了这种optimization的存在，对其优化程度则未做任何规定/明确，最终优化/编译结果亦因编译器及编译设置而异：<br />
+比如将上述代码中<code>main</code>函数的第一行改为 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> v = []&#123;Test t&#123;&#125;; <span class="keyword">return</span> t;&#125;();</span><br></pre></td></tr></table></figure>
+此时程序运行输出可能为空也可能不为空。</p>
+<blockquote>
+<p>严格来说，C++23前这段代码的输出很大程度上取决于v的初始化声明方式（参见“两轮重载决议”）。<br />
+C++23保证了这段代码若有输出，则一定是"move ctor"。</p>
+</blockquote>
 
       
 
@@ -363,7 +422,7 @@ reference</em>)的完美示范，而C++23起这段代码将不能通过编译（
                 <span class="tooltip-content">
                     <div class="toc-article">
                     <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%8D%E5%B0%B1%E6%98%AF%E4%B8%80%E4%B8%AAreturn%E5%98%9B"><span class="toc-number">1.</span> <span class="toc-text">不就是一个return嘛？</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#return%E8%83%8C%E5%90%8E%E7%9A%84%E9%A3%8E%E4%BA%91%E5%8F%8A%E4%BC%A0%E7%BB%9Fc%E7%9A%84%E5%BA%94%E4%BB%98%E4%B9%8B%E7%AD%96"><span class="toc-number">2.</span> <span class="toc-text">return背后的风云及传统C++的“应付”之策</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#c11move-sematics-comes-to-the-rescue%E5%90%97"><span class="toc-number">3.</span> <span class="toc-text">C++11：&quot;move sematics
-comes to the rescue&quot;吗？</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#c23%E7%BB%88%E7%A9%B6%E5%88%A9%E8%90%BD%E5%9C%B0%E6%96%A9%E6%96%AD%E4%B8%87%E7%BC%95%E8%BF%87%E5%BE%80"><span class="toc-number">4.</span> <span class="toc-text">C++23：终究利落地斩断万缕过往</span></a></li></ol>
+comes to the rescue&quot;吗？</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#c23%E7%BB%88%E7%A9%B6%E5%88%A9%E8%90%BD%E5%9C%B0%E6%96%A9%E6%96%AD%E4%B8%87%E7%BC%95%E8%BF%87%E5%BE%80"><span class="toc-number">4.</span> <span class="toc-text">C++23：终究利落地斩断万缕过往</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#nrvourvoc%E4%BC%98%E5%8C%96%E4%B9%8B%E8%B0%9C"><span class="toc-number">5.</span> <span class="toc-text">NRVO&#x2F;URVO：C++优化之谜</span></a></li></ol>
                     </div>
                 </span>
             </div>
