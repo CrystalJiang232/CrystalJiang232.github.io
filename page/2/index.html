@@ -285,7 +285,7 @@ class="math inline">\(n\)</span></p>
     <div class="article-entry" itemprop="articleBody">
       
         <blockquote>
-<p>一个最为简单的<code>return</code>语句是C++中出现频率最高的语句之一。为了将这一语句的效率发挥到极致，无数学者为之前仆后继……</p>
+<p>一个最为简单的<code>return x;</code>语句是C++中出现频率最高的语句之一。为了将这一语句的效率发挥到极致，历代C++都在其上下了极大功夫。</p>
 </blockquote>
 <h1 id="不就是一个return嘛">不就是一个return嘛？</h1>
 <p>是的，确实就是一个<code>return</code>。</p>
@@ -352,7 +352,7 @@ duration)变量</strong>的表达式都是 <em>move-eligible</em>
 target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/language/return">cppreference</a>。<br />
 两轮重载决议带来的最大问题就是很多奇特的现象，主要出在所谓“未选择移动构造函数”上。</p>
 </blockquote>
-<p>下述代码中，f1()在C++23前不能通过编译，f2()则通过隐式转换“逃过一劫”：</p>
+<p>下述代码中，<code>f1()</code>在C++23前不能通过编译，<code>f2()</code>则通过隐式转换“逃过一劫”：</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">T</span>&#123;&#125;;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">U</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">U</span>(T&amp;&amp;)&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function">T&amp;&amp; <span class="title">f1</span><span class="params">()</span></span>&#123;<span class="keyword">return</span> T&#123;&#125;;&#125;</span><br><span class="line"><span class="function">U <span class="title">f2</span><span class="params">()</span></span>&#123;<span class="keyword">return</span> T&#123;&#125;;&#125; </span><br></pre></td></tr></table></figure>
 <p>C++11起，由于第一轮重载决议会先将up看作右值，因此可以调用移动构造函数初始化返回值。<br />
 C++11以前，若通过一些其它方式禁用了up的复制构造，则其将不能被返回：</p>
@@ -389,13 +389,29 @@ Return Value Optimization)。</p>
 的概念，要求编译器对纯右值表达式（包括潜在需要隐式调用转换构造函数的返回值）进行复制省略优化（<strong>一定不会</strong>调用移动/复制构造函数）。
 对于以下代码： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Test</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Test</span>()&#123;&#125;</span><br><span class="line">    <span class="built_in">Test</span>(<span class="type">const</span> Test&amp;)&#123;std::<span class="built_in">println</span>(<span class="string">&quot;copy ctor&quot;</span>);&#125;</span><br><span class="line">    <span class="built_in">Test</span>(Test&amp;&amp;) <span class="keyword">noexcept</span> &#123;std::<span class="built_in">println</span>(<span class="string">&quot;move ctor&quot;</span>);&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">auto</span> v = []&#123;<span class="keyword">return</span> Test&#123;&#125;;&#125;();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> C++17的 <em>prvalue sematics</em> (a.k.a.
 guaranteed copy elision) 保证了上述代码不会有任何输出。</p>
-<p>但注意，对于NRVO，C++只是允许了这种optimization的存在，对其优化程度则未做任何规定/明确，最终优化/编译结果亦因编译器及编译设置而异：<br />
+<p>但对于NRVO来说，有两个指导于实践中的要点：<br />
+1.
+C++只是允许了这种optimization的存在，对其优化程度则未做任何规定/明确，最终优化/编译结果亦因编译器及编译设置而异：<br />
 比如将上述代码中<code>main</code>函数的第一行改为 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> v = []&#123;Test t&#123;&#125;; <span class="keyword">return</span> t;&#125;();</span><br></pre></td></tr></table></figure>
 此时程序运行输出可能为空也可能不为空。</p>
 <blockquote>
 <p>严格来说，C++23前这段代码的输出很大程度上取决于v的初始化声明方式（参见“两轮重载决议”）。<br />
 C++23保证了这段代码若有输出，则一定是"move ctor"。</p>
 </blockquote>
+<ol start="2" type="1">
+<li>NRVO的返回值不能有任何修饰（必须只是一个变量名）。因此<code>return std::move(local)</code>是不被建议的写法（如此做会disable
+NRVO）。<br />
+C++23前，在部分返回引用/move-only类型时可能需要用<code>std::move</code>来保证一定的兼容性，但随着C++23统一将
+<em>move-eligible</em>
+的本地变量视为xvalue，现在依然建议绝大部分场景直接<code>return local;</code>即可。</li>
+</ol>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">std::string <span class="title">ret</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::string val&#123;&#125;;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">    <span class="keyword">return</span> val; <span class="comment">//Left room for NRVO Optimization: invocation of move ctor not necessary</span></span><br><span class="line">    <span class="comment">//return std::move(val); //Try not to code this: surpresses NRVO</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="结语">结语</h1>
+<p>C++23起，<code>return x;</code>的诸多用法和语义得以被归一化；<br />
+从程序设计的角度来说，除少数需要移动一些<code>volatile</code>、<code>static</code>等变量的场景，其它情况下均使用最简单的<code>return x;</code>即可获得最大效率。</p>
+<p>无论是学习编程语言，还是学习、工作与生活中处理各种问题，都尽量应当摒弃"take
+it for granted"的思维。<br />
+对一些司空见惯之现象深入探究，方能助自身视野格局突破惰性之樊笼，逐渐得以游走自如于空阔之境。</p>
 
       
 
