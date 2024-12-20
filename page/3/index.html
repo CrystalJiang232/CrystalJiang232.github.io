@@ -420,7 +420,33 @@ specialization</em>)的模板类，其与满足条件（可自动推导）的模
 <li><strong>试图访问类的某个<code>typedef</code>或静态成员等，但该成员不存在</strong>；（SFINAE中最为常用之者）</li>
 </ul>
 </blockquote>
-<p>比如</p>
+<p>C++中，在<code>&lt;algorithm&gt;</code>的老STL算法库中经常能看到<code>std::enable_if_t</code>的声明，其封装了<code>std::enable_if</code>这一<code>struct</code>。</p>
+<blockquote>
+<p>C++中一定要分清模板函数的重载(overload)和特化(specialization)两个概念。特化有全特化(full
+specialization)和偏特化(partial specialization)两种。<br />
+模板函数只有“重载”和“全特化”，模板类只有“全特化”和“偏特化”。<br />
+对于模板函数，C++在匹配参数时若发现一个模板函数存在重载，则按照以下步骤决策：<br />
+- 先判定函数列表是否匹配，排除不匹配的重载选项；<br />
+-
+若重载选项中一个是模板函数，一个是非模板函数，且非模板函数的形参列表和当前参数不需要隐式转换时，选择非模板函数；<br />
+-
+否则，若可以通过自动匹配模板函数来令模板函数的形参列表和当前参数匹配，且不需要隐式转换时，选择实例化一个模板函数；<br />
+- 否则认为是存在歧义而编译失败。</p>
+</blockquote>
+<blockquote>
+<p>注意：任何<code>template</code>的声明（变量、函数、类）无论基本还是特化，<strong>自身都不会产生任何编译代码</strong>；必须有调用方实例化之时，编译的程序才会有这部分代码（比如对于函数来说，存在指向该函数的指针）。<br />
+核心点就是<strong>特化(specialization)和实例化(instanitation)是不同的概念</strong>。<br />
+相对地，任何非<code>template</code>的声明则都会产生编译代码（除非在Release版本中被编译器优化掉）。</p>
+</blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(Ty)</span></span>&#123;&#125; <span class="comment">//fun没有任何可执行代码</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;&gt;</span><br><span class="line"><span class="type">void</span> <span class="built_in">fun</span>&lt;<span class="type">int</span>&gt;(<span class="type">int</span>)&#123;&#125; <span class="comment">//fun至此仍然未产生任何可执行代码，因为这只是一个模板函数的特化，不是实例化</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;   </span><br><span class="line">    <span class="built_in">fun</span>(<span class="string">&#x27;o&#x27;</span>); <span class="comment">//实例化了一个fun&lt;char&gt;，至此程序中拥有了一个指向函数fun&lt;char&gt;的函数指针</span></span><br><span class="line">    <span class="built_in">fun</span>(<span class="number">2.3</span>); <span class="comment">//同理</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>模板类则有全特化和偏特化之分，标志为是否是<code>template&lt;&gt;</code>。<br />
+一旦出现<code>template&lt;&gt;</code>，说明其指定了模板的全部参数，则为全特化，否则为偏特化。
+C++匹配模板参数时，若该模板存在特化，则匹配优先级为全特化&gt;偏特化&gt;基本模板，其即为<code>&lt;type_traits&gt;</code>中诸多utility的实现支撑原理之一。<br />
+且C++的模板参数匹配遵循最简原则（无需隐式转换的原始类型优先级最高，引用、指针、<code>const</code>/<code>volatile</code>修饰等优先级后置）。</p>
+</blockquote>
+<p><code>&lt;type_traits&gt;</code>中提供了一个<code>remove_reference_t</code>封装<code>remove_reference</code>，来在模板编程中获取一个类型名移除引用信息的结果：<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">remove_reference</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">using</span> type = Ty;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">remove_reference</span>&lt;Ty&amp;&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">using</span> type = Ty;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">remove_reference</span>&lt;Ty&amp;&amp;&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">using</span> type = Ty;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">using</span> <span class="type">remove_reference_t</span> = <span class="keyword">typename</span> remove_reference&lt;Ty&gt;::type;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="built_in">static_assert</span>(std::<span class="type">is_same_t</span>&lt;<span class="type">remove_reference_t</span>&lt;<span class="type">int</span>&amp;&gt;,<span class="type">int</span>&gt;); <span class="comment">//注意比较类型不能用operator==</span></span><br><span class="line"></span><br></pre></td></tr></table></figure></p>
 <h1 id="presentconcepts">Present——concepts？</h1>
 <p>C++20与"concepts"有关的关键字有两个：<code>concept</code>和<code>requires</code>。其中，<br />
 -
@@ -439,7 +465,9 @@ constant)初始化之。如： <figure class="highlight c++"><table><tr><td clas
 <p>C++14起大幅扩大了auto的适用范围，约束auto模板变量的方法也非常<del>奇怪</del>简单：
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(std::default_formattable&lt;<span class="type">char</span>&gt; <span class="keyword">auto</span> x)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line"></span><br><span class="line">&#125;J</span><br></pre></td></tr></table></figure></p>
 <h2 id="requires作为concepts一部分">requires作为concepts一部分</h2>
-<p>requires可以发起一个子句，语法是<code>requires &#123;...&#125;</code>。大括号内可以添加任意数量的内嵌约束语句(nested
+<p>requires可以发起一个子句，语法是<code>requires (init_params)&#123;...&#125;</code>。<br />
+其中，init_params为可选项，如果加上了括号，则其中可以放置一些参数（如同写出函数的实参一样），可在下面的内嵌约束中使用。
+大括号内可以添加任意数量的内嵌约束语句(nested
 constraints)，以分号分隔且存在逻辑与的关系（当且仅当内嵌约束全部满足时，该requires解析为<code>true</code>）。
 Nested constraints的分类如下：</p>
 <ul>
@@ -463,6 +491,8 @@ type"-后继类型），则按以下的步骤校验：
 </ol>
 上述任何一个步骤失败，则该约束的解析结果为<code>false</code>。</li>
 </ul>
+<p>应用实例： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//比如现在约束一个迭代器类，要求：</span></span><br><span class="line"><span class="comment">//1. 其必须可以与同类对象比较并返回bool，且不能抛出异常；</span></span><br><span class="line"><span class="comment">//2. 其必须支持（前置）自增和自减运算；</span></span><br><span class="line"><span class="comment">//3. 其必须可以解引用并返回一个int&amp;；</span></span><br><span class="line"><span class="comment">//4. 其大小必须不大于8。</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> biint_iterators = <span class="built_in">requires</span>(Ty it) <span class="comment">//这里“幻化”出了一个变量it，可以在下文约束中使用。</span></span><br><span class="line">&#123;</span><br><span class="line">&#123;it != it&#125; <span class="keyword">noexcept</span> -&gt; std::same_as&lt;<span class="type">bool</span>&gt;;</span><br><span class="line">++it; --it;</span><br><span class="line">&#123;*it&#125; -&gt; std::same_as&lt;<span class="type">int</span>&amp;&gt;;</span><br><span class="line"><span class="function"><span class="keyword">requires</span> <span class="title">sizeof</span><span class="params">(it)</span> &lt; 8</span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p>显然concepts的约束比起SFINAE等方法可读性、维护性提升了数个数量级。</p>
 
       
 
