@@ -277,48 +277,64 @@ Jiang, Hibiscus, LingLong, Crystal, whatever:)</p>
 
 
   
-    <article id="post-550" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-cpp20-compare" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/550/">550</a>
+      <a class="article-title" href="/cpp20-compare/">C++20新秀之operator&lt;=&gt;</a>
     </h1>
   
 
         
-        <a href="/550/" class="archive-article-date">
-  	<time datetime="2024-12-18T02:41:05.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-18</time>
+        <a href="/cpp20-compare/" class="archive-article-date">
+  	<time datetime="2024-12-20T23:21:39.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-21</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h1 id="c">550C</h1>
+        <h1 id="前言">前言</h1>
 <blockquote>
-<p>这是550C，目前最强大的自感知、自适应、自组织可重塑编译计算核心。</p>
+<p>离散数学的联动？</p>
 </blockquote>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line"><span class="keyword">from</span> hashlib <span class="keyword">import</span> sha256</span><br><span class="line"><span class="keyword">from</span> os <span class="keyword">import</span> urandom</span><br><span class="line"><span class="keyword">from</span> functools <span class="keyword">import</span> reduce</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">ECLCG</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self,seed_x:<span class="built_in">int</span></span>):</span><br><span class="line">        p = <span class="number">115792089237316195423570985008687907853269984665640564039457584007908834671663</span></span><br><span class="line">        a = <span class="number">0</span></span><br><span class="line">        b = <span class="number">7</span></span><br><span class="line">        E=EllipticCurve(Zmod(p),[a,b])</span><br><span class="line"></span><br><span class="line">        G = E.gens()[<span class="number">0</span>]</span><br><span class="line">        <span class="variable language_">self</span>.increment = E.random_point()</span><br><span class="line">        <span class="variable language_">self</span>.status = G * seed_x</span><br><span class="line">        </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">extract</span>(<span class="params">self</span>):</span><br><span class="line">        ret = <span class="variable language_">self</span>.status</span><br><span class="line">        <span class="variable language_">self</span>.status += <span class="variable language_">self</span>.increment * <span class="number">550</span></span><br><span class="line">        <span class="keyword">return</span> ret</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">getrandbits</span>(<span class="params">self,n:<span class="built_in">int</span></span>):</span><br><span class="line">        ls = []</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(ceil(n/<span class="number">256</span>)): </span><br><span class="line">            x,y = <span class="variable language_">self</span>.extract().xy()</span><br><span class="line"></span><br><span class="line">            h1 = <span class="built_in">bin</span>(x &gt;&gt; <span class="number">144</span>)[<span class="number">2</span>:]</span><br><span class="line">            f1 = <span class="built_in">int</span>(h1[:<span class="built_in">len</span>(h1)//<span class="number">2</span>] + <span class="built_in">bin</span>(<span class="built_in">int</span>.from_bytes(urandom(<span class="number">1</span>),<span class="string">&#x27;big&#x27;</span>))[<span class="number">2</span>:] + h1[<span class="built_in">len</span>(h1)//<span class="number">2</span>:] + <span class="built_in">bin</span>(<span class="built_in">int</span>.from_bytes(urandom(<span class="number">1</span>),<span class="string">&#x27;little&#x27;</span>))[<span class="number">2</span>:],<span class="number">2</span>)</span><br><span class="line"></span><br><span class="line">            h2 = <span class="built_in">bin</span>(y &gt;&gt; <span class="number">144</span>)[<span class="number">2</span>:]</span><br><span class="line">            f2 = <span class="built_in">int</span>(h2[:<span class="built_in">len</span>(h2)//<span class="number">2</span>] + <span class="built_in">bin</span>(<span class="built_in">int</span>.from_bytes(urandom(<span class="number">1</span>),<span class="string">&#x27;big&#x27;</span>))[<span class="number">2</span>:] + h1[<span class="built_in">len</span>(h1)//<span class="number">2</span>:] + <span class="built_in">bin</span>(<span class="built_in">int</span>.from_bytes(urandom(<span class="number">1</span>),<span class="string">&#x27;little&#x27;</span>))[<span class="number">2</span>:],<span class="number">2</span>)</span><br><span class="line"></span><br><span class="line">            ls.append(f1 &lt;&lt; <span class="number">128</span> | f2)</span><br><span class="line">            </span><br><span class="line">        ls[-<span class="number">1</span>] &gt;&gt;= (-n) % <span class="number">256</span></span><br><span class="line">        <span class="keyword">return</span> reduce(<span class="keyword">lambda</span> x,y: x*<span class="number">2</span>^<span class="number">256</span>+y, [ls[-<span class="number">1</span>]] + ls[:-<span class="number">1</span>])</span><br><span class="line">    </span><br><span class="line"><span class="keyword">if</span> __name__==<span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    e = ECLCG(<span class="built_in">int</span>.from_bytes(urandom(<span class="number">32</span>),<span class="string">&#x27;big&#x27;</span>))</span><br><span class="line">    flag = <span class="string">b&#x27;nctf&#123;&#125;&#x27;</span></span><br><span class="line">    </span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;1 for fetching a random number, 2 for getting encrypted flag, 3 for exit&quot;</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">550</span>):</span><br><span class="line">        opt=<span class="built_in">int</span>(<span class="built_in">input</span>())</span><br><span class="line">        <span class="keyword">if</span> opt==<span class="number">1</span>:</span><br><span class="line">            <span class="built_in">print</span>(e.getrandbits(<span class="number">550</span>))</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">elif</span> opt==<span class="number">2</span>:</span><br><span class="line">            <span class="keyword">pass</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">elif</span> opt==<span class="number">3</span>:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&quot;Bye~&quot;</span>)</span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&quot;Invalid input&quot;</span>)</span><br><span class="line">            </span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h1 id="arcahv">Arcahv</h1>
+<p>C++20中，“比较”这一司空见惯的操作迎来了新客：<br />
+头文件<code>&lt;compare&gt;</code>，以及三向比较操作符(three-way
+comparison
+operator)：<code>&lt;=&gt;</code>。<del>至今不解为何世多谓之“飞船操作符”(spaceship
+operator)</del></p>
 <blockquote>
-<p>"Delightful."</p>
+<p>回顾：C++传统的比较操作符有六种：<code>&lt;</code>、<code>&lt;=</code>、<code>&gt;</code>、<code>&gt;=</code>、<code>==</code>、<code>!=</code>。<br />
+且C++20前并没有“互偶”运算符的概念，默认下其并不会认为<code>a == b</code>的结果就一定是<code>!(a != b)</code>（事实上如此做是符合逻辑的）。<br />
+同时C++20前使用内置运算符进行比较时，必须进行两次比较才能确定两个值的大小关系（大于、小于或等于）：
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Widget</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Widget</span>(<span class="type">int</span> dt):data&#123;dt&#125;&#123;&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="comment">//便于演示，都用友元（考考你：友元和static区别在哪？）</span></span><br><span class="line">    <span class="keyword">friend</span> <span class="type">bool</span> <span class="keyword">operator</span>==(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> x.data == y.data;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">friend</span> <span class="type">bool</span> <span class="keyword">operator</span>!=(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> !(x == y); <span class="comment">//虽然效率不是最高，但多数时候不得不这么写代码，尤其是operator==涉及比较对象多而繁琐时</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">friend</span> <span class="type">bool</span> <span class="keyword">operator</span>&lt;(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> x.data &lt; y.data; <span class="comment">//烦不烦.sage</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">friend</span> <span class="type">bool</span> <span class="keyword">operator</span>&lt;=(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> x.data &lt;= y.data; <span class="comment">//烦不烦！</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">friend</span> <span class="type">bool</span> <span class="keyword">operator</span>&gt;(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> x.data &gt; y.data; <span class="comment">//还没完呢a.a</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">friend</span> <span class="type">bool</span> <span class="keyword">operator</span>&gt;=(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> x.data &gt;= y.data; <span class="comment">//...</span></span><br><span class="line">    &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> data;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">compare_obj</span><span class="params">(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(x &gt; y)</span><br><span class="line">    &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;x &gt; y&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span>(x &lt; y)</span><br><span class="line">    &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;x &lt; y&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;x == y&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 </blockquote>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h1 id="sign">Sign</h1>
+<h1 id="新比较系统简要介绍">新比较系统简要介绍</h1>
+<p><code>operator&lt;=&gt;</code>是一个二元操作符，隐式调用的表达式为<code>a &lt;=&gt; b</code>。<br />
+对于所有的可进行“传统”比较的基本类型(fundamental
+types)，C++20都为之内置了<code>operator&lt;=&gt;</code>。<br />
+调用<code>operator&lt;=&gt;</code>时均应包含<code>&lt;compare&gt;</code>头文件（亦可依C++20之modules，<code>import</code>之）。</p>
+<p><code>operator&lt;=&gt;</code>的期望返回类型应是<code>std::strong_ordering</code>、<code>std::weak_ordering</code>和<code>std::partial_ordering</code>中的一种，对应离散数学中的强序、弱序和偏序关系。</p>
 <blockquote>
-<p>这是恢复互联网的密钥，密码是实时生成的三万个随机数。</p>
+<p>偏序、弱序和强序关系来看，比较的严格程度递增。
+偏序关系中，任意两个元素间可能无法比较；<br />
+弱序关系中，任意两个元素间必定可以比较，但比较结果的“相等”不蕴含可替换性（即，对于比较<code>a==b</code>成立时，<code>f(a)==f(b)</code>不一定成立）；<br />
+强序关系中，任意两个元素间必定可以比较，且比较结果的“相等”蕴含可替换性。</p>
 </blockquote>
-<h1 id="燕归">燕归</h1>
-<blockquote>
-<p>这时候就适合来一局活动身体的叶灵纵啊！</p>
-</blockquote>
-<h1 id="寒凝">寒凝</h1>
-<blockquote>
-
-</blockquote>
+<p>对于基本类型，<code>operator&lt;=&gt;</code>的返回值只会是<code>std::strong_ordering</code>或<code>std::partial_ordering</code>中的一种（显然基本类型的“相等”都蕴含了可替换性）。<br />
+当且仅当对浮点类型(floating point
+types)进行比较时，返回<code>std::partial_ordering</code>（浮点集合中的NaN无法和任何浮点数比较）；其它比较时均返回<code>std::strong_ordering</code>。</p>
+<p>每个类型的静态成员如下：</p>
+<ul>
+<li>偏序关系，<code>greater</code>、<code>less</code>、<code>equivalent</code>和<code>unordered</code>；<br />
+</li>
+<li>弱序关系，<code>greater</code>、<code>less</code>、<code>equivalent</code>；<br />
+</li>
+<li>强序关系，<code>greater</code>、<code>less</code>、<code>equal</code>。</li>
+</ul>
 
       
 
@@ -332,17 +348,28 @@ Jiang, Hibiscus, LingLong, Crystal, whatever:)</p>
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
         		</li>
       		
 		</ul>
 	</div>
 
       
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/550/">展开全文 >></a>
+          <a class="article-more-a" href="/cpp20-compare/">展开全文 >></a>
         </p>
       
 
@@ -376,7 +403,7 @@ Jiang, Hibiscus, LingLong, Crystal, whatever:)</p>
   
   
     <nav id="page-nav">
-      <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/6/">6</a><a class="extend next" rel="next" href="/page/2/">Next &raquo;</a>
+      <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/7/">7</a><a class="extend next" rel="next" href="/page/2/">Next &raquo;</a>
     </nav>
   
 
