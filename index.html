@@ -277,20 +277,20 @@ Jiang, Hibiscus, LingLong, Crystal, whatever:)</p>
 
 
   
-    <article id="post-cpp20-compare" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-lattices-past" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/cpp20-compare/">C++20新秀之operator&lt;=&gt;</a>
+      <a class="article-title" href="/lattices-past/">lattices_past</a>
     </h1>
   
 
         
-        <a href="/cpp20-compare/" class="archive-article-date">
-  	<time datetime="2024-12-20T23:21:39.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-21</time>
+        <a href="/lattices-past/" class="archive-article-date">
+  	<time datetime="2025-01-04T23:20:37.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-01-05</time>
 </a>
         
       </header>
@@ -298,125 +298,78 @@ Jiang, Hibiscus, LingLong, Crystal, whatever:)</p>
     <div class="article-entry" itemprop="articleBody">
       
         <blockquote>
-<p>离散数学的联动？</p>
+<p>碧海中倒映着青天，</p>
 </blockquote>
-<h1 id="前言">前言</h1>
-<p>C++20中，“比较”这一司空见惯的操作迎来了新客：<br />
-头文件<code>&lt;compare&gt;</code>，以及三向比较操作符(three-way
-comparison
-operator)：<code>&lt;=&gt;</code>。<del>至今不解为何世多谓之“飞船操作符”(spaceship
-operator)</del></p>
+<h1 id="格的基本概念">格的基本概念</h1>
+<p>离散数学中
+格是一个满足<strong>每两个元素都有最大上界和最小下界</strong>的偏序关系(partial
+ordering)集。</p>
+<p>线性代数中，我们将<strong>整数环上</strong> <span
+class="math inline">\(Z_{q}\)</span> 一组大小为 <span
+class="math inline">\(k\)</span> (<span class="math inline">\(k \leq
+n\)</span>) 且线性无关的向量，称为一组基。如果 <span
+class="math inline">\(k = n\)</span>，则称该组基是满秩的。<br />
+该组基<strong>整系数线性组合</strong>所有向量的集合（ <span
+class="math inline">\(v_{i} \in Z_{q} ，L = \{v_{i} \cdot
+M\}\)</span>），称为一个格。</p>
 <blockquote>
-<p>回顾：C++传统的比较操作符有六种：<code>&lt;</code>、<code>&lt;=</code>、<code>&gt;</code>、<code>&gt;=</code>、<code>==</code>、<code>!=</code>。<br />
-且C++20前并没有“互偶”运算符的概念，默认下其并不会认为<code>a == b</code>的结果就一定是<code>!(a != b)</code>（事实上如此做是符合逻辑的）。<br />
-同时C++20前使用内置运算符进行比较时，必须进行两次比较才能确定两个值的大小关系（大于、小于或等于）：
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Widget</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Widget</span>(<span class="type">int</span> dt):data&#123;dt&#125;&#123;&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="comment">//便于演示，都用友元（考考你：友元和static区别在哪？）</span></span><br><span class="line">    <span class="keyword">friend</span> <span class="type">bool</span> <span class="keyword">operator</span>==(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> x.data == y.data;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">friend</span> <span class="type">bool</span> <span class="keyword">operator</span>!=(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> !(x == y); <span class="comment">//虽然效率不是最高，但多数时候不得不这么写代码，尤其是operator==涉及比较对象多而繁琐时</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">friend</span> <span class="type">bool</span> <span class="keyword">operator</span>&lt;(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> x.data &lt; y.data; <span class="comment">//烦不烦.sage</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">friend</span> <span class="type">bool</span> <span class="keyword">operator</span>&lt;=(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> x.data &lt;= y.data; <span class="comment">//烦不烦！</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">friend</span> <span class="type">bool</span> <span class="keyword">operator</span>&gt;(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> x.data &gt; y.data; <span class="comment">//还没完呢a.a</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">friend</span> <span class="type">bool</span> <span class="keyword">operator</span>&gt;=(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> x.data &gt;= y.data; <span class="comment">//...</span></span><br><span class="line">    &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> data;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">compare_obj</span><span class="params">(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(x &gt; y)</span><br><span class="line">    &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;x &gt; y&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span>(x &lt; y)</span><br><span class="line">    &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;x &lt; y&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;x == y&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>举个例子：<br />
+在中国象棋中，象可能到达的坐标集合<del>假设棋盘无限大且没有楚河汉界的存在</del>就是一个格。<br />
+直观上看，在棋盘上有很多格点是象无法到达的（比如其初始位置周围一圈皆然）。数学的角度来说，我们可以认为象移动向量的基就是
+<span class="math inline">\(v_1 = (2,2), v_2 = (2,-2)\)</span>。<br />
+而 <span class="math inline">\(v_1\)</span> 与 <span
+class="math inline">\(v_2\)</span> 的线性组合就是象能到达的所有点，形如
+<span class="math inline">\(L = \{(0,0),(2,2),(2,-2),(4,0),(0,4) ...
+\}\)</span></p>
 </blockquote>
-<h1 id="新比较系统简要介绍">新比较系统简要介绍</h1>
-<h2 id="新操作符">新操作符</h2>
-<p><code>operator&lt;=&gt;</code>是一个二元操作符，隐式调用的表达式为<code>a &lt;=&gt; b</code>；其结合优先级、顺序与其它比较运算符一致。<br />
-对于所有的可进行“传统”比较的基本类型(fundamental
-types)，C++20都为之内置了<code>operator&lt;=&gt;</code>。<br />
-调用<code>operator&lt;=&gt;</code>时均应包含<code>&lt;compare&gt;</code>头文件（亦可依C++20之modules，<code>import</code>之）。</p>
-<h2 id="新比较对象">新比较对象</h2>
-<p><code>&lt;compare&gt;</code>中定义了<code>std::strong_ordering</code>、<code>std::weak_ordering</code>和<code>std::partial_ordering</code>中的一种，对应离散数学中的强序、弱序和偏序关系。<br />
-<code>operator&lt;=&gt;</code>的期望返回类型应是上述三种比较结果的一种。</p>
-<blockquote>
-<p>偏序、弱序和强序关系来看，比较的严格程度递增。<br />
-偏序关系中，任意两个元素间可能无法比较；<br />
-弱序关系中，任意两个元素间必定可以比较，但比较结果的“相等”不蕴含可替换性（即，对于比较<code>a==b</code>成立时，<code>f(a)==f(b)</code>不一定成立）；<br />
-强序关系中，任意两个元素间必定可以比较，且比较结果的“相等”蕴含可替换性。</p>
-</blockquote>
-<p>对于基本类型，<code>operator&lt;=&gt;</code>的返回值只会是<code>std::strong_ordering</code>或<code>std::partial_ordering</code>中的一种（显然基本类型的“相等”都蕴含了可替换性）。<br />
-当且仅当对浮点类型(floating point
-types)进行比较时，返回<code>std::partial_ordering</code>（浮点集合中的NaN无法和任何浮点数比较）；其它比较时均返回<code>std::strong_ordering</code>。</p>
-<p>每个类型的内置<code>static constexpr</code>成员如下：</p>
+<p>“格”之名即来源于这些结果向量都是离散而非连续分布的；以点的方式表示之，就像一个个格点。</p>
+<h1 id="格中的困难问题">格中的困难问题</h1>
+<p>现代密码学中，很多数学工具的应用依赖于其中的“难题”。格中比较重要的难题有两个：</p>
 <ul>
-<li>偏序关系，<code>greater</code>、<code>less</code>、<code>equivalent</code>和<code>unordered</code>；<br />
-</li>
-<li>弱序关系，<code>greater</code>、<code>less</code>、<code>equivalent</code>；<br />
-</li>
-<li>强序关系，<code>greater</code>、<code>less</code>、<code>equal</code>。</li>
+<li><p>SVP(Shortest Vector Problem)：</p></li>
+<li><p>CVP(Closest Vector Problem)：</p></li>
 </ul>
-<p><strong>可以认为，三向比较操作符就是一次完成了大/等/小的比较，将比较结果存储为一个tag型的对象。</strong></p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">auto</span> c1 = <span class="number">1</span> &lt;=&gt; <span class="number">2</span>; <span class="comment">//c1是std::strong_ordering::less</span></span><br><span class="line"></span><br><span class="line">    <span class="type">int</span> a&#123;&#125;,b&#123;&#125;;</span><br><span class="line">    <span class="type">int</span> *pa&#123;&amp;a&#125;,*pb&#123;&amp;b&#125;;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">auto</span> c2 = pa &lt;=&gt; pb; <span class="comment">//c2的类型为std::strong_ordering</span></span><br><span class="line"></span><br><span class="line">    <span class="type">double</span> aa&#123;&#125;,bb&#123;&#125;;</span><br><span class="line">    <span class="keyword">auto</span> c3 = aa &lt;=&gt; bb; <span class="comment">//c3是std::partial_ordering::equivalent</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="格基规约算法">格基规约算法</h1>
+<h2 id="格基规约简介">格基规约简介</h2>
+<p>格基规约，就是对一组给定的格基进行数学处理，来获得一组“简化”的基向量，<strong>这组基构成的格和原基构成的格相同</strong>。<br />
+具体地，假设原格基是 $ M = {v_1,v_2,v_3,...,v_n}$，<br />
+为令新格基 <span class="math inline">\(M^{&#39;} =
+\{v_1^{&#39;},v_2^{&#39;},...,v_n^{&#39;}\}\)</span>
+组成的格与原格相同，则新格基应当由原格基和整数域上的矩阵相乘而得（即，<span
+class="math inline">\(v_i^{&#39;}\)</span>, $i [1,n] $
+都能表示成原格基的整系数线性组合）。</p>
+<p>而格基规约的目标是在满足上述条件的前提下，令新格基的模(norm)尽可能短（即，获得新格基的各向量长度尽可能短）。</p>
+<blockquote>
+<p>依然举一个比较直观的例子：<br />
+考虑一个由基 <span class="math inline">\(v_1 = (0,1), v_2 =
+(1,1)\)</span>
+组成的二维格。不难发现所有整数坐标的格点都在这个格上。<br />
+对 <span class="math inline">\(M = \{v_1,v_2\}\)</span>
+进行格基规约的结果是 <span class="math inline">\(M^{&#39;} =
+\{v_1^{&#39;} = (0,1),v_2^{&#39;} = (1,0)\}\)</span>。<br />
+可以发现新的这组基更短，质量更高。</p>
+</blockquote>
+<h2 id="二维空间下的格基规约">二维空间下的格基规约</h2>
+<p>在二维空间中，格基规约的算法最早由高斯提出，其计算过程非常近似于施密特正交化(Schmidt
+Orthogonalization)。不同的是：</p>
+<ul>
+<li>由于格基规约的运算均在整数环上进行，因此对于施密特正交化步骤中的“比例”计算应当取整处理（这也提示了格基规约得到的向量组是高度正交化的，但不保证是正交矩阵）。<br />
+</li>
+<li>格基规约本质上是一种贪心算法，计算思路类似于欧几里得算法，即不断地将两组基互相约减，直至满足循环结束的条件。</li>
+</ul>
+<h1 id="碧海格的增广攻击">碧海——格的“增广”攻击</h1>
 <h1
-id="c20语言上对operator的支持">C++20语言上对operator&lt;=&gt;的支持</h1>
-<p>语言层面上，C++20让比较运算符又迈出了关键一步。</p>
-<h2 id="运算符的自动填充">运算符的自动“填充”</h2>
-<ul>
-<li>如果一个类定义了<code>operator&lt;=&gt;</code>且返回的是上述三种ordering中的一种，则编译器将自动为之生成<code>&lt;</code>、<code>&lt;=</code>、<code>&gt;</code>、<code>&gt;=</code>四种运算符（自动封装并调用<code>operator&lt;=&gt;</code>实现）。<br />
-</li>
-<li>如果一个类定义了<code>operator==</code>或<code>operator!=</code>且返回的是<code>bool</code>，则编译器将自动为之生成另一个（调用已定义的运算符，结果逻辑取反）。</li>
-</ul>
-<blockquote>
-<p>上述自动生成的运算符均可以被覆写（自行定义即可），编译器优先使用user-defined的运算符。</p>
-</blockquote>
-<p>老规矩，附上实例： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Widget</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="keyword">friend</span> <span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="built_in">operator</span>&lt;=&gt;(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> x.data&lt;=&gt;y.data;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">friend</span> <span class="keyword">constexpr</span> <span class="type">bool</span> <span class="keyword">operator</span>==(<span class="type">const</span> Widget&amp;,<span class="type">const</span> Widget&amp;)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>; <span class="comment">//Debug</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> data;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Widget a&#123;<span class="number">2</span>&#125;,b&#123;<span class="number">3</span>&#125;;</span><br><span class="line">    std::cout &lt;&lt; (a &lt; b) &lt;&lt; std::endl; <span class="comment">//true</span></span><br><span class="line">    std::cout &lt;&lt; (a &lt;= b) &lt;&lt; std::endl; <span class="comment">//false</span></span><br><span class="line">    std::cout &lt;&lt; (a != b) &lt;&lt; std::endl; <span class="comment">//true</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure></p>
+id="青天从方程组中提取系数而构造的短格">青天——从方程组中提取系数而构造的“短格”</h1>
+<h2 id="从ntru入门短格">从NTRU入门“短格”</h2>
+<p>利用“青天”之术，尝试一下对NTRU(Number Theory Research
+Unit)的攻击：</p>
 <h2
-id="将满足条件的同类比较运算符声明为-default">将满足条件的同类比较运算符声明为
-=default</h2>
-<p>同时C++20中支持对满足 <em>一定条件</em>
-的类的比较函数通过<code>= default</code>声明，指示编译器自动生成之。</p>
-<blockquote>
-<p><em>一定条件</em>
-指该类的所有数据成员都应该可以被<code>operator&lt;=&gt;</code>和同类对象比较（三向/相等）。</p>
-</blockquote>
-<ul>
-<li>对于自动生成的三向运算符，类<code>Ty</code>应声明为<code>auto operator&lt;=&gt;(const Ty&amp;) const = default;</code>或<code>friend auto operator&lt;=&gt;(const Ty&amp;,const Ty&amp;) = default;</code>。<br />
-此时<code>auto</code>的类型由编译器推导，取所有数据成员比较返回comparison
-object中对应<strong>最弱</strong>的比较结果；返回值类型若手动指定，则不能强于该最弱的比较类型。<br />
-</li>
-<li>对于自动生成的相等运算符，类<code>Ty</code>应声明为<code>bool operator==(const Ty&amp;) const = default;</code>或<code>friend bool operator==(const Ty&amp;,const Ty&amp;) = default;</code>。</li>
-</ul>
-<blockquote>
-<p>可以为默认生成的运算符添加<code>constexpr</code>和<code>noexcept</code>修饰符，当然前者要求下辖比较运算符都是<code>constexpr</code>。</p>
-</blockquote>
-<blockquote>
-<p>“自动”比较内涵：按变量声明顺序逐个比较，若比较结果不为相等(equivalent或equal)或全部比较结束（直至最后一个仍为相等），则返回之。</p>
-</blockquote>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">stu</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">stu</span>(std::string_view sv,<span class="type">int</span> sc):<span class="built_in">id</span>(sv),<span class="built_in">score</span>(sc)&#123;&#125;</span><br><span class="line">    <span class="keyword">auto</span> <span class="built_in">operator</span>&lt;=&gt;(<span class="type">const</span> nihao&amp;,<span class="type">const</span> nihao&amp;) = <span class="keyword">default</span>; <span class="comment">//auto可以被指定为任意一种ordering（不能强于数据成员中最弱的比较类型）</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    std::string id;</span><br><span class="line">    <span class="type">int</span> score;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>C++20中，对于既往有同类比较运算符的类（如<code>std::string</code>支持和同类比较，行为类似C中的<code>strcmp</code>），均已经添加了<code>operator&lt;=&gt;</code>。<br />
-如此来看，其实三向比较的思想也并不新鲜——<code>strcmp</code>就是一种三向比较（返回值大于0/0/小于0），最初的动机即为对于比较时间开销可能较大的object，一次完成对大/等/小的比较并存储起来。<br />
-C++20的comparison
-object相比之的进步在于大幅增强了语义约束，使程序设计的语义更为清晰，可读性和维护性更佳，同时统一并专用化了比较接口（<del>现代C++哲学唠嗑时间</del>）</p>
-</blockquote>
-<h2 id="特例">特例</h2>
-<p>特别地，如果一个类的<code>operator&lt;=&gt;</code>被声明为<code>= default;</code>则该类也会自动生成<code>operator==</code>。</p>
-<h1 id="探究比较对象的性质与应用">探究比较对象的性质与应用</h1>
-<p>为了支持和以往的比较类型有类似的interface，这几种关系都支持了和0做比较（必须是字面量的零，否则报编译错误/UB）。<br />
-结合<code>if</code>的clause-initialization，可以极大地提升程序的可维护性，使执行逻辑更加简洁：
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(<span class="type">int</span> arg)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(<span class="keyword">auto</span> cp = arg &lt;=&gt; <span class="number">335</span>; cp &gt; <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        std::clog &lt;&lt; <span class="string">&quot;Overheat!&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure></p>
-<blockquote>
-<p>MSVC中利用C++20的新关键字<code>consteval</code>与一些其它有趣的既有语法特性实现了对之的约束，赏析以下代码：
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">Literal_zero</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">Literal_zero_is_expected</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">consteval</span> <span class="title">Literal_zero</span><span class="params">(<span class="type">int</span> _val)</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(_val != <span class="number">0</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="built_in">Literal_zero_is_expected</span>();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">bool</span> <span class="keyword">operator</span>&gt;(std::strong_ordering odr,Literal_zero) <span class="keyword">noexcept</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> odr == std::strong_ordering::greater;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-</blockquote>
-<blockquote>
-<p>其设置了两道哨兵：</p>
-<ul>
-<li>其一，如果传入的不是一个字面量，则被<code>consteval</code>的语义约束（<code>consteval</code>函数必须在编译期被调用，但显然传入这个参数不满足约束）；<br />
-</li>
-<li>其二，若传入的字面量不为零，则试图调用<code>Literal_zero_is_expected()</code>函数，但该函数既不是<code>constexpr</code>也不是<code>consteval</code>，无法在编译期被调用，因而报错。</li>
-</ul>
-</blockquote>
-<p>另一个性质和离散数学有关：由于偏序-弱序-强序对这种二元关系的约束严格程度递增，因而从语义的角度出发，应当允许更强的比较关系向更弱的比较关系转换，并相应地阻止反方向的转换。<br />
-C++中同样如此：如，<code>std::strong_ordering</code>拥有<code>operator std::weak_ordering</code>和<code>operator std::partial_ordering</code>。</p>
-<p>同时关于和零比较/拓展运算符的返回结果的一些补充：<br />
-对于返回结果<code>cp</code>，</p>
-<ul>
-<li>当且仅当返回greater（无论类型，下同），<code>cp &gt; 0</code>成立；<br />
-</li>
-<li>当且仅当返回less，<code>cp &lt; 0</code>成立；<br />
-</li>
-<li>当且仅当返回equal/equivalent，<code>cp == 0</code>成立；<br />
-</li>
-<li>如果返回值是<code>std::partial_ordering::unordered</code>，则<strong>有且仅有</strong><code>cp != 0</code>成立，其余均不成立。<br />
-</li>
-<li>对于其它的返回值，<code>&gt;=</code>就是<code>&lt;</code>的结果取反，以此类推。</li>
-</ul>
-<h1 id="结语">结语</h1>
-<p>比较运算符的进步明显源于人们在编程实践中的需求，而其又反作用于人们的编程实践中，消除了编写语义重复的运算符重载这一场景，亦为简单类的比较提供了语义更为清晰、简洁的方法(<code>= default;</code>依然还是如此优雅)。</p>
+id="对既有密码体系的攻击以wieners-attack的格形式为例">对既有密码体系的攻击——以Wiener's
+Attack的格形式为例</h2>
+<h1
+id="春滋基于格问题的后量子密码体系">春滋——基于格问题的后量子密码体系</h1>
+<h2 id="agcd问题">AGCD问题</h2>
+<p>AGCD问题，全称Approximate Greatest Common Divisor Problem。</p>
 
       
 
@@ -430,7 +383,7 @@ C++中同样如此：如，<code>std::strong_ordering</code>拥有<code>operator
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
         		</li>
       		
 		</ul>
@@ -442,7 +395,7 @@ C++中同样如此：如，<code>std::strong_ordering</code>拥有<code>operator
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
+        			<a href="/categories/闲笔//" class="article-tag-list-link color3">闲笔</a>
         		</li>
       		
 		</ul>
@@ -451,7 +404,7 @@ C++中同样如此：如，<code>std::strong_ordering</code>拥有<code>operator
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/cpp20-compare/">展开全文 >></a>
+          <a class="article-more-a" href="/lattices-past/">展开全文 >></a>
         </p>
       
 
@@ -502,7 +455,7 @@ C++中同样如此：如，<code>std::strong_ordering</code>拥有<code>operator
   <div class="outer">
     <div id="footer-info">
       <div class="footer-left">
-        &copy; 2024 Hibiscus
+        &copy; 2025 Hibiscus
       </div>
       <div class="footer-left">
         <a
