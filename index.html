@@ -335,9 +335,8 @@ class="math inline">\(v_2\)</span> 的线性组合就是象能到达的所有点
 具体地，假设原格基是 $ M = {v_1,v_2,v_3,...,v_n}$，<br />
 为令新格基 <span class="math inline">\(M^{&#39;} =
 \{v_1^{&#39;},v_2^{&#39;},...,v_n^{&#39;}\}\)</span>
-组成的格与原格相同，则新格基应当由原格基和整数域上的矩阵相乘而得（即，<span
-class="math inline">\(v_i^{&#39;}\)</span>, $i [1,n] $
-都能表示成原格基的整系数线性组合）。</p>
+组成的格与原格相同，则新格基应当由原格基和整数域上的矩阵相乘而得（即，$v_i^{'}，i
+[1,n] $ 都能表示成原格基的整系数线性组合）。</p>
 <p>而格基规约的目标是在满足上述条件的前提下，令新格基的模(norm)尽可能短（即，获得新格基的各向量长度尽可能短）。</p>
 <blockquote>
 <p>依然举一个比较直观的例子：<br />
@@ -357,19 +356,179 @@ Orthogonalization)。不同的是：</p>
 </li>
 <li>格基规约本质上是一种贪心算法，计算思路类似于欧几里得算法，即不断地将两组基互相约减，直至满足循环结束的条件。</li>
 </ul>
+<h2
+id="llllenstra-lenstra-lovasz拓展到高维的格基规约">LLL(Lenstra-Lenstra-Lovasz)：拓展到高维的格基规约</h2>
+<p>我们一直在提及“可能”规约出期望的结果（目标向量），其因目标向量的模长越短，规约成功率越高；同时目标向量的模长存在一个上界，超过该上界时规约（几乎）必定失败。<br />
+Hermite定理给出了 "LLL-reduced" 规约格上界：</p>
+<p><span class="math inline">\(\|v_1\| \leq \|v_2\| \leq \cdots \leq
+\|v_i\| \leq 2^{\frac{n(n-1)}{4(n+1-i)}}
+det(L)^{\frac{1}{n+1-i}}\)</span></p>
+<p>显然若能利用矩阵和向量的一些性质，在不显著增大目标向量 <span
+class="math inline">\(v_i\)</span> 的前提下增大 <span
+class="math inline">\(det(L)\)</span>，即可大幅提高规约成功率。<br />
+根据线性代数的理论可知：<br />
+对于 <span class="math inline">\(v_i = (x_1,x_2,\cdots,x_n)\)</span> ，
+<span class="math inline">\(\|v_i\| = (\sum_{i=0}^{n}
+x_i^2)^{\frac{1}{2}}\)</span></p>
+<h1 id="格核心性质的利用方法">格核心性质的利用方法</h1>
+<p>在应用格攻击时，会经常碰到的一个概念即为“构造”格。<br />
+格的重要性质：格中向量一定是<strong>基向量的整系数线性组合</strong>，但这个线性组合的具体值并不重要（考虑
+<span class="math inline">\(v_0 \cdot M = v_r\)</span> ，如果已知 <span
+class="math inline">\(v_r\)</span> 在基 <span
+class="math inline">\(M\)</span> 构成的格上，则只需要 <span
+class="math inline">\(v_0\)</span>
+是整数环上的向量，就可以进行格攻击）。<br />
+实践中，联系线性代数和线性方程组的关系不难发现，对于一个“部分量已知，部分量未知且恒定，部分量未知且可变”的方程组，就可能可以格攻击之，获得那个“未知且恒定”的量。</p>
+<p>但假如不知道 <span class="math inline">\(v_0\)</span>
+的具体值，怎么还原出 <span class="math inline">\(v_r\)</span>
+？此处即为格基规约的用武之地了。</p>
+<p>假设 <span class="math inline">\(v_r\)</span> 是由 <span
+class="math inline">\(M\)</span> 为基的格上的一个短向量（相较于 <span
+class="math inline">\(M\)</span> 的向量），那么对 <span
+class="math inline">\(M\)</span> 进行格基规约就可能得到 <span
+class="math inline">\(v_r\)</span>。</p>
+<blockquote>
+<p>格基规约可行的依据在于其本质上是一种贪心算法，会不断规约直至向量模达到下界为止。<br />
+更直观地，参考“辗转相除”中的贪心：求 <span
+class="math inline">\(gcd(4,6)\)</span> 的过程和求 <span
+class="math inline">\(gcd(65538,65540)\)</span> 的过程本质无异。</p>
+</blockquote>
+<p>构造格的一般步骤：</p>
+<ol type="1">
+<li>列出线性方程组，保证所有系数均为整数，并将较小的未知量放在等式的一侧；<br />
+</li>
+<li></li>
+</ol>
 <h1 id="碧海格的增广攻击">碧海——格的“增广”攻击</h1>
+<h2
+id="关于hnp问题基于hnp的多种应用场景的攻击">关于HNP问题、基于HNP的多种应用场景的攻击</h2>
+<p>HNP问题，全称Hidden Number Problem，即隐藏数问题。</p>
+<p>其描述如下：<br />
+给定质数 <span class="math inline">\(p\)</span>、一些整数 <span
+class="math inline">\(\{t_i\}\)</span> 以及 $ MSB_{}(pt_i )$</p>
+<h2 id="巧击背包密码">“巧击”背包密码</h2>
 <h1
 id="青天从方程组中提取系数而构造的短格">青天——从方程组中提取系数而构造的“短格”</h1>
 <h2 id="从ntru入门短格">从NTRU入门“短格”</h2>
 <p>利用“青天”之术，尝试一下对NTRU(Number Theory Research
-Unit)的攻击：</p>
+Unit)的攻击。</p>
+<blockquote>
+<p>NTRU Encryption原理：</p>
+<p>密钥生成：<br />
+选定质数 <span class="math inline">\(q\)</span> ，随机选取 <span
+class="math inline">\(f \in (2,q-2)\)</span>， <span
+class="math inline">\(g \in (\frac{q}{2},q)\)</span>，保证 <span
+class="math inline">\(gcd(f,g) = 1\)</span>。<br />
+计算 <span class="math inline">\(h \equiv f^{-1}g (mod
+q)\)</span>，公钥为 <span class="math inline">\((q,h)\)</span>，私钥为
+<span class="math inline">\((f,g)\)</span>。</p>
+<p>公钥加密：<br />
+选取一个临时数 <span class="math inline">\(r\)</span>，记待加密的消息为
+<span class="math inline">\(m\)</span>，通过约束其上界使 <span
+class="math inline">\(rg + mf &lt; q\)</span>成立。<br />
+计算密文 <span class="math inline">\(c \equiv rh + m (mod
+q)\)</span>。</p>
+<p>私钥解密：<br />
+计算 <span class="math inline">\(a \equiv cf (mod q)\)</span>，显然
+<span class="math inline">\(a \equiv rhf + mf \equiv rg + mf (mod
+q)\)</span>。<br />
+输出明文 <span class="math inline">\(c \equiv af^{-1} (mod
+g)\)</span>，其解密正确性显然。</p>
+</blockquote>
+<p>注意到NTRU的公钥生成中，存在 <span class="math inline">\(fh \equiv g
+(mod q)\)</span>，转化为等式即为 <span class="math inline">\(fh + kq = g
+(k \in Z)\)</span>。 将该等式“构造”为一个向量乘法的形式：<br />
+<span class="math inline">\(\begin{bmatrix} f &amp; k \end{bmatrix}
+\cdot \begin{bmatrix} 1 &amp; h \\ 0 &amp; q \end{bmatrix} =
+\begin{bmatrix} f &amp; g \end{bmatrix}\)</span>。</p>
+<p>若参数选取不当，<span class="math inline">\(f,g &lt;&lt;
+h,q\)</span>，使得结果向量在格中是一个短向量，则对该格进行规约即可得到
+<span class="math inline">\(\begin{bmatrix} f &amp; g
+\end{bmatrix}\)</span>，直接获得两个私钥。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">NTRU_attack</span>(<span class="params">q:<span class="built_in">int</span>,h:<span class="built_in">int</span></span>):</span><br><span class="line">    mt = matrix(ZZ,[[<span class="number">1</span>,h],[<span class="number">0</span>,q]])</span><br><span class="line">    mt = mt.LLL()</span><br><span class="line">    <span class="keyword">return</span> mt[<span class="number">0</span>]</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>注意事项：<br />
+切记LLL的规约结果很多时候并不“理想”，构造目标向量足够短的情况下，有两个常见的原因：<br />
+1.
+格中存在比目标向量更短的向量（在一些构造比较“模糊”的格中容易出现），由于格基规约的贪心特性，会令调用者错过“预期”结果；<br />
+2.</p>
+</blockquote>
 <h2
 id="对既有密码体系的攻击以wieners-attack的格形式为例">对既有密码体系的攻击——以Wiener's
 Attack的格形式为例</h2>
+<p>分析一下RSA的等式：<br />
+<span class="math inline">\(ed \equiv 1 (mod \varphi(N))\)</span><br />
+<span class="math inline">\(ed + k\varphi(N) - 1 = 0\)</span><br />
+<span class="math inline">\(ed + kN = p + q + 1 - k\)</span></p>
+<p>所有运算数均为整数，d较小，k为未知整数，右侧 <span
+class="math inline">\(p + q + 1 - k\)</span>
+可视为小量（比较显然）。</p>
+<p>将上述等式转化为向量乘法： <span
+class="math inline">\(\begin{bmatrix} d &amp; k \end{bmatrix} \cdot
+\begin{bmatrix} e &amp; N^{\frac{1}{2}} \\ N &amp; 0 \end{bmatrix} =
+\begin{bmatrix} ed + kN &amp; dN^{\frac{1}{2}}
+\end{bmatrix}\)</span></p>
+<blockquote>
+<p>此处 <span class="math inline">\(N^{\frac{1}{2}}\)</span>
+的作用是配平格，提高规约成功率。<br />
+设矩阵[0,1]位置的元素为 <span
+class="math inline">\(C\)</span>，显然矩阵的行列式（绝对值）为 <span
+class="math inline">\(CN\)</span>，同时目标向量是 <span
+class="math inline">\(\begin{bmatrix} ed + kN &amp; dC
+\end{bmatrix}\)</span>。<br />
+在 $dC &lt;&lt; (p + q + 1 - k) $
+时，改变C的值对目标向量的模长影响可以忽略。<br />
+通过增加 <span class="math inline">\(C\)</span> 进而增大 <span
+class="math inline">\(det(M)\)</span>
+，根据Hermite定理可以增大解出目标向量 <span
+class="math inline">\(v\)</span> 的概率。<br />
+注意到 <span class="math inline">\(p + q + 1 \approx
+2N^{\frac{1}{2}}\)</span>，又 <span class="math inline">\(|k| = \frac{ed
+- 1}{\varphi(N)} \approx \frac{ed}{N}\)</span></p>
+</blockquote>
+<p>对该格进行格基规约，即有机会得到结果向量；取其第二维数值除以 <span
+class="math inline">\(N^{\frac{1}{2}}\)</span>（亦可以校验其是否整除来判定攻击成功与否），即可得到私钥
+<span class="math inline">\(d\)</span>。<br />
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">attack</span>(<span class="params">N:<span class="built_in">int</span>,e:<span class="built_in">int</span></span>):</span><br><span class="line">    mt = matrix(ZZ,[[e,isqrt(N)],[N,<span class="number">0</span>]])</span><br><span class="line">    mt = mt.LLL()</span><br><span class="line">    <span class="keyword">if</span> mt[<span class="number">0</span>,<span class="number">1</span>] % isqrt(N) != <span class="number">0</span>:</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">None</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> mt[<span class="number">0</span>,<span class="number">1</span>] // isqrt(N)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<del>看到None第一反应还是逆向联动回了cpp的std::optional</del></p>
 <h1
 id="春滋基于格问题的后量子密码体系">春滋——基于格问题的后量子密码体系</h1>
 <h2 id="agcd问题">AGCD问题</h2>
-<p>AGCD问题，全称Approximate Greatest Common Divisor Problem。</p>
+<p>AGCD问题，全称Approximate Greatest Common Divisor
+Problem，即近似最大公约数问题。</p>
+<p>其是传统的最大公约数(GCD)问题的延申：<br />
+假设我们有一组数 <span
+class="math inline">\(x_1,x_2,...,x_n\)</span>，已知 <span
+class="math inline">\(x_i =
+pq_i\)</span>，则我们有很多种算法可以快速求出 <span
+class="math inline">\(p\)</span> 。<br />
+但若加入误差 <span class="math inline">\(e_i (e_i &lt;
+q_i)\)</span>，将条件变为 <span class="math inline">\(x_i = pq_i +
+e_i\)</span>，那么就难以直接求解最大公约数了。</p>
+<p>当 <span class="math inline">\(i\)</span> 和 <span
+class="math inline">\(e_i\)</span>较小时，可以尝试爆破 <span
+class="math inline">\(e_i\)</span> 来获得 $p =
+gcd(x_1-e_1,x_2-e_2,...,x_n-e_n)
+$，但多数情况下如此做在计算上是不现实的。</p>
+<p>对AGCD的近似格攻击如下：<br />
+首先将上述问题的参数精确化，记...</p>
+<p>注意到 <span class="math inline">\(q_0x_i - q_ix_0 = q_0(pq_i+e_i) -
+q_i(pq_0+e_0)\)</span><br />
+即 <span class="math inline">\(q_0x_i - q_ix_0 = q_0e_i -
+q_ie_0\)</span>。</p>
+<p>显然，<span class="math inline">\(\{q_0,q_1,...,q_n\}\)</span>
+是<strong>大小未知</strong>的<strong>整系数</strong>，<span
+class="math inline">\(q_0e_i - q_ie_0\)</span>
+是<strong>比较小</strong>的<strong>整系数</strong>。</p>
+<p>于是可以构造“碧海”格：</p>
+<p>显然目标向量在格中是一个短向量。
+规约得到短向量后，可以从其第一维度中得 <span
+class="math inline">\(q_0\)</span>，直接计算 <span
+class="math inline">\(e_0 = x_0 mod q_0\)</span> ， ... 即可。</p>
+<blockquote>
+<p>需要满足 ，格攻击才有解。</p>
+</blockquote>
+<h2 id="section"></h2>
 
       
 
