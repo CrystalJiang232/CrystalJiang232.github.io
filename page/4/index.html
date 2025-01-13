@@ -152,6 +152,118 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-a" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/a/">第二届长城杯CTF Crypto wp(partial)</a>
+    </h1>
+  
+
+        
+        <a href="/a/" class="archive-article-date">
+  	<time datetime="2024-12-15T09:37:44.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-15</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>难度分布过于<del>均匀</del>，前半小时意气风发，后面六小时坐牢<del>（还把脑子烧坏了.sage</del><br />
+Crypto上尚待学习探索的区域还有很多呐...</p>
+<h1 id="rsand">rsand</h1>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> getPrime, bytes_to_long</span><br><span class="line"><span class="keyword">from</span> random <span class="keyword">import</span> randint</span><br><span class="line"><span class="keyword">import</span> os</span><br><span class="line"></span><br><span class="line">FLAG = os.getenv(<span class="string">&quot;FLAG&quot;</span>).encode()</span><br><span class="line">flag1 = FLAG[:<span class="number">15</span>]</span><br><span class="line">flag2 = FLAG[<span class="number">15</span>:]</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">crypto1</span>():</span><br><span class="line">    p = getPrime(<span class="number">1024</span>)</span><br><span class="line">    q = getPrime(<span class="number">1024</span>)</span><br><span class="line">    n = p * q</span><br><span class="line">    e = <span class="number">0x10001</span></span><br><span class="line">    x1=randint(<span class="number">0</span>,<span class="number">2</span>**<span class="number">11</span>)</span><br><span class="line">    y1=randint(<span class="number">0</span>,<span class="number">2</span>**<span class="number">114</span>)</span><br><span class="line">    x2=randint(<span class="number">0</span>,<span class="number">2</span>**<span class="number">11</span>)</span><br><span class="line">    y2=randint(<span class="number">0</span>,<span class="number">2</span>**<span class="number">514</span>)</span><br><span class="line">    hint1=x1*p+y1*q-<span class="number">0x114</span></span><br><span class="line">    hint2=x2*p+y2*q-<span class="number">0x514</span></span><br><span class="line">    c = <span class="built_in">pow</span>(bytes_to_long(flag1), e, n)</span><br><span class="line">    <span class="built_in">print</span>(n)</span><br><span class="line">    <span class="built_in">print</span>(c)</span><br><span class="line">    <span class="built_in">print</span>(hint1)</span><br><span class="line">    <span class="built_in">print</span>(hint2)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">crypto2</span>():</span><br><span class="line">    p = getPrime(<span class="number">1024</span>)</span><br><span class="line">    q = getPrime(<span class="number">1024</span>)</span><br><span class="line">    n = p * q</span><br><span class="line">    e = <span class="number">0x10001</span></span><br><span class="line">    hint = <span class="built_in">pow</span>(<span class="number">514</span>*p - <span class="number">114</span>*q, n - p - q, n)</span><br><span class="line">    c = <span class="built_in">pow</span>(bytes_to_long(flag2),e,n)</span><br><span class="line">    <span class="built_in">print</span>(n)</span><br><span class="line">    <span class="built_in">print</span>(c)</span><br><span class="line">    <span class="built_in">print</span>(hint)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;==================================================================&quot;</span>)</span><br><span class="line">crypto1()</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;==================================================================&quot;</span>)</span><br><span class="line">crypto2()</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;==================================================================&quot;</span>)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p><code>crypto1()</code>函数产生了hint1和hint2。<br />
+注意到 <span class="math inline">\(x_1\)</span> 、<span
+class="math inline">\(x_2\)</span> 的值均不大，且若已知之，存在 <span
+class="math inline">\(gcd(x_2hint_1-x_1hint_2,n) == q\)</span><br />
+故可以爆破 <span class="math inline">\(x_1\)</span>、<span
+class="math inline">\(x_2\)</span> 的值来分解n，代码如下</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> itertools <span class="keyword">import</span> product</span><br><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> gmpy2 <span class="keyword">import</span> gcd</span><br><span class="line"></span><br><span class="line">n1=<span class="number">22717688782107854545906794591350792188387875110194655242509979558461609026689126410958538692592463401522362356541060680408895294904619968427918132940416290637253975078909557570052294696752131550575267463205417657973110741875406631276906289161580355184931848747568838733566664530108459688971836475286014292763710955427636743872406784553276648507633638199756885671818682171699361643329537983168846325911881270521846099654288267068313463192062464398908330416955834032336069159066966753411191707859856389748617142937092219735847967559900971260163275274768523333750643268027704717919118936153897897131289192675763387811013</span></span><br><span class="line">c1=<span class="number">1558252460972099536711225051588554580318072299427314767703923796142958329478177837363654442346261739741092040593629411679066822482727491716985291081418724270921015825854190667916784526990039016012998579465839964466544193668482366443421030413848501164167083542684099820843740534553329803216858946383113948594174252707382307857234879302568335916655231823986006116032577877784092927461435642266714835802321330508070457299737128702295341171291240636594559140008577327543379170891332505804603999880161479252367891021732181686834465274026830438997961540000598683834926675711282575578551072028019741577061900406050342688458</span></span><br><span class="line">h1=<span class="number">1785400845353189749482286289179481615877733122115008276512206537767234304427512467620804745559571677050458859357456035669730928744227986060695929592626894225264031471880622019995439974759232998264197998661247884396744524865844791270731263298403015254884799180837584748516933203206716038313235184449245118539673100116727208395667843647446216575</span></span><br><span class="line">h2=<span class="number">4768290722045376113291539697751845492297828894506607687019886528688947365279933318542249148120591713377136829810253611016690765615542919031118840184459133618654100026395299998797995448105138246862328974800269378627003305498938807053253155312899666823211626587642773325777459110096832523197515520831587264132693167407988204540224314122959560422620710487922928480844859739608566274988519288343603058586422940803845283584074835988958761787309635325070293038864953194</span></span><br><span class="line">e = <span class="number">65537</span></span><br><span class="line"></span><br><span class="line">h1 += <span class="number">0x114</span></span><br><span class="line">h2 += <span class="number">0x514</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> x1,x2 <span class="keyword">in</span> product(<span class="built_in">range</span>(<span class="number">2</span>**<span class="number">11</span>),repeat=<span class="number">2</span>):</span><br><span class="line">    <span class="keyword">if</span> gcd(x1*h2-x2*h1,n1) != <span class="number">1</span>:</span><br><span class="line">        q1 = gcd(x1*h2-x2*h1,n1)</span><br><span class="line">        <span class="keyword">if</span> q1==n1:</span><br><span class="line">            <span class="keyword">continue</span></span><br><span class="line">        p1 = n1 // q1</span><br><span class="line">        <span class="built_in">print</span>(p1,q1)</span><br><span class="line">        d1 = <span class="built_in">int</span>(<span class="built_in">pow</span>(e,-<span class="number">1</span>,(p1-<span class="number">1</span>)*(q1-<span class="number">1</span>)))</span><br><span class="line">        <span class="built_in">print</span>(long_to_bytes(<span class="built_in">int</span>(<span class="built_in">pow</span>(c1,d1,n1))))</span><br><span class="line"></span><br><span class="line"><span class="comment">#b&#x27;flag&#123;3e5ef8ee-c823-&#x27;</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p><code>crypto2</code>函数中，<span class="math inline">\(hint \equiv
+(514p - 114q)^{n-p-q} (mod n)\)</span><br />
+根据欧拉函数性质显然有 <span class="math inline">\((514p -
+114q)^{n-p-q+1} \equiv 1 (mod n)\)</span><br />
+进而，<span class="math inline">\(hint^{-1} \equiv 514p-114q (mod
+n)\)</span> 又由于 <span class="math inline">\(514p-114q \in
+(0,n)\)</span> 显然成立，故 <span
+class="math inline">\(hint^{-1}\)</span> 就是其值 将之与方程 <span
+class="math inline">\(n=pq\)</span>联立即可分解 <span
+class="math inline">\(n\)</span></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line">n2=<span class="number">23301270370141612330143249564959167999228952608712168779005620502267285156915999431165077980542964295999346892411751982792106531064749859998324403553828150458489912004321705559850482154675511319849888703426512353277473602134376825692345016437768245466469519768372263929100926977019866358427404868365153401534717296761071322172550730839392284228315564674287251955446739867333680875136131197078701261161473605292835590020412488259675818419919656303024005482784483529585855459082494687375253068135930378498456710949935330943648377764301078025458819757637193359534111017671688548495903880663891480831184157816239626750043</span></span><br><span class="line">c2=<span class="number">15154362247416833654874538866222303523564655502350143155042495279226934061117190464416559600114696199066594736043690897596945588720795487024161560079279635555757929743621207095425417248155771743585809715364339743613170559263801923828346132740396834092233104169833261587028257094105183142686581463164262368477202915768936279703753445661191665158883833492034478618553842878077641070131158366324287975018862012100924617592087104048825937530826657263770569129787378008786436051567330825371173569403780114839873592637937742553526185515371878434795312157292258810274451720036653523188513529132197471378811832009182418760448</span></span><br><span class="line">h = <span class="number">11574440934831556034723051057283542407332101344903394221647161034006584633702312851012881096546725183871843470306347168596589056621524160818188725619205790524384122606005486500598885295323033448984884291965912156280740846422438998271175595659299898234463882384160290793302007988149229773440712388994937267153031701764033364222504099057654985080539279285158866715715993693994617506028704652676563435164588466433989525485331944330416415023529660239650818869745957136675397467577768769303074091298570418559011249779965136728956550856369106784649405705908086276018004285287057080288901547467887280926775732587854691256048</span></span><br><span class="line">h = <span class="built_in">int</span>(<span class="built_in">pow</span>(h,-<span class="number">1</span>,n2))</span><br><span class="line">e = <span class="number">65537</span></span><br><span class="line"></span><br><span class="line">h2 = h^<span class="number">2</span> + <span class="number">4</span>*<span class="number">114</span>*<span class="number">514</span>*n2</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="built_in">pow</span>(h2,<span class="number">1</span>/<span class="number">2</span>))</span><br><span class="line"></span><br><span class="line">q2 = <span class="built_in">int</span>((<span class="built_in">pow</span>(h2,<span class="number">1</span>/<span class="number">2</span>) - h) / (<span class="number">114</span> * <span class="number">2</span>))</span><br><span class="line"></span><br><span class="line">p2 = n2 // q2</span><br><span class="line">d2 = <span class="built_in">int</span>(<span class="built_in">pow</span>(e,-<span class="number">1</span>,(p2-<span class="number">1</span>)*(q2-<span class="number">1</span>)))</span><br><span class="line"><span class="built_in">print</span>(long_to_bytes(<span class="built_in">int</span>(<span class="built_in">pow</span>(c2,d2,n2))))</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">wp</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/CTF-Writeups//" class="article-tag-list-link color3">CTF Writeups</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/a/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+  <div>
+</article>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-ret" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -335,199 +447,6 @@ it for granted"的思维。<br />
       
         <p class="article-more-link">
           <a class="article-more-a" href="/ret/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-  <div>
-</article>
-
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-cpp20-arkdoom-p1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/cpp20-arkdoom-p1/">C++20四大金刚之青龙concepts</a>
-    </h1>
-  
-
-        
-        <a href="/cpp20-arkdoom-p1/" class="archive-article-date">
-  	<time datetime="2024-12-12T13:37:44.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-12</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <blockquote>
-<p>东方青龙，<code>concepts</code>龙腾四海。</p>
-</blockquote>
-<p>C++20的更新量级极大：其开创了大量新的编程模式，引入了大量语法点、标准库等等，对C++体系的影响可以与C++11相提并论。<br />
-其中更有“四大金刚”——<code>concepts</code>、<code>modules</code>、<code>ranges</code>和<code>coroutines</code>。本篇将深入浅出地探讨<code>concepts</code>这一大特性。<br />
-<del>其实concepts是C++20最“简单”的大特性之一了</del></p>
-<h1 id="pastsfinae">Past——SFINAE</h1>
-<p>concepts其实并不是一个新的“概念”(???)。</p>
-<p>模板（泛型）编程的课题可以占据C++的半壁江山。极高的设计自由度、一望无际的复用可能性、牵扯到的语法之繁杂、相关库的多样性使其一直以来都是C++语言的最重要课题，几乎没有之一。<br />
-所谓“C++其实是两门语言，带<code>template</code>的是一种，不带<code>template</code>的是另一种”的说法丝毫不为夸张。</p>
-<p>而作为一门编译型语言，在Metaprogramming中我们自然希望对模板的参数有一定约束，让函数按设计者期望的方式进行调用。<br />
-而在传统C++中，除了一些语言上的小“华点”被复用，并没有太好的办法对模板参数进行高可读性、易于维护/复用、明确的约束。</p>
-<p>C++11中提出了SFINAE(Substitution Failure Is Not An
-Error)的概念。<br />
-SFINAE在模板编程中的应用在于完成模板参数替换（即将实例化）时，如果代入<code>Ty = ...</code>会产生一些非法的表达式，则编译器会放弃这个重载（而不是继续试图<del>在绝路上狂奔</del>编译错误），转而试着寻找下一个重载进行匹配。<br />
-与SFINAE相搭配的内容还有：</p>
-<ul>
-<li>对于全特化(<em>full specialization</em>)/偏特化(<em>partial
-specialization</em>)的模板类，其与满足条件（可自动推导）的模板参数匹配优先级很高，且绑定后<strong>不会受SFINAE影响放弃</strong>。<br />
-</li>
-<li>C++中，对于自动模板参数，其推导遵循最简原则（即优先尝试将令参数不带任何
-<em>cvref</em> 修饰来实例化）。</li>
-</ul>
-<p><del>（感觉又噎着了，赶紧上代码润润嗓子）</del><br />
-最简推导原则： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//完美转发的场景</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(Ty&amp;&amp; arg)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> x = <span class="number">2</span>;</span><br><span class="line"></span><br><span class="line"><span class="built_in">fun</span>(<span class="number">1</span>); <span class="comment">//Ty = int，虽然Ty = int&amp;&amp;同样“能用”，但最简原则，不加引用优先</span></span><br><span class="line"><span class="built_in">fun</span>(x); <span class="comment">//Ty = int&amp;（比较显然，毕竟int就不能编译了）</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//一些其它的函数调用</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">bar</span><span class="params">(Ty arg)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="built_in">bar</span>(<span class="number">1</span>); <span class="comment">//Ty = int，虽然Ty确实可以是int&amp;&amp;，依然是“避重就轻”</span></span><br><span class="line"><span class="built_in">bar</span>(x); <span class="comment">//Ty仍然是int，虽然Ty依然可以是int&amp;，但毕竟int arg&#123;x&#125;;是合法的，所以编译器不会“闲着没事干”</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//std::forward</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function">std::<span class="type">remove_reference_t</span>&lt;Ty&gt;&amp; <span class="title">forward</span><span class="params">(std::<span class="type">remove_reference_t</span>&lt;Ty&gt;&amp; arg)</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> arg;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure></p>
-<blockquote>
-<p>常见的非法表达式：</p>
-<ul>
-<li>（实例化代码中）建立了对void的引用；</li>
-<li>试图对<code>void</code>或其它 <em>不完整的类型</em>
-计算<code>sizeof</code>；</li>
-<li><strong>试图访问类的某个<code>typedef</code>或静态成员等，但该成员不存在</strong>；（SFINAE中最为常用之者）</li>
-</ul>
-</blockquote>
-<p>C++中，在<code>&lt;algorithm&gt;</code>的老STL算法库中经常能看到<code>std::enable_if_t</code>的声明，其封装了<code>std::enable_if</code>这一<code>struct</code>。</p>
-<blockquote>
-<p>C++中一定要分清模板函数的重载(overload)和特化(specialization)两个概念。特化有全特化(full
-specialization)和偏特化(partial specialization)两种。<br />
-模板函数只有“重载”和“全特化”，模板类只有“全特化”和“偏特化”。<br />
-对于模板函数，C++在匹配参数时若发现一个模板函数存在重载，则按照以下步骤决策：<br />
-- 先判定函数列表是否匹配，排除不匹配的重载选项；<br />
--
-若重载选项中一个是模板函数，一个是非模板函数，且非模板函数的形参列表和当前参数不需要隐式转换时，选择非模板函数；<br />
--
-否则，若可以通过自动匹配模板函数来令模板函数的形参列表和当前参数匹配，且不需要隐式转换时，选择实例化一个模板函数；<br />
-- 否则认为是存在歧义而编译失败。</p>
-</blockquote>
-<blockquote>
-<p>注意：任何<code>template</code>的声明（变量、函数、类）无论基本还是特化，<strong>自身都不会产生任何编译代码</strong>；必须有调用方实例化之时，编译的程序才会有这部分代码（比如对于函数来说，存在指向该函数的指针）。<br />
-核心点就是<strong>特化(specialization)和实例化(instanitation)是不同的概念</strong>。<br />
-相对地，任何非<code>template</code>的声明则都会产生编译代码（除非在Release版本中被编译器优化掉）。</p>
-</blockquote>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(Ty)</span></span>&#123;&#125; <span class="comment">//fun没有任何可执行代码</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;&gt;</span><br><span class="line"><span class="type">void</span> <span class="built_in">fun</span>&lt;<span class="type">int</span>&gt;(<span class="type">int</span>)&#123;&#125; <span class="comment">//fun至此仍然未产生任何可执行代码，因为这只是一个模板函数的特化，不是实例化</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;   </span><br><span class="line">    <span class="built_in">fun</span>(<span class="string">&#x27;o&#x27;</span>); <span class="comment">//实例化了一个fun&lt;char&gt;，至此程序中拥有了一个指向函数fun&lt;char&gt;的函数指针</span></span><br><span class="line">    <span class="built_in">fun</span>(<span class="number">2.3</span>); <span class="comment">//同理</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>模板类则有全特化和偏特化之分，标志为是否是<code>template&lt;&gt;</code>。<br />
-一旦出现<code>template&lt;&gt;</code>，说明其指定了模板的全部参数，则为全特化，否则为偏特化。
-C++匹配模板参数时，若该模板存在特化，则匹配优先级为全特化&gt;偏特化&gt;基本模板，其即为<code>&lt;type_traits&gt;</code>中诸多utility的实现支撑原理之一。<br />
-且C++的模板参数匹配遵循最简原则（无需隐式转换的原始类型优先级最高，引用、指针、<code>const</code>/<code>volatile</code>修饰等优先级后置）。</p>
-</blockquote>
-<p><code>&lt;type_traits&gt;</code>中提供了一个<code>remove_reference_t</code>封装<code>remove_reference</code>，来在模板编程中获取一个类型名移除引用信息的结果：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">remove_reference</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">using</span> type = Ty;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">remove_reference</span>&lt;Ty&amp;&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">using</span> type = Ty;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">remove_reference</span>&lt;Ty&amp;&amp;&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">using</span> type = Ty;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">using</span> <span class="type">remove_reference_t</span> = <span class="keyword">typename</span> remove_reference&lt;Ty&gt;::type;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="built_in">static_assert</span>(std::<span class="type">is_same_t</span>&lt;<span class="type">remove_reference_t</span>&lt;<span class="type">int</span>&amp;&gt;,<span class="type">int</span>&gt;); <span class="comment">//注意比较类型不能用operator==</span></span><br><span class="line"></span><br></pre></td></tr></table></figure></p>
-<h1 id="presentconcepts">Present——concepts？</h1>
-<p>C++20与"concepts"有关的关键字有两个：<code>concept</code>和<code>requires</code>。其中，<br />
--
-<code>concept</code>声明一个“概念”，其本质是一个编译期的模板<code>bool</code>变量。其必须作为一个模板变量声明，并以编译期常量(compile-time
-constant)初始化之。如： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> example = <span class="literal">true</span>; <span class="comment">//一个永远为真的concept</span></span><br><span class="line"><span class="comment">//其实它的本质就是</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">bool</span> equivlant_cpvar = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> small = <span class="built_in">sizeof</span>(Ty) &lt; <span class="number">4</span>; <span class="comment">//对于sizeof()小于4的类型，获得一个true的编译期常量</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">static_assert</span>(small&lt;<span class="type">int</span>&gt;);</span><br><span class="line"><span class="built_in">static_assert</span>(!small&lt;<span class="type">double</span>&gt;);</span><br></pre></td></tr></table></figure></p>
-<ul>
-<li><code>requires</code>则既可以作为specifier修饰一个模板（进行约束），亦是定义concepts元素的一部分。</li>
-</ul>
-<h2 id="requires作为约束提示字">requires作为约束提示字</h2>
-<p>作为前者时，其可以出现在template的多种可能位置<del>（C++20为了避免过多争端，对各方势力采取绥靖政策而接受了多种不同写法）</del>。<br />
-通过requires显式约束时，变量可以是一个<code>concept</code>或编译期的<code>bool</code>变量：
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//#1</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt; <span class="title">requires</span><span class="params">(small&lt;Ty&gt;)</span></span></span><br><span class="line"><span class="function"><span class="keyword">class</span> smallvector</span>&#123;&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">//#2</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt; <span class="type">void</span> <span class="title">func</span><span class="params">(Ty arg)</span> <span class="title">requires</span><span class="params">(small&lt;Ty&gt; &amp;&amp; std::is_nothrow_destructible&lt;Ty&gt;)</span></span></span><br><span class="line"><span class="function"><span class="comment">//Main body can be omitted(just declaration)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-而隐式约束时，其必须是一个concept<del>（所以可能需要对一些旧的interface手动套皮）</del>。<br />
-对于单模板变量的约束，其空置变量数必须为1（具体地，实例化时会将该模板参数填入该concept的第一个模板参数中，若其仍有后续非默认参数则必须指定之）：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Tx</span>,<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> two_template_parameters = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;two_template_parameters&lt;<span class="type">int</span>&gt; Ty&gt; <span class="comment">//相当于约束 two_template_parameters&lt;Ty,int&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">()</span></span>&#123;&#125;</span><br></pre></td></tr></table></figure></p>
-<p>C++14起大幅扩大了auto的适用范围，约束auto模板变量的方法也非常<del>奇怪</del>简单：
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(std::default_formattable&lt;<span class="type">char</span>&gt; <span class="keyword">auto</span> x)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line"></span><br><span class="line">&#125;J</span><br></pre></td></tr></table></figure></p>
-<h2 id="requires作为concepts一部分">requires作为concepts一部分</h2>
-<p>requires可以发起一个子句，语法是<code>requires (init_params)&#123;...&#125;</code>。<br />
-其中，init_params为可选项，如果加上了括号，则其中可以放置一些参数（如同写出函数的实参一样），可在下面的内嵌约束中使用。
-大括号内可以添加任意数量的内嵌约束语句(nested
-constraints)，以分号分隔且存在逻辑与的关系（当且仅当内嵌约束全部满足时，该requires解析为<code>true</code>）。
-Nested constraints的分类如下：</p>
-<ul>
-<li>简单约束：一个任意的表达式，该表达式合法（可以通过编译）时通过；<br />
-</li>
-<li>变量约束:
-<code>requires</code>加上一个编译期的<code>bool</code>变量，该变量为<code>true</code>时通过；<br />
-</li>
-<li>复合约束：语法为<code>&#123;expr&#125; (noexcept) (-&gt; [concept])</code>，通过条件如下：
-<ol type="1">
-<li>expr必须能通过编译（和“简单约束”相同）；<br />
-</li>
-<li>若声明了noexcept，则expr必须被声明为<code>noexcept(true)</code>；<br />
-</li>
-<li>若指定了后继的<code>-&gt; [concept]</code>（所谓"trailing
-type"-后继类型），则按以下的步骤校验：
-<ul>
-<li>将<code>decltype(expr)</code>代入至后继的concept中（作为第一个变量，规则可以参考模板隐式约束），</li>
-<li>该concept也必须最终解析为<code>true</code>。</li>
-</ul></li>
-</ol>
-上述任何一个步骤失败，则该约束的解析结果为<code>false</code>。</li>
-</ul>
-<p>应用实例： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//比如现在约束一个迭代器类，要求：</span></span><br><span class="line"><span class="comment">//1. 其必须可以与同类对象比较并返回bool，且不能抛出异常；</span></span><br><span class="line"><span class="comment">//2. 其必须支持（前置）自增和自减运算；</span></span><br><span class="line"><span class="comment">//3. 其必须可以解引用并返回一个int&amp;；</span></span><br><span class="line"><span class="comment">//4. 其大小必须不大于8。</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> biint_iterators = <span class="built_in">requires</span>(Ty it) <span class="comment">//这里“幻化”出了一个变量it，可以在下文约束中使用。</span></span><br><span class="line">&#123;</span><br><span class="line">&#123;it != it&#125; <span class="keyword">noexcept</span> -&gt; std::same_as&lt;<span class="type">bool</span>&gt;;</span><br><span class="line">++it; --it;</span><br><span class="line">&#123;*it&#125; -&gt; std::same_as&lt;<span class="type">int</span>&amp;&gt;;</span><br><span class="line"><span class="function"><span class="keyword">requires</span> <span class="title">sizeof</span><span class="params">(it)</span> &lt; 8</span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
-<p>显然concepts的约束比起SFINAE等方法可读性、维护性提升了数个数量级。</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/cpp20-arkdoom-p1/">展开全文 >></a>
         </p>
       
 

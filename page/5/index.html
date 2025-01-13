@@ -152,6 +152,199 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-cpp20-arkdoom-p1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/cpp20-arkdoom-p1/">C++20四大金刚之青龙concepts</a>
+    </h1>
+  
+
+        
+        <a href="/cpp20-arkdoom-p1/" class="archive-article-date">
+  	<time datetime="2024-12-12T13:37:44.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-12</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <blockquote>
+<p>东方青龙，<code>concepts</code>龙腾四海。</p>
+</blockquote>
+<p>C++20的更新量级极大：其开创了大量新的编程模式，引入了大量语法点、标准库等等，对C++体系的影响可以与C++11相提并论。<br />
+其中更有“四大金刚”——<code>concepts</code>、<code>modules</code>、<code>ranges</code>和<code>coroutines</code>。本篇将深入浅出地探讨<code>concepts</code>这一大特性。<br />
+<del>其实concepts是C++20最“简单”的大特性之一了</del></p>
+<h1 id="pastsfinae">Past——SFINAE</h1>
+<p>concepts其实并不是一个新的“概念”(???)。</p>
+<p>模板（泛型）编程的课题可以占据C++的半壁江山。极高的设计自由度、一望无际的复用可能性、牵扯到的语法之繁杂、相关库的多样性使其一直以来都是C++语言的最重要课题，几乎没有之一。<br />
+所谓“C++其实是两门语言，带<code>template</code>的是一种，不带<code>template</code>的是另一种”的说法丝毫不为夸张。</p>
+<p>而作为一门编译型语言，在Metaprogramming中我们自然希望对模板的参数有一定约束，让函数按设计者期望的方式进行调用。<br />
+而在传统C++中，除了一些语言上的小“华点”被复用，并没有太好的办法对模板参数进行高可读性、易于维护/复用、明确的约束。</p>
+<p>C++11中提出了SFINAE(Substitution Failure Is Not An
+Error)的概念。<br />
+SFINAE在模板编程中的应用在于完成模板参数替换（即将实例化）时，如果代入<code>Ty = ...</code>会产生一些非法的表达式，则编译器会放弃这个重载（而不是继续试图<del>在绝路上狂奔</del>编译错误），转而试着寻找下一个重载进行匹配。<br />
+与SFINAE相搭配的内容还有：</p>
+<ul>
+<li>对于全特化(<em>full specialization</em>)/偏特化(<em>partial
+specialization</em>)的模板类，其与满足条件（可自动推导）的模板参数匹配优先级很高，且绑定后<strong>不会受SFINAE影响放弃</strong>。<br />
+</li>
+<li>C++中，对于自动模板参数，其推导遵循最简原则（即优先尝试将令参数不带任何
+<em>cvref</em> 修饰来实例化）。</li>
+</ul>
+<p><del>（感觉又噎着了，赶紧上代码润润嗓子）</del><br />
+最简推导原则： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//完美转发的场景</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(Ty&amp;&amp; arg)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> x = <span class="number">2</span>;</span><br><span class="line"></span><br><span class="line"><span class="built_in">fun</span>(<span class="number">1</span>); <span class="comment">//Ty = int，虽然Ty = int&amp;&amp;同样“能用”，但最简原则，不加引用优先</span></span><br><span class="line"><span class="built_in">fun</span>(x); <span class="comment">//Ty = int&amp;（比较显然，毕竟int就不能编译了）</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//一些其它的函数调用</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">bar</span><span class="params">(Ty arg)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="built_in">bar</span>(<span class="number">1</span>); <span class="comment">//Ty = int，虽然Ty确实可以是int&amp;&amp;，依然是“避重就轻”</span></span><br><span class="line"><span class="built_in">bar</span>(x); <span class="comment">//Ty仍然是int，虽然Ty依然可以是int&amp;，但毕竟int arg&#123;x&#125;;是合法的，所以编译器不会“闲着没事干”</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//std::forward</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function">std::<span class="type">remove_reference_t</span>&lt;Ty&gt;&amp; <span class="title">forward</span><span class="params">(std::<span class="type">remove_reference_t</span>&lt;Ty&gt;&amp; arg)</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> arg;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure></p>
+<blockquote>
+<p>常见的非法表达式：</p>
+<ul>
+<li>（实例化代码中）建立了对void的引用；</li>
+<li>试图对<code>void</code>或其它 <em>不完整的类型</em>
+计算<code>sizeof</code>；</li>
+<li><strong>试图访问类的某个<code>typedef</code>或静态成员等，但该成员不存在</strong>；（SFINAE中最为常用之者）</li>
+</ul>
+</blockquote>
+<p>C++中，在<code>&lt;algorithm&gt;</code>的老STL算法库中经常能看到<code>std::enable_if_t</code>的声明，其封装了<code>std::enable_if</code>这一<code>struct</code>。</p>
+<blockquote>
+<p>C++中一定要分清模板函数的重载(overload)和特化(specialization)两个概念。特化有全特化(full
+specialization)和偏特化(partial specialization)两种。<br />
+模板函数只有“重载”和“全特化”，模板类只有“全特化”和“偏特化”。<br />
+对于模板函数，C++在匹配参数时若发现一个模板函数存在重载，则按照以下步骤决策：<br />
+- 先判定函数列表是否匹配，排除不匹配的重载选项；<br />
+-
+若重载选项中一个是模板函数，一个是非模板函数，且非模板函数的形参列表和当前参数不需要隐式转换时，选择非模板函数；<br />
+-
+否则，若可以通过自动匹配模板函数来令模板函数的形参列表和当前参数匹配，且不需要隐式转换时，选择实例化一个模板函数；<br />
+- 否则认为是存在歧义而编译失败。</p>
+</blockquote>
+<blockquote>
+<p>注意：任何<code>template</code>的声明（变量、函数、类）无论基本还是特化，<strong>自身都不会产生任何编译代码</strong>；必须有调用方实例化之时，编译的程序才会有这部分代码（比如对于函数来说，存在指向该函数的指针）。<br />
+核心点就是<strong>特化(specialization)和实例化(instanitation)是不同的概念</strong>。<br />
+相对地，任何非<code>template</code>的声明则都会产生编译代码（除非在Release版本中被编译器优化掉）。</p>
+</blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(Ty)</span></span>&#123;&#125; <span class="comment">//fun没有任何可执行代码</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;&gt;</span><br><span class="line"><span class="type">void</span> <span class="built_in">fun</span>&lt;<span class="type">int</span>&gt;(<span class="type">int</span>)&#123;&#125; <span class="comment">//fun至此仍然未产生任何可执行代码，因为这只是一个模板函数的特化，不是实例化</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;   </span><br><span class="line">    <span class="built_in">fun</span>(<span class="string">&#x27;o&#x27;</span>); <span class="comment">//实例化了一个fun&lt;char&gt;，至此程序中拥有了一个指向函数fun&lt;char&gt;的函数指针</span></span><br><span class="line">    <span class="built_in">fun</span>(<span class="number">2.3</span>); <span class="comment">//同理</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>模板类则有全特化和偏特化之分，标志为是否是<code>template&lt;&gt;</code>。<br />
+一旦出现<code>template&lt;&gt;</code>，说明其指定了模板的全部参数，则为全特化，否则为偏特化。
+C++匹配模板参数时，若该模板存在特化，则匹配优先级为全特化&gt;偏特化&gt;基本模板，其即为<code>&lt;type_traits&gt;</code>中诸多utility的实现支撑原理之一。<br />
+且C++的模板参数匹配遵循最简原则（无需隐式转换的原始类型优先级最高，引用、指针、<code>const</code>/<code>volatile</code>修饰等优先级后置）。</p>
+</blockquote>
+<p><code>&lt;type_traits&gt;</code>中提供了一个<code>remove_reference_t</code>封装<code>remove_reference</code>，来在模板编程中获取一个类型名移除引用信息的结果：<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">remove_reference</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">using</span> type = Ty;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">remove_reference</span>&lt;Ty&amp;&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">using</span> type = Ty;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">remove_reference</span>&lt;Ty&amp;&amp;&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">using</span> type = Ty;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">using</span> <span class="type">remove_reference_t</span> = <span class="keyword">typename</span> remove_reference&lt;Ty&gt;::type;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="built_in">static_assert</span>(std::<span class="type">is_same_t</span>&lt;<span class="type">remove_reference_t</span>&lt;<span class="type">int</span>&amp;&gt;,<span class="type">int</span>&gt;); <span class="comment">//注意比较类型不能用operator==</span></span><br><span class="line"></span><br></pre></td></tr></table></figure></p>
+<h1 id="presentconcepts">Present——concepts？</h1>
+<p>C++20与"concepts"有关的关键字有两个：<code>concept</code>和<code>requires</code>。其中，<br />
+-
+<code>concept</code>声明一个“概念”，其本质是一个编译期的模板<code>bool</code>变量。其必须作为一个模板变量声明，并以编译期常量(compile-time
+constant)初始化之。如： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> example = <span class="literal">true</span>; <span class="comment">//一个永远为真的concept</span></span><br><span class="line"><span class="comment">//其实它的本质就是</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">bool</span> equivlant_cpvar = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> small = <span class="built_in">sizeof</span>(Ty) &lt; <span class="number">4</span>; <span class="comment">//对于sizeof()小于4的类型，获得一个true的编译期常量</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">static_assert</span>(small&lt;<span class="type">int</span>&gt;);</span><br><span class="line"><span class="built_in">static_assert</span>(!small&lt;<span class="type">double</span>&gt;);</span><br></pre></td></tr></table></figure></p>
+<ul>
+<li><code>requires</code>则既可以作为specifier修饰一个模板（进行约束），亦是定义concepts元素的一部分。</li>
+</ul>
+<h2 id="requires作为约束提示字">requires作为约束提示字</h2>
+<p>作为前者时，其可以出现在template的多种可能位置<del>（C++20为了避免过多争端，对各方势力采取绥靖政策而接受了多种不同写法）</del>。<br />
+通过requires显式约束时，变量可以是一个<code>concept</code>或编译期的<code>bool</code>变量：
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//#1</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt; <span class="title">requires</span><span class="params">(small&lt;Ty&gt;)</span></span></span><br><span class="line"><span class="function"><span class="keyword">class</span> smallvector</span>&#123;&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">//#2</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt; <span class="type">void</span> <span class="title">func</span><span class="params">(Ty arg)</span> <span class="title">requires</span><span class="params">(small&lt;Ty&gt; &amp;&amp; std::is_nothrow_destructible&lt;Ty&gt;)</span></span></span><br><span class="line"><span class="function"><span class="comment">//Main body can be omitted(just declaration)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+而隐式约束时，其必须是一个concept<del>（所以可能需要对一些旧的interface手动套皮）</del>。<br />
+对于单模板变量的约束，其空置变量数必须为1（具体地，实例化时会将该模板参数填入该concept的第一个模板参数中，若其仍有后续非默认参数则必须指定之）：<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Tx</span>,<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> two_template_parameters = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;two_template_parameters&lt;<span class="type">int</span>&gt; Ty&gt; <span class="comment">//相当于约束 two_template_parameters&lt;Ty,int&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">()</span></span>&#123;&#125;</span><br></pre></td></tr></table></figure></p>
+<p>C++14起大幅扩大了auto的适用范围，约束auto模板变量的方法也非常<del>奇怪</del>简单：
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(std::default_formattable&lt;<span class="type">char</span>&gt; <span class="keyword">auto</span> x)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line"></span><br><span class="line">&#125;J</span><br></pre></td></tr></table></figure></p>
+<h2 id="requires作为concepts一部分">requires作为concepts一部分</h2>
+<p>requires可以发起一个子句，语法是<code>requires (init_params)&#123;...&#125;</code>。<br />
+其中，init_params为可选项，如果加上了括号，则其中可以放置一些参数（如同写出函数的实参一样），可在下面的内嵌约束中使用。
+大括号内可以添加任意数量的内嵌约束语句(nested
+constraints)，以分号分隔且存在逻辑与的关系（当且仅当内嵌约束全部满足时，该requires解析为<code>true</code>）。
+Nested constraints的分类如下：</p>
+<ul>
+<li>简单约束：一个任意的表达式，该表达式合法（可以通过编译）时通过；<br />
+</li>
+<li>变量约束:
+<code>requires</code>加上一个编译期的<code>bool</code>变量，该变量为<code>true</code>时通过；<br />
+</li>
+<li>复合约束：语法为<code>&#123;expr&#125; (noexcept) (-&gt; [concept])</code>，通过条件如下：
+<ol type="1">
+<li>expr必须能通过编译（和“简单约束”相同）；<br />
+</li>
+<li>若声明了noexcept，则expr必须被声明为<code>noexcept(true)</code>；<br />
+</li>
+<li>若指定了后继的<code>-&gt; [concept]</code>（所谓"trailing
+type"-后继类型），则按以下的步骤校验：
+<ul>
+<li>将<code>decltype(expr)</code>代入至后继的concept中（作为第一个变量，规则可以参考模板隐式约束），</li>
+<li>该concept也必须最终解析为<code>true</code>。</li>
+</ul></li>
+</ol>
+上述任何一个步骤失败，则该约束的解析结果为<code>false</code>。</li>
+</ul>
+<p>应用实例： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//比如现在约束一个迭代器类，要求：</span></span><br><span class="line"><span class="comment">//1. 其必须可以与同类对象比较并返回bool，且不能抛出异常；</span></span><br><span class="line"><span class="comment">//2. 其必须支持（前置）自增和自减运算；</span></span><br><span class="line"><span class="comment">//3. 其必须可以解引用并返回一个int&amp;；</span></span><br><span class="line"><span class="comment">//4. 其大小必须不大于8。</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> biint_iterators = <span class="built_in">requires</span>(Ty it) <span class="comment">//这里“幻化”出了一个变量it，可以在下文约束中使用。</span></span><br><span class="line">&#123;</span><br><span class="line">&#123;it != it&#125; <span class="keyword">noexcept</span> -&gt; std::same_as&lt;<span class="type">bool</span>&gt;;</span><br><span class="line">++it; --it;</span><br><span class="line">&#123;*it&#125; -&gt; std::same_as&lt;<span class="type">int</span>&amp;&gt;;</span><br><span class="line"><span class="function"><span class="keyword">requires</span> <span class="title">sizeof</span><span class="params">(it)</span> &lt; 8</span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p>显然concepts的约束比起SFINAE等方法可读性、维护性提升了数个数量级。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/cpp20-arkdoom-p1/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+  <div>
+</article>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-rrefs-and-move-sematics" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -798,260 +991,6 @@ reference)</em>，C++23起其非良构(<em>ill-formed</em>)而不能通过编译
       
         <p class="article-more-link">
           <a class="article-more-a" href="/rrefs-and-move-sematics/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-  <div>
-</article>
-
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-dlog" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/dlog/">离散对数——Discrete Logorithm</a>
-    </h1>
-  
-
-        
-        <a href="/dlog/" class="archive-article-date">
-  	<time datetime="2024-12-10T12:18:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-10</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>离散对数问题，Discrete Logorithm
-Problem，简称DLP，是非对称密码学所依赖的极为重要的数学难题之一。<br />
-经典DLP问题描述：<br />
-给定 <span class="math inline">\(g^x \equiv c (mod p) （g,x &lt;
-p）\)</span>，由 <span class="math inline">\((g,x)\)</span> 计算 <span
-class="math inline">\(c\)</span> 很容易（快速幂取模），但由 <span
-class="math inline">\((g,c)\)</span> 计算 <span
-class="math inline">\(x\)</span> 是困难的。</p>
-<blockquote>
-<p>即使是BSGS等攻击方法，依然必须涉及“爆破”一步，即在x的可能范围内逐个数值尝试是否能让等式成立。</p>
-</blockquote>
-<p>离散数学（广义上）DLP问题描述： 设循环群 <span
-class="math inline">\(G_p\)</span> 的阶为 <span
-class="math inline">\(n\)</span>。<br />
-给定群内的任意元素 <span class="math inline">\(A \in G_p\)</span> 及
-<span class="math inline">\(x &lt; n\)</span>，计算 <span
-class="math inline">\(C = x \cdot A\)</span> 很容易，但给定 <span
-class="math inline">\(C\)</span>、<span
-class="math inline">\(A\)</span>，求解 <span
-class="math inline">\(x\)</span> 是困难的。<br />
-这里x代表A执行二元运算的次数，对于经典DLP，其为模p环下的乘法运算；对于ECDLP，其为椭圆曲线上的加法运算。</p>
-<blockquote>
-<p>给定<span class="math inline">\(C,x\)</span>，可以计算 <span
-class="math inline">\(A = x^{-1} \cdot C\)</span>，此时 <span
-class="math inline">\(x^{-1}\)</span> 应理解为 <span
-class="math inline">\(x\)</span> 在 <span
-class="math inline">\(Zmod(n)\)</span> 下的逆元。</p>
-</blockquote>
-<p>由DLP问题衍生出的 <strong><em>Diffle-Hellman</em></strong>
-密钥交换：<br />
-假设Alice和Bob希望在一个不安全的环境下进行密钥交换。他们协商密钥交换在
-<span class="math inline">\(G_p\)</span> 上进行，选定生成元 <span
-class="math inline">\(G\)</span> 并公开。<br />
-Alice和Bob分别产生一个私钥 <span class="math inline">\(d_A\)</span> 和
-<span class="math inline">\(d_B\)</span>，分别计算 <span
-class="math inline">\(A = d_A \cdot G\)</span> 与 <span
-class="math inline">\(B = d_B \cdot G\)</span>，将 <span
-class="math inline">\(A\)</span>、<span class="math inline">\(B\)</span>
-发送给对方并公开。<br />
-随后，他们再分别使用私钥和对方发送的密钥计算 <span
-class="math inline">\(AB = d_A \cdot B = d_B \cdot A\)</span>。
-在阿贝尔群上其正确性显然。<br />
-此时双方就已经完成了密钥交换，共享密钥就是AB。外人即使知道了 <span
-class="math inline">\((G_p,G,A,B)\)</span>，亦很难从中获得<span
-class="math inline">\(d_A\)</span>或<span
-class="math inline">\(d_B\)</span>，进而保证了共享密钥 <span
-class="math inline">\(AB\)</span> 的安全性。</p>
-<h1 id="攻击方法概览">攻击方法概览</h1>
-<ul>
-<li>暴力攻击，在n较小时，攻击者可以枚举所有的 <span
-class="math inline">\(x \in (0,n)\)</span> 逐个校验。<br />
-</li>
-<li>BSGS(Baby-step
-Giant-step，大步小步法，<del>又名“亦步亦趋”</del>)，通过制造碰撞来“用空间换时间”。</li>
-</ul>
-<blockquote>
-<p>大步小步法的空间复杂度与时间复杂度均为 <span
-class="math inline">\(O(\sqrt n)\)</span>。暴力攻击的二者显然分别为
-<span class="math inline">\(O(1)\)</span> 及 <span
-class="math inline">\(O(n)\)</span>。</p>
-</blockquote>
-<ul>
-<li>Pohlig-Hellman攻击<br />
-</li>
-<li>Pollard's kangaroo algorithm<br />
-</li>
-<li>Pollard's rho algorithm</li>
-</ul>
-<blockquote>
-<p>上述是较为通用的解法，对于部分 <span
-class="math inline">\(G_p\)</span>
-存在特有的攻击方法，比如ECDLP下的Smart's Attack、MOV Attack等。</p>
-<p>另外，有一些循环群可能求解 <span class="math inline">\(G_p\)</span>
-上的离散对数问题并不困难，比如 <span
-class="math inline">\(Zmod(p)\)</span> 上的加法运算可以快速求解。</p>
-</blockquote>
-<h1 id="细讲">细讲</h1>
-<blockquote>
-<p>以下内容干货（纸面资料）过多，<del>小心噎着</del></p>
-</blockquote>
-<h2 id="bsgs-亦步亦趋">BSGS —— 亦步亦趋</h2>
-<p>BSGS本质是在试着制造碰撞，利用散列表查找复杂度为常量的优势，以空间换时间。<br />
-具体操作方法如下：设待求解 <span class="math inline">\(C = x \cdot
-G\)</span> 中的x，<br />
-记 <span class="math inline">\(T = \sqrt n\)</span>，<span
-class="math inline">\(R = G \cdot T^{-1}\)</span>；制备一个散列表集合
-<span class="math inline">\(S = {i \cdot G}，i \in [0,C)\)</span><br />
-随后遍历 <span class="math inline">\(j \in [0,C)\)</span>，若 <span
-class="math inline">\(C + j \cdot R \in S\)</span>
-，则说明碰撞成功，得到 <span class="math inline">\(x = jT +
-i\)</span>。<br />
-显然遍历中一定会存在一次碰撞。</p>
-<blockquote>
-<p>“大步小步”的命名之源：</p>
-<p>如上式，<span class="math inline">\(i\)</span> 每增加1，<span
-class="math inline">\(x\)</span> 增加1，所谓一“小步”；<span
-class="math inline">\(j\)</span> 每增加1， <span
-class="math inline">\(x\)</span> 增加 <span class="math inline">\(\sqrt
-n\)</span> ，所谓一“大步”。</p>
-<p>这种攻击思想在轮加密/类轮加密的攻击（含哈希碰撞）中也有较多应用，思路即为将密钥拆为两部分，将中间值进行碰撞。</p>
-</blockquote>
-<p><del>为了便于理解，</del>给出一段示意BSGS求解 <span
-class="math inline">\(GF_p\)</span> 下DLP问题的代码</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">dlog</span>(<span class="params">p:<span class="built_in">int</span>,c:<span class="built_in">int</span></span>) -&gt; <span class="built_in">int</span>:</span><br><span class="line">    g = <span class="number">2</span> <span class="comment">#假设目标是求解pow(2,x,p)==c中的p</span></span><br><span class="line">    t = <span class="built_in">int</span>(<span class="built_in">pow</span>(p,<span class="number">1</span>/<span class="number">2</span>))</span><br><span class="line">    r = <span class="built_in">pow</span>(<span class="number">2</span>,-t,p)</span><br><span class="line"></span><br><span class="line">    dc = &#123;&#125;</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(t):</span><br><span class="line">        dc[g] = i</span><br><span class="line">        g = (g * <span class="number">2</span>) % p</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(t):</span><br><span class="line">        <span class="keyword">if</span> c <span class="keyword">in</span> dc: <span class="comment">#找到碰撞</span></span><br><span class="line">            <span class="keyword">return</span> dc[c] + j * t</span><br><span class="line">        c = (c * r) % p</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">None</span></span><br></pre></td></tr></table></figure>
-<h2 id="pohlig-hellman-韩信点兵">Pohlig-Hellman —— 韩信点“兵”</h2>
-<p>Pohlig-Hellman
-利用了<em>群论中的</em>拉格朗日定理和中国剩余定理。<br />
-其攻击对象是<strong>阶的小因子之积</strong>过小的循环群，在这些群上，可以求解(部分)阶比较小的子群的离散对数问题；<br />
-对这些结果应用中国剩余定理，即可获得原群上离散对数问题的结果。</p>
-<blockquote>
-<p>群中的拉格朗日定理：如果 <span class="math inline">\(G_P\)</span> 是
-<span class="math inline">\(G\)</span> 的一个子群，则 <span
-class="math inline">\(ord(G_P)\)</span> 一定整除 <span
-class="math inline">\(ord(G)\)</span>。</p>
-</blockquote>
-<p>攻击成立的两个场景：<br />
-- 目标群的阶的全部因子都很小，a.k.a.“光滑数”(smooth-number)；<br />
-- 目标运算数计数 <span class="math inline">\(x\)</span>
-小于目标群的阶的小因子之积（实际上第一种情况可以看作是第二种情况的特例）。</p>
-<p>实现上，我们令 $n = $ <span
-class="math inline">\(\prod_{i=1}^m{p_i^{e_i}}\)</span>。对于每个因子
-<span class="math inline">\(f = p_i^{e_i}\)</span>，考虑 <span
-class="math inline">\(C^{&#39;} = f \cdot C\)</span>，<span
-class="math inline">\(G^{&#39;} = f \cdot G\)</span>。<br />
-此时 <span class="math inline">\(C^{&#39;}\)</span> 在群中的阶为 <span
-class="math inline">\(\frac{n}{f}x\)</span>，<span
-class="math inline">\(G^{&#39;}\)</span> 的阶则为 <span
-class="math inline">\(\frac{n}{f}\)</span>。<br />
-根据拉格朗日定理，此时以 <span class="math inline">\(G^{&#39;}\)</span>
-为生成元的子群的阶只有 <span class="math inline">\(f\)</span>，且 <span
-class="math inline">\(C^{&#39;}\)</span>
-亦在这个群上，故可以在这个低阶子群上求解DLP。<br />
-依此法求解的 <span class="math inline">\(\{x_i\}\)</span> 满足 <span
-class="math inline">\(x_i \equiv x (mod p_i^{e_i})\)</span>。</p>
-<ul>
-<li>对于第一种情况，显然 <span
-class="math inline">\({p_i^{e_i}}\)</span>
-互素，故将所有等式联立至CRT中，求出通解 <span
-class="math inline">\(x^{&#39;} = x_0 + kn&#39;\)</span>，令 <span
-class="math inline">\(k=0\)</span> 即可获得 <span
-class="math inline">\(x\)</span>。<br />
-</li>
-<li>对于第二种情况，假设存在 <span class="math inline">\(x &lt;
-r\)</span>，则可以升序求解模 <span
-class="math inline">\(p_i^{e_i}\)</span> 下的DLP，只需要求解出的 <span
-class="math inline">\(\prod_{i=1}^m{p_i^{e_i}} &gt; r\)</span>
-，即可令CRT求解出的 <span class="math inline">\(x^{&#39;}\)</span>
-模数大于 <span class="math inline">\(r\)</span>，进而获得 <span
-class="math inline">\(x\)</span>。</li>
-</ul>
-<p>还是直接上代码：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">ph_attack</span>(<span class="params">p:<span class="built_in">int</span>,c:<span class="built_in">int</span>,intact: <span class="built_in">bool</span> = <span class="literal">True</span></span>) -&gt; <span class="built_in">int</span>: <span class="comment">#仍旧是pow(2,x,p) == c</span></span><br><span class="line">    g = <span class="number">2</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">#约定，factor(x)返回一个list，每个元素是形如(prime,factor)的tuple</span></span><br><span class="line">    <span class="comment">#约定，预置了discrete_log(a,g)返回int，作用为给定(g,a)，求解群中满足a = x * g的x，其可以采用暴力攻击、BSGS等方法进行</span></span><br><span class="line">    <span class="comment">#约定，函数crt(r,m)可以对给定两个等长的列表，且m各元素互质时，求CRT问题的基础解(k=0)</span></span><br><span class="line">    rls = []</span><br><span class="line">    mls = []</span><br><span class="line"></span><br><span class="line">    n = p - <span class="number">1</span> <span class="comment">#Zmod(p)的阶</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">#对于第一种情况的攻击，即不知道x的额外信息，完全攻击每个子群</span></span><br><span class="line">    <span class="keyword">if</span> intact:</span><br><span class="line">        <span class="keyword">for</span> pm,exp <span class="keyword">in</span> factor(n):</span><br><span class="line">            cur = <span class="built_in">pow</span>(pm,exp)</span><br><span class="line">            fc = n // cur</span><br><span class="line">            temp_g = <span class="built_in">pow</span>(g,fc,p)</span><br><span class="line">            temp_c = <span class="built_in">pow</span>(c,fc,p)</span><br><span class="line">            mls.append(cur)</span><br><span class="line">            rls.append(discrete_log(temp_c,temp_g))</span><br><span class="line"></span><br><span class="line">    <span class="comment">#对于第二种情况的攻击，攻击部分子群，其实只需要记录已经求解的模数之积，伺机break</span></span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        Sentinel = <span class="built_in">pow</span>(<span class="number">2</span>,<span class="number">32</span>) <span class="comment">#x的上界</span></span><br><span class="line">        mul = <span class="number">1</span></span><br><span class="line">        <span class="keyword">for</span> pm,exp <span class="keyword">in</span> factor(n):</span><br><span class="line">            cur = <span class="built_in">pow</span>(pm,exp)</span><br><span class="line">            fc = n // cur</span><br><span class="line">            temp_g = <span class="built_in">pow</span>(g,fc,p)</span><br><span class="line">            temp_c = <span class="built_in">pow</span>(c,fc,p)</span><br><span class="line">            mls.append(cur)</span><br><span class="line">            rls.append(discrete_log(temp_c,temp_g))</span><br><span class="line">            mul *= cur</span><br><span class="line">            <span class="keyword">if</span> mul &gt; Sentinel:</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> crt(rls,mls)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>因此，为使任意场景实例化的DLP问题抵抗Pohlig-Hellman攻击，该群的阶或应没有小因子（最好阶自身就是大质数），或其小因子极少且乘积极小。</p>
-<p>对于 <span class="math inline">\(Zmod(p)\)</span>
-上的离散对数问题，一般会要求p是质数的同时，<span
-class="math inline">\(\frac{p-1}{2}\)</span>
-为质数（或没有小因子）。</p>
-<blockquote>
-<p><span class="math inline">\(p\)</span> 是质数时，其阶 <span
-class="math inline">\(\phi(p) = p-1\)</span>，显然此时 <span
-class="math inline">\(2\)</span>
-是其阶的一个因子，令其阶的另一个因子是质数，同时约束 <span
-class="math inline">\(x&gt;2\)</span>，即可确保其最大限度地抵抗Pohlig-Hellman攻击。</p>
-</blockquote>
-<p><strong>只要一个群的阶不是质数，那么Pohlig-Hellman总能通过转而攻击子群，降低求解该群上DLP问题的复杂度。</strong></p>
-</blockquote>
-<p>sagemath中内置了求解离散对数相关的工具： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line">p = <span class="number">7</span></span><br><span class="line">E = EllipticCurve(Zmod(p),[<span class="number">0</span>,<span class="number">2</span>])</span><br><span class="line">A = E.random_point()</span><br><span class="line">G = E.gens()[<span class="number">0</span>]</span><br><span class="line"></span><br><span class="line"><span class="comment">#经典调用方法，discrete_log是一个通用化的函数，第一参数为结果，第二参数为底，内置方法就是Pohlig-Hellman和BSGS</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#指定operation相当于约定了特定的运算（对于EllipticCurve默认为&#x27;+&#x27;，对于Zmod(p)默认为&#x27;*&#x27;）</span></span><br><span class="line"><span class="built_in">print</span>(discrete_log(A,G,operation=<span class="string">&#x27;+&#x27;</span>)) </span><br><span class="line"></span><br><span class="line"><span class="comment">#还可以指定bounds=(a,b)来引导sage来利用上述Pohlig-Hellman攻击中的第二种情况</span></span><br><span class="line"><span class="built_in">print</span>(discrete_log(A,G,operation=<span class="string">&#x27;+&#x27;</span>,bounds=(<span class="number">0</span>,<span class="number">5</span>))) <span class="comment">#假设x的上界为5</span></span><br></pre></td></tr></table></figure></p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/闲笔//" class="article-tag-list-link color3">闲笔</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/dlog/">展开全文 >></a>
         </p>
       
 

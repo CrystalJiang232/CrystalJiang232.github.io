@@ -152,6 +152,260 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-dlog" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/dlog/">离散对数——Discrete Logorithm</a>
+    </h1>
+  
+
+        
+        <a href="/dlog/" class="archive-article-date">
+  	<time datetime="2024-12-10T12:18:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-10</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>离散对数问题，Discrete Logorithm
+Problem，简称DLP，是非对称密码学所依赖的极为重要的数学难题之一。<br />
+经典DLP问题描述：<br />
+给定 <span class="math inline">\(g^x \equiv c (mod p) （g,x &lt;
+p）\)</span>，由 <span class="math inline">\((g,x)\)</span> 计算 <span
+class="math inline">\(c\)</span> 很容易（快速幂取模），但由 <span
+class="math inline">\((g,c)\)</span> 计算 <span
+class="math inline">\(x\)</span> 是困难的。</p>
+<blockquote>
+<p>即使是BSGS等攻击方法，依然必须涉及“爆破”一步，即在x的可能范围内逐个数值尝试是否能让等式成立。</p>
+</blockquote>
+<p>离散数学（广义上）DLP问题描述： 设循环群 <span
+class="math inline">\(G_p\)</span> 的阶为 <span
+class="math inline">\(n\)</span>。<br />
+给定群内的任意元素 <span class="math inline">\(A \in G_p\)</span> 及
+<span class="math inline">\(x &lt; n\)</span>，计算 <span
+class="math inline">\(C = x \cdot A\)</span> 很容易，但给定 <span
+class="math inline">\(C\)</span>、<span
+class="math inline">\(A\)</span>，求解 <span
+class="math inline">\(x\)</span> 是困难的。<br />
+这里x代表A执行二元运算的次数，对于经典DLP，其为模p环下的乘法运算；对于ECDLP，其为椭圆曲线上的加法运算。</p>
+<blockquote>
+<p>给定<span class="math inline">\(C,x\)</span>，可以计算 <span
+class="math inline">\(A = x^{-1} \cdot C\)</span>，此时 <span
+class="math inline">\(x^{-1}\)</span> 应理解为 <span
+class="math inline">\(x\)</span> 在 <span
+class="math inline">\(Zmod(n)\)</span> 下的逆元。</p>
+</blockquote>
+<p>由DLP问题衍生出的 <strong><em>Diffle-Hellman</em></strong>
+密钥交换：<br />
+假设Alice和Bob希望在一个不安全的环境下进行密钥交换。他们协商密钥交换在
+<span class="math inline">\(G_p\)</span> 上进行，选定生成元 <span
+class="math inline">\(G\)</span> 并公开。<br />
+Alice和Bob分别产生一个私钥 <span class="math inline">\(d_A\)</span> 和
+<span class="math inline">\(d_B\)</span>，分别计算 <span
+class="math inline">\(A = d_A \cdot G\)</span> 与 <span
+class="math inline">\(B = d_B \cdot G\)</span>，将 <span
+class="math inline">\(A\)</span>、<span class="math inline">\(B\)</span>
+发送给对方并公开。<br />
+随后，他们再分别使用私钥和对方发送的密钥计算 <span
+class="math inline">\(AB = d_A \cdot B = d_B \cdot A\)</span>。
+在阿贝尔群上其正确性显然。<br />
+此时双方就已经完成了密钥交换，共享密钥就是AB。外人即使知道了 <span
+class="math inline">\((G_p,G,A,B)\)</span>，亦很难从中获得<span
+class="math inline">\(d_A\)</span>或<span
+class="math inline">\(d_B\)</span>，进而保证了共享密钥 <span
+class="math inline">\(AB\)</span> 的安全性。</p>
+<h1 id="攻击方法概览">攻击方法概览</h1>
+<ul>
+<li>暴力攻击，在n较小时，攻击者可以枚举所有的 <span
+class="math inline">\(x \in (0,n)\)</span> 逐个校验。<br />
+</li>
+<li>BSGS(Baby-step
+Giant-step，大步小步法，<del>又名“亦步亦趋”</del>)，通过制造碰撞来“用空间换时间”。</li>
+</ul>
+<blockquote>
+<p>大步小步法的空间复杂度与时间复杂度均为 <span
+class="math inline">\(O(\sqrt n)\)</span>。暴力攻击的二者显然分别为
+<span class="math inline">\(O(1)\)</span> 及 <span
+class="math inline">\(O(n)\)</span>。</p>
+</blockquote>
+<ul>
+<li>Pohlig-Hellman攻击<br />
+</li>
+<li>Pollard's kangaroo algorithm<br />
+</li>
+<li>Pollard's rho algorithm</li>
+</ul>
+<blockquote>
+<p>上述是较为通用的解法，对于部分 <span
+class="math inline">\(G_p\)</span>
+存在特有的攻击方法，比如ECDLP下的Smart's Attack、MOV Attack等。</p>
+<p>另外，有一些循环群可能求解 <span class="math inline">\(G_p\)</span>
+上的离散对数问题并不困难，比如 <span
+class="math inline">\(Zmod(p)\)</span> 上的加法运算可以快速求解。</p>
+</blockquote>
+<h1 id="细讲">细讲</h1>
+<blockquote>
+<p>以下内容干货（纸面资料）过多，<del>小心噎着</del></p>
+</blockquote>
+<h2 id="bsgs-亦步亦趋">BSGS —— 亦步亦趋</h2>
+<p>BSGS本质是在试着制造碰撞，利用散列表查找复杂度为常量的优势，以空间换时间。<br />
+具体操作方法如下：设待求解 <span class="math inline">\(C = x \cdot
+G\)</span> 中的x，<br />
+记 <span class="math inline">\(T = \sqrt n\)</span>，<span
+class="math inline">\(R = G \cdot T^{-1}\)</span>；制备一个散列表集合
+<span class="math inline">\(S = {i \cdot G}，i \in [0,C)\)</span><br />
+随后遍历 <span class="math inline">\(j \in [0,C)\)</span>，若 <span
+class="math inline">\(C + j \cdot R \in S\)</span>
+，则说明碰撞成功，得到 <span class="math inline">\(x = jT +
+i\)</span>。<br />
+显然遍历中一定会存在一次碰撞。</p>
+<blockquote>
+<p>“大步小步”的命名之源：</p>
+<p>如上式，<span class="math inline">\(i\)</span> 每增加1，<span
+class="math inline">\(x\)</span> 增加1，所谓一“小步”；<span
+class="math inline">\(j\)</span> 每增加1， <span
+class="math inline">\(x\)</span> 增加 <span class="math inline">\(\sqrt
+n\)</span> ，所谓一“大步”。</p>
+<p>这种攻击思想在轮加密/类轮加密的攻击（含哈希碰撞）中也有较多应用，思路即为将密钥拆为两部分，将中间值进行碰撞。</p>
+</blockquote>
+<p><del>为了便于理解，</del>给出一段示意BSGS求解 <span
+class="math inline">\(GF_p\)</span> 下DLP问题的代码</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">dlog</span>(<span class="params">p:<span class="built_in">int</span>,c:<span class="built_in">int</span></span>) -&gt; <span class="built_in">int</span>:</span><br><span class="line">    g = <span class="number">2</span> <span class="comment">#假设目标是求解pow(2,x,p)==c中的p</span></span><br><span class="line">    t = <span class="built_in">int</span>(<span class="built_in">pow</span>(p,<span class="number">1</span>/<span class="number">2</span>))</span><br><span class="line">    r = <span class="built_in">pow</span>(<span class="number">2</span>,-t,p)</span><br><span class="line"></span><br><span class="line">    dc = &#123;&#125;</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(t):</span><br><span class="line">        dc[g] = i</span><br><span class="line">        g = (g * <span class="number">2</span>) % p</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(t):</span><br><span class="line">        <span class="keyword">if</span> c <span class="keyword">in</span> dc: <span class="comment">#找到碰撞</span></span><br><span class="line">            <span class="keyword">return</span> dc[c] + j * t</span><br><span class="line">        c = (c * r) % p</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">None</span></span><br></pre></td></tr></table></figure>
+<h2 id="pohlig-hellman-韩信点兵">Pohlig-Hellman —— 韩信点“兵”</h2>
+<p>Pohlig-Hellman
+利用了<em>群论中的</em>拉格朗日定理和中国剩余定理。<br />
+其攻击对象是<strong>阶的小因子之积</strong>过小的循环群，在这些群上，可以求解(部分)阶比较小的子群的离散对数问题；<br />
+对这些结果应用中国剩余定理，即可获得原群上离散对数问题的结果。</p>
+<blockquote>
+<p>群中的拉格朗日定理：如果 <span class="math inline">\(G_P\)</span> 是
+<span class="math inline">\(G\)</span> 的一个子群，则 <span
+class="math inline">\(ord(G_P)\)</span> 一定整除 <span
+class="math inline">\(ord(G)\)</span>。</p>
+</blockquote>
+<p>攻击成立的两个场景：<br />
+- 目标群的阶的全部因子都很小，a.k.a.“光滑数”(smooth-number)；<br />
+- 目标运算数计数 <span class="math inline">\(x\)</span>
+小于目标群的阶的小因子之积（实际上第一种情况可以看作是第二种情况的特例）。</p>
+<p>实现上，我们令 $n = $ <span
+class="math inline">\(\prod_{i=1}^m{p_i^{e_i}}\)</span>。对于每个因子
+<span class="math inline">\(f = p_i^{e_i}\)</span>，考虑 <span
+class="math inline">\(C^{&#39;} = f \cdot C\)</span>，<span
+class="math inline">\(G^{&#39;} = f \cdot G\)</span>。<br />
+此时 <span class="math inline">\(C^{&#39;}\)</span> 在群中的阶为 <span
+class="math inline">\(\frac{n}{f}x\)</span>，<span
+class="math inline">\(G^{&#39;}\)</span> 的阶则为 <span
+class="math inline">\(\frac{n}{f}\)</span>。<br />
+根据拉格朗日定理，此时以 <span class="math inline">\(G^{&#39;}\)</span>
+为生成元的子群的阶只有 <span class="math inline">\(f\)</span>，且 <span
+class="math inline">\(C^{&#39;}\)</span>
+亦在这个群上，故可以在这个低阶子群上求解DLP。<br />
+依此法求解的 <span class="math inline">\(\{x_i\}\)</span> 满足 <span
+class="math inline">\(x_i \equiv x (mod p_i^{e_i})\)</span>。</p>
+<ul>
+<li>对于第一种情况，显然 <span
+class="math inline">\({p_i^{e_i}}\)</span>
+互素，故将所有等式联立至CRT中，求出通解 <span
+class="math inline">\(x^{&#39;} = x_0 + kn&#39;\)</span>，令 <span
+class="math inline">\(k=0\)</span> 即可获得 <span
+class="math inline">\(x\)</span>。<br />
+</li>
+<li>对于第二种情况，假设存在 <span class="math inline">\(x &lt;
+r\)</span>，则可以升序求解模 <span
+class="math inline">\(p_i^{e_i}\)</span> 下的DLP，只需要求解出的 <span
+class="math inline">\(\prod_{i=1}^m{p_i^{e_i}} &gt; r\)</span>
+，即可令CRT求解出的 <span class="math inline">\(x^{&#39;}\)</span>
+模数大于 <span class="math inline">\(r\)</span>，进而获得 <span
+class="math inline">\(x\)</span>。</li>
+</ul>
+<p>还是直接上代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">ph_attack</span>(<span class="params">p:<span class="built_in">int</span>,c:<span class="built_in">int</span>,intact: <span class="built_in">bool</span> = <span class="literal">True</span></span>) -&gt; <span class="built_in">int</span>: <span class="comment">#仍旧是pow(2,x,p) == c</span></span><br><span class="line">    g = <span class="number">2</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">#约定，factor(x)返回一个list，每个元素是形如(prime,factor)的tuple</span></span><br><span class="line">    <span class="comment">#约定，预置了discrete_log(a,g)返回int，作用为给定(g,a)，求解群中满足a = x * g的x，其可以采用暴力攻击、BSGS等方法进行</span></span><br><span class="line">    <span class="comment">#约定，函数crt(r,m)可以对给定两个等长的列表，且m各元素互质时，求CRT问题的基础解(k=0)</span></span><br><span class="line">    rls = []</span><br><span class="line">    mls = []</span><br><span class="line"></span><br><span class="line">    n = p - <span class="number">1</span> <span class="comment">#Zmod(p)的阶</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">#对于第一种情况的攻击，即不知道x的额外信息，完全攻击每个子群</span></span><br><span class="line">    <span class="keyword">if</span> intact:</span><br><span class="line">        <span class="keyword">for</span> pm,exp <span class="keyword">in</span> factor(n):</span><br><span class="line">            cur = <span class="built_in">pow</span>(pm,exp)</span><br><span class="line">            fc = n // cur</span><br><span class="line">            temp_g = <span class="built_in">pow</span>(g,fc,p)</span><br><span class="line">            temp_c = <span class="built_in">pow</span>(c,fc,p)</span><br><span class="line">            mls.append(cur)</span><br><span class="line">            rls.append(discrete_log(temp_c,temp_g))</span><br><span class="line"></span><br><span class="line">    <span class="comment">#对于第二种情况的攻击，攻击部分子群，其实只需要记录已经求解的模数之积，伺机break</span></span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        Sentinel = <span class="built_in">pow</span>(<span class="number">2</span>,<span class="number">32</span>) <span class="comment">#x的上界</span></span><br><span class="line">        mul = <span class="number">1</span></span><br><span class="line">        <span class="keyword">for</span> pm,exp <span class="keyword">in</span> factor(n):</span><br><span class="line">            cur = <span class="built_in">pow</span>(pm,exp)</span><br><span class="line">            fc = n // cur</span><br><span class="line">            temp_g = <span class="built_in">pow</span>(g,fc,p)</span><br><span class="line">            temp_c = <span class="built_in">pow</span>(c,fc,p)</span><br><span class="line">            mls.append(cur)</span><br><span class="line">            rls.append(discrete_log(temp_c,temp_g))</span><br><span class="line">            mul *= cur</span><br><span class="line">            <span class="keyword">if</span> mul &gt; Sentinel:</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> crt(rls,mls)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>因此，为使任意场景实例化的DLP问题抵抗Pohlig-Hellman攻击，该群的阶或应没有小因子（最好阶自身就是大质数），或其小因子极少且乘积极小。</p>
+<p>对于 <span class="math inline">\(Zmod(p)\)</span>
+上的离散对数问题，一般会要求p是质数的同时，<span
+class="math inline">\(\frac{p-1}{2}\)</span>
+为质数（或没有小因子）。</p>
+<blockquote>
+<p><span class="math inline">\(p\)</span> 是质数时，其阶 <span
+class="math inline">\(\phi(p) = p-1\)</span>，显然此时 <span
+class="math inline">\(2\)</span>
+是其阶的一个因子，令其阶的另一个因子是质数，同时约束 <span
+class="math inline">\(x&gt;2\)</span>，即可确保其最大限度地抵抗Pohlig-Hellman攻击。</p>
+</blockquote>
+<p><strong>只要一个群的阶不是质数，那么Pohlig-Hellman总能通过转而攻击子群，降低求解该群上DLP问题的复杂度。</strong></p>
+</blockquote>
+<p>sagemath中内置了求解离散对数相关的工具： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line">p = <span class="number">7</span></span><br><span class="line">E = EllipticCurve(Zmod(p),[<span class="number">0</span>,<span class="number">2</span>])</span><br><span class="line">A = E.random_point()</span><br><span class="line">G = E.gens()[<span class="number">0</span>]</span><br><span class="line"></span><br><span class="line"><span class="comment">#经典调用方法，discrete_log是一个通用化的函数，第一参数为结果，第二参数为底，内置方法就是Pohlig-Hellman和BSGS</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#指定operation相当于约定了特定的运算（对于EllipticCurve默认为&#x27;+&#x27;，对于Zmod(p)默认为&#x27;*&#x27;）</span></span><br><span class="line"><span class="built_in">print</span>(discrete_log(A,G,operation=<span class="string">&#x27;+&#x27;</span>)) </span><br><span class="line"></span><br><span class="line"><span class="comment">#还可以指定bounds=(a,b)来引导sage来利用上述Pohlig-Hellman攻击中的第二种情况</span></span><br><span class="line"><span class="built_in">print</span>(discrete_log(A,G,operation=<span class="string">&#x27;+&#x27;</span>,bounds=(<span class="number">0</span>,<span class="number">5</span>))) <span class="comment">#假设x的上界为5</span></span><br></pre></td></tr></table></figure></p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/闲笔//" class="article-tag-list-link color3">闲笔</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/dlog/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+  <div>
+</article>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-std-print" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -308,204 +562,6 @@ member法的灵活度会更高些，甚至可以在<code>parse</code>中让迭�
       
         <p class="article-more-link">
           <a class="article-more-a" href="/std-print/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-  <div>
-</article>
-
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-explore-scanf" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/explore-scanf/">细究scanf</a>
-    </h1>
-  
-
-        
-        <a href="/explore-scanf/" class="archive-article-date">
-  	<time datetime="2024-12-08T13:16:43.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-08</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="scanf简明精干之美">scanf，简明精干之美</h1>
-<h2 id="基本语法">基本语法</h2>
-<p>scanf的函数签名为：
-<code>int scanf(const char* format, ...);</code><br />
-其中format为格式字符串，后跟不定参数传递待赋值变量的地址。</p>
-<blockquote>
-<p>较高级的C语言提倡使用scanf_s代替scanf以确保内存安全，其函数签名为
-<code>int scanf_s(const char* format, ...)</code>。</p>
-<p>用法区别为，不定参数列表需要传递待赋值变量的地址和<strong>最大写入内存大小</strong>，如：<code>scanf_s("%d", &amp;var, sizeof(int));</code></p>
-</blockquote>
-<p>scanf()的核心在于格式字符串上。<br />
-format-string的说明符形式为：
-<code>[=%[*][width][modifiers]type=]</code><br />
-其中，%标志说明符的开始（"%%"符号的escape-character是"%%"）；<br />
-*是一个可选字符，任何被指定了*的format-string均不会被赋值至对应的变量中（相当于这一段scan后被舍弃）。
-width表示了该说明符读取的最大字符数；<br />
-modifiers表示一个对变量类型的修饰符（“长”“短”一类，比如ll表示long
-long，s表示short，用于修饰%d,%u,%f）；<br />
-type的“全解”如下。<br />
-<strong>以下部分内容可能会因编译器不同而有所不同，仅供MSVC
-19.3参考。</strong></p>
-<ul>
-<li><p>d:
-表示读入一个十进制整数。<strong>使用之时会优先读取前置负号，如果负号后没有十进制字符，则该次读取失败（变量不会被赋值），但负号已经从流中被读取（“取出”）。</strong><br />
-函数的对应预期变量是一个<code>int*</code>，并将以"1+31"的方式将读取的数值写入该地址（第一位符号，后31位是数值，表示范围<span
-class="math inline">\(-2^{31} ~ 2^{31} - 1\)</span>。<br />
-如果需要读取long/long
-long/short整型，请将modifiers指定为l/ll/s（应用形如<code>%lld</code>）。long
-long的范围自然扩展至<span class="math inline">\(-2^{63} ~ 2^{63} -
-1\)</span>。 如果发生溢出，则结果为未定义行为(Undefined
-Behavior)。</p></li>
-<li><p>s:
-表示读入一个字符串。<strong>此处“字符串”的定义是连续的任意字符，直至终止字符('\0')或空白字符（换行、水平/垂直制表符、空格）。读取时，%s不会读取这些终止符（亦不会将之从流中取出）。</strong><br />
-函数的对应预期变量是一个<code>char*</code>，并将读取到的所有字符（最大数目由width指定）依次写入其中，<strong>并在最后追加一个'\0'，所以需要预留的内存空间至少是(width+1)*<code>sizeof(char)</code></strong>。</p></li>
-<li><p>c：表示读入单个字符。<strong>如果指定了width，则会连续读取width个字符，存储在该对应地址开始的连续位置（增量为<code>sizeof(char)</code>），且末尾不会追加'\0'。</strong>
-函数的对应预期变量是一个<code>char*</code>。</p></li>
-<li><p>u：表示读入一个无符号十进制整数。
-函数的对应预期变量是一个<code>unsigned int*</code>。</p></li>
-<li><p>f：表示读入一个浮点数。
-函数的对应预期变量是一个<code>float*</code>。<strong>如需读取至</strong><code>double*</code><strong>，请使用<code>%lf</code>；long
-double则请使用<code>%llf</code>。</strong></p></li>
-</ul>
-<blockquote>
-<p>浮点数应形如：[符号]十进制数[.十进制数][e[符号]十进制数]。</p>
-<p>有效的浮点数实例： 3；3.14；+6.24e5；-9e-7。</p>
-</blockquote>
-<ul>
-<li><p>x，X:
-十六进制整数，除字符集合改为所有的十六进制字符（大小写均有效）外行为与d相似。十六进制数前的'0x'/'0X'前缀是可选的。
-函数的对应预期变量是一个<code>int*</code>，修饰规则与前述相同。</p></li>
-<li><p>o： 八进制整数，不再赘述。</p></li>
-<li><p>i：
-读取一个整数，行为类似于python中的<code>int(x,0)</code>（即自动根据前缀判断进制），0-八进制，0x/0X-十六进制，其它-十进制（参考C中的numeric
-constants规则）。</p></li>
-<li><p>[]：扫描字符集合，集成了一个弱化版的正则表达式。<br />
-具体地，[]内部可以放置扫描字符的集合，集合的表达方式有逐个列出/横杠表示范围，并支持'^'表示'否'。<br />
-举例：<code>%[a-zA-Z]</code>扫描所有字母；<code>%[^\n]</code>扫描直至换行符（相当于获取一整行）；<code>%1[x]</code>获取至多一个x字符。</p></li>
-</ul>
-<blockquote>
-<p>'^'的转义字符为'^'，但在C的源代码中应写作<code>\\^</code>（因为''自身会被预处理转义）。</p>
-</blockquote>
-<p>返回值：赋值成功的变量数，若到达文件末尾则返回EOF（负数宏，在许多平台上通常为-1）。<br />
-<strong>当且仅当赋值成功的变量数为0且到达文件尾时，返回EOF（亦即只要存在赋值成功的变量，即不会返回负数）。</strong></p>
-<h2 id="底层逻辑">底层逻辑</h2>
-<p>假设scanf的目标流为in。scanf从左往右扫描format-string，遇到以下字符时分别采取对应的措施：<br />
--
-specifier（如上）：尝试根据specifier的规则处理in中的下一段符合要求的字符；<br />
-若specifier没有加星号(*)，则取va_arg（不定参数列表）中的下一个参数，对之解引用并将数据写入其中。<br />
--
-任意空白字符：将format-string读取点前进至下一个非空白字符，同时跳过流in中所有的空白字符。<strong>即，任意数目的连续空白字符对于scanf而言是等效的。</strong><br />
--
-其它字符：scanf将从流中尝试取走一个给定的字符<code>(char)</code>，行为类似于给定形如
-<code>%*1[(char)]</code>。</p>
-<blockquote>
-<p><strong><em>重点来咯！！！</em></strong></p>
-<ul>
-<li><p>对于上述的第1、3种情况（即扫描format-string需要处理的是specifier/其它非空白字符），一旦读取失败，<strong>则对format-string的扫描终止，读取结束。</strong></p></li>
-<li><p>第2种情况（处理空白字符）时，即使流中没有空白字符，依然继续。</p></li>
-<li><p>每次调用scanf时，如果specifier不是<code>%c</code>或扫描字符合集<code>%[]</code>，则会<strong>自动先跳过所有的空白字符一次</strong>。</p></li>
-</ul>
-</blockquote>
-<p>假设待读取流形如 <code>1  2\n34abc d</code>，代码及读取效果示例：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">input1</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span> a=<span class="number">0</span>,b=<span class="number">0</span>;</span><br><span class="line">    <span class="type">char</span> c=<span class="number">0</span>;</span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%d%d&quot;</span>,&amp;a,&amp;b); <span class="comment">//a=1,b=2,返回值2，流的下一个字符是\n</span></span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%c&quot;</span>,&amp;c); <span class="comment">//c=&#x27;\n&#x27;,返回值1</span></span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%da%d&quot;</span>,&amp;a,&amp;b); <span class="comment">//a=34，返回值1，流的下一个字符是c，b未更改(b=2)</span></span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%*[^d]&quot;</span>); <span class="comment">//返回值0，流的下一个字符是d</span></span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%x&quot;</span>,&amp;a); <span class="comment">//a=13，返回值1</span></span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%c&quot;</span>,&amp;c); <span class="comment">//返回值-1（假设EOF的宏常量是-1）</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h2 id="实战示例">实战示例</h2>
-<blockquote>
-<p>Talk is cheap. Show me the code.</p>
-</blockquote>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">//逐位读取整数（比如输入12345，存储于数组[1,2,3,4,5]）</span></span><br><span class="line">    <span class="type">int</span>* data = <span class="built_in">calloc</span>(<span class="number">100</span>,<span class="keyword">sizeof</span>(<span class="type">int</span>));</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;<span class="number">100</span>;++i)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">scanf</span>(<span class="string">&quot;%1d&quot;</span>,data+i);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//读取一整行字符</span></span><br><span class="line">    <span class="type">char</span>* str = <span class="built_in">calloc</span>(<span class="number">255</span>,<span class="keyword">sizeof</span>(<span class="type">char</span>));</span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%[^\n]&quot;</span>,str); <span class="comment">//虽然这种用法不是非常memory-safe</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//只读取十六进制字符，并舍弃前缀的非十六进制字符</span></span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%*[^0-9A-Fa-f]%[0-9A-Fa-f]&quot;</span>,str);</span><br><span class="line"></span><br><span class="line">    <span class="comment">//试探下一个字符是否为&quot;x&quot;，且若是则读取之</span></span><br><span class="line">    <span class="comment">//注意！！绝对不允许将扫描字符集合直接读至单个char中，必须分配至少为两个char的内存空间（数组/堆内存均可），因为其会要求写入一个&#x27;\0&#x27;！</span></span><br><span class="line">    <span class="type">char</span>* temp = <span class="built_in">calloc</span>(<span class="number">2</span>,<span class="keyword">sizeof</span>(<span class="type">char</span>));</span><br><span class="line">    <span class="type">int</span> status = <span class="built_in">scanf</span>(<span class="string">&quot;%1[x]&quot;</span>,temp);</span><br><span class="line">    <span class="keyword">if</span>(status==<span class="number">1</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;x received!&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//连续读取全部字符，直至下一个&#x27;*&#x27;（像不像消除全部注释？）</span></span><br><span class="line">    (<span class="type">void</span>)<span class="built_in">scanf</span>(<span class="string">&quot;%*[^*]&quot;</span>);</span><br><span class="line">    <span class="keyword">if</span>(<span class="built_in">scanf</span>(<span class="string">&quot;%1[/]&quot;</span>,temp) == <span class="number">1</span>) </span><br><span class="line">    <span class="comment">//结合上述，进入这个if分支说明碰到&quot;*/&quot;了，也就是注释结束的意思</span></span><br><span class="line">    <span class="comment">//同时如果下一个字符不是&quot;/&quot;，则其会保留在流中，不会影响后续while操作等。</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">//...</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="pta与巧用scanf有关的题目示例">PTA与巧用scanf有关的题目示例</h2>
-<h3 id="一元多项式函数求导强化版">一元多项式函数求导（强化版）</h3>
-<blockquote>
-<p>给出一个一元多项式函数 (形如<span
-class="math inline">\(f(x)=ax^b+cx^d+...\)</span>)，求出其导函数，结果用标准书写格式输出，必须合并同类项，降幂排列。如果结果多项式为空，仅输出0。</p>
-<p>每一项的系数绝对值小于100，指数为小于100的非负整数。输入字符串长度不超过3000。变量用字母
-x 表示。题目保证输入的多项式均合法。</p>
-<p>输入格式:<br />
-在一行中输入一个多项式字符串。</p>
-<p>输出格式:<br />
-在一行中按照标准书写格式输出字符串。</p>
-<p>输入样例： <code>x^4-3x^2+4</code></p>
-<p>输出样例： <code>4x^3-6x</code></p>
-</blockquote>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">int</span> out[<span class="number">100</span>] = &#123; <span class="number">0</span> &#125;, flag = <span class="number">0</span>;</span><br><span class="line">	<span class="type">char</span> <span class="built_in">string</span>[<span class="number">21</span>] = &#123; <span class="string">&#x27;+&#x27;</span> &#125;, temp[<span class="number">2</span>] = &#123; <span class="number">0</span> &#125;;</span><br><span class="line">	<span class="keyword">while</span> (!feof(<span class="built_in">stdin</span>))</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="type">int</span> factor = <span class="number">0</span>, exponent = <span class="number">0</span>;</span><br><span class="line">		(<span class="type">void</span>)<span class="built_in">scanf</span>(<span class="string">&quot;%1[+-]&quot;</span>, <span class="built_in">string</span>);</span><br><span class="line">		<span class="keyword">if</span> (<span class="built_in">scanf</span>(<span class="string">&quot;%19[0-9]&quot;</span>, <span class="built_in">string</span> + <span class="number">1</span>) == <span class="number">0</span>)</span><br><span class="line">		&#123;</span><br><span class="line">			<span class="built_in">string</span>[<span class="number">1</span>] = <span class="string">&#x27;1&#x27;</span>;</span><br><span class="line">		&#125;</span><br><span class="line">		factor = atoi(<span class="built_in">string</span>);</span><br><span class="line">		<span class="keyword">if</span> (<span class="built_in">scanf</span>(<span class="string">&quot;%1[x]&quot;</span>, temp) == <span class="number">0</span>)</span><br><span class="line">		&#123;</span><br><span class="line">			<span class="keyword">continue</span>;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> (<span class="built_in">scanf</span>(<span class="string">&quot;%1[\\^]&quot;</span>, temp) == <span class="number">1</span>)</span><br><span class="line">		&#123;</span><br><span class="line">			(<span class="type">void</span>)<span class="built_in">scanf</span>(<span class="string">&quot;%d&quot;</span>, &amp;exponent);</span><br><span class="line">			<span class="keyword">if</span> (exponent &gt;= <span class="number">1</span>)</span><br><span class="line">			&#123;</span><br><span class="line">				out[exponent - <span class="number">1</span>] += factor * exponent;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">else</span></span><br><span class="line">		&#123;</span><br><span class="line">			out[<span class="number">0</span>] += factor;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">    <span class="type">char</span>* output = <span class="built_in">calloc</span>(<span class="number">1000</span>,<span class="keyword">sizeof</span>(<span class="type">char</span>));</span><br><span class="line">    <span class="type">int</span> putloc = <span class="number">0</span>;</span><br><span class="line">	<span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">99</span>;i &gt;= <span class="number">2</span>;--i)</span><br><span class="line">	&#123;</span><br><span class="line">        putloc += (out[i] ? <span class="built_in">sprintf</span>(output + putloc, <span class="string">&quot;%+dx^%d&quot;</span>,out[i],i) : <span class="number">0</span>);</span><br><span class="line">	&#125;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&gt;=<span class="number">0</span>;--i)</span><br><span class="line">    &#123;</span><br><span class="line">        putloc += (out[i] ? <span class="built_in">sprintf</span>(output + putloc, i ? <span class="string">&quot;%+dx&quot;</span> : <span class="string">&quot;%+d&quot;</span>,out[<span class="number">1</span>]) : <span class="number">0</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span>(putloc)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%s&quot;</span>,output[<span class="number">0</span>]==<span class="string">&#x27;+&#x27;</span> ? output+<span class="number">1</span> : output);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;0&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">free</span>(output);</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>注释：</p>
-<ul>
-<li><p>在scan前置系数上，采用了统一interface的策略（即在接收string的第一个字符设置为'+'，规避开第一项的'+'缺失问题）。</p></li>
-<li><p><code>&lt;stdlib.h&gt;</code>中的<code>atoi</code>可以帮助处理数字字符。</p></li>
-<li><p>每一步都是借助弱化的regex来“步步为营”，<br />
-比如<code>scanf("%1[x]",temp)</code>试探有无'x'，若无则<code>continue</code>；<br />
-<code>scanf("%1[\\^]",temp)</code>试探有无'^'，若无则确定为一次幂。<code>[]</code>的优点体现在<del>strong
-exception guarantee</del>若失败则不会产生其它影响。</p></li>
-</ul>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">C Libraries</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/explore-scanf/">展开全文 >></a>
         </p>
       
 
