@@ -152,19 +152,19 @@
           <div id="js-content" class="content-ll">
             
   
-    <article id="post-lattices-past" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-lattice" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/lattices-past/">lattices_past</a>
+      <a class="article-title" href="/lattice/">格</a>
     </h1>
   
 
         
-        <a href="/lattices-past/" class="archive-article-date">
+        <a href="/lattice/" class="archive-article-date">
   	<time datetime="2025-01-04T23:20:37.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-01-05</time>
 </a>
         
@@ -172,10 +172,7 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <blockquote>
-<p>碧海中倒映着青天，</p>
-</blockquote>
-<h1 id="格的基本概念">格的基本概念</h1>
+        <h1 id="格的基本概念">格的基本概念</h1>
 <p>离散数学中
 格是一个满足<strong>每两个元素都有最大上界和最小下界</strong>的偏序关系(partial
 ordering)集。</p>
@@ -250,11 +247,99 @@ Orthogonalization)。不同的是：</p>
 <ul>
 <li>由于格基规约的运算均在整数环上进行，因此对于施密特正交化步骤中的“比例”计算应当取整处理（这也提示了格基规约得到的向量组是高度正交化的，但不保证是正交矩阵）。<br />
 </li>
-<li>格基规约本质上是一种贪心算法，计算思路类似于欧几里得算法，即不断地将两组基互相约减，直至满足循环结束的条件。</li>
+<li>格基规约本质上是一种贪心算法，即不断地将两组基互相规约，直至满足循环结束的条件（不能再变得更短）。</li>
 </ul>
-<p>回顾施密特正交化的步骤：</p>
+<p>对比来看，设一个二维格中的两个向量分别为 <span
+class="math inline">\(v_1\)</span> 和 <span
+class="math inline">\(v_2\)</span>，线性代数的知识可知对之进行正交化的步骤为：<br />
+令 <span class="math inline">\(v_1^{&#39;} = v_1\)</span>， <span
+class="math inline">\(v_2^{&#39;} = v_2 - \frac{v_2 \cdot
+v_1^{&#39;}}{v_1^{&#39;} \cdot v_1^{&#39;}} v_1^{&#39;}\)</span>。<br />
+输出的正交基即为 <span
+class="math inline">\((v_1^{&#39;},v_2^{&#39;})\)</span>。</p>
+<p>而对 <span class="math inline">\((v_1,v_2)\)</span>
+进行规约的操作则有所不同：</p>
+<blockquote>
+<p>约定，<span class="math inline">\(\lceil x \rfloor\)</span>
+表示取距离 <span class="math inline">\(x\)</span> 最近的整数；对于 <span
+class="math inline">\(x \in Z\)</span>，<span
+class="math inline">\(\lceil x+\frac{1}{2} \rfloor = x\)</span>。</p>
+</blockquote>
+<p>令 <span class="math inline">\(v_2 = v_2 - \lceil \frac{v_2 \cdot
+v_1}{v_1 \cdot v_1} \rfloor v_1\)</span>；<br />
+若此时 <span class="math inline">\(\|v_1\| \leq
+\|v_2\|\)</span>，则输出<span
+class="math inline">\((v_1,v_2)\)</span>，算法运行结束；<strong>否则
+<span class="math inline">\(v_1 \leftrightarrow
+v_2\)</span>，回到上一步。</strong></p>
+<p>例：某棋子在一个棋盘中只允许有两个行走向量（允许后退）：(2,3)和(0,2)，计算该棋子（等价的）最简行走向量及可达点。</p>
+<p>解：记 <span class="math inline">\(v_1 = (2,3),v_2 =
+(0,2)\)</span>。<br />
+根据规约公式，代入数据得 <span class="math inline">\(v_2 = (0,2) -
+\lceil \frac{6}{13} \rfloor \cdot (2,3) = (0,2)\)</span>，由于 <span
+class="math inline">\(\|v_1\| = \sqrt{13} &gt; \|v_2\| =
+2\)</span>，故<span class="math inline">\(v_1 \leftrightarrow
+v_2\)</span>；<br />
+再计算 <span class="math inline">\(v_1 = (0,2)\)</span>，<span
+class="math inline">\(v_2 = (2,3) - \lceil \frac{6}{4} \rfloor \cdot
+(0,2) = (2,1)\)</span>；此时 <span class="math inline">\(\|v_1\| = 2
+\leq \|v_2\| = \sqrt{5}\)</span>，故规约结束，输出 <span
+class="math inline">\(\{(0,2),(2,1)\}\)</span>。</p>
+<p>因此，该棋子等价于只能以 <span
+class="math inline">\(\{(0,2),(2,1)\}\)</span>
+的方式行走。数学推导可得可以到达的点 <span
+class="math inline">\((x,y)\)</span> 满足：</p>
+<ul>
+<li>若 <span class="math inline">\(x \equiv 2 (mod 4)\)</span>，则 <span
+class="math inline">\(y \equiv 1 (mod 2)\)</span>，对应的点包括 <span
+class="math inline">\(\{(2,1),(2,3),(2,5),(-2,7),\cdots\}\)</span>；</li>
+<li>若 <span class="math inline">\(x \equiv 0 (mod 4)\)</span>，则 <span
+class="math inline">\(y \equiv 0 (mod 2)\)</span>，具体点略。</li>
+</ul>
+<p>纵观算法的执行过程，不难得出输出基有一个 <em>size-reduced</em>
+性质：<span class="math inline">\(|\mu_{1,2}| \leq
+\frac{1}{2}\)</span>。<br />
+其中 <span class="math inline">\(\mu_{i,j} = \frac{v_i \cdot
+v_j^{&#39;}}{v_j^{&#39;} \cdot v_j^{&#39;}}\)</span> （换言之，<span
+class="math inline">\(\mu_{i,j}\)</span> 为施密特正交化中减去 <span
+class="math inline">\(v_j^{&#39;}\)</span> 的系数）。</p>
+<blockquote>
+<p>若 <span class="math inline">\(v_1,v_2 \in L\)</span> 线性无关且满足
+<em>size-reduced</em> 的条件，则称之为二维格 <span
+class="math inline">\(L\)</span> 中的<strong>最小基</strong>（亦名
+<em>Minkowski约化基</em> ）。</p>
+</blockquote>
 <h2
 id="llllenstra-lenstra-lovasz拓展到高维的格基规约">LLL(Lenstra-Lenstra-Lovasz)：拓展到高维的格基规约</h2>
+<p>LLL算法可以视为上述算法在高维格中的推广，其可以在多项式时间内输出一组约化基。<br />
+设 <span class="math inline">\(\{v_1,v_2,\cdots,v_n\}\)</span> 是 <span
+class="math inline">\(L\)</span>
+上的一组格基，若其满足以下两个性质：</p>
+<ol type="1">
+<li><em>size-reduced</em> ：<span class="math inline">\(\forall 1 \leq i
+&lt; j \leq n， |\mu_{i,j}| \leq \frac{1}{2}\)</span>。<br />
+</li>
+<li><em>Lovasz-condition</em> ： <span class="math inline">\(\forall i
+\in [1,n]\)</span>，<span class="math inline">\(\delta \|v_i\|^2 \leq
+\|v_{i+1} + \mu_{i,i+1}v_i\|^{2}\)</span> 。</li>
+</ol>
+<p>则称 <span class="math inline">\(\{v_1,v_2,\cdots,v_n\}\)</span> 是格
+<span class="math inline">\(L\)</span> 的一组 <span
+class="math inline">\(\delta\)</span>-LLL约化基(<span
+class="math inline">\(\delta\)</span>-LLL reduced)。显然参数 <span
+class="math inline">\(\delta \in (0.25,1]\)</span>。</p>
+<blockquote>
+<p>第二个条件亦可写作 <span class="math inline">\(\|v_{i+1}\|^2 \geq
+(\delta - \mu_{i,i+1}^2) \|v_i\|^2 \geq (\delta - \frac{1}{4})
+\|v_i\|^2\)</span>。</p>
+</blockquote>
+<blockquote>
+<p>第一个条件表明了 <em>LLL-reduced</em>
+的向量是<strong>相对较短</strong>且<strong>高度正交</strong>的；<br />
+第二个条件是为根据向量的范数(norm)对之进行大致排序。</p>
+</blockquote>
+<p>相应地，LLL算法的执行过程如下：</p>
+<h2 id="lll在密码分析中的应用">LLL在密码分析中的应用</h2>
 <p>我们一直在提及“可能”规约出期望的结果（目标向量），其因目标向量的模长越短，规约成功率越高；同时目标向量的模长存在一个上界，超过该上界时规约（几乎）必定失败。<br />
 Hermite定理给出了 "LLL-reduced" 规约格上界：</p>
 <p><span class="math inline">\(\|v_1\| \leq \|v_2\| \leq \cdots \leq
@@ -274,6 +359,8 @@ class="math inline">\(\|v_i\|\)</span>。</p>
 <blockquote>
 <p>推导方式很多且都不难，上至偏导数，<del>下至三角板</del>，反正怎么能理解怎么来(bushi)</p>
 </blockquote>
+<p>同时，LLL算法中参数 <span class="math inline">\(\delta\)</span>
+的选取对于效率和成功率的平衡也极为关键。</p>
 <h1 id="格核心性质的利用方法">格核心性质的利用方法</h1>
 <p>在应用格攻击时，会经常碰到的一个概念即为“构造”格。<br />
 格的重要性质：格中向量一定是<strong>基向量的整系数线性组合</strong>，但这个线性组合的具体值并不重要（考虑
@@ -294,8 +381,7 @@ class="math inline">\(v_r\)</span>。<br />
 而构造方法则参照格的定义即可：利用已知条件，写出一个矩阵乘法方程 <span
 class="math inline">\(a \cdot M = v_r\)</span>，其中 <span
 class="math inline">\(a\)</span>
-只需确定是整系数n维向量即可，无需知道其确值~~不然你直接一乘结果不就出来了嘛
-~~<br />
+只需确定是整系数n维向量即可，无需知道其确值<del>不然你直接一乘结果不就出来了嘛</del><br />
 相对地，<span class="math inline">\(v_r\)</span>
 也只需确定其各维均为整数即可，但 <span
 class="math inline">\(v_r\)</span> <strong>应尽可能地短</strong>；<span
@@ -684,7 +770,7 @@ class="math inline">\(\{k_i\}\)</span> 作为公钥。<br />
 class="math inline">\(pq_i + sr_i\)</span>的形式；将其结果和 <span
 class="math inline">\(m\)</span> 相加，即可获得密文 <span
 class="math inline">\(c\)</span>。</p>
-<p>实践代码如下： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> random <span class="keyword">import</span> getrandbits</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">AGCD</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="variable language_">self</span>.eta = <span class="number">256</span></span><br><span class="line">        <span class="variable language_">self</span>.rho = <span class="number">64</span></span><br><span class="line">        <span class="variable language_">self</span>.gamma = <span class="number">1024</span></span><br><span class="line"></span><br><span class="line">        <span class="variable language_">self</span>.p = getPrime(<span class="variable language_">self</span>.eta)</span><br><span class="line">        <span class="variable language_">self</span>.s = <span class="number">256</span> <span class="comment">#2^8</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">encrypt</span>(<span class="params">self,m:<span class="built_in">int</span></span>):</span><br><span class="line">        <span class="keyword">assert</span> <span class="built_in">abs</span>(m) &lt; <span class="variable language_">self</span>.limit</span><br><span class="line">        </span><br><span class="line">        q = getrandbits(<span class="variable language_">self</span>.gamma)</span><br><span class="line">        r = getrandbits(<span class="variable language_">self</span>.rho - <span class="number">8</span>)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="variable language_">self</span>.p*q + <span class="variable language_">self</span>.s*r + m</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">gen_pubkey</span>(<span class="params">self,<span class="built_in">len</span>:<span class="built_in">int</span> = <span class="number">16</span></span>):</span><br><span class="line">        <span class="keyword">return</span> [encrypt(<span class="number">0</span>) <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(<span class="built_in">len</span>)]</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">decrypt</span>(<span class="params">self,c:<span class="built_in">int</span></span>):</span><br><span class="line">        temp = c % <span class="variable language_">self</span>.p</span><br><span class="line">        <span class="keyword">return</span> temp % <span class="variable language_">self</span>.s</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure></p>
+<p>实践代码如下： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> random <span class="keyword">import</span> getrandbits</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">AGCD</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="variable language_">self</span>.eta = <span class="number">256</span></span><br><span class="line">        <span class="variable language_">self</span>.rho = <span class="number">64</span></span><br><span class="line">        <span class="variable language_">self</span>.gamma = <span class="number">1024</span></span><br><span class="line"></span><br><span class="line">        <span class="variable language_">self</span>.p = getPrime(<span class="variable language_">self</span>.eta)</span><br><span class="line">        <span class="variable language_">self</span>.s = <span class="number">256</span> <span class="comment">#2^8</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">encrypt</span>(<span class="params">self,m:<span class="built_in">int</span></span>):</span><br><span class="line">        <span class="keyword">assert</span> <span class="built_in">abs</span>(m) &lt; <span class="variable language_">self</span>.limit</span><br><span class="line">        </span><br><span class="line">        q = getrandbits(<span class="variable language_">self</span>.gamma)</span><br><span class="line">        r = getrandbits(<span class="variable language_">self</span>.rho - <span class="number">8</span>)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="variable language_">self</span>.p*q + <span class="variable language_">self</span>.s*r + m</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">gen_pubkey</span>(<span class="params">self,<span class="built_in">len</span>:<span class="built_in">int</span> = <span class="number">16</span></span>):</span><br><span class="line">        <span class="keyword">return</span> [encrypt(<span class="number">0</span>) <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(<span class="built_in">len</span>)]</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">decrypt</span>(<span class="params">self,c:<span class="built_in">int</span></span>):</span><br><span class="line">        temp = c % <span class="variable language_">self</span>.p</span><br><span class="line">        <span class="keyword">return</span> temp % <span class="variable language_">self</span>.s</span><br><span class="line"></span><br></pre></td></tr></table></figure></p>
 
       
 
@@ -719,7 +805,7 @@ class="math inline">\(c\)</span>。</p>
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/lattices-past/">展开全文 >></a>
+          <a class="article-more-a" href="/lattice/">展开全文 >></a>
         </p>
       
 
@@ -751,19 +837,19 @@ class="math inline">\(c\)</span>。</p>
 
 
   
-    <article id="post-cpp20-compare" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-cpp-3compare" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/cpp20-compare/">C++20新秀之operator&lt;=&gt;</a>
+      <a class="article-title" href="/cpp-3compare/">C++20新秀：operator&lt;=&gt;</a>
     </h1>
   
 
         
-        <a href="/cpp20-compare/" class="archive-article-date">
+        <a href="/cpp-3compare/" class="archive-article-date">
   	<time datetime="2024-12-20T23:21:39.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-21</time>
 </a>
         
@@ -925,7 +1011,7 @@ C++中同样如此：如，<code>std::strong_ordering</code>拥有<code>operator
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/cpp20-compare/">展开全文 >></a>
+          <a class="article-more-a" href="/cpp-3compare/">展开全文 >></a>
         </p>
       
 
@@ -1134,6 +1220,10 @@ MathJax.Hub.Queue(function() {
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color4">C++ Libraries</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">Flag</a>
               </li>
             
             <div class="clearfix"></div>

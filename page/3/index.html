@@ -152,116 +152,19 @@
           <div id="js-content" class="content-ll">
             
   
-    <article id="post-550" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-cryptohack" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/550/">550</a>
+      <a class="article-title" href="/cryptohack/">Cryptohack打本手记（持续咕咕ing）</a>
     </h1>
   
 
         
-        <a href="/550/" class="archive-article-date">
-  	<time datetime="2024-12-18T02:41:05.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-18</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="c">550C</h1>
-<blockquote>
-<p>这是550C，目前最强大的自感知、自适应、自组织可重塑编译计算核心。</p>
-</blockquote>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line"><span class="keyword">from</span> hashlib <span class="keyword">import</span> sha256</span><br><span class="line"><span class="keyword">from</span> os <span class="keyword">import</span> urandom</span><br><span class="line"><span class="keyword">from</span> functools <span class="keyword">import</span> reduce</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">ECLCG</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self,seed_x:<span class="built_in">int</span></span>):</span><br><span class="line">        p = <span class="number">115792089237316195423570985008687907853269984665640564039457584007908834671663</span></span><br><span class="line">        a = <span class="number">0</span></span><br><span class="line">        b = <span class="number">7</span></span><br><span class="line">        E=EllipticCurve(Zmod(p),[a,b])</span><br><span class="line"></span><br><span class="line">        G = E.gens()[<span class="number">0</span>]</span><br><span class="line">        <span class="variable language_">self</span>.increment = E.random_point()</span><br><span class="line">        <span class="variable language_">self</span>.status = G * seed_x</span><br><span class="line">        </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">extract</span>(<span class="params">self</span>):</span><br><span class="line">        ret = <span class="variable language_">self</span>.status</span><br><span class="line">        <span class="variable language_">self</span>.status += <span class="variable language_">self</span>.increment * <span class="number">550</span></span><br><span class="line">        <span class="keyword">return</span> ret</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">getrandbits</span>(<span class="params">self,n:<span class="built_in">int</span></span>):</span><br><span class="line">        ls = []</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(ceil(n/<span class="number">256</span>)): </span><br><span class="line">            x,y = <span class="variable language_">self</span>.extract().xy()</span><br><span class="line"></span><br><span class="line">            h1 = <span class="built_in">bin</span>(x &gt;&gt; <span class="number">144</span>)[<span class="number">2</span>:]</span><br><span class="line">            f1 = <span class="built_in">int</span>(h1[:<span class="built_in">len</span>(h1)//<span class="number">2</span>] + <span class="built_in">bin</span>(<span class="built_in">int</span>.from_bytes(urandom(<span class="number">1</span>),<span class="string">&#x27;big&#x27;</span>))[<span class="number">2</span>:] + h1[<span class="built_in">len</span>(h1)//<span class="number">2</span>:] + <span class="built_in">bin</span>(<span class="built_in">int</span>.from_bytes(urandom(<span class="number">1</span>),<span class="string">&#x27;little&#x27;</span>))[<span class="number">2</span>:],<span class="number">2</span>)</span><br><span class="line"></span><br><span class="line">            h2 = <span class="built_in">bin</span>(y &gt;&gt; <span class="number">144</span>)[<span class="number">2</span>:]</span><br><span class="line">            f2 = <span class="built_in">int</span>(h2[:<span class="built_in">len</span>(h2)//<span class="number">2</span>] + <span class="built_in">bin</span>(<span class="built_in">int</span>.from_bytes(urandom(<span class="number">1</span>),<span class="string">&#x27;big&#x27;</span>))[<span class="number">2</span>:] + h1[<span class="built_in">len</span>(h1)//<span class="number">2</span>:] + <span class="built_in">bin</span>(<span class="built_in">int</span>.from_bytes(urandom(<span class="number">1</span>),<span class="string">&#x27;little&#x27;</span>))[<span class="number">2</span>:],<span class="number">2</span>)</span><br><span class="line"></span><br><span class="line">            ls.append(f1 &lt;&lt; <span class="number">128</span> | f2)</span><br><span class="line">            </span><br><span class="line">        ls[-<span class="number">1</span>] &gt;&gt;= (-n) % <span class="number">256</span></span><br><span class="line">        <span class="keyword">return</span> reduce(<span class="keyword">lambda</span> x,y: x*<span class="number">2</span>^<span class="number">256</span>+y, [ls[-<span class="number">1</span>]] + ls[:-<span class="number">1</span>])</span><br><span class="line">    </span><br><span class="line"><span class="keyword">if</span> __name__==<span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    e = ECLCG(<span class="built_in">int</span>.from_bytes(urandom(<span class="number">32</span>),<span class="string">&#x27;big&#x27;</span>))</span><br><span class="line">    flag = <span class="string">b&#x27;nctf&#123;&#125;&#x27;</span></span><br><span class="line">    </span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;1 for fetching a random number, 2 for getting encrypted flag, 3 for exit&quot;</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">550</span>):</span><br><span class="line">        opt=<span class="built_in">int</span>(<span class="built_in">input</span>())</span><br><span class="line">        <span class="keyword">if</span> opt==<span class="number">1</span>:</span><br><span class="line">            <span class="built_in">print</span>(e.getrandbits(<span class="number">550</span>))</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">elif</span> opt==<span class="number">2</span>:</span><br><span class="line">            <span class="keyword">pass</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">elif</span> opt==<span class="number">3</span>:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&quot;Bye~&quot;</span>)</span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&quot;Invalid input&quot;</span>)</span><br><span class="line">            </span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h1 id="arcahv">Arcahv</h1>
-<blockquote>
-<p>"Delightful."</p>
-</blockquote>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h1 id="sign">Sign</h1>
-<blockquote>
-<p>这是恢复互联网的密钥，密码是实时生成的三万个随机数。</p>
-</blockquote>
-<h1 id="燕归">燕归</h1>
-<blockquote>
-<p>这时候就适合来一局活动身体的叶灵纵啊！</p>
-</blockquote>
-<h1 id="寒凝">寒凝</h1>
-<blockquote>
-
-</blockquote>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/550/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-  <div>
-</article>
-
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-cryptohack-wps" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/cryptohack-wps/">Cryptohack打本手记（持续咕咕ing）</a>
-    </h1>
-  
-
-        
-        <a href="/cryptohack-wps/" class="archive-article-date">
+        <a href="/cryptohack/" class="archive-article-date">
   	<time datetime="2024-12-18T02:13:02.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-18</time>
 </a>
         
@@ -356,7 +259,119 @@ exp即为获得(iv+密文)后直接传回交互式窗口，decode即可。</p>
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/cryptohack-wps/">展开全文 >></a>
+          <a class="article-more-a" href="/cryptohack/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+  <div>
+</article>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-a" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/a/">第二届长城杯CTF Crypto wp(partial)</a>
+    </h1>
+  
+
+        
+        <a href="/a/" class="archive-article-date">
+  	<time datetime="2024-12-15T09:37:44.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-15</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>难度分布过于<del>均匀</del>，前半小时意气风发，后面六小时坐牢<del>（还把脑子烧坏了.sage</del><br />
+Crypto上尚待学习探索的区域还有很多呐...</p>
+<h1 id="rsand">rsand</h1>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> getPrime, bytes_to_long</span><br><span class="line"><span class="keyword">from</span> random <span class="keyword">import</span> randint</span><br><span class="line"><span class="keyword">import</span> os</span><br><span class="line"></span><br><span class="line">FLAG = os.getenv(<span class="string">&quot;FLAG&quot;</span>).encode()</span><br><span class="line">flag1 = FLAG[:<span class="number">15</span>]</span><br><span class="line">flag2 = FLAG[<span class="number">15</span>:]</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">crypto1</span>():</span><br><span class="line">    p = getPrime(<span class="number">1024</span>)</span><br><span class="line">    q = getPrime(<span class="number">1024</span>)</span><br><span class="line">    n = p * q</span><br><span class="line">    e = <span class="number">0x10001</span></span><br><span class="line">    x1=randint(<span class="number">0</span>,<span class="number">2</span>**<span class="number">11</span>)</span><br><span class="line">    y1=randint(<span class="number">0</span>,<span class="number">2</span>**<span class="number">114</span>)</span><br><span class="line">    x2=randint(<span class="number">0</span>,<span class="number">2</span>**<span class="number">11</span>)</span><br><span class="line">    y2=randint(<span class="number">0</span>,<span class="number">2</span>**<span class="number">514</span>)</span><br><span class="line">    hint1=x1*p+y1*q-<span class="number">0x114</span></span><br><span class="line">    hint2=x2*p+y2*q-<span class="number">0x514</span></span><br><span class="line">    c = <span class="built_in">pow</span>(bytes_to_long(flag1), e, n)</span><br><span class="line">    <span class="built_in">print</span>(n)</span><br><span class="line">    <span class="built_in">print</span>(c)</span><br><span class="line">    <span class="built_in">print</span>(hint1)</span><br><span class="line">    <span class="built_in">print</span>(hint2)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">crypto2</span>():</span><br><span class="line">    p = getPrime(<span class="number">1024</span>)</span><br><span class="line">    q = getPrime(<span class="number">1024</span>)</span><br><span class="line">    n = p * q</span><br><span class="line">    e = <span class="number">0x10001</span></span><br><span class="line">    hint = <span class="built_in">pow</span>(<span class="number">514</span>*p - <span class="number">114</span>*q, n - p - q, n)</span><br><span class="line">    c = <span class="built_in">pow</span>(bytes_to_long(flag2),e,n)</span><br><span class="line">    <span class="built_in">print</span>(n)</span><br><span class="line">    <span class="built_in">print</span>(c)</span><br><span class="line">    <span class="built_in">print</span>(hint)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;==================================================================&quot;</span>)</span><br><span class="line">crypto1()</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;==================================================================&quot;</span>)</span><br><span class="line">crypto2()</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;==================================================================&quot;</span>)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p><code>crypto1()</code>函数产生了hint1和hint2。<br />
+注意到 <span class="math inline">\(x_1\)</span> 、<span
+class="math inline">\(x_2\)</span> 的值均不大，且若已知之，存在 <span
+class="math inline">\(gcd(x_2hint_1-x_1hint_2,n) == q\)</span><br />
+故可以爆破 <span class="math inline">\(x_1\)</span>、<span
+class="math inline">\(x_2\)</span> 的值来分解n，代码如下</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> itertools <span class="keyword">import</span> product</span><br><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> gmpy2 <span class="keyword">import</span> gcd</span><br><span class="line"></span><br><span class="line">n1=<span class="number">22717688782107854545906794591350792188387875110194655242509979558461609026689126410958538692592463401522362356541060680408895294904619968427918132940416290637253975078909557570052294696752131550575267463205417657973110741875406631276906289161580355184931848747568838733566664530108459688971836475286014292763710955427636743872406784553276648507633638199756885671818682171699361643329537983168846325911881270521846099654288267068313463192062464398908330416955834032336069159066966753411191707859856389748617142937092219735847967559900971260163275274768523333750643268027704717919118936153897897131289192675763387811013</span></span><br><span class="line">c1=<span class="number">1558252460972099536711225051588554580318072299427314767703923796142958329478177837363654442346261739741092040593629411679066822482727491716985291081418724270921015825854190667916784526990039016012998579465839964466544193668482366443421030413848501164167083542684099820843740534553329803216858946383113948594174252707382307857234879302568335916655231823986006116032577877784092927461435642266714835802321330508070457299737128702295341171291240636594559140008577327543379170891332505804603999880161479252367891021732181686834465274026830438997961540000598683834926675711282575578551072028019741577061900406050342688458</span></span><br><span class="line">h1=<span class="number">1785400845353189749482286289179481615877733122115008276512206537767234304427512467620804745559571677050458859357456035669730928744227986060695929592626894225264031471880622019995439974759232998264197998661247884396744524865844791270731263298403015254884799180837584748516933203206716038313235184449245118539673100116727208395667843647446216575</span></span><br><span class="line">h2=<span class="number">4768290722045376113291539697751845492297828894506607687019886528688947365279933318542249148120591713377136829810253611016690765615542919031118840184459133618654100026395299998797995448105138246862328974800269378627003305498938807053253155312899666823211626587642773325777459110096832523197515520831587264132693167407988204540224314122959560422620710487922928480844859739608566274988519288343603058586422940803845283584074835988958761787309635325070293038864953194</span></span><br><span class="line">e = <span class="number">65537</span></span><br><span class="line"></span><br><span class="line">h1 += <span class="number">0x114</span></span><br><span class="line">h2 += <span class="number">0x514</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> x1,x2 <span class="keyword">in</span> product(<span class="built_in">range</span>(<span class="number">2</span>**<span class="number">11</span>),repeat=<span class="number">2</span>):</span><br><span class="line">    <span class="keyword">if</span> gcd(x1*h2-x2*h1,n1) != <span class="number">1</span>:</span><br><span class="line">        q1 = gcd(x1*h2-x2*h1,n1)</span><br><span class="line">        <span class="keyword">if</span> q1==n1:</span><br><span class="line">            <span class="keyword">continue</span></span><br><span class="line">        p1 = n1 // q1</span><br><span class="line">        <span class="built_in">print</span>(p1,q1)</span><br><span class="line">        d1 = <span class="built_in">int</span>(<span class="built_in">pow</span>(e,-<span class="number">1</span>,(p1-<span class="number">1</span>)*(q1-<span class="number">1</span>)))</span><br><span class="line">        <span class="built_in">print</span>(long_to_bytes(<span class="built_in">int</span>(<span class="built_in">pow</span>(c1,d1,n1))))</span><br><span class="line"></span><br><span class="line"><span class="comment">#b&#x27;flag&#123;3e5ef8ee-c823-&#x27;</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p><code>crypto2</code>函数中，<span class="math inline">\(hint \equiv
+(514p - 114q)^{n-p-q} (mod n)\)</span><br />
+根据欧拉函数性质显然有 <span class="math inline">\((514p -
+114q)^{n-p-q+1} \equiv 1 (mod n)\)</span><br />
+进而，<span class="math inline">\(hint^{-1} \equiv 514p-114q (mod
+n)\)</span> 又由于 <span class="math inline">\(514p-114q \in
+(0,n)\)</span> 显然成立，故 <span
+class="math inline">\(hint^{-1}\)</span> 就是其值 将之与方程 <span
+class="math inline">\(n=pq\)</span>联立即可分解 <span
+class="math inline">\(n\)</span></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line">n2=<span class="number">23301270370141612330143249564959167999228952608712168779005620502267285156915999431165077980542964295999346892411751982792106531064749859998324403553828150458489912004321705559850482154675511319849888703426512353277473602134376825692345016437768245466469519768372263929100926977019866358427404868365153401534717296761071322172550730839392284228315564674287251955446739867333680875136131197078701261161473605292835590020412488259675818419919656303024005482784483529585855459082494687375253068135930378498456710949935330943648377764301078025458819757637193359534111017671688548495903880663891480831184157816239626750043</span></span><br><span class="line">c2=<span class="number">15154362247416833654874538866222303523564655502350143155042495279226934061117190464416559600114696199066594736043690897596945588720795487024161560079279635555757929743621207095425417248155771743585809715364339743613170559263801923828346132740396834092233104169833261587028257094105183142686581463164262368477202915768936279703753445661191665158883833492034478618553842878077641070131158366324287975018862012100924617592087104048825937530826657263770569129787378008786436051567330825371173569403780114839873592637937742553526185515371878434795312157292258810274451720036653523188513529132197471378811832009182418760448</span></span><br><span class="line">h = <span class="number">11574440934831556034723051057283542407332101344903394221647161034006584633702312851012881096546725183871843470306347168596589056621524160818188725619205790524384122606005486500598885295323033448984884291965912156280740846422438998271175595659299898234463882384160290793302007988149229773440712388994937267153031701764033364222504099057654985080539279285158866715715993693994617506028704652676563435164588466433989525485331944330416415023529660239650818869745957136675397467577768769303074091298570418559011249779965136728956550856369106784649405705908086276018004285287057080288901547467887280926775732587854691256048</span></span><br><span class="line">h = <span class="built_in">int</span>(<span class="built_in">pow</span>(h,-<span class="number">1</span>,n2))</span><br><span class="line">e = <span class="number">65537</span></span><br><span class="line"></span><br><span class="line">h2 = h^<span class="number">2</span> + <span class="number">4</span>*<span class="number">114</span>*<span class="number">514</span>*n2</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="built_in">pow</span>(h2,<span class="number">1</span>/<span class="number">2</span>))</span><br><span class="line"></span><br><span class="line">q2 = <span class="built_in">int</span>((<span class="built_in">pow</span>(h2,<span class="number">1</span>/<span class="number">2</span>) - h) / (<span class="number">114</span> * <span class="number">2</span>))</span><br><span class="line"></span><br><span class="line">p2 = n2 // q2</span><br><span class="line">d2 = <span class="built_in">int</span>(<span class="built_in">pow</span>(e,-<span class="number">1</span>,(p2-<span class="number">1</span>)*(q2-<span class="number">1</span>)))</span><br><span class="line"><span class="built_in">print</span>(long_to_bytes(<span class="built_in">int</span>(<span class="built_in">pow</span>(c2,d2,n2))))</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">wp</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/CTF-Writeups//" class="article-tag-list-link color3">CTF Writeups</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/a/">展开全文 >></a>
         </p>
       
 
@@ -565,6 +580,10 @@ MathJax.Hub.Queue(function() {
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color4">C++ Libraries</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">Flag</a>
               </li>
             
             <div class="clearfix"></div>

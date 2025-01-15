@@ -6,19 +6,20 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="https://crystaljiang232.github.io">
-  <title>C++20新秀之operator&lt;=&gt; | 玲珑</title>
+  <title>挖坑 | 玲珑</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="离散数学的联动？  前言 C++20中，“比较”这一司空见惯的操作迎来了新客： 头文件&lt;compare&gt;，以及三向比较操作符(three-way comparison operator)：&lt;&#x3D;&gt;。至今不解为何世多谓之“飞船操作符”(spaceship operator)  回顾：C++传统的比较操作符有六种：&lt;、&lt;&#x3D;、&gt;、&gt;&#x3D;、">
+  <meta name="description" content="挖个关于Modern C++全盘点的坑，欢迎催更  Modern C++ C++11  Lambda expression Smart pointers Rvalue references &amp; move sematics Variadic templates std::thread  C++17  Execution policies Structural">
 <meta property="og:type" content="article">
-<meta property="og:title" content="C++20新秀之operator&lt;&#x3D;&gt;">
-<meta property="og:url" content="https://crystaljiang232.github.io/cpp20-compare/index.html">
+<meta property="og:title" content="挖坑">
+<meta property="og:url" content="https://crystaljiang232.github.io/tasks/index.html">
 <meta property="og:site_name" content="玲珑">
-<meta property="og:description" content="离散数学的联动？  前言 C++20中，“比较”这一司空见惯的操作迎来了新客： 头文件&lt;compare&gt;，以及三向比较操作符(three-way comparison operator)：&lt;&#x3D;&gt;。至今不解为何世多谓之“飞船操作符”(spaceship operator)  回顾：C++传统的比较操作符有六种：&lt;、&lt;&#x3D;、&gt;、&gt;&#x3D;、">
+<meta property="og:description" content="挖个关于Modern C++全盘点的坑，欢迎催更  Modern C++ C++11  Lambda expression Smart pointers Rvalue references &amp; move sematics Variadic templates std::thread  C++17  Execution policies Structural">
 <meta property="og:locale" content="en_US">
-<meta property="article:published_time" content="2024-12-20T23:21:39.000Z">
-<meta property="article:modified_time" content="2024-12-23T01:29:16.349Z">
+<meta property="article:published_time" content="2025-01-15T03:43:58.000Z">
+<meta property="article:modified_time" content="2025-01-15T05:48:16.797Z">
 <meta property="article:author" content="Hibiscus">
 <meta property="article:tag" content="Modern C++">
+<meta property="article:tag" content="Flag">
 <meta name="twitter:card" content="summary">
   
     <link rel="alternative" href="/atom.xml" title="玲珑" type="application/atom+xml">
@@ -155,20 +156,20 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            <article id="post-cpp20-compare" class="article article-type-post " itemscope itemprop="blogPost">
+            <article id="post-tasks" class="article article-type-post " itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 class="article-title" itemprop="name">
-      C++20新秀之operator&lt;=&gt;
+      挖坑
     </h1>
   
 
         
-        <a href="/cpp20-compare/" class="archive-article-date">
-  	<time datetime="2024-12-20T23:21:39.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-21</time>
+        <a href="/tasks/" class="archive-article-date">
+  	<time datetime="2025-01-15T03:43:58.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-01-15</time>
 </a>
         
       </header>
@@ -176,125 +177,79 @@
     <div class="article-entry" itemprop="articleBody">
       
         <blockquote>
-<p>离散数学的联动？</p>
+<p>挖个关于Modern C++全盘点的坑，<del>欢迎催更</del></p>
 </blockquote>
-<h1 id="前言">前言</h1>
-<p>C++20中，“比较”这一司空见惯的操作迎来了新客：<br />
-头文件<code>&lt;compare&gt;</code>，以及三向比较操作符(three-way
-comparison
-operator)：<code>&lt;=&gt;</code>。<del>至今不解为何世多谓之“飞船操作符”(spaceship
-operator)</del></p>
-<blockquote>
-<p>回顾：C++传统的比较操作符有六种：<code>&lt;</code>、<code>&lt;=</code>、<code>&gt;</code>、<code>&gt;=</code>、<code>==</code>、<code>!=</code>。<br />
-且C++20前并没有“互偶”运算符的概念，默认下其并不会认为<code>a == b</code>的结果就一定是<code>!(a != b)</code>（事实上如此做是符合逻辑的）。<br />
-同时C++20前使用内置运算符进行比较时，必须进行两次比较才能确定两个值的大小关系（大于、小于或等于）：
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Widget</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Widget</span>(<span class="type">int</span> dt):data&#123;dt&#125;&#123;&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="comment">//便于演示，都用友元（考考你：友元和static区别在哪？）</span></span><br><span class="line">    <span class="keyword">friend</span> <span class="type">bool</span> <span class="keyword">operator</span>==(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> x.data == y.data;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">friend</span> <span class="type">bool</span> <span class="keyword">operator</span>!=(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> !(x == y); <span class="comment">//虽然效率不是最高，但多数时候不得不这么写代码，尤其是operator==涉及比较对象多而繁琐时</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">friend</span> <span class="type">bool</span> <span class="keyword">operator</span>&lt;(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> x.data &lt; y.data; <span class="comment">//烦不烦.sage</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">friend</span> <span class="type">bool</span> <span class="keyword">operator</span>&lt;=(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> x.data &lt;= y.data; <span class="comment">//烦不烦！</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">friend</span> <span class="type">bool</span> <span class="keyword">operator</span>&gt;(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> x.data &gt; y.data; <span class="comment">//还没完呢a.a</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">friend</span> <span class="type">bool</span> <span class="keyword">operator</span>&gt;=(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> x.data &gt;= y.data; <span class="comment">//...</span></span><br><span class="line">    &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> data;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">compare_obj</span><span class="params">(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(x &gt; y)</span><br><span class="line">    &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;x &gt; y&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span>(x &lt; y)</span><br><span class="line">    &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;x &lt; y&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;x == y&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-</blockquote>
-<h1 id="新比较系统简要介绍">新比较系统简要介绍</h1>
-<h2 id="新操作符">新操作符</h2>
-<p><code>operator&lt;=&gt;</code>是一个二元操作符，隐式调用的表达式为<code>a &lt;=&gt; b</code>；其结合优先级、顺序与其它比较运算符一致。<br />
-对于所有的可进行“传统”比较的基本类型(fundamental
-types)，C++20都为之内置了<code>operator&lt;=&gt;</code>。<br />
-调用<code>operator&lt;=&gt;</code>时均应包含<code>&lt;compare&gt;</code>头文件（亦可依C++20之modules，<code>import</code>之）。</p>
-<h2 id="新比较对象">新比较对象</h2>
-<p><code>&lt;compare&gt;</code>中定义了<code>std::strong_ordering</code>、<code>std::weak_ordering</code>和<code>std::partial_ordering</code>中的一种，对应离散数学中的强序、弱序和偏序关系。<br />
-<code>operator&lt;=&gt;</code>的期望返回类型应是上述三种比较结果的一种。</p>
-<blockquote>
-<p>偏序、弱序和强序关系来看，比较的严格程度递增。<br />
-偏序关系中，任意两个元素间可能无法比较；<br />
-弱序关系中，任意两个元素间必定可以比较，但比较结果的“相等”不蕴含可替换性（即，对于比较<code>a==b</code>成立时，<code>f(a)==f(b)</code>不一定成立）；<br />
-强序关系中，任意两个元素间必定可以比较，且比较结果的“相等”蕴含可替换性。</p>
-</blockquote>
-<p>对于基本类型，<code>operator&lt;=&gt;</code>的返回值只会是<code>std::strong_ordering</code>或<code>std::partial_ordering</code>中的一种（显然基本类型的“相等”都蕴含了可替换性）。<br />
-当且仅当对浮点类型(floating point
-types)进行比较时，返回<code>std::partial_ordering</code>（浮点集合中的NaN无法和任何浮点数比较）；其它比较时均返回<code>std::strong_ordering</code>。</p>
-<p>每个类型的内置<code>static constexpr</code>成员如下：</p>
-<ul>
-<li>偏序关系，<code>greater</code>、<code>less</code>、<code>equivalent</code>和<code>unordered</code>；<br />
-</li>
-<li>弱序关系，<code>greater</code>、<code>less</code>、<code>equivalent</code>；<br />
-</li>
-<li>强序关系，<code>greater</code>、<code>less</code>、<code>equal</code>。</li>
+<h1 id="modern-c">Modern C++</h1>
+<h2 id="c11">C++11</h2>
+<ul class="task-list">
+<li><label><input type="checkbox" />Lambda expression</label></li>
+<li><label><input type="checkbox" />Smart pointers</label></li>
+<li><label><input type="checkbox" checked="" />Rvalue references &amp;
+move sematics</label></li>
+<li><label><input type="checkbox" />Variadic templates</label></li>
+<li><label><input
+type="checkbox" /><code>std::thread</code></label></li>
 </ul>
-<p><strong>可以认为，三向比较操作符就是一次完成了大/等/小的比较，将比较结果存储为一个tag型的对象。</strong></p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">auto</span> c1 = <span class="number">1</span> &lt;=&gt; <span class="number">2</span>; <span class="comment">//c1是std::strong_ordering::less</span></span><br><span class="line"></span><br><span class="line">    <span class="type">int</span> a&#123;&#125;,b&#123;&#125;;</span><br><span class="line">    <span class="type">int</span> *pa&#123;&amp;a&#125;,*pb&#123;&amp;b&#125;;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">auto</span> c2 = pa &lt;=&gt; pb; <span class="comment">//c2的类型为std::strong_ordering</span></span><br><span class="line"></span><br><span class="line">    <span class="type">double</span> aa&#123;&#125;,bb&#123;&#125;;</span><br><span class="line">    <span class="keyword">auto</span> c3 = aa &lt;=&gt; bb; <span class="comment">//c3是std::partial_ordering::equivalent</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h1
-id="c20语言上对operator的支持">C++20语言上对operator&lt;=&gt;的支持</h1>
-<p>语言层面上，C++20让比较运算符又迈出了关键一步。</p>
-<h2 id="运算符的自动填充">运算符的自动“填充”</h2>
-<ul>
-<li>如果一个类定义了<code>operator&lt;=&gt;</code>且返回的是上述三种ordering中的一种，则编译器将自动为之生成<code>&lt;</code>、<code>&lt;=</code>、<code>&gt;</code>、<code>&gt;=</code>四种运算符（自动封装并调用<code>operator&lt;=&gt;</code>实现）。<br />
-</li>
-<li>如果一个类定义了<code>operator==</code>或<code>operator!=</code>且返回的是<code>bool</code>，则编译器将自动为之生成另一个（调用已定义的运算符，结果逻辑取反）。</li>
+<h2 id="c17">C++17</h2>
+<ul class="task-list">
+<li><label><input type="checkbox" />Execution policies</label></li>
+<li><label><input type="checkbox" />Structural binding</label></li>
 </ul>
-<blockquote>
-<p>上述自动生成的运算符均可以被覆写（自行定义即可），编译器优先使用user-defined的运算符。</p>
-</blockquote>
-<p>老规矩，附上实例： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Widget</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="keyword">friend</span> <span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="built_in">operator</span>&lt;=&gt;(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> x.data&lt;=&gt;y.data;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">friend</span> <span class="keyword">constexpr</span> <span class="type">bool</span> <span class="keyword">operator</span>==(<span class="type">const</span> Widget&amp;,<span class="type">const</span> Widget&amp;)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>; <span class="comment">//Debug</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> data;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Widget a&#123;<span class="number">2</span>&#125;,b&#123;<span class="number">3</span>&#125;;</span><br><span class="line">    std::cout &lt;&lt; (a &lt; b) &lt;&lt; std::endl; <span class="comment">//true</span></span><br><span class="line">    std::cout &lt;&lt; (a &lt;= b) &lt;&lt; std::endl; <span class="comment">//false</span></span><br><span class="line">    std::cout &lt;&lt; (a != b) &lt;&lt; std::endl; <span class="comment">//true</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure></p>
-<h2
-id="将满足条件的同类比较运算符声明为-default">将满足条件的同类比较运算符声明为
-=default</h2>
-<p>同时C++20中支持对满足 <em>一定条件</em>
-的类的比较函数通过<code>= default</code>声明，指示编译器自动生成之。</p>
-<blockquote>
-<p><em>一定条件</em>
-指该类的所有数据成员都应该可以被<code>operator&lt;=&gt;</code>和同类对象比较（三向/相等）。</p>
-</blockquote>
-<ul>
-<li>对于自动生成的三向运算符，类<code>Ty</code>应声明为<code>auto operator&lt;=&gt;(const Ty&amp;) const = default;</code>或<code>friend auto operator&lt;=&gt;(const Ty&amp;,const Ty&amp;) = default;</code>。<br />
-此时<code>auto</code>的类型由编译器推导，取所有数据成员比较返回comparison
-object中对应<strong>最弱</strong>的比较结果；返回值类型若手动指定，则不能强于该最弱的比较类型。<br />
-</li>
-<li>对于自动生成的相等运算符，类<code>Ty</code>应声明为<code>bool operator==(const Ty&amp;) const = default;</code>或<code>friend bool operator==(const Ty&amp;,const Ty&amp;) = default;</code>。</li>
+<h2 id="c20">C++20</h2>
+<ul class="task-list">
+<li><label><input type="checkbox" />Ranges library</label></li>
+<li><label><input type="checkbox" />Concepts</label></li>
+<li><label><input type="checkbox" />Modules</label></li>
+<li><label><input type="checkbox" />Coroutines</label></li>
+<li><label><input type="checkbox" checked="" />Three-way
+comparison</label></li>
+<li><label><input type="checkbox"
+checked="" /><code>std::format</code></label></li>
 </ul>
-<blockquote>
-<p>可以为默认生成的运算符添加<code>constexpr</code>和<code>noexcept</code>修饰符，当然前者要求下辖比较运算符都是<code>constexpr</code>。</p>
-</blockquote>
-<blockquote>
-<p>“自动”比较内涵：按变量声明顺序逐个比较，若比较结果不为相等(equivalent或equal)或全部比较结束（直至最后一个仍为相等），则返回之。</p>
-</blockquote>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">stu</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">stu</span>(std::string_view sv,<span class="type">int</span> sc):<span class="built_in">id</span>(sv),<span class="built_in">score</span>(sc)&#123;&#125;</span><br><span class="line">    <span class="keyword">auto</span> <span class="built_in">operator</span>&lt;=&gt;(<span class="type">const</span> nihao&amp;,<span class="type">const</span> nihao&amp;) = <span class="keyword">default</span>; <span class="comment">//auto可以被指定为任意一种ordering（不能强于数据成员中最弱的比较类型）</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    std::string id;</span><br><span class="line">    <span class="type">int</span> score;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>C++20中，对于既往有同类比较运算符的类（如<code>std::string</code>支持和同类比较，行为类似C中的<code>strcmp</code>），均已经添加了<code>operator&lt;=&gt;</code>。<br />
-如此来看，其实三向比较的思想也并不新鲜——<code>strcmp</code>就是一种三向比较（返回值大于0/0/小于0），最初的动机即为对于比较时间开销可能较大的object，一次完成对大/等/小的比较并存储起来。<br />
-C++20的comparison
-object相比之的进步在于大幅增强了语义约束，使程序设计的语义更为清晰，可读性和维护性更佳，同时统一并专用化了比较接口（<del>现代C++哲学唠嗑时间</del>）</p>
-</blockquote>
-<h2 id="特例">特例</h2>
-<p>特别地，如果一个类的<code>operator&lt;=&gt;</code>被声明为<code>= default;</code>则该类也会自动生成<code>operator==</code>。</p>
-<h1 id="探究比较对象的性质与应用">探究比较对象的性质与应用</h1>
-<p>为了支持和以往的比较类型有类似的interface，这几种关系都支持了和0做比较（必须是字面量的零，否则报编译错误/UB）。<br />
-结合<code>if</code>的clause-initialization，可以极大地提升程序的可维护性，使执行逻辑更加简洁：
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(<span class="type">int</span> arg)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(<span class="keyword">auto</span> cp = arg &lt;=&gt; <span class="number">335</span>; cp &gt; <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        std::clog &lt;&lt; <span class="string">&quot;Overheat!&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure></p>
-<blockquote>
-<p>MSVC中利用C++20的新关键字<code>consteval</code>与一些其它有趣的既有语法特性实现了对之的约束，赏析以下代码：
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">Literal_zero</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">Literal_zero_is_expected</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">consteval</span> <span class="title">Literal_zero</span><span class="params">(<span class="type">int</span> _val)</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(_val != <span class="number">0</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="built_in">Literal_zero_is_expected</span>();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">bool</span> <span class="keyword">operator</span>&gt;(std::strong_ordering odr,Literal_zero) <span class="keyword">noexcept</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> odr == std::strong_ordering::greater;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-</blockquote>
-<blockquote>
-<p>其设置了两道哨兵：</p>
-<ul>
-<li>其一，如果传入的不是一个字面量，则被<code>consteval</code>的语义约束（<code>consteval</code>函数必须在编译期被调用，但显然传入这个参数不满足约束）；<br />
-</li>
-<li>其二，若传入的字面量不为零，则试图调用<code>Literal_zero_is_expected()</code>函数，但该函数既不是<code>constexpr</code>也不是<code>consteval</code>，无法在编译期被调用，因而报错。</li>
+<h2 id="c23">C++23</h2>
+<ul class="task-list">
+<li><label><input type="checkbox" />sum-types &amp;
+<code>std::expected</code></label></li>
+<li><label><input type="checkbox"
+checked="" /><code>std::print</code></label></li>
 </ul>
-</blockquote>
-<p>另一个性质和离散数学有关：由于偏序-弱序-强序对这种二元关系的约束严格程度递增，因而从语义的角度出发，应当允许更强的比较关系向更弱的比较关系转换，并相应地阻止反方向的转换。<br />
-C++中同样如此：如，<code>std::strong_ordering</code>拥有<code>operator std::weak_ordering</code>和<code>operator std::partial_ordering</code>。</p>
-<p>同时关于和零比较/拓展运算符的返回结果的一些补充：<br />
-对于返回结果<code>cp</code>，</p>
-<ul>
-<li>当且仅当返回greater（无论类型，下同），<code>cp &gt; 0</code>成立；<br />
-</li>
-<li>当且仅当返回less，<code>cp &lt; 0</code>成立；<br />
-</li>
-<li>当且仅当返回equal/equivalent，<code>cp == 0</code>成立；<br />
-</li>
-<li>如果返回值是<code>std::partial_ordering::unordered</code>，则<strong>有且仅有</strong><code>cp != 0</code>成立，其余均不成立。<br />
-</li>
-<li>对于其它的返回值，<code>&gt;=</code>就是<code>&lt;</code>的结果取反，以此类推。</li>
+<h2 id="杂项">杂项</h2>
+<ul class="task-list">
+<li><label><input type="checkbox" />Compile-time
+computation</label></li>
+<li><label><input type="checkbox" />Tag-design</label></li>
+<li><label><input
+type="checkbox" />Specifier(<code>inline</code>,<code>constexpr</code>,<code>noexcept</code>)</label></li>
+<li><label><input type="checkbox" />SFINAE</label></li>
+<li><label><input type="checkbox" />RAII</label></li>
+<li><label><input type="checkbox" />Type casting</label></li>
+<li><label><input type="checkbox" />STL Review</label></li>
+<li><label><input type="checkbox"
+checked="" /><code>return</code></label></li>
 </ul>
-<h1 id="结语">结语</h1>
-<p>比较运算符的进步明显源于人们在编程实践中的需求，而其又反作用于人们的编程实践中，消除了编写语义重复的运算符重载这一场景，亦为简单类的比较提供了语义更为清晰、简洁的方法(<code>= default;</code>依然还是如此优雅)。</p>
+<h1 id="crypto">Crypto</h1>
+<h2 id="asymmetric-cipher">Asymmetric Cipher</h2>
+<ul class="task-list">
+<li><label><input type="checkbox" />RSA</label></li>
+<li><label><input type="checkbox" checked="" />Discrete Log</label></li>
+<li><label><input type="checkbox" />ECC</label></li>
+<li><label><input type="checkbox" />Digital Signature</label></li>
+</ul>
+<h2 id="symmetric-cipher">Symmetric Cipher</h2>
+<ul class="task-list">
+<li><label><input type="checkbox" />Block Cipher: Chaining</label></li>
+<li><label><input type="checkbox" />Block Cipher:
+Encryption</label></li>
+<li><label><input type="checkbox" />Block Cipher: Padding</label></li>
+<li><label><input type="checkbox" />Stream Cipher &amp;
+Psuedorandom</label></li>
+<li><label><input type="checkbox" />Hash Functions</label></li>
+</ul>
+<h2 id="mathematics">Mathematics</h2>
+<ul class="task-list">
+<li><label><input type="checkbox" />Lattices</label></li>
+<li><label><input type="checkbox" />Coppersmith</label></li>
+</ul>
 
       
 
@@ -310,6 +265,10 @@ C++中同样如此：如，<code>std::strong_ordering</code>拥有<code>operator
         		<li class="article-tag-list-item">
         			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
         		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">Flag</a>
+        		</li>
       		
 		</ul>
 	</div>
@@ -320,7 +279,7 @@ C++中同样如此：如，<code>std::strong_ordering</code>拥有<code>operator
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
+        			<a href="/categories/闲笔//" class="article-tag-list-link color3">闲笔</a>
         		</li>
       		
 		</ul>
@@ -375,7 +334,7 @@ C++中同样如此：如，<code>std::strong_ordering</code>拥有<code>operator
     <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
     <p>扫一扫，分享到微信</p>
     <div class="wx-qrcode">
-      <img src="//pan.baidu.com/share/qrcode?url=https://crystaljiang232.github.io/cpp20-compare/" alt="微信分享二维码">
+      <img src="//pan.baidu.com/share/qrcode?url=https://crystaljiang232.github.io/tasks/" alt="微信分享二维码">
     </div>
 </div>
 
@@ -391,18 +350,9 @@ C++中同样如此：如，<code>std::strong_ordering</code>拥有<code>operator
   
 <nav id="article-nav">
   
-    <a href="/lattices-past/" id="article-nav-newer" class="article-nav-link-wrap">
-      <i class="icon-circle-left"></i>
-      <div class="article-nav-title">
-        
-          lattices_past
-        
-      </div>
-    </a>
   
-  
-    <a href="/550/" id="article-nav-older" class="article-nav-link-wrap">
-      <div class="article-nav-title">550</div>
+    <a href="/lattice/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">格</div>
       <i class="icon-circle-right"></i>
     </a>
   
@@ -429,8 +379,7 @@ C++中同样如此：如，<code>std::strong_ordering</code>拥有<code>operator
                 </span>
                 <span class="tooltip-content">
                     <div class="toc-article">
-                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%96%B0%E6%AF%94%E8%BE%83%E7%B3%BB%E7%BB%9F%E7%AE%80%E8%A6%81%E4%BB%8B%E7%BB%8D"><span class="toc-number">2.</span> <span class="toc-text">新比较系统简要介绍</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B0%E6%93%8D%E4%BD%9C%E7%AC%A6"><span class="toc-number">2.1.</span> <span class="toc-text">新操作符</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B0%E6%AF%94%E8%BE%83%E5%AF%B9%E8%B1%A1"><span class="toc-number">2.2.</span> <span class="toc-text">新比较对象</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#c20%E8%AF%AD%E8%A8%80%E4%B8%8A%E5%AF%B9operator%E7%9A%84%E6%94%AF%E6%8C%81"><span class="toc-number">3.</span> <span class="toc-text">C++20语言上对operator&lt;&#x3D;&gt;的支持</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%90%E7%AE%97%E7%AC%A6%E7%9A%84%E8%87%AA%E5%8A%A8%E5%A1%AB%E5%85%85"><span class="toc-number">3.1.</span> <span class="toc-text">运算符的自动“填充”</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%86%E6%BB%A1%E8%B6%B3%E6%9D%A1%E4%BB%B6%E7%9A%84%E5%90%8C%E7%B1%BB%E6%AF%94%E8%BE%83%E8%BF%90%E7%AE%97%E7%AC%A6%E5%A3%B0%E6%98%8E%E4%B8%BA-default"><span class="toc-number">3.2.</span> <span class="toc-text">将满足条件的同类比较运算符声明为
-&#x3D;default</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%89%B9%E4%BE%8B"><span class="toc-number">3.3.</span> <span class="toc-text">特例</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%8E%A2%E7%A9%B6%E6%AF%94%E8%BE%83%E5%AF%B9%E8%B1%A1%E7%9A%84%E6%80%A7%E8%B4%A8%E4%B8%8E%E5%BA%94%E7%94%A8"><span class="toc-number">4.</span> <span class="toc-text">探究比较对象的性质与应用</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%BB%93%E8%AF%AD"><span class="toc-number">5.</span> <span class="toc-text">结语</span></a></li></ol>
+                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#modern-c"><span class="toc-number">1.</span> <span class="toc-text">Modern C++</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#c11"><span class="toc-number">1.1.</span> <span class="toc-text">C++11</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c17"><span class="toc-number">1.2.</span> <span class="toc-text">C++17</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c20"><span class="toc-number">1.3.</span> <span class="toc-text">C++20</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c23"><span class="toc-number">1.4.</span> <span class="toc-text">C++23</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9D%82%E9%A1%B9"><span class="toc-number">1.5.</span> <span class="toc-text">杂项</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#crypto"><span class="toc-number">2.</span> <span class="toc-text">Crypto</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#asymmetric-cipher"><span class="toc-number">2.1.</span> <span class="toc-text">Asymmetric Cipher</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#symmetric-cipher"><span class="toc-number">2.2.</span> <span class="toc-text">Symmetric Cipher</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#mathematics"><span class="toc-number">2.3.</span> <span class="toc-text">Mathematics</span></a></li></ol></li></ol>
                     </div>
                 </span>
             </div>
@@ -624,6 +573,10 @@ MathJax.Hub.Queue(function() {
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color4">C++ Libraries</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">Flag</a>
               </li>
             
             <div class="clearfix"></div>

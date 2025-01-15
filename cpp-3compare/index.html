@@ -6,21 +6,19 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="https://crystaljiang232.github.io">
-  <title>I/O新生的序幕——std::print | 玲珑</title>
+  <title>C++20新秀：operator&lt;=&gt; | 玲珑</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="函数签名 123456789&#x2F;&#x2F;namepsace stdtemplate&lt;class ...Args&gt;void print(std::format_string fmt,Args&amp;&amp;... args);template&lt;class ...Args&gt;void print(FILE* const stream,std::format_string fmt,A">
+  <meta name="description" content="离散数学的联动？  前言 C++20中，“比较”这一司空见惯的操作迎来了新客： 头文件&lt;compare&gt;，以及三向比较操作符(three-way comparison operator)：&lt;&#x3D;&gt;。至今不解为何世多谓之“飞船操作符”(spaceship operator)  回顾：C++传统的比较操作符有六种：&lt;、&lt;&#x3D;、&gt;、&gt;&#x3D;、">
 <meta property="og:type" content="article">
-<meta property="og:title" content="I&#x2F;O新生的序幕——std::print">
-<meta property="og:url" content="https://crystaljiang232.github.io/std-print/index.html">
+<meta property="og:title" content="C++20新秀：operator&lt;&#x3D;&gt;">
+<meta property="og:url" content="https://crystaljiang232.github.io/cpp-3compare/index.html">
 <meta property="og:site_name" content="玲珑">
-<meta property="og:description" content="函数签名 123456789&#x2F;&#x2F;namepsace stdtemplate&lt;class ...Args&gt;void print(std::format_string fmt,Args&amp;&amp;... args);template&lt;class ...Args&gt;void print(FILE* const stream,std::format_string fmt,A">
+<meta property="og:description" content="离散数学的联动？  前言 C++20中，“比较”这一司空见惯的操作迎来了新客： 头文件&lt;compare&gt;，以及三向比较操作符(three-way comparison operator)：&lt;&#x3D;&gt;。至今不解为何世多谓之“飞船操作符”(spaceship operator)  回顾：C++传统的比较操作符有六种：&lt;、&lt;&#x3D;、&gt;、&gt;&#x3D;、">
 <meta property="og:locale" content="en_US">
-<meta property="article:published_time" content="2024-12-10T06:01:08.000Z">
-<meta property="article:modified_time" content="2024-12-13T09:26:03.982Z">
+<meta property="article:published_time" content="2024-12-20T23:21:39.000Z">
+<meta property="article:modified_time" content="2025-01-15T15:32:04.983Z">
 <meta property="article:author" content="Hibiscus">
 <meta property="article:tag" content="Modern C++">
-<meta property="article:tag" content="C++23">
-<meta property="article:tag" content="C++ Libraries">
 <meta name="twitter:card" content="summary">
   
     <link rel="alternative" href="/atom.xml" title="玲珑" type="application/atom+xml">
@@ -157,119 +155,146 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            <article id="post-std-print" class="article article-type-post " itemscope itemprop="blogPost">
+            <article id="post-cpp-3compare" class="article article-type-post " itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 class="article-title" itemprop="name">
-      I/O新生的序幕——std::print
+      C++20新秀：operator&lt;=&gt;
     </h1>
   
 
         
-        <a href="/std-print/" class="archive-article-date">
-  	<time datetime="2024-12-10T06:01:08.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-10</time>
+        <a href="/cpp-3compare/" class="archive-article-date">
+  	<time datetime="2024-12-20T23:21:39.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-21</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h2 id="函数签名">函数签名</h2>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//namepsace std</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Args&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(std::format_string fmt,Args&amp;&amp;... args)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Args&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(FILE* <span class="type">const</span> stream,std::format_string fmt,Args&amp;&amp;... args)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Args&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(std::ostream&amp; stream,std::format_string fmt,Args&amp;&amp;... args)</span></span>;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>其中前两个在<code>&lt;print&gt;</code>中被定义，第三个在<code>&lt;ostream&gt;</code>中被定义。</p>
+        <blockquote>
+<p>离散数学的联动？</p>
 </blockquote>
-<p>std::print相当于补全了现代C++在输出内容上的一大缺憾。
-C/C++传统的输入/输出至今已经历了三代：以<code>&lt;stdio.h&gt;</code>为代表的传统C样式I/O、以<code>&lt;iostream&gt;</code>为代表的C++98时代的I/O及如今<code>&lt;print&gt;</code>打头的Modern
-C++ I/O。</p>
-<ol type="1">
-<li><code>&lt;stdio.h&gt;</code>作为经典的输入/输出手段永不过时，其两大特性——高效、便捷堪称遥遥领先。<code>printf</code>提供了高可读性的format方案——<code>%-2d</code>就是输出整型左对齐2格，<code>%.3f</code>就是输出浮点加三位小数，即写即用。其一大缺点是作为C时代的产物，不能支持自定义类型的输出（相当于无法实现一个统一的interface，必须另起炉灶）；另一个缺点是C遗留的va_args是一个不成熟的变参数解决方案（比如没有对format-specifier和参数数量统一的校验，给极大量的segament
-fault和奇奇怪怪的bug留下了空间），且其并不能完美地传递C++的类/object。</li>
-<li><code>&lt;iostream&gt;</code>则代表着一代经典C++。其将C++区别于C的特性发挥到了极致——通过继承树提供了I/O的统一接口，同时令用户可以通过重载<code>operator&lt;&lt;</code>来便捷地自定义类型（这点甚至远胜于<code>print</code>的<code>formatter</code>特化），在OOP上则让I/O流成为对象且支持调用各种方法来对之进行操作。但其冗余过多的副作用就是输出效率远不如<code>&lt;stdio.h&gt;</code>——频繁的函数调用（每一个<code>&lt;&lt;</code>都算调用一次函数，需要不断地将<code>std::ostream&amp;</code>操作和返回，<code>inline</code>亦很难对之有很大改观）；同时格式化输出的便捷性和可读性之差一直是其痛点之一。比较一下三代C/C++格式化输出一个简单的信息：
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">output</span><span class="params">(<span class="type">double</span> temp,<span class="type">int</span> speed)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">//&lt;stdio.h&gt;</span></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Temperature: %.1f ℃. Speed: %d km/h.\n&quot;</span>,temp,speed); </span><br><span class="line"></span><br><span class="line">    <span class="comment">//&lt;iostream&gt;</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Temperature: &quot;</span> &lt;&lt; std::<span class="built_in">setpercision</span>(<span class="number">1</span>) &lt;&lt; temp &lt;&lt; <span class="string">&quot; ℃. Speed: &quot;</span> &lt;&lt; speed &lt;&lt; <span class="string">&quot;km/h.&quot;</span> &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//&lt;print&gt;</span></span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;Temperature: &#123;:.1f&#125; ℃. Speed: &#123;&#125; km/h.&quot;</span>,temp,speed);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
-<li><code>&lt;print&gt;</code>则是C++23加入的新成员，其基本继承了既有的较成功库<code>&lt;fmtlib&gt;</code>的实践。<br />
-trivial-type的格式化语法上和python的format几乎无二，相当于保留了<code>printf</code>的高可读性和高效率的同时，融合了Modern
-C++的template元素，并由此支持自定义类型格式化和类型推导。</li>
-</ol>
-<p>函数签名显然非常的straightforward，第一个重载为基础，后两个只是指定了输出流（可以传<code>FILE*</code>或<code>std::ostream&amp;</code>）。</p>
-<h2 id="stdformatter的特化">std::formatter的特化</h2>
-<p>客观来说，<code>&lt;format&gt;</code>和<code>&lt;print&gt;</code>的自定义实际上门槛相较于<code>&lt;iostream&gt;</code>的重载<code>operator&lt;&lt;</code>还是有些高。<br />
-自定义类型需要通过特化<code>std::formatter</code>来实现自定义输出。<br />
-但其优点在于开发复用上限极高，可以将任意的自定义类的format自由度提至与trivial-types相并论。</p>
+<h1 id="前言">前言</h1>
+<p>C++20中，“比较”这一司空见惯的操作迎来了新客：<br />
+头文件<code>&lt;compare&gt;</code>，以及三向比较操作符(three-way
+comparison
+operator)：<code>&lt;=&gt;</code>。<del>至今不解为何世多谓之“飞船操作符”(spaceship
+operator)</del></p>
 <blockquote>
-<p>关于std::formatter的一切，可以移步天书般的<a
-target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/utility/format/formatter">cppreference</a>。</p>
+<p>回顾：C++传统的比较操作符有六种：<code>&lt;</code>、<code>&lt;=</code>、<code>&gt;</code>、<code>&gt;=</code>、<code>==</code>、<code>!=</code>。<br />
+且C++20前并没有“互偶”运算符的概念，默认下其并不会认为<code>a == b</code>的结果就一定是<code>!(a != b)</code>（事实上如此做是符合逻辑的）。<br />
+同时C++20前使用内置运算符进行比较时，必须进行两次比较才能确定两个值的大小关系（大于、小于或等于）：
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Widget</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Widget</span>(<span class="type">int</span> dt):data&#123;dt&#125;&#123;&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="comment">//便于演示，都用友元（考考你：友元和static区别在哪？）</span></span><br><span class="line">    <span class="keyword">friend</span> <span class="type">bool</span> <span class="keyword">operator</span>==(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> x.data == y.data;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">friend</span> <span class="type">bool</span> <span class="keyword">operator</span>!=(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> !(x == y); <span class="comment">//虽然效率不是最高，但多数时候不得不这么写代码，尤其是operator==涉及比较对象多而繁琐时</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">friend</span> <span class="type">bool</span> <span class="keyword">operator</span>&lt;(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> x.data &lt; y.data; <span class="comment">//烦不烦.sage</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">friend</span> <span class="type">bool</span> <span class="keyword">operator</span>&lt;=(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> x.data &lt;= y.data; <span class="comment">//烦不烦！</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">friend</span> <span class="type">bool</span> <span class="keyword">operator</span>&gt;(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> x.data &gt; y.data; <span class="comment">//还没完呢a.a</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">friend</span> <span class="type">bool</span> <span class="keyword">operator</span>&gt;=(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> x.data &gt;= y.data; <span class="comment">//...</span></span><br><span class="line">    &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> data;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">compare_obj</span><span class="params">(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(x &gt; y)</span><br><span class="line">    &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;x &gt; y&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span>(x &lt; y)</span><br><span class="line">    &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;x &lt; y&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;x == y&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 </blockquote>
-<p>std::formatter特化用法精选：先从下面的代码出发，自行体会。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">CR</span></span><br><span class="line">&#123; </span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">CR</span>(<span class="type">int</span> v):<span class="built_in">speed</span>(v)&#123;&#125;</span><br><span class="line">    <span class="keyword">friend</span> <span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;CR&gt;;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> speed;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;CR&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="title">parse</span><span class="params">(std::format_parse_context&amp; fpc)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> fpc.<span class="built_in">begin</span>();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">auto</span> <span class="title">format</span><span class="params">(<span class="type">const</span> CR&amp; c,std::format_context&amp; fc)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> std::format_to(fc.<span class="built_in">out</span>(),<span class="string">&quot;Train operating at &#123;&#125; km/h&quot;</span>,c.speed);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h1 id="新比较系统简要介绍">新比较系统简要介绍</h1>
+<h2 id="新操作符">新操作符</h2>
+<p><code>operator&lt;=&gt;</code>是一个二元操作符，隐式调用的表达式为<code>a &lt;=&gt; b</code>；其结合优先级、顺序与其它比较运算符一致。<br />
+对于所有的可进行“传统”比较的基本类型(fundamental
+types)，C++20都为之内置了<code>operator&lt;=&gt;</code>。<br />
+调用<code>operator&lt;=&gt;</code>时均应包含<code>&lt;compare&gt;</code>头文件（亦可依C++20之modules，<code>import</code>之）。</p>
+<h2 id="新比较对象">新比较对象</h2>
+<p><code>&lt;compare&gt;</code>中定义了<code>std::strong_ordering</code>、<code>std::weak_ordering</code>和<code>std::partial_ordering</code>中的一种，对应离散数学中的强序、弱序和偏序关系。<br />
+<code>operator&lt;=&gt;</code>的期望返回类型应是上述三种比较结果的一种。</p>
 <blockquote>
-<p>回顾一下：今我们希望将一个对象转化为字符串输出，该任务可以分为两步：</p>
-<p>解析格式串，将format的“需求”存储起来；</p>
-<p>根据这些“需求”，读取对象信息并将之格式化。</p>
-<p>而std::formatter的<code>parse</code>和<code>format</code>函数就分别负责执行这两个任务。</p>
+<p>偏序、弱序和强序关系来看，比较的严格程度递增。<br />
+偏序关系中，任意两个元素间可能无法比较；<br />
+弱序关系中，任意两个元素间必定可以比较，但比较结果的“相等”不蕴含可替换性（即，对于比较<code>a==b</code>成立时，<code>f(a)==f(b)</code>不一定成立）；<br />
+强序关系中，任意两个元素间必定可以比较，且比较结果的“相等”蕴含可替换性。</p>
 </blockquote>
+<p>对于基本类型，<code>operator&lt;=&gt;</code>的返回值只会是<code>std::strong_ordering</code>或<code>std::partial_ordering</code>中的一种（显然基本类型的“相等”都蕴含了可替换性）。<br />
+当且仅当对浮点类型(floating point
+types)进行比较时，返回<code>std::partial_ordering</code>（浮点集合中的NaN无法和任何浮点数比较）；其它比较时均返回<code>std::strong_ordering</code>。</p>
+<p>每个类型的内置<code>static constexpr</code>成员如下：</p>
 <ul>
-<li>第一个函数必须具有签名<code>constexpr auto parse(std::format_parse_context&amp;);</code>（auto类型由<code>decltype(std::format_parse_context::begin())</code>确定）。<br />
-该函数必须声明为constexpr，否则编译不能通过（对于直接的调用std::format/print，C++23要求必须在编译期处理之，同时引出的就是目前格式串必须是string-constant；动态格式串另有他法）。<br />
-该函数接收的<code>std::format_parse_context&amp;</code>实际上是表征format-specifier区间的一个view，调用<code>fpc.begin()</code>会返回一个指向当前处理域':'的下一个字符的迭代器。</li>
+<li>偏序关系，<code>greater</code>、<code>less</code>、<code>equivalent</code>和<code>unordered</code>；<br />
+</li>
+<li>弱序关系，<code>greater</code>、<code>less</code>、<code>equivalent</code>；<br />
+</li>
+<li>强序关系，<code>greater</code>、<code>less</code>、<code>equal</code>。</li>
+</ul>
+<p><strong>可以认为，三向比较操作符就是一次完成了大/等/小的比较，将比较结果存储为一个tag型的对象。</strong></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">auto</span> c1 = <span class="number">1</span> &lt;=&gt; <span class="number">2</span>; <span class="comment">//c1是std::strong_ordering::less</span></span><br><span class="line"></span><br><span class="line">    <span class="type">int</span> a&#123;&#125;,b&#123;&#125;;</span><br><span class="line">    <span class="type">int</span> *pa&#123;&amp;a&#125;,*pb&#123;&amp;b&#125;;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">auto</span> c2 = pa &lt;=&gt; pb; <span class="comment">//c2的类型为std::strong_ordering</span></span><br><span class="line"></span><br><span class="line">    <span class="type">double</span> aa&#123;&#125;,bb&#123;&#125;;</span><br><span class="line">    <span class="keyword">auto</span> c3 = aa &lt;=&gt; bb; <span class="comment">//c3是std::partial_ordering::equivalent</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1
+id="c20语言上对operator的支持">C++20语言上对operator&lt;=&gt;的支持</h1>
+<p>语言层面上，C++20让比较运算符又迈出了关键一步。</p>
+<h2 id="运算符的自动填充">运算符的自动“填充”</h2>
+<ul>
+<li>如果一个类定义了<code>operator&lt;=&gt;</code>且返回的是上述三种ordering中的一种，则编译器将自动为之生成<code>&lt;</code>、<code>&lt;=</code>、<code>&gt;</code>、<code>&gt;=</code>四种运算符（自动封装并调用<code>operator&lt;=&gt;</code>实现）。<br />
+</li>
+<li>如果一个类定义了<code>operator==</code>或<code>operator!=</code>且返回的是<code>bool</code>，则编译器将自动为之生成另一个（调用已定义的运算符，结果逻辑取反）。</li>
 </ul>
 <blockquote>
-<p>插播一下“处理域”的定义：每个框或可为全空<code>&#123;&#125;</code>，或应形如<code>&#123;A:B&#125;</code>，<strong><em>其中A为一部分，':B'为一部分，可以理解为两侧分别都是可选的，用法见下：</em></strong></p>
-<p>A是index，<strong>若不指定A，则该格式字符串采用的是“自动索引”(auto-indexing)</strong>，即每遇到一个框就把下一个参数丢进去；</p>
-<p>否则为手动索引（manual-indexing），指定每个框所用参数的index（可以复用），如<code>std::println("&#123;0&#125; &#123;1&#125; &#123;0&#125;",1,2);</code>输出<code>1 2 1</code>。</p>
+<p>上述自动生成的运算符均可以被覆写（自行定义即可），编译器优先使用user-defined的运算符。</p>
+</blockquote>
+<p>老规矩，附上实例： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Widget</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="keyword">friend</span> <span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="built_in">operator</span>&lt;=&gt;(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> x.data&lt;=&gt;y.data;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">friend</span> <span class="keyword">constexpr</span> <span class="type">bool</span> <span class="keyword">operator</span>==(<span class="type">const</span> Widget&amp;,<span class="type">const</span> Widget&amp;)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>; <span class="comment">//Debug</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> data;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Widget a&#123;<span class="number">2</span>&#125;,b&#123;<span class="number">3</span>&#125;;</span><br><span class="line">    std::cout &lt;&lt; (a &lt; b) &lt;&lt; std::endl; <span class="comment">//true</span></span><br><span class="line">    std::cout &lt;&lt; (a &lt;= b) &lt;&lt; std::endl; <span class="comment">//false</span></span><br><span class="line">    std::cout &lt;&lt; (a != b) &lt;&lt; std::endl; <span class="comment">//true</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure></p>
+<h2
+id="将满足条件的同类比较运算符声明为-default">将满足条件的同类比较运算符声明为
+=default</h2>
+<p>同时C++20中支持对满足 <em>一定条件</em>
+的类的比较函数通过<code>= default</code>声明，指示编译器自动生成之。</p>
 <blockquote>
-<p><strong>不允许使用混合索引（即要么全自动，要么全手动）。</strong></p>
-<p><strong>索引不允许越界，比如<code>std::println("&#123;&#125; &#123;&#125;",1)</code>不能通过编译。</strong></p>
+<p><em>一定条件</em>
+指该类的所有数据成员都应该可以被<code>operator&lt;=&gt;</code>和同类对象比较（三向/相等）。</p>
 </blockquote>
-<p>:B是format-specifier，形式和python/C的类似，每个框都可以自定义，不再赘述。</p>
-<p>应用实例：将一个浮点数输出两次，精度分别为4位、2位：<code>std::println("&#123;0:.4f&#125; -&gt; &#123;0:.2f&#125;",some_float);</code>。</p>
-</blockquote>
-<p><strong>简而言之，该函数的任务是通过移动该迭代器来收集format的需求，并将之存储于这个struct的成员变量中，以供后续处理。</strong><br />
-该函数的返回值必须同样是一个迭代器，且该迭代器<strong>必须指向'}'（也就是format-specifier的末尾的下一个字符），否则会抛出std::format_error！</strong></p>
 <ul>
-<li>第二个函数必须具有签名<code>auto format(const Ty&amp;,std::format_context&amp;) const;</code>（auto类型由<code>decltype(std::format_context::out())</code>确定）。<br />
-该函数必须被声明为常成员函数（后缀<code>const</code>不要漏）；对于trivial-types，const
-Ty&amp;可以被改为Ty（更改原则和其它函数的const
-int&amp;/int一类相同）。<br />
-该函数接收的<code>std::format_context&amp;</code>是一个缓存输出格式串的字符串，调用<code>fc.out()</code>会返回一个<em>back
-insert iterator</em>。</li>
+<li>对于自动生成的三向运算符，类<code>Ty</code>应声明为<code>auto operator&lt;=&gt;(const Ty&amp;) const = default;</code>或<code>friend auto operator&lt;=&gt;(const Ty&amp;,const Ty&amp;) = default;</code>。<br />
+此时<code>auto</code>的类型由编译器推导，取所有数据成员比较返回comparison
+object中对应<strong>最弱</strong>的比较结果；返回值类型若手动指定，则不能强于该最弱的比较类型。<br />
+</li>
+<li>对于自动生成的相等运算符，类<code>Ty</code>应声明为<code>bool operator==(const Ty&amp;) const = default;</code>或<code>friend bool operator==(const Ty&amp;,const Ty&amp;) = default;</code>。</li>
 </ul>
 <blockquote>
-<p><em>back insert
-iterator</em>是一类简单的迭代器，其仅定义了以下的<code>public</code>成员函数：</p>
-<ul>
-<li><code>operator*()</code>，返回<code>*this</code>；</li>
-<li><code>operator++()</code>（含<code>operator++(int)</code>），返回<code>*this</code>且什么也不做；</li>
-<li><code>operator=(const Ty&amp;)</code>（含<code>operator=(Ty&amp;&amp;)</code>），将给定元素copy(或move)追加到容器末尾（相当于调用了<code>push_back(const Ty&amp;)</code>/<code>push_back(Ty&amp;&amp;)</code>）。</li>
-</ul>
+<p>可以为默认生成的运算符添加<code>constexpr</code>和<code>noexcept</code>修饰符，当然前者要求下辖比较运算符都是<code>constexpr</code>。</p>
+</blockquote>
 <blockquote>
-<p>事实上这些<em>iterator</em>的<code>operator=</code>有四个重载，还有两个是类的基本成员函数（即copy/move
-assignment operator）</p>
+<p>“自动”比较内涵：按变量声明顺序逐个比较，若比较结果不为相等(equivalent或equal)或全部比较结束（直至最后一个仍为相等），则返回之。</p>
 </blockquote>
-<p>在C++ Standard
-library中，调用std::back_inserter(some_container)可以获得一个<em>back
-insert
-iterator</em>，some_container应具有<code>push_back</code>成员函数。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">stu</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">stu</span>(std::string_view sv,<span class="type">int</span> sc):<span class="built_in">id</span>(sv),<span class="built_in">score</span>(sc)&#123;&#125;</span><br><span class="line">    <span class="keyword">auto</span> <span class="built_in">operator</span>&lt;=&gt;(<span class="type">const</span> nihao&amp;,<span class="type">const</span> nihao&amp;) = <span class="keyword">default</span>; <span class="comment">//auto可以被指定为任意一种ordering（不能强于数据成员中最弱的比较类型）</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    std::string id;</span><br><span class="line">    <span class="type">int</span> score;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>C++20中，对于既往有同类比较运算符的类（如<code>std::string</code>支持和同类比较，行为类似C中的<code>strcmp</code>），均已经添加了<code>operator&lt;=&gt;</code>。<br />
+如此来看，其实三向比较的思想也并不新鲜——<code>strcmp</code>就是一种三向比较（返回值大于0/0/小于0），最初的动机即为对于比较时间开销可能较大的object，一次完成对大/等/小的比较并存储起来。<br />
+C++20的comparison
+object相比之的进步在于大幅增强了语义约束，使程序设计的语义更为清晰，可读性和维护性更佳，同时统一并专用化了比较接口（<del>现代C++哲学唠嗑时间</del>）</p>
 </blockquote>
-<p>该函数应当通过这个<code>fc.out()</code>来向缓冲字符串中写入字符，并返回<code>fc.out()</code>。<br />
-写入方法相对就比较五花八门了：
-最“老土”的方式无疑是直接对这个iterator逐个字符地赋值（注意右操作数只能是<code>char</code>）；<br />
-现代C++中同样有很多函数可以高效地进行此项任务，对于潜在自由度较高的object，可以先建立一个string缓存并操作之，最后再copy过去。<br />
-两个比较常用的、更为简洁的方法为复用<code>std::ranges::copy</code>和<code>std::format_to</code></p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//方法1：利用ranges库，集复制返回于一体</span></span><br><span class="line">std::string buf&#123;&#125;;</span><br><span class="line"><span class="comment">//...对buf进行操作</span></span><br><span class="line"><span class="comment">//优势在于可以按需较为灵活地截取/操作buf（ranges上分ing）</span></span><br><span class="line"><span class="keyword">return</span> std::ranges::<span class="built_in">copy</span>(buf,fc.<span class="built_in">out</span>()).out; <span class="comment">//注意返回值是一个含有in/out迭代器的struct，需要取其out</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//方法2：std::format_to直接格式化至迭代器（相应地，std::format相当于格式化至字符串，对标sprintf）</span></span><br><span class="line"><span class="keyword">return</span> std::format_to(fc.<span class="built_in">out</span>(),<span class="string">&quot;&#123;&#125;&quot;</span>,...); <span class="comment">//函数返回值就是迭代器本身</span></span><br></pre></td></tr></table></figure>
-<h3
-id="奇技淫巧既有formatter的复用"><del>奇技淫巧</del>：既有Formatter的复用</h3>
-<p>对于很多较简单的class/object，一视同仁start-from-scratch显然不是明智之举，此时对formatter的复用可令你在format间游走自如。<br />
-复用方式有二：继承复用/成员复用<br />
-还是直接看代码： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//还是以上文的CR类为例</span></span><br><span class="line"><span class="keyword">namespace</span> inheritance</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">template</span>&lt;&gt;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;CR&gt; : std::formatter&lt;<span class="type">int</span>&gt;</span><br><span class="line">    &#123;   </span><br><span class="line">        <span class="function"><span class="keyword">auto</span> <span class="title">format</span><span class="params">(<span class="type">const</span> CR&amp; c,std::format_context&amp; fc)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">        </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> std::formatter&lt;<span class="type">int</span>&gt;::format(c.speed,fc);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;; <span class="comment">//相当于用std::formatter&lt;int&gt;部分覆写了自身，parse遵循int的format-specifier</span></span><br><span class="line">    <span class="comment">//而format时需要调用父类的format方法</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">namespace</span> member</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">template</span>&lt;&gt;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;CR&gt;</span><br><span class="line">    &#123;</span><br><span class="line">        std::formatter&lt;<span class="type">int</span>&gt; fmt&#123;&#125;;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="title">parse</span><span class="params">(std::format_parse_context&amp; fpc)</span></span></span><br><span class="line"><span class="function">        </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> fmt.<span class="built_in">parse</span>(fpc);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">auto</span> <span class="title">format</span><span class="params">(<span class="type">const</span> CR&amp; c,std::format_context&amp; fc)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">        </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> fmt.format(c.speed,fc);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>显然inheritance对于较小的类（最好是只有一个需要格式化的量）来说比较友好，格式化进行更高效；<br />
-且若<code>std::convertible_to&lt;const A&amp;, B&gt;</code>（A为待格式化的类，B为继承类的<code>format</code>函数第一参数）为<code>true</code>，则可以完全继承之，<strong>比如自定义许多容器的format。</strong><br />
-member法的灵活度会更高些，甚至可以在<code>parse</code>中让迭代器在<code>format_parse_context</code>里游走来实现更高的自由度，适合于每个参数的输出格式都希望独立控制的类，如时间。<br />
-下面再附上一例应用了concepts、<code>std::span</code>等来实现<code>std::vector</code>的通用格式化方法：
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;algorithm&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;print&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;span&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;std::default_formattable&lt;<span class="type">char</span>&gt; Ty&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;std::span&lt;Ty&gt;&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="title">parse</span><span class="params">(std::format_parse_context&amp; fpc)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> fpc.<span class="built_in">begin</span>();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">auto</span> <span class="title">format</span><span class="params">(std::span&lt;Ty&gt; sp,std::format_context&amp; fc)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="comment">//我们希望实现一个类似python的list的效果，即[1,2,3]这样，此处尚未加入自定义分隔符等功能</span></span><br><span class="line">        std::string buf&#123;<span class="string">&quot;[&quot;</span>&#125;;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">const</span> <span class="keyword">auto</span>&amp; i : sp)</span><br><span class="line">        &#123;</span><br><span class="line">            buf += std::format(<span class="string">&quot;&#123;&#125;,&quot;</span>,i);</span><br><span class="line">        &#125;</span><br><span class="line">        buf.<span class="built_in">back</span>() = <span class="string">&#x27;]&#x27;</span>;</span><br><span class="line">        <span class="keyword">return</span> std::ranges::<span class="built_in">copy</span>(buf,fc.<span class="built_in">out</span>()).out;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;std::default_formattable&lt;<span class="type">char</span>&gt; Ty&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;std::vector&lt;Ty&gt;&gt; : std::formatter&lt;std::span&lt;Ty&gt;&gt;</span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">//现在可以直接格式化所有（元素类型可以被默认格式化的）vector</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::vector&lt;<span class="type">int</span>&gt; vc&#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>&#125;;</span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,vc); <span class="comment">//[1,2,3]</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="特例">特例</h2>
+<p>特别地，如果一个类的<code>operator&lt;=&gt;</code>被声明为<code>= default;</code>则该类也会自动生成<code>operator==</code>。</p>
+<h1 id="探究比较对象的性质与应用">探究比较对象的性质与应用</h1>
+<p>为了支持和以往的比较类型有类似的interface，这几种关系都支持了和0做比较（必须是字面量的零，否则报编译错误/UB）。<br />
+结合<code>if</code>的clause-initialization，可以极大地提升程序的可维护性，使执行逻辑更加简洁：
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(<span class="type">int</span> arg)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(<span class="keyword">auto</span> cp = arg &lt;=&gt; <span class="number">335</span>; cp &gt; <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        std::clog &lt;&lt; <span class="string">&quot;Overheat!&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure></p>
+<blockquote>
+<p>MSVC中利用C++20的新关键字<code>consteval</code>与一些其它有趣的既有语法特性实现了对之的约束，赏析以下代码：
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">Literal_zero</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">Literal_zero_is_expected</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">consteval</span> <span class="title">Literal_zero</span><span class="params">(<span class="type">int</span> _val)</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(_val != <span class="number">0</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="built_in">Literal_zero_is_expected</span>();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">bool</span> <span class="keyword">operator</span>&gt;(std::strong_ordering odr,Literal_zero) <span class="keyword">noexcept</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> odr == std::strong_ordering::greater;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+</blockquote>
+<blockquote>
+<p>其设置了两道哨兵：</p>
+<ul>
+<li>其一，如果传入的不是一个字面量，则被<code>consteval</code>的语义约束（<code>consteval</code>函数必须在编译期被调用，但显然传入这个参数不满足约束）；<br />
+</li>
+<li>其二，若传入的字面量不为零，则试图调用<code>Literal_zero_is_expected()</code>函数，但该函数既不是<code>constexpr</code>也不是<code>consteval</code>，无法在编译期被调用，因而报错。</li>
+</ul>
+</blockquote>
+<p>另一个性质和离散数学有关：由于偏序-弱序-强序对这种二元关系的约束严格程度递增，因而从语义的角度出发，应当允许更强的比较关系向更弱的比较关系转换，并相应地阻止反方向的转换。<br />
+C++中同样如此：如，<code>std::strong_ordering</code>拥有<code>operator std::weak_ordering</code>和<code>operator std::partial_ordering</code>。</p>
+<p>同时关于和零比较/拓展运算符的返回结果的一些补充：<br />
+对于返回结果<code>cp</code>，</p>
+<ul>
+<li>当且仅当返回greater（无论类型，下同），<code>cp &gt; 0</code>成立；<br />
+</li>
+<li>当且仅当返回less，<code>cp &lt; 0</code>成立；<br />
+</li>
+<li>当且仅当返回equal/equivalent，<code>cp == 0</code>成立；<br />
+</li>
+<li>如果返回值是<code>std::partial_ordering::unordered</code>，则<strong>有且仅有</strong><code>cp != 0</code>成立，其余均不成立。<br />
+</li>
+<li>对于其它的返回值，<code>&gt;=</code>就是<code>&lt;</code>的结果取反，以此类推。</li>
+</ul>
+<h1 id="结语">结语</h1>
+<p>比较运算符的进步明显源于人们在编程实践中的需求，而其又反作用于人们的编程实践中，消除了编写语义重复的运算符重载这一场景，亦为简单类的比较提供了语义更为清晰、简洁的方法(<code>= default;</code>依然还是如此优雅)。</p>
 
       
 
@@ -284,14 +309,6 @@ member法的灵活度会更高些，甚至可以在<code>parse</code>中让迭�
 			 
         		<li class="article-tag-list-item">
         			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">C++23</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">C++ Libraries</a>
         		</li>
       		
 		</ul>
@@ -358,7 +375,7 @@ member法的灵活度会更高些，甚至可以在<code>parse</code>中让迭�
     <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
     <p>扫一扫，分享到微信</p>
     <div class="wx-qrcode">
-      <img src="//pan.baidu.com/share/qrcode?url=https://crystaljiang232.github.io/std-print/" alt="微信分享二维码">
+      <img src="//pan.baidu.com/share/qrcode?url=https://crystaljiang232.github.io/cpp-3compare/" alt="微信分享二维码">
     </div>
 </div>
 
@@ -374,18 +391,18 @@ member法的灵活度会更高些，甚至可以在<code>parse</code>中让迭�
   
 <nav id="article-nav">
   
-    <a href="/dlog/" id="article-nav-newer" class="article-nav-link-wrap">
+    <a href="/lattice/" id="article-nav-newer" class="article-nav-link-wrap">
       <i class="icon-circle-left"></i>
       <div class="article-nav-title">
         
-          离散对数——Discrete Logorithm
+          格
         
       </div>
     </a>
   
   
-    <a href="/index/" id="article-nav-older" class="article-nav-link-wrap">
-      <div class="article-nav-title">玲珑</div>
+    <a href="/cryptohack/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">Cryptohack打本手记（持续咕咕ing）</div>
       <i class="icon-circle-right"></i>
     </a>
   
@@ -412,7 +429,8 @@ member法的灵活度会更高些，甚至可以在<code>parse</code>中让迭�
                 </span>
                 <span class="tooltip-content">
                     <div class="toc-article">
-                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%87%BD%E6%95%B0%E7%AD%BE%E5%90%8D"><span class="toc-number">1.</span> <span class="toc-text">函数签名</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#stdformatter%E7%9A%84%E7%89%B9%E5%8C%96"><span class="toc-number">2.</span> <span class="toc-text">std::formatter的特化</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A5%87%E6%8A%80%E6%B7%AB%E5%B7%A7%E6%97%A2%E6%9C%89formatter%E7%9A%84%E5%A4%8D%E7%94%A8"><span class="toc-number">2.1.</span> <span class="toc-text">奇技淫巧：既有Formatter的复用</span></a></li></ol></li></ol>
+                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%96%B0%E6%AF%94%E8%BE%83%E7%B3%BB%E7%BB%9F%E7%AE%80%E8%A6%81%E4%BB%8B%E7%BB%8D"><span class="toc-number">2.</span> <span class="toc-text">新比较系统简要介绍</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B0%E6%93%8D%E4%BD%9C%E7%AC%A6"><span class="toc-number">2.1.</span> <span class="toc-text">新操作符</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B0%E6%AF%94%E8%BE%83%E5%AF%B9%E8%B1%A1"><span class="toc-number">2.2.</span> <span class="toc-text">新比较对象</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#c20%E8%AF%AD%E8%A8%80%E4%B8%8A%E5%AF%B9operator%E7%9A%84%E6%94%AF%E6%8C%81"><span class="toc-number">3.</span> <span class="toc-text">C++20语言上对operator&lt;&#x3D;&gt;的支持</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%90%E7%AE%97%E7%AC%A6%E7%9A%84%E8%87%AA%E5%8A%A8%E5%A1%AB%E5%85%85"><span class="toc-number">3.1.</span> <span class="toc-text">运算符的自动“填充”</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%86%E6%BB%A1%E8%B6%B3%E6%9D%A1%E4%BB%B6%E7%9A%84%E5%90%8C%E7%B1%BB%E6%AF%94%E8%BE%83%E8%BF%90%E7%AE%97%E7%AC%A6%E5%A3%B0%E6%98%8E%E4%B8%BA-default"><span class="toc-number">3.2.</span> <span class="toc-text">将满足条件的同类比较运算符声明为
+&#x3D;default</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%89%B9%E4%BE%8B"><span class="toc-number">3.3.</span> <span class="toc-text">特例</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%8E%A2%E7%A9%B6%E6%AF%94%E8%BE%83%E5%AF%B9%E8%B1%A1%E7%9A%84%E6%80%A7%E8%B4%A8%E4%B8%8E%E5%BA%94%E7%94%A8"><span class="toc-number">4.</span> <span class="toc-text">探究比较对象的性质与应用</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%BB%93%E8%AF%AD"><span class="toc-number">5.</span> <span class="toc-text">结语</span></a></li></ol>
                     </div>
                 </span>
             </div>
@@ -606,6 +624,10 @@ MathJax.Hub.Queue(function() {
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color4">C++ Libraries</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">Flag</a>
               </li>
             
             <div class="clearfix"></div>

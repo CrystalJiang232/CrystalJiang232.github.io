@@ -277,52 +277,100 @@ Jiang, Hibiscus, LingLong, Crystal, whatever:)</p>
 
 
   
-    <article id="post-cpp-sum-t" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-tasks" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/cpp-sum-t/">cpp-sum-t</a>
+      <a class="article-title" href="/tasks/">挖坑</a>
     </h1>
   
 
         
-        <a href="/cpp-sum-t/" class="archive-article-date">
-  	<time datetime="2025-01-10T00:41:33.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-01-10</time>
+        <a href="/tasks/" class="archive-article-date">
+  	<time datetime="2025-01-15T03:43:58.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-01-15</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h1 id="源远流长的sum-types">源远流长的sum-types</h1>
-<p>sum-types（“简并类型”）一直是C++中的热门话题之一。简单来说，其就是两种/多种类型中的选择——同一时间最多只会是几种可能类型中的一个。</p>
-<p>作为一门编译期语言，C++要求所有变量的类型均在编译时确定（比如一个<code>int</code>就是一个<code>int</code>，此后若想将该部分内存空间用作一个<code>float</code>，则相关的<code>reinterpret_cast</code>代码等也必须在编译期声明完成）。</p>
-<h1 id="union">union?</h1>
-<p>C++中最经典的sum-types就是从C沿袭而来的<code>union</code>：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">union</span> <span class="title class_">T</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span> a;</span><br><span class="line">    std::string b;</span><br><span class="line">    <span class="type">char</span> c;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    T x;</span><br><span class="line">    x.a = <span class="number">3</span>;</span><br><span class="line">    x.c = <span class="string">&#x27;g&#x27;</span>;</span><br><span class="line">    x.b = <span class="string">&quot;abc&quot;</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>一个<code>T</code>在同一时间内只能是<code>int</code>、<code>std::string</code>或<code>char</code>中的一种，不可能都不是也不可能都是。<br />
-但很显然这种<code>union</code>的缺陷有很多：</p>
-<ul>
-<li><code>union</code>是类型不安全的，没有针对访问非活动类型的检查或者保护（因而极易触发UB）；</li>
-<li><code>union</code>作为C时代的产物，和现代C++在许多方面的兼容性依然堪忧，如其中多个成员类的构造函数接受相同类型的参数时，直接初始化就会编译失败；<br />
-</li>
-<li><code>union</code>并没有直接提供“空”选项<del>C时代的legacy还指望这么多干什么</del>等等。</li>
+        <blockquote>
+<p>挖个关于Modern C++全盘点的坑，<del>欢迎催更</del></p>
+</blockquote>
+<h1 id="modern-c">Modern C++</h1>
+<h2 id="c11">C++11</h2>
+<ul class="task-list">
+<li><label><input type="checkbox" />Lambda expression</label></li>
+<li><label><input type="checkbox" />Smart pointers</label></li>
+<li><label><input type="checkbox" checked="" />Rvalue references &amp;
+move sematics</label></li>
+<li><label><input type="checkbox" />Variadic templates</label></li>
+<li><label><input
+type="checkbox" /><code>std::thread</code></label></li>
 </ul>
-<h1 id="c17三足鼎立">C++17“三足鼎立”</h1>
-<p>针对这些问题，C++17为标准库一口气加了三种sum-types：<code>std::optional</code>，<code>std::variant</code>和<code>std::any</code>。</p>
-<h2 id="stdoptional">std::optional</h2>
-<p><code>std::optional</code>用于表示一个可空的类型，相当于其它语言的<code>optional</code>、<code>maybe</code>或<code>nullable</code>等等。<br />
-其用于表示一个可能有也可能没有的值时非常好用，如C++23的<code>ranges</code>库里就对<code>fold</code>的返回值复用了这个<code>optional</code>。</p>
-<p><code>std::optional</code>的应用interface也非常简洁：
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;optional&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;print&gt;</span></span></span><br><span class="line"><span class="function">std::optional&lt;<span class="type">int</span>&gt; <span class="title">recv_int</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">auto</span> v = <span class="built_in">recv_int</span>();</span><br><span class="line">    <span class="keyword">if</span>(v) <span class="comment">//等价v.has_value()</span></span><br><span class="line">    &#123;</span><br><span class="line">        std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,*v);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//C++17开始应当使用下述更为简洁、变量作用域更小的写法</span></span><br><span class="line">    <span class="keyword">if</span>(<span class="keyword">auto</span> v = <span class="built_in">recv_int</span>();v)</span><br><span class="line">    &#123;</span><br><span class="line">        std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,*v);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//若v.has_value()为false，则直接访问其值为UB</span></span><br><span class="line">    <span class="comment">//如果不想检验，可以直接上v.value()，此时会附带一次存值检查，若空则抛异常</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//但注意由于v.value()存在检查开销，因此两种应用方式不应混合（降低效率）</span></span><br><span class="line">    <span class="keyword">try</span></span><br><span class="line">    &#123;</span><br><span class="line">        std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,v.<span class="built_in">value</span>());</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">catch</span>(<span class="type">const</span> std::exception&amp; e)</span><br><span class="line">    &#123;</span><br><span class="line">        std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,e.<span class="built_in">what</span>());</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>对于默认值的使用需求，<code>std::optional</code>同样提供了<code>value_or</code>函数应对之，使得语义更为清晰简洁：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">std::optional&lt;<span class="type">int</span>&gt; op;</span><br><span class="line"><span class="comment">//...</span></span><br><span class="line"></span><br><span class="line">std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,op.<span class="built_in">value_or</span>(<span class="number">9</span>));</span><br><span class="line"><span class="comment">//equivalent to</span></span><br><span class="line"><span class="keyword">if</span>(op)</span><br><span class="line">&#123;</span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,*op);    </span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">&#123;</span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,<span class="number">9</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="stdvariant">std::variant</h2>
-<p><code>std::variant</code>相对来说更像是<code>union</code>的进化版。其声明为<code>template&lt;class T1,class T2,class... Tn&gt; class variant;</code>。<br />
-其可能具有多种类型中的<strong>至多</strong>一种</p>
+<h2 id="c17">C++17</h2>
+<ul class="task-list">
+<li><label><input type="checkbox" />Execution policies</label></li>
+<li><label><input type="checkbox" />Structural binding</label></li>
+</ul>
+<h2 id="c20">C++20</h2>
+<ul class="task-list">
+<li><label><input type="checkbox" />Ranges library</label></li>
+<li><label><input type="checkbox" />Concepts</label></li>
+<li><label><input type="checkbox" />Modules</label></li>
+<li><label><input type="checkbox" />Coroutines</label></li>
+<li><label><input type="checkbox" checked="" />Three-way
+comparison</label></li>
+<li><label><input type="checkbox"
+checked="" /><code>std::format</code></label></li>
+</ul>
+<h2 id="c23">C++23</h2>
+<ul class="task-list">
+<li><label><input type="checkbox" />sum-types &amp;
+<code>std::expected</code></label></li>
+<li><label><input type="checkbox"
+checked="" /><code>std::print</code></label></li>
+</ul>
+<h2 id="杂项">杂项</h2>
+<ul class="task-list">
+<li><label><input type="checkbox" />Compile-time
+computation</label></li>
+<li><label><input type="checkbox" />Tag-design</label></li>
+<li><label><input
+type="checkbox" />Specifier(<code>inline</code>,<code>constexpr</code>,<code>noexcept</code>)</label></li>
+<li><label><input type="checkbox" />SFINAE</label></li>
+<li><label><input type="checkbox" />RAII</label></li>
+<li><label><input type="checkbox" />Type casting</label></li>
+<li><label><input type="checkbox" />STL Review</label></li>
+<li><label><input type="checkbox"
+checked="" /><code>return</code></label></li>
+</ul>
+<h1 id="crypto">Crypto</h1>
+<h2 id="asymmetric-cipher">Asymmetric Cipher</h2>
+<ul class="task-list">
+<li><label><input type="checkbox" />RSA</label></li>
+<li><label><input type="checkbox" checked="" />Discrete Log</label></li>
+<li><label><input type="checkbox" />ECC</label></li>
+<li><label><input type="checkbox" />Digital Signature</label></li>
+</ul>
+<h2 id="symmetric-cipher">Symmetric Cipher</h2>
+<ul class="task-list">
+<li><label><input type="checkbox" />Block Cipher: Chaining</label></li>
+<li><label><input type="checkbox" />Block Cipher:
+Encryption</label></li>
+<li><label><input type="checkbox" />Block Cipher: Padding</label></li>
+<li><label><input type="checkbox" />Stream Cipher &amp;
+Psuedorandom</label></li>
+<li><label><input type="checkbox" />Hash Functions</label></li>
+</ul>
+<h2 id="mathematics">Mathematics</h2>
+<ul class="task-list">
+<li><label><input type="checkbox" />Lattices</label></li>
+<li><label><input type="checkbox" />Coppersmith</label></li>
+</ul>
 
       
 
@@ -338,6 +386,10 @@ Jiang, Hibiscus, LingLong, Crystal, whatever:)</p>
         		<li class="article-tag-list-item">
         			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
         		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">Flag</a>
+        		</li>
       		
 		</ul>
 	</div>
@@ -348,7 +400,7 @@ Jiang, Hibiscus, LingLong, Crystal, whatever:)</p>
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
+        			<a href="/categories/闲笔//" class="article-tag-list-link color3">闲笔</a>
         		</li>
       		
 		</ul>
@@ -357,7 +409,7 @@ Jiang, Hibiscus, LingLong, Crystal, whatever:)</p>
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/cpp-sum-t/">展开全文 >></a>
+          <a class="article-more-a" href="/tasks/">展开全文 >></a>
         </p>
       
 
@@ -566,6 +618,10 @@ MathJax.Hub.Queue(function() {
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color4">C++ Libraries</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">Flag</a>
               </li>
             
             <div class="clearfix"></div>
