@@ -339,28 +339,65 @@ class="math inline">\(\delta \in (0.25,1]\)</span>。</p>
 第二个条件是为根据向量的范数(norm)对之进行大致排序。</p>
 </blockquote>
 <p>相应地，LLL算法的执行过程如下：</p>
+<p>输入 <span class="math inline">\(\{v_1,v_2,\cdots,v_n\}\)</span>
+与参数 <span class="math inline">\(\delta \in
+(\frac{1}{4},1]\)</span>，置 <span class="math inline">\(k =
+2\)</span>。<br />
+每个循环进行以下两步：</p>
+<ol type="1">
+<li>规约步：令 <span class="math inline">\(v_i = v_i - \lceil \mu_{i}{k}
+\rfloor v_k\)</span>，<span class="math inline">\(i \in
+[1,k)\)</span>；<br />
+</li>
+<li>排序步：若 <span class="math inline">\(\|v_k\|^2 \geq (\delta -
+\mu_{k,k-1}^{2})\|v_{k-1}\|^2\)</span>，则 <span class="math inline">\(k
++= 1\)</span>，否则置 <span class="math inline">\(k =
+max(k-1,2)\)</span>。</li>
+</ol>
+<p>若 <span class="math inline">\(k \leq
+n\)</span>，则继续循环，否则循环结束。</p>
+<p>可以发现LLL算法的核心和高斯算法是类似的：第一步在“不断地”满足
+<em>size-reduced</em> 条件，第二步则对应 <em>Lovasz-condition</em>。</p>
 <h2 id="lll在密码分析中的应用">LLL在密码分析中的应用</h2>
-<p>我们一直在提及“可能”规约出期望的结果（目标向量），其因目标向量的模长越短，规约成功率越高；同时目标向量的模长存在一个上界，超过该上界时规约（几乎）必定失败。<br />
-Hermite定理给出了 "LLL-reduced" 规约格上界：</p>
-<p><span class="math inline">\(\|v_1\| \leq \|v_2\| \leq \cdots \leq
+<p>数学理论终究还需付诸实践。<br />
+LLL对格进行规约的效率和参数 <span class="math inline">\(\delta\)</span>
+的选取密切相关。密码学分析中，多数情况下取 <span
+class="math inline">\(\delta = 0.99\)</span>
+可以达到比较好的规约质量-运行速度的平衡。<br />
+先介绍LLL算法的规约能力、时间复杂度：</p>
+<p><strong>规约能力</strong>：<br />
+假设 <span class="math inline">\(\{v_1,v_2,\cdots,v_n\}\)</span> 是格
+<span class="math inline">\(L\)</span> 的一组 <span
+class="math inline">\(\delta\)</span>-LLL 约化基，则 <span
+class="math inline">\(\|v_1\| \leq (\frac{2}{\sqrt{4\delta - 1}})^{n-1}
+\lambda_1(L)\)</span>。</p>
+<p>显然LLL的输出向量长度和参数 <span
+class="math inline">\(\delta\)</span> 成负相关： <span
+class="math inline">\(\delta = 0.99\)</span> 时，<span
+class="math inline">\(\|v_1\| \leq (1.35)^{\frac{n-1}{2}}
+\lambda_1(L)\)</span>。<br />
+实践中，LLL的输出基质量会明显优于上述定理给出的上界（即上述定理给出的是最坏情况的估计）。</p>
+<p><strong>时间复杂度</strong>：<br />
+LLL算法会在 <span class="math inline">\(O(n^{6} \ln^{3} B)\)</span>
+的时间内运行完毕，其中 <span class="math inline">\(\forall i \in [1,n],
+\|v_i\| \leq B\)</span>。<br />
+同样地，这也是最坏情况下的时间复杂度。</p>
+<p>同时，由于规约目标是寻找“短向量”，故事先构造目标向量使之“变短”是规约的重要准备步骤。</p>
+<p><strong>Hermite定理</strong>则表明了一个格 <span
+class="math inline">\(L\)</span> 的最短基的模长：<br />
+<span class="math inline">\(\|v_1\| \leq \|v_2\| \leq \cdots \leq
 \|v_i\| \leq 2^{\frac{n(n-1)}{4(n+1-i)}}
 det(L)^{\frac{1}{n+1-i}}\)</span></p>
-<p>显然若能利用矩阵和向量的一些性质，在不显著增大目标向量 <span
-class="math inline">\(v_i\)</span> 的前提下增大 <span
-class="math inline">\(det(L)\)</span>，即可大幅提高规约成功率。<br />
-根据线性代数的理论可知：<br />
-对于 <span class="math inline">\(v_i = (x_1,x_2,\cdots,x_n)\)</span> ，
-<span class="math inline">\(\|v_i\| = \sqrt{\sum_{i=0}^{n}
+<p>显然通过矩阵性质构造，大幅增大 <span
+class="math inline">\(\frac{det(L)}{\|v_t\|}\)</span>
+是一种可行方案。</p>
+<p>密码分析的构造格实践中，下述方法的应用非常广泛：</p>
+<p>对于 <span class="math inline">\(v_i = (x_1,x_2,\cdots,x_n)\)</span>
+， <span class="math inline">\(\|v_i\| = \sqrt{\sum_{i=0}^{n}
 x_i^2}\)</span><br />
-若 <span class="math inline">\(|v_k|\)</span>
-远大于其余维度的长度，则调整 <span class="math inline">\(v_i (i \neq
-k)\)</span> 的值几乎不会改变 <span
-class="math inline">\(\|v_i\|\)</span>。</p>
-<blockquote>
-<p>推导方式很多且都不难，上至偏导数，<del>下至三角板</del>，反正怎么能理解怎么来(bushi)</p>
-</blockquote>
-<p>同时，LLL算法中参数 <span class="math inline">\(\delta\)</span>
-的选取对于效率和成功率的平衡也极为关键。</p>
+若 <span class="math inline">\(|x_k| &gt;&gt; \|x_i\| (i \neq
+k)\)</span> ，则增大 <span class="math inline">\(x_i\)</span> 的值时
+<span class="math inline">\(\|v_i\|\)</span> 几乎不变。</p>
 <h1 id="格核心性质的利用方法">格核心性质的利用方法</h1>
 <p>在应用格攻击时，会经常碰到的一个概念即为“构造”格。<br />
 格的重要性质：格中向量一定是<strong>基向量的整系数线性组合</strong>，但这个线性组合的具体值并不重要（考虑
