@@ -277,27 +277,149 @@ Jiang, Hibiscus, LingLong, Crystal, whatever:)</p>
 
 
   
-    <article id="post-a-1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-rsa" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/a-1/">a</a>
+      <a class="article-title" href="/rsa/">rsa</a>
     </h1>
   
 
         
-        <a href="/a-1/" class="archive-article-date">
-  	<time datetime="2025-01-16T01:05:18.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-01-16</time>
+        <a href="/rsa/" class="archive-article-date">
+  	<time datetime="2025-01-16T07:19:27.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-01-16</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p><a target="_blank" rel="noopener" href="https:/www.baidu.com">这是一个链接</a></p>
+        <h1 id="rsa及非对称密码学简介">RSA及非对称密码学简介</h1>
+<h2 id="非对称密码学">非对称密码学</h2>
+<p>经典的加密/解密系统都是对称密码学（亦称“私钥密码学”），其中加密方和解密方使用相同密钥。<br />
+而在计算机网络环境中，密钥的管理与分发将成为一个难题；同时加密和解密所需的权限相同（即拥有加密权限的人也拥有解密权限），不利于权限控制等。</p>
+<p>非对称密码学（亦称“公钥密码学”）采用的加/解密方法中，加密方和解密方的密钥<strong>不同</strong>。称加密方的密钥为“公钥”，解密方的密钥为“私钥”。</p>
+<blockquote>
+<p>一般称加密“公钥”为 <em>public</em>
+的原因是多数场景下，加密所需的权限比解密低。</p>
+</blockquote>
+<p>实践中，公钥是（相对地）可以公开的密钥集，私钥则需要保密。<br />
+公钥和私钥的关系在于：</p>
+<ul>
+<li>私钥是由公钥决定的（即公、私钥之间存在某种数学联系，这种数学联系因加密方式不同而异），生成密钥时二者相伴而生，搭配使用。<br />
+</li>
+<li>加密方式的安全性依赖于某个数学难题，攻击者即使已知公钥和加密方式，由于该数学难题的存在，亦很难从中获得私钥（计算上不可行）。</li>
+</ul>
+<p>其中，非对称加密算法都涉及到“陷门函数”(trapdoor
+function)的使用：类似于二极管，通过陷门函数正向计算时非常简单，但逆向计算时极为困难。</p>
+<blockquote>
+<p>不同于哈希函数(Hash
+Functions)的是，陷门函数是可逆的，只是在参数满足一定条件时，逆映射在计算上不可行。</p>
+</blockquote>
+<p>非对称密码学的应用极为广泛，比较常见的场景包括：</p>
+<ul>
+<li>不可靠信道下的密文传输<br />
+</li>
+<li>密钥交换与分发<br />
+</li>
+<li>...</li>
+</ul>
+<h2 id="rsa非对称密码学的朝阳">RSA：非对称密码学的朝阳</h2>
+<p>RSA于1977年由Ron Rivest, Adi Shamir和Leonard
+Adleman共同提出，是第一种被<strong>极广泛应用</strong>（且至今依然被大量使用）的非对称加密算法。<br />
+RSA依赖的数学难题是大整数分解难题：<br />
+给定 <span class="math inline">\((p,q)\)</span>，计算 <span
+class="math inline">\(N = pq\)</span> 很容易，但给定 <span
+class="math inline">\(N\)</span>，找到满足 <span
+class="math inline">\(pq = N\)</span> 的 <span
+class="math inline">\((p,q)\)</span> 是困难的。</p>
+<h3 id="原理">原理</h3>
+<h4 id="密钥生成">密钥生成</h4>
+<ol type="1">
+<li>选择大质数 <span class="math inline">\(p,q\)</span> 且 <span
+class="math inline">\(p \neq q\)</span>，计算 <span
+class="math inline">\(N = pq\)</span>。<br />
+</li>
+<li>计算 <span class="math inline">\(\varphi(N) =
+(p-1)(q-1)\)</span>，其中 <span
+class="math inline">\(\varphi(N)\)</span> 表示N的欧拉函数值。<br />
+</li>
+<li>选择整数 <span class="math inline">\(e\)</span> 且 <span
+class="math inline">\(gcd(e,\varphi(N)) = 1\)</span>（即 <span
+class="math inline">\(e\)</span> 与 <span
+class="math inline">\(\varphi(N)\)</span> 互质），计算 <span
+class="math inline">\(d = e^{-1} (mod \varphi(N))\)</span>。<br />
+</li>
+<li>将 <span class="math inline">\(p,q\)</span> 的记录销毁，<span
+class="math inline">\((N,e)\)</span> 为公钥，<span
+class="math inline">\(d\)</span> 为私钥。</li>
+</ol>
+<blockquote>
+<p>第三步后半部分中，<span class="math inline">\(d\)</span> 是 <span
+class="math inline">\(e\)</span> 关于 <span
+class="math inline">\(\varphi(N)\)</span> 的模逆元；换言之，<span
+class="math inline">\(d\)</span> 是满足 <span class="math inline">\(ed
+\equiv 1 (mod \varphi(N))\)</span> 的最小正整数。<br />
+要求 <span class="math inline">\(e\)</span> 与 <span
+class="math inline">\(\varphi(N)\)</span> 互质的原因是，若不然，则 <span
+class="math inline">\(e\)</span> 在 <span
+class="math inline">\(F_{\varphi(N)}\)</span> 下的逆元不存在。</p>
+</blockquote>
+<h4 id="加密解密">加密/解密</h4>
+<p>加/解密前，首先需要将信息编码为一个正整数 <span
+class="math inline">\(m\)</span>，且 <span class="math inline">\(m &lt;
+N\)</span>。<br />
+若消息比较长，可以将消息分成多段，保证每一段待加密的 <span
+class="math inline">\(m_i &lt; N\)</span>。</p>
+<p>加密：<br />
+加密方计算 <span class="math inline">\(c = m^e mod N\)</span>，<span
+class="math inline">\(c\)</span>即为密文。</p>
+<p>解密：<br />
+解密方计算 <span class="math inline">\(m = c^d mod N\)</span>，<span
+class="math inline">\(m\)</span>即为明文。</p>
+<h4 id="正确性证明">正确性证明</h4>
+<h1 id="rsa应用">RSA应用</h1>
+<h1 id="rsa-attacks-past">RSA-Attacks: Past</h1>
+<p>针对RSA，最简单的攻击方式就是因数分解了。只要能获取到满足 <span
+class="math inline">\(pq = N\)</span> 的 <span
+class="math inline">\((p,q)\)</span>，就可以通过 <span
+class="math inline">\((p,q,e)\)</span> 计算获得私钥 <span
+class="math inline">\(d\)</span>，进而完全攻破RSA。<br />
+给一个简单的（以至于可以口算）的实例：</p>
+<blockquote>
+<p>已知RSA的公钥为 <span class="math inline">\((N,e) =
+(55,3)\)</span>，计算私钥 <span class="math inline">\(d\)</span>。<br />
+解：显然 <span class="math inline">\((p,q) = (5,11)\)</span>，计算 <span
+class="math inline">\(\varphi(N) = (p-1)(q-1) = 40\)</span>。<br />
+经过<del>盲猜+肉眼观察</del>计算可得 <span class="math inline">\(e^{-1}
+mod \varphi(N) = 27\)</span>，故私钥为 <span class="math inline">\(d =
+27\)</span>。</p>
+</blockquote>
+<p>在密码学应用中，一般建议N至少为2048位（即 $N &gt; 2^{2048} = $
+<code>32317006071311007300714876688669951960444102669715484032130345427524655138867890893197201411522913463688717960921898019494119559150490921095088152386448283120630877367300996091750197750389652106796057638384067568276792218642619756161838094338476170470581645852036305042887575891541065808607552399123930385521914333389668342420684974786564569494856176035326322058077805659331026192708460314150258592864177116725943603718461857357598351152301645904403697613233287231227125684710820209725157101726931323469678542580656697935045997268352998638215525166389437335543602135433229604645318478604952148193555853611059596230656</code>）。</p>
+<p>普通的个人计算机可以在不太长（几秒至几小时内）分解 <span
+class="math inline">\(N&lt;2^{512}\)</span>。<br />
+分解 <span
+class="math inline">\(N\)</span>的方法有很多，稍加改善的手搓法（遍历<span
+class="math inline">\(i \in (2,\sqrt{N})\)</span> 的所有奇数）对于 <span
+class="math inline">\(N&lt;2^{128}\)</span> 来说都是极其高效的。<br />
+对于稍大一些的 <span
+class="math inline">\(N\)</span>，通用的分解方法包括二次筛选法、椭圆曲线分解法、普通数域筛选法（目前因数分解复杂度最低的非量子计算方法）等。</p>
+<p>同时，若质数 <span class="math inline">\(p,q\)</span>
+选取不当，则可能存在其它投机取巧之法，如 <span
+class="math inline">\((p,q)\)</span> 相差太小时，攻击者可以从 <span
+class="math inline">\(\lceil \sqrt{N} \rfloor\)</span>
+向上/下枚举爆破；<span class="math inline">\((p,q)\)</span>
+相差太大时试除即可攻破之（因数分解的复杂度取决于较小的因子大小）。</p>
+<p>约定<code>factor()</code>函数返回一个数的因子：<br />
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">factor_attack</span>(<span class="params">N:<span class="built_in">int</span>,e:<span class="built_in">int</span></span>):</span><br><span class="line">    p,q = factor(N)</span><br><span class="line">    phi = (p-<span class="number">1</span>)*(q-<span class="number">1</span>)</span><br><span class="line">    d = <span class="built_in">pow</span>(e,-<span class="number">1</span>,phi)</span><br><span class="line">    <span class="keyword">return</span> d</span><br><span class="line"></span><br></pre></td></tr></table></figure></p>
+<p><del>是不是非常简单？您现在已经完全掌握RSA了，快来CTF的世界里大战各种ezRSA吧</del></p>
+<h1 id="rsa-attacks-present">RSA-Attacks: Present</h1>
+<h1 id="rsa-attacks-future">RSA-Attacks: Future</h1>
+<h1 id="rsa-attacks-beyond">RSA-Attacks: Beyond</h1>
 
       
 
@@ -306,11 +428,33 @@ Jiang, Hibiscus, LingLong, Crystal, whatever:)</p>
     <div class="article-info article-info-index">
       
       
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
       
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/闲笔//" class="article-tag-list-link color3">闲笔</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/a-1/">展开全文 >></a>
+          <a class="article-more-a" href="/rsa/">展开全文 >></a>
         </p>
       
 
@@ -344,7 +488,7 @@ Jiang, Hibiscus, LingLong, Crystal, whatever:)</p>
   
   
     <nav id="page-nav">
-      <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/7/">7</a><a class="extend next" rel="next" href="/page/2/">Next &raquo;</a>
+      <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/8/">8</a><a class="extend next" rel="next" href="/page/2/">Next &raquo;</a>
     </nav>
   
 
