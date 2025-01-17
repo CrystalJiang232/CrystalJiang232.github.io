@@ -152,145 +152,6 @@
           <div id="js-content" class="content-ll">
             
   
-    <article id="post-cryptohack" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/cryptohack/">Cryptohack打本手记（持续咕咕ing）</a>
-    </h1>
-  
-
-        
-        <a href="/cryptohack/" class="archive-article-date">
-  	<time datetime="2024-12-18T02:13:02.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-18</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="ecb-orcale">ECB Orcale</h1>
-<p>ECB
-Orcale属于<strong>选择明文攻击</strong>，需要拥有对明文的一定加密权限。<br />
-其利用了ECB加密模式不能抵抗 <em>Replay
-Attacks</em>（重放攻击）的特点。</p>
-<h2 id="攻击原理">攻击原理</h2>
-<p>目标Orcale常形如<strong>固定后缀</strong>，对于攻击者传递的字符串m，该Orcale会将(m+flag)填充后加密之。<br />
-此时，攻击者可以先爆破出flag的长度，随后通过控制m，将待加密的明文（填充后的）制备为形如“控制域+填充域+待解域”的形式。
-以block大小为16为例，各个域的说明如下：</p>
-<blockquote>
-<p>控制域：大小为16，每次爆破控制域中的第i位，使之遍历 <span
-class="math inline">\((0,255)\)</span>。该位其前的内容应为已解密内容，其后的内容应与“待解域”的填充部分全等。</p>
-<p>填充域：大小为16*k(<span class="math inline">\(k \in
-Z_+\)</span>)，通过调整m，该域内容应为任意内容 +
-flag的待解密其它部分。</p>
-<p>待解域：大小为16，该域内容中应为待解密的一位c + 已解密的flag +
-填充部分。</p>
-</blockquote>
-<p>核心是利用ECB加密<strong>各部分相独立</strong>的特性，让控制域和待解域的内容进行碰撞；一旦加密得到的密文相同，说明明文也一定相同，此时就碰撞得到了flag的一位。</p>
-<h2 id="攻击实现">攻击实现</h2>
-<p>假设加密orcale形如下文：<br />
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> Crypto.Cipher <span class="keyword">import</span> AES</span><br><span class="line"><span class="keyword">from</span> Crypto.Util.Padding <span class="keyword">import</span> pad</span><br><span class="line"><span class="keyword">from</span> secret <span class="keyword">import</span> flag,key</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">encrypt</span>(<span class="params">msg:<span class="built_in">bytes</span></span>):</span><br><span class="line">    aes = AES.new(key,AES.MODE_ECB)</span><br><span class="line">    plain = pad(msg+flag,<span class="number">16</span>)</span><br><span class="line">    <span class="keyword">return</span> aes.encrypt(plain).<span class="built_in">hex</span>()</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__==<span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        ipt = <span class="built_in">bytes</span>.fromhex(<span class="built_in">input</span>(<span class="string">&#x27;encrypt :&#x27;</span>))</span><br><span class="line">        cipher = encrypt(ipt)</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&#x27;result : <span class="subst">&#123;cipher&#125;</span>&#x27;</span>)</span><br></pre></td></tr></table></figure></p>
-<p>我们的攻击思路：<br />
-1.
-爆破出flag的长度（或，构造临界点，即让我们知道初始状态下应如何做才能控制“待解域”的填充部分已知）。<br />
-2. 对于第i位，构造明文（控制域+填充域+待解域的非填充部分），传递之<br />
-3.
-若加密结果第一组和最后一组相同，说明得到碰撞，即获得了flag的一位。如此重复，直至明文全部解密完成</p>
-<blockquote>
-<p>“临界点”：当添加一个<code>byte</code>的明文后，发现得到cipher的长度增加了16(<code>BLOCK_SIZE</code>)，这是因为<code>pad</code>的规则要求填充位数不能为0。</p>
-<p>因此，此时实际被加密的明文恰好就是(<code>msg + flag + b'\x10' * 16</code>)。</p>
-<p>如果再给msg添加1位，就可以把flag的一位“挤”到后面（当然，相应的填充内容也会变成<code>b'\x0f'</code>）。（为了保证控制域的内容完全可控，msg应当从16位开始，或者在临界点后再向msg添加17位开始爆破）</p>
-</blockquote>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">getcipher</span>():</span><br><span class="line">    io.recvuntil(<span class="string">b&#x27;:&#x27;</span>)</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">bytes</span>.fromhex(io.recvline().strip().decode())</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__==<span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    io = process([<span class="string">&#x27;python&#x27;</span>,<span class="string">&#x27;task.py&#x27;</span>])</span><br><span class="line"></span><br><span class="line">    <span class="comment">#第一步</span></span><br><span class="line"></span><br><span class="line">    teststr = <span class="string">&#x27;&#x27;</span></span><br><span class="line">    lastlen = <span class="number">0</span></span><br><span class="line">    io.sendlineafter(<span class="string">b&#x27;:&#x27;</span>,teststr.encode())</span><br><span class="line">    start = <span class="built_in">len</span>(getcipher())</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">16</span>):</span><br><span class="line">        teststr += <span class="string">&#x27;0f&#x27;</span> <span class="comment">#内容随意，此处0f为考虑到后续碰撞需要提前准备</span></span><br><span class="line">        io.sendlineafter(<span class="string">b&#x27;:&#x27;</span>,teststr.encode())</span><br><span class="line">        <span class="keyword">if</span> <span class="built_in">len</span>(getcipher()) != start: </span><br><span class="line">            teststr += <span class="string">&#x27;0f&#x27;</span> * <span class="number">17</span></span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">    bt = <span class="built_in">bytearray</span>.fromhex(teststr)</span><br><span class="line">    decrypted = <span class="string">b&#x27;&#x27;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">#理论上可以不断assert len(decrypted) == i</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">16</span>):</span><br><span class="line">        padval = <span class="number">15</span> - i</span><br><span class="line">        bt = <span class="built_in">bytearray</span>(decrypted + [<span class="number">0</span>] + [padval] * padval + bt[<span class="number">16</span>:])</span><br><span class="line">        <span class="keyword">for</span> t <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">255</span>):</span><br><span class="line">            bt[i] = t</span><br><span class="line">            io.sendlineafter(<span class="string">b&#x27;:&#x27;</span>,bt.<span class="built_in">hex</span>().encode())</span><br><span class="line">            dealer = getcipher()</span><br><span class="line">            <span class="keyword">if</span> dealer[-<span class="number">16</span>:] == dealer[:<span class="number">16</span>]: <span class="comment">#碰撞成功，说明获得了一位密文</span></span><br><span class="line">                decrypted += t</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">raise</span> Exception(<span class="string">&quot;Something Wrong?&quot;</span>) <span class="comment">#Error</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">print</span>(decrypted)</span><br></pre></td></tr></table></figure>
-<h1 id="symmetry">Symmetry</h1>
-<p><del>游戏链接：</del><br />
-<a target="_blank" rel="noopener" href="https://aes.cryptohack.org/symmetry/">Cryptohack</a>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> Crypto.Cipher <span class="keyword">import</span> AES</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">KEY = ?</span><br><span class="line">FLAG = ?</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">@chal.route(<span class="params"><span class="string">&#x27;/symmetry/encrypt/&lt;plaintext&gt;/&lt;iv&gt;/&#x27;</span></span>)</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">encrypt</span>(<span class="params">plaintext, iv</span>):</span><br><span class="line">    plaintext = <span class="built_in">bytes</span>.fromhex(plaintext)</span><br><span class="line">    iv = <span class="built_in">bytes</span>.fromhex(iv)</span><br><span class="line">    <span class="keyword">if</span> <span class="built_in">len</span>(iv) != <span class="number">16</span>:</span><br><span class="line">        <span class="keyword">return</span> &#123;<span class="string">&quot;error&quot;</span>: <span class="string">&quot;IV length must be 16&quot;</span>&#125;</span><br><span class="line"></span><br><span class="line">    cipher = AES.new(KEY, AES.MODE_OFB, iv)</span><br><span class="line">    encrypted = cipher.encrypt(plaintext)</span><br><span class="line">    ciphertext = encrypted.<span class="built_in">hex</span>()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="string">&quot;ciphertext&quot;</span>: ciphertext&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">@chal.route(<span class="params"><span class="string">&#x27;/symmetry/encrypt_flag/&#x27;</span></span>)</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">encrypt_flag</span>():</span><br><span class="line">    iv = os.urandom(<span class="number">16</span>)</span><br><span class="line"></span><br><span class="line">    cipher = AES.new(KEY, AES.MODE_OFB, iv)</span><br><span class="line">    encrypted = cipher.encrypt(FLAG.encode())</span><br><span class="line">    ciphertext = iv.<span class="built_in">hex</span>() + encrypted.<span class="built_in">hex</span>()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="string">&quot;ciphertext&quot;</span>: ciphertext&#125;</span><br></pre></td></tr></table></figure></p>
-<p>本题的核心点在于OFB这个模式的“对称性”：OFB中并没有所谓“解密”操作（虽然很多流密码其实都没有解密操作，“加密”只是生成密钥流的过程，最终将该流和明文异或而得）。<br />
-考虑OFB的加密过程如图：<br />
-<img src="/img/OFB.png" title="Output Feedback Mode Encryption"
-alt="OFB" /><br />
-显然，只要攻击者获得了前一组密文并拥有加密权限，则其传递该组密文作为"iv"，即可解密后一组密文。<br />
-进一步地，若攻击者拥有全部的密文和iv，则其可以解密全部明文（将iv和密文再走一遍加密流程即可）。<br />
-exp即为获得(iv+密文)后直接传回交互式窗口，decode即可。</p>
-<blockquote>
-<p>flag: crypto{0fb_15_5ymm37r1c4l_!!!11!}</p>
-</blockquote>
-<h1 id="bean-counter">Bean Counter</h1>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">wp</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/闲笔//" class="article-tag-list-link color3">闲笔</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/cryptohack/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-  <div>
-</article>
-
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
     <article id="post-a" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -403,9 +264,223 @@ class="math inline">\(n\)</span></p>
 
 
   
+    <article id="post-cpp-return" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/cpp-return/">“事了拂衣去”——return的沧海桑田</a>
+    </h1>
+  
+
+        
+        <a href="/cpp-return/" class="archive-article-date">
+  	<time datetime="2024-12-13T02:36:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-13</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <blockquote>
+<p>一个最为简单的<code>return x;</code>语句是C++中出现频率最高的语句之一。为了将这一语句的效率发挥到极致，历代C++都在其上下了极大功夫。</p>
+</blockquote>
+<h1 id="不就是一个return嘛">不就是一个return嘛？</h1>
+<p>是的，确实就是一个<code>return</code>。</p>
+<p>C语言的所有变量都符合现代C++的<em>trivial
+types</em>的定义，即当一个变量被赋值时，只需要将该值对应内存空间的数据简单地copy到当前变量对应的内存空间。<br />
+对于 <em>trivial</em>
+的类来说，return确实只是将变量的值丢回到函数栈存储返回值之处（随后再销毁其它局部变量等等）。</p>
+<p>但C++作为一门面向对象的编译期语言，其揭示了一点——这一表面风平浪静的过程实则暗藏汹涌。<br />
+因为某一片具备数据、可使用的内存距离C++中的“对象”概念完全不能相提并论。</p>
+<blockquote>
+<p>这也是C/C++对于堆内存分配的“看法”迥异之处：C的<code>malloc</code>/<code>free</code>实际上不会对内存做任何事情（只是“申请”并获得使用权），顶多算上<code>calloc</code>的零初始化；</p>
+<p>而C++中的<code>new</code>实际上涉及分配内存-&gt;调用构造函数两步，具体地，你可以认为<code>operator new</code>就是一个<code>calloc</code>加上一个<code>thiscall</code>函数的调用：
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function">Ty* <span class="keyword">operator</span> <span class="title">new</span><span class="params">(<span class="type">size_t</span> size)</span> <span class="comment">//C++中operator new的最常用函数重载，在隐式调用时size_t会自动传递</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Ty* ptr = <span class="built_in">static_cast</span>&lt;Ty*&gt;(<span class="built_in">malloc</span>(size));</span><br><span class="line"></span><br><span class="line">    <span class="comment">//随后，我们假设一个函数的ctor在调用时实际上具备Ty::Ty(Ty* where,...)的形式。</span></span><br><span class="line">    <span class="comment">//其就是将本来隐式传递的this写成了显式的形式，参考python中的self和C++23的deducing this。</span></span><br><span class="line">    Ty::<span class="built_in">Ty</span>(ptr);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> ptr;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+</blockquote>
+<h1
+id="return背后的风云及传统c的应付之策">return背后的风云及传统C++的“应付”之策</h1>
+<p>现在我们假设希望去返回一个值，在C语言中由于并没有明确的“对象”概念——即使是<code>struct</code>也无异于具有特殊内存layout的fundamental
+types而已；<br />
+因此在返回时，可以直接从源内存块复制数据到目标内存块，随后释放源内存块的内存占用（栈/堆皆然）。以一个对应用途的、比较知名的C函数来说就是可以单纯地<code>memcpy</code>。</p>
+<blockquote>
+<p>C语言中确实有<code>memmove</code>这一函数，但其与C++的移动语义云云无关——其只是提供了在源内存和目标内存重叠时，保证数据可以正确覆写的保证。</p>
+</blockquote>
+<p>而在C++中却不是这样：对象可以认为是内存之上的上层建筑，获得对象时要先分配内存再调用构造函数，销毁对象时需要先调用析构函数再释放内存。<br />
+由此，直观的<code>return</code>解决方案就应运而生：以<code>return</code>的值作为参数，分配新内存并构造新对象，随后析构原对象、释放原内存即可。<br />
+但对于存在大型类的C++，如此做的弊端也非常明显：</p>
+<ul>
+<li>（复制）构造函数、析构函数可能会涉及到大量的其它操作，时间、资源开销较大；<br />
+</li>
+<li>C++的OOP思想决定了资源是由对象所“拥有”的，涉及到保有资源对象的相关操作时，或存在大量不必要的复制-析构操作（如堆内存），或很难/无法依此法安全地完成资源所有权的转移（如文件句柄）。</li>
+</ul>
+<p>举个有趣的实例：不知各位在初学C++，观察复制构造函数的作用时，是否有思索——即使是一念间，下面这段函数有些蹊跷？<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">S</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">S</span>(<span class="type">int</span> _x):<span class="built_in">x</span>(_x)&#123;&#125;</span><br><span class="line">    <span class="built_in">S</span>(<span class="type">const</span> S&amp; from):<span class="built_in">x</span>(from.x * <span class="number">2</span>)&#123;&#125;</span><br><span class="line">    <span class="built_in">S</span>(S&amp;&amp; from):<span class="built_in">x</span>(from.x*<span class="number">3</span>)&#123;&#125;</span><br><span class="line">    ~<span class="built_in">S</span>()&#123;std::cout &lt;&lt; x &lt;&lt; <span class="string">&#x27; &#x27;</span>;&#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> x;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">S <span class="title">single</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> S&#123;<span class="number">1</span>&#125;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">S <span class="title">transfer</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    S w&#123;<span class="built_in">single</span>()&#125;;</span><br><span class="line">    <span class="keyword">return</span> w;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    S a&#123;<span class="built_in">transfer</span>()&#125;;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>事实上，即使到了C++23，依然无法绝对把握地预测上述代码的输出——（在遵循标准下）不同的编译器给出的不同优化结果都会导致输出不同。<br />
+这也是纷争来源之始端：只要拥有non-trivial的复制/移动构造函数（甚至不涉及赋值，涉及赋值更麻烦），就有很多的<del>胡来</del>优化空间。<br />
+比如，<code>single()</code>返回的S到底是要copy一次返回（传统C++）还是move一次返回（C++11）？（剧透：C++17起，<code>single()</code>必须遵循
+<em>prvalue sematics</em>
+,意即其既不会copy也不会move<del>(surprise!)</del><br />
+再比如，<code>transfer()</code>明明初始化w后啥都没干，返回的时候是copy，还是move，还是都不调用？</p>
+<p>从C++98的观点来看（忽略移动构造函数），<code>single()</code>返回时需要复制构造一次，<code>transfer()</code>返回时亦然，故<code>std::cout</code>应当输出<code>1 2 4</code>。</p>
+<blockquote>
+<p>但其实即使是C++98的编译器编译运行之，依然不一定会输出上述结果。</p>
+</blockquote>
+<h1 id="c11move-sematics-comes-to-the-rescue吗">C++11："move sematics
+comes to the rescue"吗？</h1>
+<p>其中，第二条也是C++的一大痛点，因而C++11提出了右值引用和移动语义的概念，语言层面上支持了我们通过函数等来完成转移资源的操作。<br />
+作为配套，C++11提出了 <em>move-eligible</em>
+这一概念，通过它来规范一种"Automatic Move"。</p>
+<blockquote>
+<p>以下标志着一个具有<strong>自动存储周期(automatic storage
+duration)变量</strong>的表达式都是 <em>move-eligible</em>
+（可移动）的：<br />
+-
+其为一个非易失(non-<code>volatile</code>)对象类型，<strong>或一个非易失对象的右值引用（此项C++20中加入）</strong>；<br />
+- 且其在函数体内被声明/作为函数体内的参数出现。</p>
+</blockquote>
+<p>从C++11开始，对于<code>return x;</code>这条语句用于初始化一个临时对象时，其规定调用构造函数的重载决议会执行两次：<br />
+-
+第一次决议将x视为一个右值(rvalue?)；但若第一轮重载决议<strong>失败</strong>，或其成功但未选择移动构造函数（所谓选择函数的形参不是纯粹的“右值引用”），则继续执行第二轮<br />
+- 第二次决议时，x就会被视为一个左值(lvalue)。</p>
+<p>这里可见的最大的疑点就在第一轮重载决议的“失败”定义。比如，选到<code>= delete;</code>的函数算不算失败？若有多个函数的形参复合要求且优先级相同（即制造了歧义(ambiguity)），是遵循此条规则进行第二轮重载决议还是直接报错？<br />
+不同版本中，不同编译器都给出了诸多不同的实现、决策方式。</p>
+<blockquote>
+<p>关于C++11——C++20的规则细讲，可以参考<a
+target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/language/return">cppreference</a>。<br />
+两轮重载决议带来的最大问题就是很多奇特的现象，主要出在所谓“未选择移动构造函数”上。</p>
+</blockquote>
+<p>下述代码中，<code>f1()</code>在C++23前不能通过编译，<code>f2()</code>则通过隐式转换“逃过一劫”：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">T</span>&#123;&#125;;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">U</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">U</span>(T&amp;&amp;)&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function">T&amp;&amp; <span class="title">f1</span><span class="params">()</span></span>&#123;<span class="keyword">return</span> T&#123;&#125;;&#125;</span><br><span class="line"><span class="function">U <span class="title">f2</span><span class="params">()</span></span>&#123;<span class="keyword">return</span> T&#123;&#125;;&#125; </span><br></pre></td></tr></table></figure>
+<p>C++11起，由于第一轮重载决议会先将up看作右值，因此可以调用移动构造函数初始化返回值。<br />
+C++11以前，若通过一些其它方式禁用了up的复制构造，则其将不能被返回：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">std::unique_ptr&lt;<span class="type">int</span>&gt; <span class="title">f3</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::unique_ptr&lt;<span class="type">int</span>&gt; up&#123;&#125;;</span><br><span class="line">    <span class="keyword">return</span> up;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>C++20前若第一轮重载决议没有选择移动构造函数（必须是“move
+constructor”），则会回退到传统C++的重载决策(rr视为左值)进而无法使该段程序ill-formed：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">std::unique_ptr&lt;<span class="type">int</span>&gt; <span class="title">f4</span><span class="params">(std::unique_ptr&lt;<span class="type">int</span>&gt;&amp;&amp; rr)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> rr;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="c23终究利落地斩断万缕过往">C++23：终究利落地斩断万缕过往</h1>
+<p>对于二次重载决议的纷争不休，C++23最终选择给出了一个干净利落的解决方案：移除此前搭建的诸多为了保证兼容性而留下的设施，最大化"Automatic
+move"的适用范围。<br />
+C++23起，只要<code>return exp;</code>中的exp是 <em>move-eligible</em>
+的， 那么该表达式就会被视为 <strong><em>xvalue</em></strong> 。
+当然，如此做也有一定的副作用：<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span>&amp; <span class="title">fun</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> x = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">return</span> x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 这段代码一直以来都是C++中演示悬挂引用(<em>dangling
+reference</em>)的完美示范，而C++23起这段代码将不能通过编译（因为x将被视作xvalue）。<br />
+<del>（当然，如果你执意要创造一个悬挂引用，可以把返回值类型改成<code>int&amp;&amp;</code>）</del></p>
+<blockquote>
+<p>预告：C++26中对于上述悬挂引用的规定作出了更新，现在若一个函数返回的引用值绑定至临时对象上，则该程序非良构(ill-formed)。<del>相当于悬挂引用return渐渐成为历史</del></p>
+</blockquote>
+<h1 id="nrvourvoc优化之谜">NRVO/URVO：C++优化之谜</h1>
+<p>回到最开始的那个函数套娃传递的实例（不要笑——这种套娃传递初始化构造是非常常见的），在许多场景下其编译结果依然有优化空间：<br />
+与其让编译器调用几次移动构造函数，不如甚至直接略去这个过程，让最上层的栈函数直接控制最底层函数构造的对象栈空间。<br />
+事实上，早在移动语义提出之前的C++98，就已经允许了编译器执行这样的优化（“优化”掉部分<code>return</code>函数中对<strong>可能带副作用</strong>的复制构造函数的调用）。</p>
+<p>这样的优化场景有两种：<br />
+- 返回值的表达式是一个纯右值(<em>prvalue</em>)表达式，称为"URVO"(Unnamed
+Return Value Optimization)；<br />
+-
+返回值的表达式是一个本地变量的表达式，但编译器可以预知该变量在一定代码块内不会变化（相当于可以“预判”其返回值/状态），称为"NRVO"(Named
+Return Value Optimization)。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">std::string <span class="title">getstr</span><span class="params">(<span class="type">int</span> var)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> std::format(<span class="string">&quot;&#123;0&#125; &#123;0&#125; &#123;0&#125;&quot;</span>,var);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">std::string <span class="title">process</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::string base = <span class="built_in">getstr</span>(<span class="number">3</span>);</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">    <span class="keyword">return</span> base;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,<span class="built_in">process</span>());</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如上，C++23中在没有任何优化的情况下，至少需要调用<code>std::string</code>的移动构造函数两次。<br />
+但实际上<code>getstr(int)</code>函数中初始化一个对象后直接<code>return</code>了，显然它的栈空间是可以复用的；同时<code>process()</code>中并没有对<code>base</code>进行任何其它操作就直接返回，因而其移动也可以省略。</p>
+<p>C++17提出了 <em>prvalue sematics</em>
+的概念，要求编译器对纯右值表达式（包括潜在需要隐式调用转换构造函数的返回值）进行复制省略优化（<strong>一定不会</strong>调用移动/复制构造函数）。
+对于以下代码： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Test</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Test</span>()&#123;&#125;</span><br><span class="line">    <span class="built_in">Test</span>(<span class="type">const</span> Test&amp;)&#123;std::<span class="built_in">println</span>(<span class="string">&quot;copy ctor&quot;</span>);&#125;</span><br><span class="line">    <span class="built_in">Test</span>(Test&amp;&amp;) <span class="keyword">noexcept</span> &#123;std::<span class="built_in">println</span>(<span class="string">&quot;move ctor&quot;</span>);&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">auto</span> v = []&#123;<span class="keyword">return</span> Test&#123;&#125;;&#125;();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> C++17的 <em>prvalue sematics</em> (a.k.a.
+guaranteed copy elision) 保证了上述代码不会有任何输出。</p>
+<p>但对于NRVO来说，有两个指导于实践中的要点：<br />
+1.
+C++只是允许了这种optimization的存在，对其优化程度则未做任何规定/明确，最终优化/编译结果亦因编译器及编译设置而异：<br />
+比如将上述代码中<code>main</code>函数的第一行改为 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> v = []&#123;Test t&#123;&#125;; <span class="keyword">return</span> t;&#125;();</span><br></pre></td></tr></table></figure>
+此时程序运行输出可能为空也可能不为空。</p>
+<blockquote>
+<p>严格来说，C++23前这段代码的输出很大程度上取决于v的初始化声明方式（参见“两轮重载决议”）。<br />
+C++23保证了这段代码若有输出，则一定是"move ctor"。</p>
+</blockquote>
+<ol start="2" type="1">
+<li>NRVO的返回值不能有任何修饰（必须只是一个变量名）。因此<code>return std::move(local)</code>是不被建议的写法（如此做会disable
+NRVO）。<br />
+C++23前，在部分返回引用/move-only类型时可能需要用<code>std::move</code>来保证一定的兼容性，但随着C++23统一将
+<em>move-eligible</em>
+的本地变量视为xvalue，现在依然建议绝大部分场景直接<code>return local;</code>即可。</li>
+</ol>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">std::string <span class="title">ret</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::string val&#123;&#125;;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">    <span class="keyword">return</span> val; <span class="comment">//Left room for NRVO Optimization: invocation of move ctor not necessary</span></span><br><span class="line">    <span class="comment">//return std::move(val); //Try not to code this: surpresses NRVO</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="结语">结语</h1>
+<p>C++23起，<code>return x;</code>的诸多用法和语义得以被归一化；<br />
+从程序设计的角度来说，除少数需要移动一些<code>volatile</code>、<code>static</code>等变量的场景，其它情况下均使用最简单的<code>return x;</code>即可获得最大效率。</p>
+<p>无论是学习编程语言，还是学习、工作与生活中处理各种问题，都尽量应当摒弃"take
+it for granted"的思维。<br />
+对一些司空见惯之现象深入探究，方能助自身视野格局突破惰性之樊笼，逐渐得以游走自如于空阔之境。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/cpp-return/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+  <div>
+</article>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
   
     <nav id="page-nav">
-      <a class="extend prev" rel="prev" href="/page/3/">&laquo; Prev</a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><span class="page-number current">4</span><a class="page-number" href="/page/5/">5</a><a class="page-number" href="/page/6/">6</a><span class="space">&hellip;</span><a class="page-number" href="/page/8/">8</a><a class="extend next" rel="next" href="/page/5/">Next &raquo;</a>
+      <a class="extend prev" rel="prev" href="/page/3/">&laquo; Prev</a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><span class="page-number current">4</span><a class="page-number" href="/page/5/">5</a><a class="page-number" href="/page/6/">6</a><a class="page-number" href="/page/7/">7</a><a class="extend next" rel="next" href="/page/5/">Next &raquo;</a>
     </nav>
   
 
@@ -584,6 +659,10 @@ MathJax.Hub.Queue(function() {
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">Flag</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">长文精选</a>
               </li>
             
             <div class="clearfix"></div>

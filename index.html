@@ -336,8 +336,7 @@ class="math inline">\(N = pq\)</span> 很容易，但给定 <span
 class="math inline">\(N\)</span>，找到满足 <span
 class="math inline">\(pq = N\)</span> 的 <span
 class="math inline">\((p,q)\)</span> 是困难的。</p>
-<h3 id="原理">原理</h3>
-<h4 id="密钥生成">密钥生成</h4>
+<h3 id="密钥生成">密钥生成</h3>
 <ol type="1">
 <li>选择大质数 <span class="math inline">\(p,q\)</span> 且 <span
 class="math inline">\(p \neq q\)</span>，计算 <span
@@ -368,7 +367,7 @@ class="math inline">\(\varphi(N)\)</span> 互质的原因是，若不然，则 <
 class="math inline">\(e\)</span> 在 <span
 class="math inline">\(F_{\varphi(N)}\)</span> 下的逆元不存在。</p>
 </blockquote>
-<h4 id="加密解密">加密/解密</h4>
+<h3 id="加密解密">加密/解密</h3>
 <p>加/解密前，首先需要将信息编码为一个正整数 <span
 class="math inline">\(m\)</span>，且 <span class="math inline">\(m &lt;
 N\)</span>。<br />
@@ -380,7 +379,30 @@ class="math inline">\(c\)</span>即为密文。</p>
 <p>解密：<br />
 解密方计算 <span class="math inline">\(m = c^d mod N\)</span>，<span
 class="math inline">\(m\)</span>即为明文。</p>
-<h4 id="正确性证明">正确性证明</h4>
+<h3 id="正确性证明">正确性证明</h3>
+<p>显然我们有 <span class="math inline">\(m_c = (m^e)^d mod N = m^{ed}
+mod N\)</span>。</p>
+<ul>
+<li>若 <span class="math inline">\(gcd(m,N) = 1\)</span>，又 <span
+class="math inline">\(ed \equiv 1 (mod
+\varphi{N})\)</span>，故由欧拉定理知其成立。<br />
+</li>
+<li>若 <span class="math inline">\(gcd(m,N) = k \neq 1\)</span>，则显然
+<span class="math inline">\(gcd(\frac{m}{k},\frac{N}{k}) =
+1\)</span>。<br />
+考虑 <span class="math inline">\(m^{ed} =
+\frac{m}{k}^{ed}k^{ed}\)</span>，同理有 <span
+class="math inline">\(\frac{m}{k}^{ed} \equiv \frac{m}{k} (mod
+N)\)</span>；<br />
+又因 <span class="math inline">\(N = pq\)</span>，则必有 <span
+class="math inline">\(k = lp\)</span> 或 <span class="math inline">\(k =
+lq\)</span> 成立(<span class="math inline">\(k \in Z\)</span>)，以 <span
+class="math inline">\(k = lp\)</span>
+为例说明（另一者互偶，同理）：<br />
+<span class="math inline">\(k^{ed} = (lp)^{ed} =
+l^{ed}p^{ed}\)</span>，同时有 <span class="math inline">\(p^{ed} \equiv
+mp (mod N) (m \in Z)\)</span>，</li>
+</ul>
 <h1 id="rsa应用">RSA应用</h1>
 <h1 id="rsa-attacks-past">RSA-Attacks: Past</h1>
 <p>针对RSA，最简单的攻击方式就是因数分解了。只要能获取到满足 <span
@@ -418,8 +440,225 @@ class="math inline">\(\lceil \sqrt{N} \rfloor\)</span>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">factor_attack</span>(<span class="params">N:<span class="built_in">int</span>,e:<span class="built_in">int</span></span>):</span><br><span class="line">    p,q = factor(N)</span><br><span class="line">    phi = (p-<span class="number">1</span>)*(q-<span class="number">1</span>)</span><br><span class="line">    d = <span class="built_in">pow</span>(e,-<span class="number">1</span>,phi)</span><br><span class="line">    <span class="keyword">return</span> d</span><br><span class="line"></span><br></pre></td></tr></table></figure></p>
 <p><del>是不是非常简单？您现在已经完全掌握RSA了，快来CTF的世界里大战各种ezRSA吧</del></p>
 <h1 id="rsa-attacks-present">RSA-Attacks: Present</h1>
+<p>比较“普通”的RSA攻击一般针对 <span class="math inline">\(p,q\)</span>
+以外某些参数的选取不当，或应用时获得了一些额外信息。<br />
+针对RSA的攻击大致可分为两级：<br />
+- 获得私钥 <span class="math inline">\(d\)</span>（无论是通过分解 <span
+class="math inline">\(N\)</span> 还是其它方法使然）；<br />
+- 仅解出密文 <span class="math inline">\(c\)</span> 对应的明文 <span
+class="math inline">\(m\)</span>。</p>
+<blockquote>
+<p>任何加密算法的成长都是在不断应对针对它的攻击中进行的，因此下述在介绍攻击方式后，亦会附上防范此类攻击的参数选择要点。</p>
+</blockquote>
+<h2 id="共模攻击">共模攻击</h2>
+<p>如果同一个明文 <span class="math inline">\(m\)</span> 被相同的 <span
+class="math inline">\(N\)</span>，两个互质的 <span
+class="math inline">\(e\)</span> 加密，则其会受到共模攻击而被解出 <span
+class="math inline">\(m\)</span>。</p>
+<p>假设公钥对是 <span class="math inline">\((N,e_1)\)</span> 和 <span
+class="math inline">\((N,e_2)\)</span> 且 <span
+class="math inline">\(gcd(e_1,e_2) = 1\)</span>，<br />
+根据RSA加密算法可知 <span class="math inline">\(c_1 = m^{e_1} mod
+N\)</span>，<span class="math inline">\(c_2 = m^{e_2} mod
+N\)</span>。</p>
+<p>而根据扩展欧几里得算法(extended gcd)，<span
+class="math inline">\(gcd(e_1,e_2) = 1\)</span>时，必定存在 <span
+class="math inline">\(k_1,k_2 \in Z\)</span> 使得 <span
+class="math inline">\(k_1e_1 + k_2e_2 = 1\)</span> 成立，且对 <span
+class="math inline">\(k_1,k_2\)</span> 的计算是极其高效的。<br />
+在获得 <span class="math inline">\((k_1,k_2)\)</span>
+后，原式中存在：<br />
+<span class="math inline">\(c_1^{k_1}c_2^{k_2} = m^{e_1k_1}m^{e_2k_2} =
+m^{e_1k_1+e_2k_2} = m mod N\)</span>。</p>
+<p>攻击代码： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> gmpy2 <span class="keyword">import</span> gcdext</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">module_attack</span>(<span class="params">N:<span class="built_in">int</span>,e1:<span class="built_in">int</span>,e2:<span class="built_in">int</span>,c1:<span class="built_in">int</span>,c2:<span class="built_in">int</span></span>):</span><br><span class="line">    k1,k2 = gcdext(e1,e2)</span><br><span class="line">    m = <span class="built_in">pow</span>(c1,k1,N) * <span class="built_in">pow</span>(c2,k2,N)</span><br><span class="line">    <span class="keyword">return</span> m</span><br><span class="line"></span><br></pre></td></tr></table></figure></p>
+<p>防御措施：<br />
+避免复用公钥模数 <span class="math inline">\(N\)</span>
+（当然看下面的广播攻击，结论是RSA加密中尽量避免复用公钥组 <span
+class="math inline">\((N,e)\)</span> 中的任何一项）。</p>
+<h2 id="低加密指数攻击">低加密指数攻击</h2>
+<ul>
+<li>对于比较小的e，若待加密明文过小且参数e也太小，导致 <span
+class="math inline">\(m^e &lt; N\)</span> （或 $c = m^e + kN $ 中 <span
+class="math inline">\(k\)</span> 过小），则可以直接开方或枚举 <span
+class="math inline">\(k\)</span> 的值来获得明文。<br />
+如下述实例：</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">N = <span class="number">15067247495220337739044658580299422870743900516291641900709982926345667445039146043233960939583805867654877804217823602164965308434379916314531787544484331879416867309985969107571009640793541373033817591265862576042098374671328353177269157927530773089919450474387718226408886464418934301939562552412210432078973011198275525131589077112707811244813014186842704804798516862080895193027541400001107109348059144275554795461055553022886195506734038234367433077440246383581544003867276627576721675797264983653531410560174664964798418527973330630833350627208925524624696705806770455875901332452920931280846343304764406432431</span></span><br><span class="line">e = <span class="number">3</span></span><br><span class="line">m = <span class="built_in">int</span>.from_bytes(msg)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&#x27;c=<span class="subst">&#123;<span class="built_in">pow</span>(m,e,N)&#125;</span>&#x27;</span>)</span><br><span class="line"><span class="comment"># c = 56904331863513826993889193197580675994130972045548192078570591022171553205166868384632082720292597125</span></span><br></pre></td></tr></table></figure>
+<p>显然由于N太大，e太小且待加密的信息太小，因此会受到低解密指数攻击（直接开三次根即可）。</p>
+<p>防御措施：</p>
+<ul>
+<li>不选择太小的e；<br />
+</li>
+<li>加密前对消息进行填充(padding)，使之达到与N相近的长度。</li>
+</ul>
+<blockquote>
+<p>盲目选择较大的e可能会导致计算负载变大，故在很多密码学应用中可以看到<code>e = 65537</code>的声明，因其可表示为<code>0x10001</code>，计算速度快（参考快速幂取模算法），且是较大的质数，易于满足
+<span class="math inline">\(gcd(e,\varphi(N)) = 1\)</span>的要求。</p>
+</blockquote>
+<h2 id="广播攻击">广播攻击</h2>
+<p>先介绍一下<del>韩信点兵</del>CRT(Chinese Remainder
+Theorem，中国剩余定理)：</p>
+<blockquote>
+
+</blockquote>
+<p>其应用场景为当一个明文被相同的 <span class="math inline">\(e\)</span>
+和不同的模数 <span class="math inline">\(N\)</span>
+加密多次后，可以通过CRT得到其通解，当该通解满足 <span
+class="math inline">\(\prod_{i=1}^{n} N_i &gt; m^e\)</span> 时，取 <span
+class="math inline">\(k=0\)</span> 的特解得到的必定是 <span
+class="math inline">\(m^e\)</span> 的值。<br />
+照常先上靶子： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line">Nls = [getPrime(<span class="number">512</span>)*getPrime(<span class="number">512</span>) <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">50</span>)]</span><br><span class="line">e = <span class="number">47</span></span><br><span class="line">m = <span class="built_in">int</span>.from_bytes(msg)</span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">100</span>):</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&#x27;c = <span class="subst">&#123;<span class="built_in">pow</span>(m,e,Nls[i])&#125;</span>&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">#...(omitted)</span></span><br></pre></td></tr></table></figure></p>
+<p>sagemath中内置了crt函数，直接调用之即可：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line"></span><br><span class="line">Nlist = ...</span><br><span class="line">clist = ...</span><br><span class="line">e = <span class="number">47</span></span><br><span class="line"></span><br><span class="line">m = crt(Nlist,clist) ^ (<span class="number">1</span>/e)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>可以发现，若 <span class="math inline">\(m\)</span> 与 <span
+class="math inline">\(N_i\)</span> 位数相近，则必须要 <span
+class="math inline">\(e\)</span> 组数据才能让CRT获得解。而在数据量较大时
+<span class="math inline">\(\prod_{i=1}^{n} N_i\)</span>
+会急速膨胀，故在 <span class="math inline">\(m^e\)</span>
+较大时此方法在计算上并不可行。</p>
+</blockquote>
+<p>防御措施：</p>
+<ul>
+<li>依然需要避免加密过小的明文或令 <span
+class="math inline">\(e\)</span> 的值太小；<br />
+</li>
+<li>避免复用 <span class="math inline">\((N,e)\)</span> 进行加密。</li>
+</ul>
+<h2 id="低解密指数攻击">低解密指数攻击</h2>
+<p>如果解密指数 <span class="math inline">\(d\)</span>
+太小，可能会受到低解密指数攻击（又名“连分数攻击”，Wiener's
+Attack）。</p>
+<blockquote>
+<p>Wiener's Attack的成立条件是 <span class="math inline">\(p &lt; q &lt;
+2p\)</span> 且 <span class="math inline">\(d &lt;
+\frac{1}{3}N^{\frac{1}{4}}\)</span>。</p>
+</blockquote>
 <h1 id="rsa-attacks-future">RSA-Attacks: Future</h1>
+<p>在RSA中，如果我们可以进行选择明/密文攻击，则在一定场景下存在诸多较为“花哨”的攻击方式。</p>
+<h2 id="rsa-parity-orcale">RSA Parity Orcale</h2>
+<blockquote>
+<p>Orcale可以理解为一种交互装置，其可以对给定的输入运行密码算法，并按特殊的规则输出（意即其执行的并不是常规的完整加/解密操作，但会返回和加/解密过程有关的信息）。</p>
+</blockquote>
+<p>Parity Orcale又名“奇偶攻击”，本质是一种选择密文攻击。<br />
+其描述为：给定一个解密Orcale，其接受任意密文 <span
+class="math inline">\(c\)</span>
+并解密之，但只会输出计算明文的奇偶性（变种是输出其最后一个/n个字节，本质是
+<span class="math inline">\(mod 2\)</span> 和 <span
+class="math inline">\(mod 16^{n}\)</span> 的区别而已）。<br />
+攻击目标是解密一个用对应公钥加密的密文 <span
+class="math inline">\(c_0\)</span>。</p>
+<p>攻击思路：公钥 <span class="math inline">\((N,e)\)</span>
+公开，同时显然我们有 <span class="math inline">\(m,c &lt;
+N\)</span>。<br />
+已知 <span class="math inline">\(m \equiv c^{d} mod N\)</span>，<br />
+现计算 <span class="math inline">\(c_1 = c2^e mod N\)</span>（等价于
+<span class="math inline">\(c_1\)</span> 就是 <span
+class="math inline">\(2m\)</span> 的加密结果），将 <span
+class="math inline">\(c_1\)</span> 输入该Orcale，观察输出：<br />
+由于其解密的 <span class="math inline">\(m_1\)</span> 必定满足 <span
+class="math inline">\(m_1 \equiv 2m (mod N)\)</span>，即 <span
+class="math inline">\(m_1 + kN = 2m\)</span>，又以 <span
+class="math inline">\(m \in (0,N)\)</span>，故必定有 <span
+class="math inline">\(k \in \{0,1\}\)</span>，同时显然 <span
+class="math inline">\(N \equiv 1 (mod 2)\)</span>成立，因而：</p>
+<ul>
+<li>若Orcale返回奇数，则 <span class="math inline">\(k =
+1\)</span>，说明 <span class="math inline">\(m \in [\lceil \frac{N}{2}
+\rceil,N)\)</span>；<br />
+</li>
+<li>若Orcale返回偶数，则 <span class="math inline">\(k =
+0\)</span>，说明 <span class="math inline">\(m \in (0,\lceil \frac{N}{2}
+\rceil)\)</span>。</li>
+</ul>
+<blockquote>
+<p>可以发现，其逻辑分析完成后与“二分查找” <span
+class="math inline">\(m\)</span> 的值无异。</p>
+</blockquote>
+<p>因此每次将 <span class="math inline">\(m\)</span> “加倍” （对上一次的
+<span class="math inline">\(c\)</span> 乘以 <span
+class="math inline">\(2^e\)</span> 后对 <span
+class="math inline">\(N\)</span>
+取模）后，都可以通过Orcale返回的奇偶性缩小 <span
+class="math inline">\(m\)</span>
+的范围：奇数则为上半部分，偶数则为下半部分。<br />
+故该算法可以在 <span class="math inline">\(O(\log_2N)\)</span>
+的时间内运行完毕。</p>
+<p>代码示例：<br />
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Orcale</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        p = getPrime(<span class="number">1024</span>)</span><br><span class="line">        q = getPrime(<span class="number">1024</span>)</span><br><span class="line">        <span class="variable language_">self</span>.e = <span class="number">65537</span></span><br><span class="line">        <span class="variable language_">self</span>.N = p * q</span><br><span class="line">        <span class="variable language_">self</span>.d = <span class="built_in">pow</span>(<span class="variable language_">self</span>.e,-<span class="number">1</span>,(p-<span class="number">1</span>)*(q-<span class="number">1</span>))</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">decrypt</span>(<span class="params">self,c:<span class="built_in">int</span></span>):</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">pow</span>(c,<span class="variable language_">self</span>.d,<span class="variable language_">self</span>.N) % <span class="number">2</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">get_pubkey</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="keyword">return</span> <span class="variable language_">self</span>.N,<span class="variable language_">self</span>.e</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">get_cipher</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">pow</span>(<span class="built_in">int</span>.from_bytes(msg),<span class="variable language_">self</span>.e,<span class="variable language_">self</span>.N)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__==<span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    rsa = Orcale()</span><br><span class="line">    N,e = rsa.get_pubkey()</span><br><span class="line">    c = rsa.get_cipher()</span><br><span class="line"></span><br><span class="line">    low = <span class="number">0</span></span><br><span class="line">    high = N</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> low &lt; high:</span><br><span class="line">        c = c * <span class="built_in">pow</span>(<span class="number">2</span>,e,N) % N</span><br><span class="line">        mid = high // <span class="number">2</span></span><br><span class="line">        <span class="keyword">if</span> rsa.decrypt(c):</span><br><span class="line">            high = mid</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            low = mid + <span class="number">1</span></span><br><span class="line"></span><br><span class="line">    result = low</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&#x27;result = <span class="subst">&#123;result&#125;</span>&#x27;</span>)</span><br><span class="line"></span><br></pre></td></tr></table></figure></p>
+<h2 id="rsa-side-channel-attack">RSA side channel attack</h2>
+<h3 id="侧信道攻击简介">侧信道攻击简介</h3>
+<p>Side Channel Attack,
+侧信道攻击，指攻击者通过对密码算法运行设备的信号特征等进行分析，从中提取关键信息的攻击。<br />
+现实中，此类攻击针对的对象主要有：</p>
+<ul>
+<li>设计有疏漏的服务端，其在运行过程中泄露了部分关键/非关键信息；<br />
+</li>
+<li>微型的电子设备，其在运行密码算法时自身的功耗、信号特征等会随运行过程而明显波动。</li>
+</ul>
+<p>多数情况下，侧信道攻击会和其它类型的攻击一同使用（即侧信道很可能只是获取部分参数，而非全部）。</p>
+<h3 id="快速幂">快速幂？</h3>
+<p>RSA中的侧信道攻击主要针对的是快速幂（取模）算法的特征。<br />
+数学上，根据幂的递归定义我们可以得到：<br />
+<span class="math inline">\(a^{b+1} = a \cdot a^{b} (a,b \in R; a,b \neq
+0)\)</span> 。<br />
+因此计算 <span class="math inline">\(a^b\)</span> 时，我们诚然可以将
+<span class="math inline">\(b\)</span> 个 <span
+class="math inline">\(a\)</span> 相乘来获得结果，但如此做的时间复杂度是
+<span class="math inline">\(O(b)\)</span>，在 <span
+class="math inline">\(b\)</span> 很大时显然是不现实的。</p>
+<p>快速幂的计算思想是将幂数分解为二进制位，对每一个二进制位都只需要乘一次（因为根据幂运算法则，该位对应的乘数可以预先计算）。数学表达就是：<br />
+若 <span class="math inline">\(b \equiv 0 (mod 2)\)</span>，则 <span
+class="math inline">\(a^b = (a^2)^{\frac{b}{2}}\)</span>；<br />
+若 <span class="math inline">\(b \equiv 1 (mod 2)\)</span>，则 <span
+class="math inline">\(a^b = a \cdot
+(a^2)^{\frac{b-1}{2}}\)</span>。<br />
+设 <span class="math inline">\(b\)</span> 是一个 <span
+class="math inline">\(k\)</span> 位的二进制数 <span
+class="math inline">\(\{b_n b_{n-1} b_{n-2} \cdots b_1 b_0\} (b_i \in
+\{0,1\})\)</span>，<br />
+则 <span class="math inline">\(a^b\)</span> 可以表示成 <span
+class="math inline">\(b_0a \cdot b_1a^2 \cdot b_2a^{2^{2}} \cdots
+b_na^{2^{n}}\)</span>。<br />
+显然 <span class="math inline">\(a^{2^{n+1}} =
+(a^{2^{n}})^2\)</span>，故该算法运行的时间复杂度会瞬间降至 <span
+class="math inline">\(\log_{2}N\)</span>。</p>
+<p>而对于 <span class="math inline">\(Zmod(N)\)</span>
+上的幂运算，其分析同理。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">fastexpmod</span>(<span class="params">a:<span class="built_in">int</span>,b:<span class="built_in">int</span>,N:<span class="built_in">int</span></span>):</span><br><span class="line">    <span class="keyword">assert</span> a&gt;<span class="number">0</span> <span class="keyword">and</span> b&gt;<span class="number">0</span> <span class="keyword">and</span> N&gt;<span class="number">0</span></span><br><span class="line">    res = <span class="number">1</span></span><br><span class="line">    <span class="keyword">while</span> b:</span><br><span class="line">        <span class="keyword">if</span> b &amp; <span class="number">1</span>:</span><br><span class="line">            res = res * a % N</span><br><span class="line">        b &gt;&gt;= <span class="number">1</span></span><br><span class="line">        a = a * a % N</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> res</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>显然对于不取模的情况，将对 <span class="math inline">\(N\)</span>
+取模的部分去除即可。</p>
+<h3 id="攻击">攻击</h3>
+<p>对于小型的电子设备，快速幂的运算特点就会暴露出一些信息。<br />
+如上，当<code>b &amp; 1 == 1</code>
+时，每次循环中会额外将<code>res</code>的值进行一次乘数+取模的操作，宏观上其会体现为一个电磁脉冲的峰值。<br />
+分析脉冲的谷峰，则可以从中“套取”到幂数的信息；而RSA中最关键的参数（公钥e/私钥d）均作为幂数出现，因此攻击者就有可能通过加/解密过程来获得公钥/私钥。</p>
+<blockquote>
+<p>对于小型的电子设备，其可能只具有（部分的）加/解密功能而并不会直接公开公钥，因此密码分析时公钥不能作为“理所当然”的条件。</p>
+</blockquote>
+<h2 id="rsa-n-orcale">RSA N-Orcale</h2>
+<p>上述中考虑到了RSA中针对 <span class="math inline">\(e\)</span>
+的一种攻击方法（<span class="math inline">\(d\)</span>同理）。<br />
+事实上，在已知 <span class="math inline">\(N\)</span>
+时若我们拥有一个加/解密Orcale，则其相当于去解一个离散对数(Discrete
+Logorithm)问题，若 <span class="math inline">\(e &lt; 2^{64}\)</span>
+则其亦能在不太长的时间内破解。<br />
+但假如我们连 <span class="math inline">\(N\)</span> 都不知道呢？</p>
+<p>对于 <span class="math inline">\(N\)</span>
+的攻击可以通过选择明(密)文进行（加密/解密Orcale任取其一即可）。</p>
 <h1 id="rsa-attacks-beyond">RSA-Attacks: Beyond</h1>
+<blockquote>
+<p>可曾听闻格攻击？</p>
+</blockquote>
+<h2 id="增广格">增广格</h2>
+<p>在RSA中，如果私钥 <span class="math inline">\(d\)</span> 被复用且满足
+<span class="math inline">\(d &lt;
+N^{\frac{1}{2}}\)</span>，则攻击者可以仅通过一些公钥集 <span
+class="math inline">\((N_i,e_i)\)</span> 获得私钥 <span
+class="math inline">\(d\)</span>。<br />
+其对于很多微型电子设备来说非常致命，因为对于一个小型的加密Orcale，攻击者甚至不需要显式地知道公钥集——
+<span class="math inline">\(e\)</span> 可以通过侧信道攻击获得，而 <span
+class="math inline">\(N\)</span> 可以通过一个加密Orcale来获得。</p>
 
       
 
@@ -488,7 +727,7 @@ class="math inline">\(\lceil \sqrt{N} \rfloor\)</span>
   
   
     <nav id="page-nav">
-      <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/8/">8</a><a class="extend next" rel="next" href="/page/2/">Next &raquo;</a>
+      <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/7/">7</a><a class="extend next" rel="next" href="/page/2/">Next &raquo;</a>
     </nav>
   
 
@@ -667,6 +906,10 @@ MathJax.Hub.Queue(function() {
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">Flag</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">长文精选</a>
               </li>
             
             <div class="clearfix"></div>
