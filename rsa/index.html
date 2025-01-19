@@ -6,17 +6,17 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="https://crystaljiang232.github.io">
-  <title>rsa | 玲珑</title>
+  <title>RSA | 玲珑</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta name="description" content="RSA及非对称密码学简介 非对称密码学 经典的加密&#x2F;解密系统都是对称密码学（亦称“私钥密码学”），其中加密方和解密方使用相同密钥。 而在计算机网络环境中，密钥的管理与分发将成为一个难题；同时加密和解密所需的权限相同（即拥有加密权限的人也拥有解密权限），不利于权限控制等。 非对称密码学（亦称“公钥密码学”）采用的加&#x2F;解密方法中，加密方和解密方的密钥不同。称加密方的密钥为“公钥”，解密方的密钥">
 <meta property="og:type" content="article">
-<meta property="og:title" content="rsa">
+<meta property="og:title" content="RSA">
 <meta property="og:url" content="https://crystaljiang232.github.io/rsa/index.html">
 <meta property="og:site_name" content="玲珑">
 <meta property="og:description" content="RSA及非对称密码学简介 非对称密码学 经典的加密&#x2F;解密系统都是对称密码学（亦称“私钥密码学”），其中加密方和解密方使用相同密钥。 而在计算机网络环境中，密钥的管理与分发将成为一个难题；同时加密和解密所需的权限相同（即拥有加密权限的人也拥有解密权限），不利于权限控制等。 非对称密码学（亦称“公钥密码学”）采用的加&#x2F;解密方法中，加密方和解密方的密钥不同。称加密方的密钥为“公钥”，解密方的密钥">
 <meta property="og:locale" content="en_US">
-<meta property="article:published_time" content="2025-01-16T07:19:27.000Z">
-<meta property="article:modified_time" content="2025-01-17T00:05:36.279Z">
+<meta property="article:published_time" content="2025-01-16T21:19:27.000Z">
+<meta property="article:modified_time" content="2025-01-19T15:05:25.782Z">
 <meta property="article:author" content="Hibiscus">
 <meta property="article:tag" content="Crypto">
 <meta name="twitter:card" content="summary">
@@ -162,13 +162,13 @@
         
   
     <h1 class="article-title" itemprop="name">
-      rsa
+      RSA
     </h1>
   
 
         
         <a href="/rsa/" class="archive-article-date">
-  	<time datetime="2025-01-16T07:19:27.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-01-16</time>
+  	<time datetime="2025-01-16T21:19:27.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-01-16</time>
 </a>
         
       </header>
@@ -282,6 +282,25 @@ l^{ed}p^{ed}\)</span>，同时有 <span class="math inline">\(p^{ed} \equiv
 mp (mod N) (m \in Z)\)</span>，</li>
 </ul>
 <h1 id="rsa应用">RSA应用</h1>
+<p>RSA的应用场景包括：</p>
+<ul>
+<li>少量信息的加密（参考<code>bytes_to_long</code>，信息不太大时可以直接以RSA加密）；<br />
+</li>
+<li>密钥的加密传输，现实中考虑到计算效率等问题，常用非对称密钥体系完成密钥交换/传输，随后再使用对称加密体系进行主要通信内容的加密；<br />
+</li>
+<li>用于数字签名，此时公私钥的位置“互换”。</li>
+</ul>
+<blockquote>
+<p>简单说下 <code>bytes_to_long</code> 的原理：<br />
+计算机中，将字节转化为整数的方式是将这些字节以十六进制方式并列写出（并将“拼凑”成的十六进制串直接转化为十进制）。<br />
+如，字节<code>\x50</code>对应的整数就是<code>80</code>；字节<code>\x50\x50</code>对应的整数则是<code>80*256+80</code>（大端序下），即<code>20560</code>。<br />
+显然，<span class="math inline">\(n\)</span> 个字节的信息对应的整数
+<span class="math inline">\(m \in
+[0,2^{8n})\)</span>，故随着消息长度变长，一段消息转化而成的整数会急剧膨胀。<br />
+这点对于中文信息尤为明显。使用unicode编码时一个汉字会被编码成三个字节，即使在中文编码gb2312中，一个汉字亦会被编为两个字节，参考如下代码的输出：<br />
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(bytes_to_long(<span class="string">&#x27;你好&#x27;</span>.encode(<span class="string">&#x27;gb2312&#x27;</span>))) <span class="comment">#3303258819</span></span><br><span class="line"><span class="built_in">print</span>(bytes_to_long(<span class="string">&#x27;剑歌飒沓访云屋&#x27;</span>.encode(<span class="string">&#x27;gb2312&#x27;</span>))) <span class="comment">#3846346832410219639926018479148765</span></span><br><span class="line"><span class="built_in">print</span>(bytes_to_long(<span class="string">&#x27;世界人民大团结万岁&#x27;</span>).encode()) <span class="comment"># 94090383611140304887381919181091888735613186691794682179454612097</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+注：Python3中对<code>int</code>类加入了<code>from_bytes</code>和<code>to_bytes</code>方法来实现字节和整数之间的转换<del>但笔者觉得用着还是不习惯，继续pycryptodome启动</del></p>
+</blockquote>
 <h1 id="rsa-attacks-past">RSA-Attacks: Past</h1>
 <p>针对RSA，最简单的攻击方式就是因数分解了。只要能获取到满足 <span
 class="math inline">\(pq = N\)</span> 的 <span
@@ -377,17 +396,29 @@ class="math inline">\(k\)</span> 的值来获得明文。<br />
 <p>先介绍一下<del>韩信点兵</del>CRT(Chinese Remainder
 Theorem，中国剩余定理)：</p>
 <blockquote>
-
+<p>假设存在以下的同余方程组：<br />
+<span class="math inline">\(\begin{align*} x &amp;\equiv r_1 (mod m_1)\\
+x &amp;\equiv r_2 (mod m_2)\\ \vdots \\ x &amp;\equiv r_n (mod r_n)
+\end{align*}\)</span><br />
+且 <span class="math inline">\(m_1,m_2,\cdots,m_n\)</span> 两两互质，记
+<span class="math inline">\(S = \prod_{i=1}^{n} m_i\)</span>，<br />
+则该方程组在模 <span class="math inline">\(S\)</span>
+意义下必定有且仅有唯一解；整数域 <span class="math inline">\(Z\)</span>
+下的通解由下式给出：<br />
+记 <span class="math inline">\(M_i = \frac{S}{m_i}\)</span>，<span
+class="math inline">\(t_i \equiv M_i^{-1} (mod m_i)\)</span>，则 <span
+class="math inline">\(x = \sum_{i=1}^{n} r_it_iM_i + kS (k \in
+Z)\)</span>。</p>
 </blockquote>
 <p>其应用场景为当一个明文被相同的 <span class="math inline">\(e\)</span>
 和不同的模数 <span class="math inline">\(N\)</span>
 加密多次后，可以通过CRT得到其通解，当该通解满足 <span
 class="math inline">\(\prod_{i=1}^{n} N_i &gt; m^e\)</span> 时，取 <span
 class="math inline">\(k=0\)</span> 的特解得到的必定是 <span
-class="math inline">\(m^e\)</span> 的值。<br />
-照常先上靶子： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line">Nls = [getPrime(<span class="number">512</span>)*getPrime(<span class="number">512</span>) <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">50</span>)]</span><br><span class="line">e = <span class="number">47</span></span><br><span class="line">m = <span class="built_in">int</span>.from_bytes(msg)</span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">100</span>):</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&#x27;c = <span class="subst">&#123;<span class="built_in">pow</span>(m,e,Nls[i])&#125;</span>&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">#...(omitted)</span></span><br></pre></td></tr></table></figure></p>
+class="math inline">\(m^e\)</span> 的值。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> functools <span class="keyword">import</span> reduce</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">RSA</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="variable language_">self</span>.e = <span class="number">17</span></span><br><span class="line">        <span class="variable language_">self</span>.m = <span class="built_in">int</span>.from_bytes(msg)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">encrypt</span>(<span class="params">self</span>):</span><br><span class="line">        N = getPrime(<span class="number">512</span>) * getPrime(<span class="number">512</span>)</span><br><span class="line">        c = <span class="built_in">pow</span>(<span class="variable language_">self</span>.m,<span class="variable language_">self</span>.e,N)</span><br><span class="line">        <span class="keyword">return</span> N,c</span><br><span class="line">    </span><br><span class="line"><span class="keyword">if</span> __name__==<span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    rsa = RSA()</span><br><span class="line">    Nlist = []</span><br><span class="line">    clist = []</span><br><span class="line">    <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">17</span>):</span><br><span class="line">        n_,c_ = rsa.encrypt()</span><br><span class="line">        Nlist.append(n_)</span><br><span class="line">        clist.append(c_)</span><br><span class="line"></span><br><span class="line">    S = reduce(<span class="keyword">lambda</span> x,y: x*y, Nlist)</span><br><span class="line">    Mlist = [S//Nlist[i] <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">17</span>)]</span><br><span class="line">    tlist = [<span class="built_in">pow</span>(Mlist[i],-<span class="number">1</span>,Nlist[i]) <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">17</span>)]</span><br><span class="line"></span><br><span class="line">    result = <span class="number">0</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">17</span>):</span><br><span class="line">        result += clist[i]*Mlist[i]*tlist[i]</span><br><span class="line">        </span><br><span class="line">    result %= S</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&#x27;m = <span class="subst">&#123;result&#125;</span>&#x27;</span>)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 <p>sagemath中内置了crt函数，直接调用之即可：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line"></span><br><span class="line">Nlist = ...</span><br><span class="line">clist = ...</span><br><span class="line">e = <span class="number">47</span></span><br><span class="line"></span><br><span class="line">m = crt(Nlist,clist) ^ (<span class="number">1</span>/e)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line">Nlist = ...</span><br><span class="line">clist = ...</span><br><span class="line">e = <span class="number">17</span></span><br><span class="line"></span><br><span class="line">m = crt(Nlist,clist) ^ (<span class="number">1</span>/e)</span><br></pre></td></tr></table></figure>
 <blockquote>
 <p>可以发现，若 <span class="math inline">\(m\)</span> 与 <span
 class="math inline">\(N_i\)</span> 位数相近，则必须要 <span
@@ -412,6 +443,88 @@ Attack）。</p>
 2p\)</span> 且 <span class="math inline">\(d &lt;
 \frac{1}{3}N^{\frac{1}{4}}\)</span>。</p>
 </blockquote>
+<p>RSA中存在等式 <span class="math inline">\(ed \equiv 1 (mod
+\varphi(N))\)</span>，即 <span class="math inline">\(ed + k\varphi(N) -
+1 = 0 (k \in Z)\)</span>。<br />
+由于N很大，且 <span class="math inline">\(N &gt;&gt; p,q\)</span>，则
+<span class="math inline">\(ed = kN\)</span> 近似成立，即 <span
+class="math inline">\(\frac{e}{N} \approx \frac{k}{d}\)</span>。<br />
+左侧式是一个已知量，此时我们可以将之展开为连分数，遍历每一组近似解，就可能找到右侧的
+<span class="math inline">\((k,d)\)</span>（<span
+class="math inline">\(k,d \in Z\)</span>）。</p>
+<p>显然在 <span class="math inline">\(d\)</span>
+比较大时这种攻击方法会失效（因为渐近遍历可能会有所遗漏）。Wiener证明了在满足上述引用中的条件时，如此遍历会精准覆盖
+<span class="math inline">\(\frac{k}{d}\)</span>。</p>
+<blockquote>
+<p>连分数的拓展知识：</p>
+</blockquote>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>在sagemath中亦内置了求解连分数的函数<del>sage magic初体验.py</del>：
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure></p>
+<blockquote>
+<p>Wiener's Attack还有一个更便捷的格(lattice)形式，参考<a
+href="/lattice/#%E5%AF%B9%E6%97%A2%E6%9C%89%E5%AF%86%E7%A0%81%E4%BD%93%E7%B3%BB%E7%9A%84%E6%94%BB%E5%87%BB%E4%BB%A5wieners-attack%E7%9A%84%E6%A0%BC%E5%BD%A2%E5%BC%8F%E4%B8%BA%E4%BE%8B">格</a>。</p>
+</blockquote>
+<p>防御措施：</p>
+<ul>
+<li>校验 <span class="math inline">\(d\)</span> 的位数，避免 <span
+class="math inline">\(d\)</span>
+过小。<del>很显然d过小比e过小要致命的多</del></li>
+</ul>
+<h2 id="光滑数攻击">光滑数攻击</h2>
+<p>即使 <span class="math inline">\(N\)</span> 确实是两个大质数 <span
+class="math inline">\(p,q\)</span>
+的乘积，但这两个质数可能是脆弱的“光滑数”(Smooth number)。</p>
+<blockquote>
+<p>光滑数是指可以分解为小质数之积的大整数。<br />
+若一个数 <span class="math inline">\(n\)</span> 满足 <span
+class="math inline">\(n = \prod_{i=1}^{n} p_i^{e_i}\)</span> 且 <span
+class="math inline">\(p_i \leq B\)</span>，则称 <span
+class="math inline">\(n\)</span> 是一个 <span
+class="math inline">\(B\)</span>-光滑数(<span
+class="math inline">\(B\)</span>-smooth number)。</p>
+</blockquote>
+<p>对于 <span class="math inline">\(N = pq\)</span>，若已知 <span
+class="math inline">\(p-1\)</span> 是一个光滑数，则可以采用
+<em>Pollard's p-1 Algorithm</em> 对 <span
+class="math inline">\(N\)</span> 进行分解。攻击思路如下：<br />
+据题意，$p-1 = $</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>防御措施：</p>
+<ul>
+<li>选择 <span class="math inline">\(p,q\)</span> 时使用强质数（强质数指
+<span class="math inline">\(p-1\)</span> 至少有一个大的素因子的质数
+<span class="math inline">\(p\)</span>）。</li>
+</ul>
+<blockquote>
+<p>Python库 <code>Crypto.Util.number</code> 中除了<del>众所周知的</del>
+<code>getPrime()</code>函数，还有一个<code>getStrongPrime()</code>函数用于产生强质数，其要求锚定的质数bits为128的整数倍且不低于512。</p>
+</blockquote>
+<h2 id="数论分析攻击">数论分析攻击</h2>
+<p>数论分析在实践中的应用非常少，多作为纯“数学”试题出现在CTF赛事中，考察选手的<del>信安数基掌握情况</del>数论功底。</p>
+<p>就笔者的<del>乱糊</del>做题经验而言，数论分析题目多涉及到的内容如下：</p>
+<ul>
+<li>最大公约数(gcd)的灵活运用；<br />
+</li>
+<li>费马小定理，即若 <span class="math inline">\(gcd(a,p) =
+1\)</span>，则 <span class="math inline">\(a^{p-1} \equiv 1 (mod
+p)\)</span>（实际上是欧拉定理的特殊情况）；<br />
+</li>
+<li>同余相关知识的“倒腾”；<br />
+</li>
+<li>和枚举爆破有关的结合，等等。</li>
+</ul>
+<h2 id="已知d时执行对n的分解">已知d时执行对N的分解</h2>
+<p>当我们获得 <span class="math inline">\(d\)</span>
+后，我们自然可以解密所有加密的消息，但远征之途不止于此——我们还希望对
+<span class="math inline">\(N\)</span> 进行分解。</p>
+<p>已知 <span class="math inline">\(ed \equiv 1 (mod
+\varphi(N))\)</span>，不难得 <span class="math inline">\(\forall a \in
+Z_{+}, a^{ed-1} \equiv 1 (mod N)\)</span>。<br />
+显然 <span class="math inline">\(ed - 1\)</span> 是一个偶数（因为 <span
+class="math inline">\(\varphi(N)\)</span> 必定为偶数）。可令 <span
+class="math inline">\(ed - 1 = t2^{s} (s \in Z_{+},t \equiv 1 (mod
+2))\)</span></p>
 <h1 id="rsa-attacks-future">RSA-Attacks: Future</h1>
 <p>在RSA中，如果我们可以进行选择明/密文攻击，则在一定场景下存在诸多较为“花哨”的攻击方式。</p>
 <h2 id="rsa-parity-orcale">RSA Parity Orcale</h2>
@@ -523,7 +636,23 @@ Logorithm)问题，若 <span class="math inline">\(e &lt; 2^{64}\)</span>
 则其亦能在不太长的时间内破解。<br />
 但假如我们连 <span class="math inline">\(N\)</span> 都不知道呢？</p>
 <p>对于 <span class="math inline">\(N\)</span>
-的攻击可以通过选择明(密)文进行（加密/解密Orcale任取其一即可）。</p>
+的攻击可以通过选择明(密)文进行（加密/解密Orcale任取其一即可）。<br />
+具体地，假设存在一个可以加密任意密文的RSA Orcale，但不知道其公钥 <span
+class="math inline">\((N,e)\)</span> 为何。</p>
+<p>此时我们可以传递 <span class="math inline">\(m \in
+\{2,2^2,2^3,2^4,\cdots\}\)</span> ，收集加密的密文。<br />
+设 <span class="math inline">\(m_i = 2^{i} (i \in Z_+)\)</span>，显然
+<span class="math inline">\(m_i = m_1^{i}\)</span>。<br />
+又， <span class="math inline">\(c_i \equiv m_i^e (mod N)\)</span>，推定
+<span class="math inline">\(c_1 \equiv m_1^e (mod
+N)\)</span>，结合上式可得 <span class="math inline">\(c_1^i - c_i \equiv
+0 (mod N)\)</span>，即 <span class="math inline">\(c_1^i - c_i = kN (k
+\in Z)\)</span>。<br />
+在加密了足够多的 <span class="math inline">\(m_i\)</span> 后，对 <span
+class="math inline">\({c_1^i - c_i}\)</span>
+求其最大公约数，即可有很大把握得到 <span
+class="math inline">\(N\)</span>。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> gmpy2 <span class="keyword">import</span> gcd</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">RSA</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="variable language_">self</span>.N = getPrime(<span class="number">1024</span>) * getPrime(<span class="number">1024</span>)</span><br><span class="line">        <span class="variable language_">self</span>.e = getPrime(<span class="number">32</span>)</span><br><span class="line">        </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">encrypt</span>(<span class="params">self,m:<span class="built_in">int</span></span>):</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">pow</span>(m,<span class="variable language_">self</span>.e,<span class="variable language_">self</span>.N)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__==<span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    rsa = RSA()</span><br><span class="line">    clist = []</span><br><span class="line">    gcdls = []</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">5</span>):</span><br><span class="line">        clist.append(rsa.encrypt(<span class="built_in">pow</span>(<span class="number">2</span>,i+<span class="number">1</span>)))</span><br><span class="line"></span><br><span class="line">    gcdls = [clist[<span class="number">0</span>]**(i+<span class="number">1</span>) - clist[i] <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>,<span class="number">5</span>)]</span><br><span class="line">    n = gcd(*gcdls)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&#x27;n = <span class="subst">&#123;n&#125;</span>&#x27;</span>)</span><br><span class="line">    </span><br></pre></td></tr></table></figure>
 <h1 id="rsa-attacks-beyond">RSA-Attacks: Beyond</h1>
 <blockquote>
 <p>可曾听闻格攻击？</p>
@@ -533,10 +662,26 @@ Logorithm)问题，若 <span class="math inline">\(e &lt; 2^{64}\)</span>
 <span class="math inline">\(d &lt;
 N^{\frac{1}{2}}\)</span>，则攻击者可以仅通过一些公钥集 <span
 class="math inline">\((N_i,e_i)\)</span> 获得私钥 <span
-class="math inline">\(d\)</span>。<br />
-其对于很多微型电子设备来说非常致命，因为对于一个小型的加密Orcale，攻击者甚至不需要显式地知道公钥集——
-<span class="math inline">\(e\)</span> 可以通过侧信道攻击获得，而 <span
-class="math inline">\(N\)</span> 可以通过一个加密Orcale来获得。</p>
+class="math inline">\(d\)</span>。</p>
+<p>考虑 <span class="math inline">\(ed \equiv 1 (mod
+\varphi(N))\)</span>，即 <span class="math inline">\(ed + k\varphi(N) -
+1 = 0 (k \in Z)\)</span>。<br />
+若 <span class="math inline">\(d\)</span>
+比较小，则本质上其可以转化为一个HNP问题：<br />
+$ed + k(N-p-q+1) - 1 = 0 $<br />
+$ed + kN = k(p+q-1) + 1 $<br />
+右侧依然近似等于 <span
+class="math inline">\(2k\sqrt{N}\)</span>，作一个CVP问题处理，即找到一个离
+<span
+class="math inline">\(\begin{bmatrix}2k\sqrt{N_1}&amp;2k\sqrt{N_2}&amp;\cdots&amp;2k\sqrt{N_n}&amp;Cd\end{bmatrix}\)</span>
+最近的向量，格由 <span
+class="math inline">\(\begin{bmatrix}N_1\\&amp;N_2\\&amp;&amp;\ddots\\&amp;&amp;&amp;N_n\\e_1&amp;e_2&amp;\cdots&amp;e_n&amp;C_0\end{bmatrix}\)</span>
+给定。</p>
+<blockquote>
+<p>可以看出它的解法其实非常类似于一种“拓展”的低解密指数攻击。</p>
+</blockquote>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">RSA</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="variable language_">self</span>.d = getPrime(<span class="number">1000</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">gen_pubkey</span>(<span class="params">self</span>):</span><br><span class="line">        N = getPrime(<span class="number">1024</span>)*getPrime(<span class="number">1024</span>)</span><br><span class="line">        e = <span class="built_in">pow</span>(<span class="variable language_">self</span>.d,-<span class="number">1</span>,N)</span><br><span class="line">        <span class="keyword">return</span> N,e</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__==<span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    rsa = RSA()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">30</span>):</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="coppersmith-小根之春">Coppersmith： “小根”之春</h2>
 
       
 
@@ -662,7 +807,7 @@ class="math inline">\(N\)</span> 可以通过一个加密Orcale来获得。</p>
                 </span>
                 <span class="tooltip-content">
                     <div class="toc-article">
-                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#rsa%E5%8F%8A%E9%9D%9E%E5%AF%B9%E7%A7%B0%E5%AF%86%E7%A0%81%E5%AD%A6%E7%AE%80%E4%BB%8B"><span class="toc-number">1.</span> <span class="toc-text">RSA及非对称密码学简介</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%9D%9E%E5%AF%B9%E7%A7%B0%E5%AF%86%E7%A0%81%E5%AD%A6"><span class="toc-number">1.1.</span> <span class="toc-text">非对称密码学</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#rsa%E9%9D%9E%E5%AF%B9%E7%A7%B0%E5%AF%86%E7%A0%81%E5%AD%A6%E7%9A%84%E6%9C%9D%E9%98%B3"><span class="toc-number">1.2.</span> <span class="toc-text">RSA：非对称密码学的朝阳</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AF%86%E9%92%A5%E7%94%9F%E6%88%90"><span class="toc-number">1.2.1.</span> <span class="toc-text">密钥生成</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8A%A0%E5%AF%86%E8%A7%A3%E5%AF%86"><span class="toc-number">1.2.2.</span> <span class="toc-text">加密&#x2F;解密</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%AD%A3%E7%A1%AE%E6%80%A7%E8%AF%81%E6%98%8E"><span class="toc-number">1.2.3.</span> <span class="toc-text">正确性证明</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#rsa%E5%BA%94%E7%94%A8"><span class="toc-number">2.</span> <span class="toc-text">RSA应用</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#rsa-attacks-past"><span class="toc-number">3.</span> <span class="toc-text">RSA-Attacks: Past</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#rsa-attacks-present"><span class="toc-number">4.</span> <span class="toc-text">RSA-Attacks: Present</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B1%E6%A8%A1%E6%94%BB%E5%87%BB"><span class="toc-number">4.1.</span> <span class="toc-text">共模攻击</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%8E%E5%8A%A0%E5%AF%86%E6%8C%87%E6%95%B0%E6%94%BB%E5%87%BB"><span class="toc-number">4.2.</span> <span class="toc-text">低加密指数攻击</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B9%BF%E6%92%AD%E6%94%BB%E5%87%BB"><span class="toc-number">4.3.</span> <span class="toc-text">广播攻击</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%8E%E8%A7%A3%E5%AF%86%E6%8C%87%E6%95%B0%E6%94%BB%E5%87%BB"><span class="toc-number">4.4.</span> <span class="toc-text">低解密指数攻击</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#rsa-attacks-future"><span class="toc-number">5.</span> <span class="toc-text">RSA-Attacks: Future</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#rsa-parity-orcale"><span class="toc-number">5.1.</span> <span class="toc-text">RSA Parity Orcale</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#rsa-side-channel-attack"><span class="toc-number">5.2.</span> <span class="toc-text">RSA side channel attack</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BE%A7%E4%BF%A1%E9%81%93%E6%94%BB%E5%87%BB%E7%AE%80%E4%BB%8B"><span class="toc-number">5.2.1.</span> <span class="toc-text">侧信道攻击简介</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BF%AB%E9%80%9F%E5%B9%82"><span class="toc-number">5.2.2.</span> <span class="toc-text">快速幂？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%94%BB%E5%87%BB"><span class="toc-number">5.2.3.</span> <span class="toc-text">攻击</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#rsa-n-orcale"><span class="toc-number">5.3.</span> <span class="toc-text">RSA N-Orcale</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#rsa-attacks-beyond"><span class="toc-number">6.</span> <span class="toc-text">RSA-Attacks: Beyond</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A2%9E%E5%B9%BF%E6%A0%BC"><span class="toc-number">6.1.</span> <span class="toc-text">增广格</span></a></li></ol></li></ol>
+                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#rsa%E5%8F%8A%E9%9D%9E%E5%AF%B9%E7%A7%B0%E5%AF%86%E7%A0%81%E5%AD%A6%E7%AE%80%E4%BB%8B"><span class="toc-number">1.</span> <span class="toc-text">RSA及非对称密码学简介</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%9D%9E%E5%AF%B9%E7%A7%B0%E5%AF%86%E7%A0%81%E5%AD%A6"><span class="toc-number">1.1.</span> <span class="toc-text">非对称密码学</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#rsa%E9%9D%9E%E5%AF%B9%E7%A7%B0%E5%AF%86%E7%A0%81%E5%AD%A6%E7%9A%84%E6%9C%9D%E9%98%B3"><span class="toc-number">1.2.</span> <span class="toc-text">RSA：非对称密码学的朝阳</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AF%86%E9%92%A5%E7%94%9F%E6%88%90"><span class="toc-number">1.2.1.</span> <span class="toc-text">密钥生成</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8A%A0%E5%AF%86%E8%A7%A3%E5%AF%86"><span class="toc-number">1.2.2.</span> <span class="toc-text">加密&#x2F;解密</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%AD%A3%E7%A1%AE%E6%80%A7%E8%AF%81%E6%98%8E"><span class="toc-number">1.2.3.</span> <span class="toc-text">正确性证明</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#rsa%E5%BA%94%E7%94%A8"><span class="toc-number">2.</span> <span class="toc-text">RSA应用</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#rsa-attacks-past"><span class="toc-number">3.</span> <span class="toc-text">RSA-Attacks: Past</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#rsa-attacks-present"><span class="toc-number">4.</span> <span class="toc-text">RSA-Attacks: Present</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B1%E6%A8%A1%E6%94%BB%E5%87%BB"><span class="toc-number">4.1.</span> <span class="toc-text">共模攻击</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%8E%E5%8A%A0%E5%AF%86%E6%8C%87%E6%95%B0%E6%94%BB%E5%87%BB"><span class="toc-number">4.2.</span> <span class="toc-text">低加密指数攻击</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B9%BF%E6%92%AD%E6%94%BB%E5%87%BB"><span class="toc-number">4.3.</span> <span class="toc-text">广播攻击</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%8E%E8%A7%A3%E5%AF%86%E6%8C%87%E6%95%B0%E6%94%BB%E5%87%BB"><span class="toc-number">4.4.</span> <span class="toc-text">低解密指数攻击</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%89%E6%BB%91%E6%95%B0%E6%94%BB%E5%87%BB"><span class="toc-number">4.5.</span> <span class="toc-text">光滑数攻击</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E8%AE%BA%E5%88%86%E6%9E%90%E6%94%BB%E5%87%BB"><span class="toc-number">4.6.</span> <span class="toc-text">数论分析攻击</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B7%B2%E7%9F%A5d%E6%97%B6%E6%89%A7%E8%A1%8C%E5%AF%B9n%E7%9A%84%E5%88%86%E8%A7%A3"><span class="toc-number">4.7.</span> <span class="toc-text">已知d时执行对N的分解</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#rsa-attacks-future"><span class="toc-number">5.</span> <span class="toc-text">RSA-Attacks: Future</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#rsa-parity-orcale"><span class="toc-number">5.1.</span> <span class="toc-text">RSA Parity Orcale</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#rsa-side-channel-attack"><span class="toc-number">5.2.</span> <span class="toc-text">RSA side channel attack</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BE%A7%E4%BF%A1%E9%81%93%E6%94%BB%E5%87%BB%E7%AE%80%E4%BB%8B"><span class="toc-number">5.2.1.</span> <span class="toc-text">侧信道攻击简介</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BF%AB%E9%80%9F%E5%B9%82"><span class="toc-number">5.2.2.</span> <span class="toc-text">快速幂？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%94%BB%E5%87%BB"><span class="toc-number">5.2.3.</span> <span class="toc-text">攻击</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#rsa-n-orcale"><span class="toc-number">5.3.</span> <span class="toc-text">RSA N-Orcale</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#rsa-attacks-beyond"><span class="toc-number">6.</span> <span class="toc-text">RSA-Attacks: Beyond</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A2%9E%E5%B9%BF%E6%A0%BC"><span class="toc-number">6.1.</span> <span class="toc-text">增广格</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#coppersmith-%E5%B0%8F%E6%A0%B9%E4%B9%8B%E6%98%A5"><span class="toc-number">6.2.</span> <span class="toc-text">Coppersmith： “小根”之春</span></a></li></ol></li></ol>
                     </div>
                 </span>
             </div>
