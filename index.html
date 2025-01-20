@@ -566,22 +566,51 @@ Attack）。</p>
 \frac{1}{3}N^{\frac{1}{4}}\)</span>。</p>
 </blockquote>
 <p>RSA中存在等式 <span class="math inline">\(ed \equiv 1 (mod
-\varphi(N))\)</span>，即 <span class="math inline">\(ed + k\varphi(N) -
-1 = 0 (k \in Z)\)</span>。<br />
-由于N很大，且 <span class="math inline">\(N &gt;&gt; p,q\)</span>，则
-<span class="math inline">\(ed = kN\)</span> 近似成立，即 <span
-class="math inline">\(\frac{e}{N} \approx \frac{k}{d}\)</span>。<br />
+\varphi(N))\)</span>，即 <span class="math inline">\(ed = k\varphi(N) +
+1 = k(N-p-q+1) + 1 (k \in Z)\)</span>。<br />
+由于N很大，且 <span class="math inline">\(N &gt;&gt; p,q &gt;&gt;
+1\)</span>，故 <span class="math inline">\(ed &lt; kN\)</span>，但同时
+<span class="math inline">\(\frac{e}{N} \approx
+\frac{k}{d}\)</span>。<br />
 左侧式是一个已知量，此时我们可以将之展开为连分数，遍历每一组近似解，就可能找到右侧的
 <span class="math inline">\((k,d)\)</span>（<span
 class="math inline">\(k,d \in Z\)</span>）。</p>
-<p>显然在 <span class="math inline">\(d\)</span>
-比较大时这种攻击方法会失效（因为渐近遍历可能会有所遗漏）。Wiener证明了在满足上述引用中的条件时，如此遍历会精准覆盖
+<p>Wiener证明了在满足上述引用中的条件时，对 <span
+class="math inline">\(\frac{e}{N}\)</span> 进行连分数遍历会精准覆盖
 <span class="math inline">\(\frac{k}{d}\)</span>。</p>
 <blockquote>
-<p>连分数的拓展知识：</p>
+<p>连分数的拓展知识：<br />
+连分数就是“分母是带分数/连分数的分数”，如 <span
+class="math inline">\(\frac{1}{1+\frac{1}{3}}\)</span>
+就是一个连分数。<br />
+事实上连分数只是分数的表示形式之一，任何一个连分数都可以被“归并”成一个普通分数，<br />
+如 <span class="math inline">\(\frac{1}{1+\frac{1}{3}} =
+\frac{1}{\frac{4}{3}} = \frac{3}{4}\)</span>。</p>
+<p>同时，任何一个分数都可以通过欧几里得算法（辗转相除）被唯一地分解为分子恒为1的连分数。<br />
+证明：设存在假分数 <span class="math inline">\(x = \frac{a}{b} &gt;
+1\)</span>，记 <span class="math inline">\(d = \lfloor \frac{a}{b}
+\rfloor\)</span>，<span class="math inline">\(r = a mod b\)</span>，则
+$r $ 时 <span class="math inline">\(x = d + \frac{r}{b}\)</span>，且
+<span class="math inline">\(\frac{r}{b}\)</span> 必是真分数。<br />
+对任意的真分数，存在 <span class="math inline">\(\frac{r}{b} =
+\frac{1}{\frac{b}{r}}\)</span>，显然 <span
+class="math inline">\(\frac{b}{r}\)</span>
+又是一个假分数，则可以递归地依上述之法分解为带分数，以此类推，直至某次计算时
+<span class="math inline">\(r = 0\)</span>。<br />
+由此，我们约定对于一个真分数 <span class="math inline">\(\frac{x}{y} =
+\frac{1}{a_1+\frac{1}{a_2+\frac{1}{a_3+\cdots}}}\)</span>，则记将之分解为连分数的结果为
+<span class="math inline">\(\{a_1,a_2,\cdots,a_n\}\)</span>。</p>
+<p>举例：分解 <span class="math inline">\(\frac{232}{335}\)</span>。
+显然我们只需要对 <span class="math inline">\((232,335)\)</span>
+进行辗转相除即可，每次记录其商，并将除数和余数分别做下一次的被除数和除数：
+<span class="math inline">\(335 \div 232 = 1 \cdots 103, 232 \div 103 =
+2 \cdots 26, 103 \div 26 = 3 \cdots 25, 26 \div 25 = 1 \cdots 1, 25 \div
+1 = 25 \cdots 0\)</span><br />
+故分解结果即为 <span class="math inline">\((1,2,3,1,25)\)</span>。</p>
+<p>连分数还原成普通分数的原理，则类似于拓展欧几里得算法解二元方程的执行过程。</p>
 </blockquote>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>在sagemath中亦内置了求解连分数的函数<del>sage magic初体验.py</del>：
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">ContinuedFraction</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self,n:<span class="built_in">int</span>,d:<span class="built_in">int</span></span>):</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>在sagemath中亦内置了求解连分数的函数<del>sage magic再体验.py</del>：
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure></p>
 <blockquote>
 <p>Wiener's Attack还有一个更便捷的格(lattice)形式，参考<a
@@ -753,8 +782,8 @@ class="math inline">\(\log_{2}N\)</span>。</p>
 <p>上述中考虑到了RSA中针对 <span class="math inline">\(e\)</span>
 的一种攻击方法（<span class="math inline">\(d\)</span>同理）。<br />
 事实上，在已知 <span class="math inline">\(N\)</span>
-时若我们拥有一个加/解密Orcale，则其相当于去解一个离散对数(Discrete
-Logorithm)问题，若 <span class="math inline">\(e &lt; 2^{64}\)</span>
+时若我们拥有一个加/解密Orcale，则其相当于去解一个离散对数问题，若 <span
+class="math inline">\(e &lt; 2^{64}\)</span>
 则其亦能在不太长的时间内破解。<br />
 但假如我们连 <span class="math inline">\(N\)</span> 都不知道呢？</p>
 <p>对于 <span class="math inline">\(N\)</span>
@@ -804,6 +833,8 @@ class="math inline">\(\begin{bmatrix}N_1\\&amp;N_2\\&amp;&amp;\ddots\\&amp;&amp;
 </blockquote>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">RSA</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="variable language_">self</span>.d = getPrime(<span class="number">1000</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">gen_pubkey</span>(<span class="params">self</span>):</span><br><span class="line">        N = getPrime(<span class="number">1024</span>)*getPrime(<span class="number">1024</span>)</span><br><span class="line">        e = <span class="built_in">pow</span>(<span class="variable language_">self</span>.d,-<span class="number">1</span>,N)</span><br><span class="line">        <span class="keyword">return</span> N,e</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__==<span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    rsa = RSA()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">30</span>):</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
 <h2 id="coppersmith-小根之春">Coppersmith： “小根”之春</h2>
+<h3 id="固化的消息头">固化的消息头</h3>
+<h3 id="徐徐而间进高低位因子已知">徐徐而间进——高(低)位因子已知</h3>
 
       
 
