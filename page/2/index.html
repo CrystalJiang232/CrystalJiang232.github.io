@@ -498,7 +498,6 @@ class="math inline">\(d\)</span>
 过小。<del>很显然d过小比e过小要致命的多</del></li>
 </ul>
 <h2 id="dpdq-泄露攻击">dp,dq 泄露攻击</h2>
-<h3 id="dpdq">dp/dq？</h3>
 <p><span class="math inline">\(dp\)</span> 和 <span
 class="math inline">\(dq\)</span>，形如其名，和 <span
 class="math inline">\(d,p,q\)</span>
@@ -521,12 +520,31 @@ class="math inline">\(m = (qt_qm_p + pt_pm_q) \bmod pq\)</span>。</p>
 <p>但若 <span class="math inline">\(dp,dq\)</span>
 及一些其它关键参数发生泄露，就可能令RSA被攻破。</p>
 <h3 id="攻击一已知ne和dpdq之一">攻击一：已知(N,e)和(dp,dq)之一</h3>
-<p>以已知 <span class="math inline">\((N,e,dp)\)</span> 为例。</p>
+<blockquote>
+<p>为便于辨识记号，将 <span class="math inline">\(dp\)</span> 记作 <span
+class="math inline">\(d_p\)</span>。</p>
+</blockquote>
+<p>显然有 <span class="math inline">\(ed_p \equiv 1 (\bmod
+(q-1))\)</span> 与 <span class="math inline">\(ed \equiv 1 (\bmod
+(p-1)(q-1))\)</span> 成立。</p>
+<p>转化为等式，<span class="math inline">\(ed_p + k_1(p-1) = ed\)</span>
+及 <span class="math inline">\(ed + k_2(p-1)(q-1) - 1 =
+0\)</span>，<span class="math inline">\(k_1,k_2 \in Z\)</span>，联立得
+<span class="math inline">\(ed_p + [k_2(q-1)+k_1](p-1) - 1 = 0\)</span>
+成立。<br />
+又，<span class="math inline">\(d_p = d \bmod p-1\)</span> 则显然有
+<span class="math inline">\(d_p &lt; p-1\)</span> 成立，又以 <span
+class="math inline">\(e,d_p &gt;&gt; 1\)</span>，记 <span
+class="math inline">\(X = -(k_2(q-1)+k_1)\)</span>，则 <span
+class="math inline">\(X \in (0,e),X \in Z\)</span>。</p>
+<p>当 <span class="math inline">\(e\)</span>
+不大时<del>点名批评65537</del>，可以枚举爆破 <span
+class="math inline">\(X\)</span>，逐个校验 <span class="math inline">\(p
+= \frac{ed_p-1}{X} + 1\)</span> 是否为 <span
+class="math inline">\(N\)</span> 的非平凡因子，即可分解 <span
+class="math inline">\(N\)</span>。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">factor_dp</span>(<span class="params">N:<span class="built_in">int</span>,e:<span class="built_in">int</span>,dp:<span class="built_in">int</span></span>):</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>,e):</span><br><span class="line">        <span class="keyword">if</span> (e*dp - <span class="number">1</span>) % i == <span class="number">0</span>:</span><br><span class="line">            fc = (e*dp - <span class="number">1</span>) // i</span><br><span class="line">            <span class="keyword">if</span> N % (fc + <span class="number">1</span>) == <span class="number">0</span>:</span><br><span class="line">                <span class="keyword">return</span> fc + <span class="number">1</span>, N % (fc + <span class="number">1</span>)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 <h3 id="攻击二已知ndpdq">攻击二：已知(N,dp,dq)</h3>
-<p>由于 <span class="math inline">\(\begin{align*} dp &amp;= d \bmod p-1
-\\ dq = d \bmod q-1 \end{align*}\)</span><br />
-又有 <span class="math inline">\(ed \equiv 1 (\bmod
-(p-1)(q-1))\)</span></p>
 <h2 id="光滑数攻击">光滑数攻击</h2>
 <p>即使 <span class="math inline">\(N\)</span> 确实是两个大质数 <span
 class="math inline">\(p,q\)</span>
@@ -540,6 +558,7 @@ class="math inline">\(n\)</span> 是一个 <span
 class="math inline">\(B\)</span>-光滑数(<span
 class="math inline">\(B\)</span>-smooth number)。</p>
 </blockquote>
+<h3 id="p-1">p-1</h3>
 <p>对于 <span class="math inline">\(N = pq\)</span>，若已知 <span
 class="math inline">\(p-1\)</span> 是一个光滑数，则可以采用
 <em>Pollard's p-1 Algorithm</em> 对 <span
@@ -667,6 +686,7 @@ class="math inline">\(p\)</span>）。</li>
 <p>Python库 <code>Crypto.Util.number</code> 中除了<del>众所周知的</del>
 <code>getPrime</code>函数，还有一个<code>getStrongPrime</code>函数用于产生强质数，其要求锚定的质数bits为128的整数倍且不低于512。</p>
 </blockquote>
+<h3 id="p1">p+1</h3>
 <h2 id="数论分析攻击">数论分析攻击</h2>
 <p>数论分析在实践中的应用非常少，多作为纯“数学”试题出现在CTF赛事中，考察选手的<del>信安数基掌握情况</del>数论功底。</p>
 <p>就笔者的<del>乱糊</del>做题经验而言，数论分析题目多涉及到的内容如下：</p>
@@ -903,6 +923,10 @@ class="math inline">\(p^{&#39;} &gt;&gt; x\)</span>。</p>
 			 
         		<li class="article-tag-list-item">
         			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">长文精选</a>
         		</li>
       		
 		</ul>
