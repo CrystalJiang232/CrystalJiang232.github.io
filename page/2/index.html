@@ -543,18 +543,129 @@ class="math inline">\(B\)</span>-smooth number)。</p>
 <p>对于 <span class="math inline">\(N = pq\)</span>，若已知 <span
 class="math inline">\(p-1\)</span> 是一个光滑数，则可以采用
 <em>Pollard's p-1 Algorithm</em> 对 <span
-class="math inline">\(N\)</span> 进行分解。攻击思路如下：<br />
-据题意，$p-1 = $</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+class="math inline">\(N\)</span> 进行分解。</p>
+<p>根据费马小定理，<span class="math inline">\(gcd(a,p) = 1\)</span>
+时，存在 <span class="math inline">\(a^{p-1} \equiv 1 (\bmod
+p)\)</span>。考虑 <span class="math inline">\(p\)</span> 是质数且 <span
+class="math inline">\(a\)</span> 不是 <span
+class="math inline">\(p\)</span> 的倍数时，其显然成立。<br />
+推广得，<span class="math inline">\(a^{K(p-1)} - 1 |
+p\)</span>，等价于只需计算 <span class="math inline">\(gcd(a^{K(p-1)} -
+1,N)\)</span> 即可（极大概率）得到 <span
+class="math inline">\(p\)</span>。<br />
+而在不知道 <span class="math inline">\(K(p-1)\)</span>
+的情况下，应当如何计算 <span
+class="math inline">\(a^{K(p-1)}\)</span>？</p>
+<p>一种方法是<del>瞎猜大法</del>考虑到 <span
+class="math inline">\(p-1\)</span> 的素因子都很小，故计算 <span
+class="math inline">\(B!\)</span> 即可有很大把握覆盖所有的 <span
+class="math inline">\(p-1\)</span> 的素因子。</p>
+<blockquote>
+<p>对于这一步，可以通过一个实例来理解：假设 <span
+class="math inline">\(p = 61, p-1 = 60 = 2^2 \times 3 \times
+5\)</span>，那么我们计算 <span class="math inline">\(5! = 120\)</span>
+就已经覆盖了所有的 <span class="math inline">\(p-1\)</span>
+的素因子（目标显然就是整除 <span
+class="math inline">\(p-1\)</span>）。</p>
+</blockquote>
+<p><em>p-1 Algorithm</em> 实践中有两个要点：</p>
+<ul>
+<li><span class="math inline">\(B!\)</span> 可能会非常大，且对 <span
+class="math inline">\(a^{B!}\)</span> 的计算可在 <span
+class="math inline">\(Z (\bmod N)\)</span>
+下进行，故应利用幂取模公式进行迭代计算，即 <span
+class="math inline">\(\forall i &gt; 2, a^{i!} \bmod N = (a^{(i-1)!}
+\bmod N)^{i} \bmod N\)</span>。<br />
+</li>
+<li>由于只需要 <span class="math inline">\(gcd(a,p) = 1\)</span>
+即可满足求解要求，且已知 <span class="math inline">\(p\)</span>
+为奇数，故为了提高计算效率，一般选择 <span class="math inline">\(a =
+2\)</span>。</li>
+</ul>
+<p>每次迭代后，若计算 <span class="math inline">\(gcd(a^{i!},N)\)</span>
+不为 <span class="math inline">\(1\)</span> 或 <span
+class="math inline">\(N\)</span>，则已经成功分解 <span
+class="math inline">\(N\)</span>（所谓 <em>non-trivial factor</em>
+，即“非平凡因子”）。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">factor_smooth</span>(<span class="params">N:<span class="built_in">int</span></span>):</span><br><span class="line">    a = <span class="number">2</span></span><br><span class="line">    i = <span class="number">2</span></span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        a = <span class="built_in">pow</span>(a,i,N)</span><br><span class="line">        res = gcd(a,N)</span><br><span class="line">        <span class="keyword">if</span> res != <span class="number">1</span> <span class="keyword">and</span> res != N:</span><br><span class="line">            <span class="keyword">return</span> res, N // res</span><br><span class="line">        i += <span class="number">1</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>关于 <em>Pollard's p-1 Algorithm</em>
+的数论部分更深入探讨（选看）：</p>
+<ol type="1">
+<li>上述方法的时间开销可能会远大于预期，因为可以注意到我们用 <span
+class="math inline">\(B!\)</span> 覆盖 <span
+class="math inline">\(p-1\)</span> 的素因子时极容易存在疏漏。<br />
+对于素因子的幂数较高的 <span
+class="math inline">\(p_i\)</span>，其可能要往上额外遍历数次才能完全覆盖之。如考虑
+<span class="math inline">\(p-1 = 2738 = 2 \times 37^2\)</span>
+的情况，若用 <span class="math inline">\(B!\)</span>
+之法覆盖之，不难发现其必须计算到 <span class="math inline">\(2^{74!}
+\bmod N\)</span>
+才能得出结果。存在多个较大的高阶素因子时，其时间开销更大。</li>
+<li>关于 <span class="math inline">\(gcd(a^{i!},N)\)</span> 结果的分析：
+若 <span class="math inline">\(gcd(a^{i!},N) = 1\)</span>，说明 <span
+class="math inline">\(i!\)</span>（或该幂数）没有覆盖 <span
+class="math inline">\(p-1\)</span> 的素因子，此时应当增大 <span
+class="math inline">\(B\)</span>（幂数上界）；<br />
+若 <span class="math inline">\(gcd(a^{i!},N) = N\)</span>，此时 <span
+class="math inline">\(i!\)</span>（或该幂数）同时已经覆盖了另一个质数与1之差
+<span class="math inline">\(q-1\)</span> 的全部素因子。</li>
+</ol>
+<p>同时，上述算法实际上针对RSA的分解需求进行过调整。原版的 <em>p-1
+Algorithm</em> 描述如下：</p>
+<ol type="1">
+<li>选定一个光滑数上界 <span class="math inline">\(B\)</span>；<br />
+</li>
+<li><strong>标定</strong> <span class="math inline">\(M =
+\prod_{i=1}^{n} q_i^{\lfloor \log_{q_i}B \rfloor}\)</span>，其中 <span
+class="math inline">\(\{q_i\}\)</span> 是小于 <span
+class="math inline">\(B\)</span> 的全部质数；</li>
+<li>随机选定与 <span class="math inline">\(N\)</span> 互质的整数 <span
+class="math inline">\(a\)</span>；<br />
+</li>
+<li>计算 <span class="math inline">\(g = gcd(a^{M}-1,N)\)</span>；<br />
+</li>
+<li>若 <span class="math inline">\(g \notin
+\{1,N\}\)</span>，则分解成功，<span class="math inline">\(g\)</span>
+就是 <span class="math inline">\(N\)</span>
+的一个素因子。否则或分解失败，或做以下调整再进行计算：
+<ul>
+<li>若 <span class="math inline">\(g = 1\)</span>，适当增大 <span
+class="math inline">\(B\)</span>；<br />
+</li>
+<li>若 <span class="math inline">\(g = N\)</span>，适当减小 <span
+class="math inline">\(B\)</span>。</li>
+</ul></li>
+</ol>
+<blockquote>
+<ul>
+<li>实际上由于锚定的 <span class="math inline">\(N\)</span>
+是奇数<del>（不是奇数的话先除到奇数）</del>，故一般都取 <span
+class="math inline">\(a = 2\)</span> 来加快计算速度。<br />
+</li>
+<li><span class="math inline">\(g = 1\)</span>
+在极少数情况下可能是选取的 <span class="math inline">\(a\)</span> 在
+<span class="math inline">\(Z(\bmod N)\)</span> 中的阶过小所致。<br />
+</li>
+<li>“标定”的含义是计算 <span class="math inline">\(gcd(a^M-1)\)</span>
+时，并不需要计算出 <span class="math inline">\(M\)</span>
+的具体数值（参考幂取模算法，步步为营）。<br />
+</li>
+<li>若对于 <span class="math inline">\(N\)</span> 的全部素因子 <span
+class="math inline">\(p_i\)</span>，<span
+class="math inline">\(p_i-1\)</span>
+的最大素因子相同，则该分解算法必定失败。</li>
+</ul>
+</blockquote>
 <p>防御措施：</p>
 <ul>
 <li>选择 <span class="math inline">\(p,q\)</span> 时使用强质数（强质数指
-<span class="math inline">\(p-1\)</span> 至少有一个大的素因子的质数
-<span class="math inline">\(p\)</span>）。</li>
+<span class="math inline">\(p-1\)</span>、<span
+class="math inline">\(p+1\)</span> 至少有一个大的素因子的质数 <span
+class="math inline">\(p\)</span>）。</li>
 </ul>
 <blockquote>
 <p>Python库 <code>Crypto.Util.number</code> 中除了<del>众所周知的</del>
-<code>getPrime()</code>函数，还有一个<code>getStrongPrime()</code>函数用于产生强质数，其要求锚定的质数bits为128的整数倍且不低于512。</p>
+<code>getPrime</code>函数，还有一个<code>getStrongPrime</code>函数用于产生强质数，其要求锚定的质数bits为128的整数倍且不低于512。</p>
 </blockquote>
 <h2 id="数论分析攻击">数论分析攻击</h2>
 <p>数论分析在实践中的应用非常少，多作为纯“数学”试题出现在CTF赛事中，考察选手的<del>信安数基掌握情况</del>数论功底。</p>
