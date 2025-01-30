@@ -152,6 +152,155 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-block-1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/block-1/">块加密之始——Padding</a>
+    </h1>
+  
+
+        
+        <a href="/block-1/" class="archive-article-date">
+  	<time datetime="2025-01-23T05:03:27.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-01-22</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="简介">简介</h1>
+<p>“块加密”，如其名所言，每次加密需要以块为单位进行。显然实际应用中，明文不会理想若长度总为块大小(Block
+size)的整倍数，故要以某种方式对其进行填充。<br />
+单论“填充”之法似乎并无太多讲究，但任何Padding都应满足以下要求：</p>
+<ul>
+<li>Padding只是追加部分，所以应当在满足块大小要求的前提下尽可能短；<br />
+</li>
+<li>Padding应当易于被辨别和移除，故显然不能在明文后添加随机/固定的明文常用字节填充之；<br />
+</li>
+<li>Padding应具备一定的冗余校验功能，解填充(Unpad)时最好可以校验填充是否正确。</li>
+</ul>
+<p>由此，主流的Padding方案存在的一个共性也就不难解释了：<strong>Padding追加字节数应不小于1，且不大于块大小</strong>。</p>
+<h1 id="常用填充方案">常用填充方案</h1>
+<p>常用的Padding方案有：<em>pkcs7</em> , <em>iso7816</em> ,
+<em>x923</em> 。</p>
+<ul>
+<li><p><em>pkcs7</em> ：最为常用的一种padding方案。<br />
+设信息长度为 <span class="math inline">\(l_m\)</span>，块长度为 <span
+class="math inline">\(S\)</span>，其填充长度 <span
+class="math inline">\(l_p = S - (l_m \bmod S)\)</span>，填充字节亦是
+<span class="math inline">\(l_p\)</span>。<br />
+如块大小为16时，<code>crypto&#123;flag&#125;</code>将被填充为<code>crypto&#123;flag&#125;\x04\x04\x04\x04</code>。<br />
+相应地，解填充时取最后一个字节并记为 <span
+class="math inline">\(b\)</span>，判断 <span class="math inline">\(b
+\leq S\)</span> 且最后 <span class="math inline">\(b\)</span> 个字节均为
+<span class="math inline">\(b\)</span> 时，解填充校验成功，移除最后
+<span class="math inline">\(b\)</span> 个字节即视为解填充完成。<br />
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">pkcs7_pad</span>(<span class="params">msg:<span class="built_in">bytes</span>,blocksize:<span class="built_in">int</span> = <span class="number">16</span></span>):</span><br><span class="line">    p = blocksize - <span class="built_in">len</span>(msg) % blocksize</span><br><span class="line">    <span class="keyword">return</span> msg + <span class="built_in">bytes</span>([p] * p)</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">pkcs7_unpad</span>(<span class="params">msg:<span class="built_in">bytes</span>,blocksize:<span class="built_in">int</span> = <span class="number">16</span></span>):</span><br><span class="line">    up = msg[-<span class="number">1</span>]</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> msg[-up:]:</span><br><span class="line">        <span class="keyword">if</span> i != up:</span><br><span class="line">            <span class="keyword">raise</span> UnpadError(<span class="string">&quot;Invalid Padding&quot;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> msg[:-up]</span><br><span class="line"></span><br></pre></td></tr></table></figure></p></li>
+<li><p><em>iso7816</em>：填充规则较 <em>pkcs7</em>
+更简单，填充长度同样是 <span class="math inline">\(l_p = S - (l_m \bmod
+S)\)</span>。<br />
+区别是，其在原字节后填充一个'1'后全部填'0'（以bit位看），宏观上形如<code>\x80\x00\x00...\x00</code>。md5即近似采用这种方式对待散列数据进行填充（区别是其填充的标定长度是
+<span class="math inline">\(l \equiv 448 (\bmod 512)\)</span>）。<br />
+下述实现假定块大小为16：<br />
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">iso7816_pad</span>(<span class="params">msg:<span class="built_in">bytes</span></span>):</span><br><span class="line">    p = <span class="number">16</span> - <span class="built_in">len</span>(msg) % <span class="number">16</span></span><br><span class="line">    <span class="keyword">return</span> msg + <span class="built_in">bytes</span>([<span class="number">128</span>] + [<span class="number">0</span>] * (p - <span class="number">1</span>))</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">iso7816_unpad</span>(<span class="params">msg:<span class="built_in">bytes</span></span>):</span><br><span class="line">    i = <span class="number">1</span></span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        <span class="keyword">if</span> msg[-i] == <span class="number">0</span>:</span><br><span class="line">            i += <span class="number">1</span></span><br><span class="line">        <span class="keyword">elif</span> msg[-i] == <span class="number">128</span>:</span><br><span class="line">            <span class="keyword">return</span> msg[:-i]</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">raise</span> UnpadError(<span class="string">&quot;Invalid Padding&quot;</span>)</span><br></pre></td></tr></table></figure></p></li>
+<li><p><em>x923</em>：填充长度同上，最后一个字节为填充长度，其余填充字节为0。
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">x923_pad</span>(<span class="params">msg:<span class="built_in">bytes</span></span>):</span><br><span class="line">    p = <span class="number">16</span> - <span class="built_in">len</span>(msg) % <span class="number">16</span></span><br><span class="line">    <span class="keyword">return</span> msg + <span class="built_in">bytes</span>([<span class="number">0</span>] * (p-<span class="number">1</span>) + [p])</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">x923_unpad</span>(<span class="params">msg:<span class="built_in">bytes</span></span>):</span><br><span class="line">    up = msg[-<span class="number">1</span>]</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">2</span>,up):</span><br><span class="line">        <span class="keyword">if</span> msg[-i] != <span class="number">0</span>:</span><br><span class="line">            <span class="keyword">raise</span> UnpadError(<span class="string">&quot;Invalid Padding&quot;</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> msg[:-up]</span><br><span class="line"></span><br></pre></td></tr></table></figure></p></li>
+</ul>
+<blockquote>
+<p><code>pycryptodome</code>再度发挥神威：<code>Crypto.Util.Padding</code>提供了<code>pad</code>和<code>unpad</code>函数来协助执行常用的填充/解填充方案。</p>
+</blockquote>
+<h1 id="padding-orcale">Padding Orcale</h1>
+<h2 id="靶子简介">靶子简介</h2>
+<p>Padding Orcale
+Attack是一种针对C/S系统的攻击，利用了服务端解密后对密文进行unpad校验结果对应的相应差分。其本质上是一种<strong>适应性选择密文攻击</strong>。</p>
+<p>假设存在一个Orcale，其会对传入的密文（AES-CBC模式加密）进行解密，根据解密结果做出不同相应：</p>
+<ul>
+<li>若解密成功（填充校验正确）且明文内容正确，返回 <em>A</em><br />
+</li>
+<li>若解密失败（填充校验错误），返回 <em>B</em><br />
+</li>
+<li>若解密成功（填充校验正确），但明文内容不正确，返回 <em>C</em></li>
+</ul>
+<p>根本上来说，一个未被恰当设计的服务端很容易暴露其解密阶段、业务校验阶段失败间的相应差分，并被Padding
+Orcale的攻击者利用。参考如下的代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> Crypto.Cipher <span class="keyword">import</span> AES</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">unpad</span>(<span class="params">msg:<span class="built_in">bytes</span></span>):</span><br><span class="line">    up = msg[-<span class="number">1</span>]</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> msg[-up:]:</span><br><span class="line">        <span class="keyword">if</span> i != up:</span><br><span class="line">            <span class="keyword">raise</span> UnpadError(<span class="string">&quot;Invalid Padding&quot;</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> msg[:-up]</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">verify</span>(<span class="params">cipher:<span class="built_in">bytes</span></span>) -&gt; <span class="literal">None</span>:</span><br><span class="line">    iv = cipher[:<span class="number">16</span>]</span><br><span class="line">    txt = cipher[<span class="number">16</span>:]</span><br><span class="line"></span><br><span class="line">    aes = AES.new(key,AES.MODE_CBC,iv)</span><br><span class="line">    plain = unpad(aes.decrypt(txt))</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> plain != secret:</span><br><span class="line">        <span class="keyword">raise</span> RuntimeError(<span class="string">&quot;Text verification failed&quot;</span>)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="攻击">攻击</h2>
+<blockquote>
+<p>Padding Orcale
+针对的主要是CBC模式分组加密的密文。针对别的模式或有更适合的攻击方法<del>比如ECB压根不需要Padding
+Orcale</del></p>
+</blockquote>
+<p>回顾AES-CBC模式加密的特性：</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/闲笔//" class="article-tag-list-link color3">闲笔</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/block-1/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+  <div>
+</article>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-rsa" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -165,7 +314,7 @@
 
         
         <a href="/rsa/" class="archive-article-date">
-  	<time datetime="2025-01-16T21:19:27.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-01-16</time>
+  	<time datetime="2025-01-16T23:19:27.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-01-16</time>
 </a>
         
       </header>
@@ -545,6 +694,8 @@ class="math inline">\(N\)</span> 的非平凡因子，即可分解 <span
 class="math inline">\(N\)</span>。</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">factor_dp</span>(<span class="params">N:<span class="built_in">int</span>,e:<span class="built_in">int</span>,dp:<span class="built_in">int</span></span>):</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>,e):</span><br><span class="line">        <span class="keyword">if</span> (e*dp - <span class="number">1</span>) % i == <span class="number">0</span>:</span><br><span class="line">            fc = (e*dp - <span class="number">1</span>) // i</span><br><span class="line">            <span class="keyword">if</span> N % (fc + <span class="number">1</span>) == <span class="number">0</span>:</span><br><span class="line">                <span class="keyword">return</span> fc + <span class="number">1</span>, N % (fc + <span class="number">1</span>)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 <h3 id="攻击二已知ndpdq">攻击二：已知(N,dp,dq)</h3>
+<p>若已知 <span class="math inline">\(d_p = d \bmod p-1\)</span>，<span
+class="math inline">\(d_q = d \bmod q-1\)</span>，</p>
 <h2 id="光滑数攻击">光滑数攻击</h2>
 <p>即使 <span class="math inline">\(N\)</span> 确实是两个大质数 <span
 class="math inline">\(p,q\)</span>
@@ -726,6 +877,36 @@ Z_{+}\)</span>，<span class="math inline">\(\exists i \in
 的数论中存在不少如此般的“飘渺”算法：每次执行时，其可能得到一个解也可能得不到。<br />
 有名的类似算法包括 <em>Pollard's rho algorithm</em> 、 **</p>
 </blockquote>
+<h2 id="解密特例-e-和-varphin-不互质">“解密”特例： <span
+class="math inline">\(e\)</span> 和 <span
+class="math inline">\(\varphi(N)\)</span> 不互质</h2>
+<p>RSA的参数选取中强调了要求 <span
+class="math inline">\(gcd(e,\varphi(N)) = 1\)</span>。若不然呢？</p>
+<p>由于 <span class="math inline">\(\varphi(N)\)</span>
+从群论的角度看就是 <span class="math inline">\(Z(\bmod N)\)</span>
+群的阶，因而若 <span class="math inline">\(e\)</span> 不与之互质，则
+<span class="math inline">\(e\)</span> 在 <span
+class="math inline">\(\varphi(N)\)</span>
+下的逆元不存在，意即此时我们无法完成密文到明文的单射。<br />
+但根据拉格朗日定理，记 <span class="math inline">\(gcd(e,\varphi(N)) =
+k\)</span>，则可以将 <span class="math inline">\(e\)</span> 和 <span
+class="math inline">\(\varphi(N)\)</span> “抬升”到 <span
+class="math inline">\(Z(\bmod N)\)</span> 的一个新子群，新子群的阶就是
+<span class="math inline">\(\frac{\varphi(N)}{k}\)</span>，<span
+class="math inline">\(e\)</span> 在其中就有逆元了。</p>
+<p>若将该结果代回到RSA解密中，可以注意到其问题就在于我们只能解密出 <span
+class="math inline">\(Z(\bmod N)\)</span> 下的 <span
+class="math inline">\(m^{k}\)</span>，需要在该域下对之开 <span
+class="math inline">\(k\)</span> 次根。</p>
+<p>在二次剩余的基础上，通过 <em>AMM Algorithm</em>
+可以实现有限域下开任意次根（当然如同二次剩余不一定有解一样，n次根也不一定有解），但大部分情况下其求解耗时会非常长。<br />
+关于 <em>AMM Algorithm</em> 的原理和实现可移步<a
+target="_blank" rel="noopener" href="https://eprint.iacr.org/2011/239.pdf">论文</a></p>
+<p>sagemath对于 <span class="math inline">\(Z(\bmod N)\)</span>
+下的元素提供了<code>nth_root</code>成员函数，结合sage的<del>蛇皮</del>特性，可以在对
+<span class="math inline">\(m\)</span>
+RSA求解后的结果直接调用之，无需换环：<br />
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line"></span><br><span class="line">p = <span class="number">11</span></span><br><span class="line">q = <span class="number">7</span></span><br><span class="line">e = <span class="number">9</span></span><br><span class="line">c = <span class="number">35</span></span><br><span class="line">n = p * q</span><br><span class="line">phi = (p-<span class="number">1</span>)*(q-<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line">k = gcd(e,phi) </span><br><span class="line">ee = e / k</span><br><span class="line">phii = phi / k</span><br><span class="line">d = <span class="built_in">pow</span>(ee,-<span class="number">1</span>,phii)</span><br><span class="line"></span><br><span class="line">mk = <span class="built_in">pow</span>(c,d,n)</span><br><span class="line">m = mk.nth_root(k,<span class="built_in">all</span>=<span class="literal">True</span>) </span><br><span class="line"></span><br></pre></td></tr></table></figure></p>
 <h1 id="rsa-attacks-future">RSA-Attacks: Future</h1>
 <p>在RSA中，如果我们可以进行选择明/密文攻击，则在一定场景下存在诸多较为“花哨”的攻击方式。</p>
 <h2 id="rsa-parity-orcale">RSA Parity Orcale</h2>
@@ -979,173 +1160,9 @@ class="math inline">\(p^{&#39;} &gt;&gt; x\)</span>。</p>
 
 
   
-    <article id="post-tasks" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/tasks/">挖坑</a>
-    </h1>
-  
-
-        
-        <a href="/tasks/" class="archive-article-date">
-  	<time datetime="2025-01-15T03:43:58.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-01-14</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <blockquote>
-<p>挖个关于Modern C++全盘点的坑，<del>欢迎催更</del></p>
-</blockquote>
-<h1 id="modern-c">Modern C++</h1>
-<h2 id="c11">C++11</h2>
-<ul class="task-list">
-<li><label><input type="checkbox" />Lambda expression</label></li>
-<li><label><input type="checkbox" />Smart pointers</label></li>
-<li><label><input type="checkbox" checked="" />Rvalue references &amp;
-move sematics</label></li>
-<li><label><input type="checkbox" />Variadic templates</label></li>
-<li><label><input
-type="checkbox" /><code>std::thread</code></label></li>
-</ul>
-<h2 id="c17">C++17</h2>
-<ul class="task-list">
-<li><label><input type="checkbox" />Execution policies</label></li>
-<li><label><input type="checkbox" />Structural binding</label></li>
-</ul>
-<h2 id="c20">C++20</h2>
-<ul class="task-list">
-<li><label><input type="checkbox" />Ranges library</label></li>
-<li><label><input type="checkbox" />Concepts</label></li>
-<li><label><input type="checkbox" />Modules</label></li>
-<li><label><input type="checkbox" />Coroutines</label></li>
-<li><label><input type="checkbox" checked="" />Three-way
-comparison</label></li>
-<li><label><input type="checkbox"
-checked="" /><code>std::format</code></label></li>
-</ul>
-<h2 id="c23">C++23</h2>
-<ul class="task-list">
-<li><label><input type="checkbox" />sum-types &amp;
-<code>std::expected</code></label></li>
-<li><label><input type="checkbox"
-checked="" /><code>std::print</code></label></li>
-</ul>
-<h2 id="杂项">杂项</h2>
-<ul class="task-list">
-<li><label><input type="checkbox" />Compile-time
-computation</label></li>
-<li><label><input type="checkbox" />Tag-design</label></li>
-<li><label><input
-type="checkbox" />Specifier(<code>inline</code>,<code>constexpr</code>,<code>noexcept</code>)</label></li>
-<li><label><input type="checkbox" />SFINAE</label></li>
-<li><label><input type="checkbox" />RAII</label></li>
-<li><label><input type="checkbox" />Type casting</label></li>
-<li><label><input type="checkbox" />STL Review</label></li>
-<li><label><input type="checkbox"
-checked="" /><code>return</code></label></li>
-</ul>
-<h1 id="crypto">Crypto</h1>
-<h2 id="asymmetric-cipher">Asymmetric Cipher</h2>
-<ul class="task-list">
-<li><label><input type="checkbox" />RSA</label></li>
-<li><label><input type="checkbox" checked="" />Discrete Log</label></li>
-<li><label><input type="checkbox" />ECC</label></li>
-<li><label><input type="checkbox" />Digital Signature</label></li>
-</ul>
-<h2 id="symmetric-cipher">Symmetric Cipher</h2>
-<ul class="task-list">
-<li><label><input type="checkbox" />Block Cipher: Chaining</label></li>
-<li><label><input type="checkbox" />Block Cipher:
-Encryption</label></li>
-<li><label><input type="checkbox" />Block Cipher: Padding</label></li>
-<li><label><input type="checkbox" />Stream Cipher &amp;
-Psuedorandom</label></li>
-<li><label><input type="checkbox" />Hash Functions</label></li>
-</ul>
-<h2 id="mathematics">Mathematics</h2>
-<ul class="task-list">
-<li><label><input type="checkbox" checked="" />Lattices</label></li>
-<li><label><input type="checkbox" />Coppersmith</label></li>
-</ul>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">Flag</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/闲笔//" class="article-tag-list-link color3">闲笔</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/tasks/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-  <div>
-</article>
-
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
   
     <nav id="page-nav">
-      <a class="extend prev" rel="prev" href="/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><span class="space">&hellip;</span><a class="page-number" href="/page/7/">7</a><a class="extend next" rel="next" href="/page/3/">Next &raquo;</a>
+      <a class="extend prev" rel="prev" href="/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><span class="space">&hellip;</span><a class="page-number" href="/page/8/">8</a><a class="extend next" rel="next" href="/page/3/">Next &raquo;</a>
     </nav>
   
 
