@@ -152,6 +152,145 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-cryptohack" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/cryptohack/">Cryptohack打本手记（持续咕咕ing）</a>
+    </h1>
+  
+
+        
+        <a href="/cryptohack/" class="archive-article-date">
+  	<time datetime="2024-12-18T02:13:02.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-18</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="ecb-orcale">ECB Orcale</h1>
+<p>ECB
+Orcale属于<strong>选择明文攻击</strong>，需要拥有对明文的一定加密权限。<br />
+其利用了ECB加密模式不能抵抗 <em>Replay
+Attacks</em>（重放攻击）的特点。</p>
+<h2 id="攻击原理">攻击原理</h2>
+<p>目标Orcale常形如<strong>固定后缀</strong>，对于攻击者传递的字符串m，该Orcale会将(m+flag)填充后加密之。<br />
+此时，攻击者可以先爆破出flag的长度，随后通过控制m，将待加密的明文（填充后的）制备为形如“控制域+填充域+待解域”的形式。
+以block大小为16为例，各个域的说明如下：</p>
+<blockquote>
+<p>控制域：大小为16，每次爆破控制域中的第i位，使之遍历 <span
+class="math inline">\((0,255)\)</span>。该位其前的内容应为已解密内容，其后的内容应与“待解域”的填充部分全等。</p>
+<p>填充域：大小为16*k(<span class="math inline">\(k \in
+Z_+\)</span>)，通过调整m，该域内容应为任意内容 +
+flag的待解密其它部分。</p>
+<p>待解域：大小为16，该域内容中应为待解密的一位c + 已解密的flag +
+填充部分。</p>
+</blockquote>
+<p>核心是利用ECB加密<strong>各部分相独立</strong>的特性，让控制域和待解域的内容进行碰撞；一旦加密得到的密文相同，说明明文也一定相同，此时就碰撞得到了flag的一位。</p>
+<h2 id="攻击实现">攻击实现</h2>
+<p>假设加密orcale形如下文：<br />
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> Crypto.Cipher <span class="keyword">import</span> AES</span><br><span class="line"><span class="keyword">from</span> Crypto.Util.Padding <span class="keyword">import</span> pad</span><br><span class="line"><span class="keyword">from</span> secret <span class="keyword">import</span> flag,key</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">encrypt</span>(<span class="params">msg:<span class="built_in">bytes</span></span>):</span><br><span class="line">    aes = AES.new(key,AES.MODE_ECB)</span><br><span class="line">    plain = pad(msg+flag,<span class="number">16</span>)</span><br><span class="line">    <span class="keyword">return</span> aes.encrypt(plain).<span class="built_in">hex</span>()</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__==<span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        ipt = <span class="built_in">bytes</span>.fromhex(<span class="built_in">input</span>(<span class="string">&#x27;encrypt :&#x27;</span>))</span><br><span class="line">        cipher = encrypt(ipt)</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&#x27;result : <span class="subst">&#123;cipher&#125;</span>&#x27;</span>)</span><br></pre></td></tr></table></figure></p>
+<p>我们的攻击思路：<br />
+1.
+爆破出flag的长度（或，构造临界点，即让我们知道初始状态下应如何做才能控制“待解域”的填充部分已知）。<br />
+2. 对于第i位，构造明文（控制域+填充域+待解域的非填充部分），传递之<br />
+3.
+若加密结果第一组和最后一组相同，说明得到碰撞，即获得了flag的一位。如此重复，直至明文全部解密完成</p>
+<blockquote>
+<p>“临界点”：当添加一个<code>byte</code>的明文后，发现得到cipher的长度增加了16(<code>BLOCK_SIZE</code>)，这是因为<code>pad</code>的规则要求填充位数不能为0。</p>
+<p>因此，此时实际被加密的明文恰好就是(<code>msg + flag + b'\x10' * 16</code>)。</p>
+<p>如果再给msg添加1位，就可以把flag的一位“挤”到后面（当然，相应的填充内容也会变成<code>b'\x0f'</code>）。（为了保证控制域的内容完全可控，msg应当从16位开始，或者在临界点后再向msg添加17位开始爆破）</p>
+</blockquote>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">getcipher</span>():</span><br><span class="line">    io.recvuntil(<span class="string">b&#x27;:&#x27;</span>)</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">bytes</span>.fromhex(io.recvline().strip().decode())</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__==<span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    io = process([<span class="string">&#x27;python&#x27;</span>,<span class="string">&#x27;task.py&#x27;</span>])</span><br><span class="line"></span><br><span class="line">    <span class="comment">#第一步</span></span><br><span class="line"></span><br><span class="line">    teststr = <span class="string">&#x27;&#x27;</span></span><br><span class="line">    lastlen = <span class="number">0</span></span><br><span class="line">    io.sendlineafter(<span class="string">b&#x27;:&#x27;</span>,teststr.encode())</span><br><span class="line">    start = <span class="built_in">len</span>(getcipher())</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">16</span>):</span><br><span class="line">        teststr += <span class="string">&#x27;0f&#x27;</span> <span class="comment">#内容随意，此处0f为考虑到后续碰撞需要提前准备</span></span><br><span class="line">        io.sendlineafter(<span class="string">b&#x27;:&#x27;</span>,teststr.encode())</span><br><span class="line">        <span class="keyword">if</span> <span class="built_in">len</span>(getcipher()) != start: </span><br><span class="line">            teststr += <span class="string">&#x27;0f&#x27;</span> * <span class="number">17</span></span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">    bt = <span class="built_in">bytearray</span>.fromhex(teststr)</span><br><span class="line">    decrypted = <span class="string">b&#x27;&#x27;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">#理论上可以不断assert len(decrypted) == i</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">16</span>):</span><br><span class="line">        padval = <span class="number">15</span> - i</span><br><span class="line">        bt = <span class="built_in">bytearray</span>(decrypted + [<span class="number">0</span>] + [padval] * padval + bt[<span class="number">16</span>:])</span><br><span class="line">        <span class="keyword">for</span> t <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">255</span>):</span><br><span class="line">            bt[i] = t</span><br><span class="line">            io.sendlineafter(<span class="string">b&#x27;:&#x27;</span>,bt.<span class="built_in">hex</span>().encode())</span><br><span class="line">            dealer = getcipher()</span><br><span class="line">            <span class="keyword">if</span> dealer[-<span class="number">16</span>:] == dealer[:<span class="number">16</span>]: <span class="comment">#碰撞成功，说明获得了一位密文</span></span><br><span class="line">                decrypted += t</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">raise</span> Exception(<span class="string">&quot;Something Wrong?&quot;</span>) <span class="comment">#Error</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">print</span>(decrypted)</span><br></pre></td></tr></table></figure>
+<h1 id="symmetry">Symmetry</h1>
+<p><del>游戏链接：</del><br />
+<a target="_blank" rel="noopener" href="https://aes.cryptohack.org/symmetry/">Cryptohack</a>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> Crypto.Cipher <span class="keyword">import</span> AES</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">KEY = ?</span><br><span class="line">FLAG = ?</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">@chal.route(<span class="params"><span class="string">&#x27;/symmetry/encrypt/&lt;plaintext&gt;/&lt;iv&gt;/&#x27;</span></span>)</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">encrypt</span>(<span class="params">plaintext, iv</span>):</span><br><span class="line">    plaintext = <span class="built_in">bytes</span>.fromhex(plaintext)</span><br><span class="line">    iv = <span class="built_in">bytes</span>.fromhex(iv)</span><br><span class="line">    <span class="keyword">if</span> <span class="built_in">len</span>(iv) != <span class="number">16</span>:</span><br><span class="line">        <span class="keyword">return</span> &#123;<span class="string">&quot;error&quot;</span>: <span class="string">&quot;IV length must be 16&quot;</span>&#125;</span><br><span class="line"></span><br><span class="line">    cipher = AES.new(KEY, AES.MODE_OFB, iv)</span><br><span class="line">    encrypted = cipher.encrypt(plaintext)</span><br><span class="line">    ciphertext = encrypted.<span class="built_in">hex</span>()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="string">&quot;ciphertext&quot;</span>: ciphertext&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">@chal.route(<span class="params"><span class="string">&#x27;/symmetry/encrypt_flag/&#x27;</span></span>)</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">encrypt_flag</span>():</span><br><span class="line">    iv = os.urandom(<span class="number">16</span>)</span><br><span class="line"></span><br><span class="line">    cipher = AES.new(KEY, AES.MODE_OFB, iv)</span><br><span class="line">    encrypted = cipher.encrypt(FLAG.encode())</span><br><span class="line">    ciphertext = iv.<span class="built_in">hex</span>() + encrypted.<span class="built_in">hex</span>()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="string">&quot;ciphertext&quot;</span>: ciphertext&#125;</span><br></pre></td></tr></table></figure></p>
+<p>本题的核心点在于OFB这个模式的“对称性”：OFB中并没有所谓“解密”操作（虽然很多流密码其实都没有解密操作，“加密”只是生成密钥流的过程，最终将该流和明文异或而得）。<br />
+考虑OFB的加密过程如图：<br />
+<img src="/img/OFB.png" title="Output Feedback Mode Encryption"
+alt="OFB" /><br />
+显然，只要攻击者获得了前一组密文并拥有加密权限，则其传递该组密文作为"iv"，即可解密后一组密文。<br />
+进一步地，若攻击者拥有全部的密文和iv，则其可以解密全部明文（将iv和密文再走一遍加密流程即可）。<br />
+exp即为获得(iv+密文)后直接传回交互式窗口，decode即可。</p>
+<blockquote>
+<p>flag: crypto{0fb_15_5ymm37r1c4l_!!!11!}</p>
+</blockquote>
+<h1 id="bean-counter">Bean Counter</h1>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">wp</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/闲笔//" class="article-tag-list-link color3">闲笔</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/cryptohack/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+  <div>
+</article>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-cpp-return" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -165,7 +304,7 @@
 
         
         <a href="/cpp-return/" class="archive-article-date">
-  	<time datetime="2024-12-13T02:36:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-12</time>
+  	<time datetime="2024-12-13T02:36:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-13</time>
 </a>
         
       </header>
@@ -335,199 +474,6 @@ it for granted"的思维。<br />
       
         <p class="article-more-link">
           <a class="article-more-a" href="/cpp-return/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-  <div>
-</article>
-
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-cpp-concepts" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/cpp-concepts/">C++20四大金刚——青龙concepts</a>
-    </h1>
-  
-
-        
-        <a href="/cpp-concepts/" class="archive-article-date">
-  	<time datetime="2024-12-12T13:37:44.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-12</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <blockquote>
-<p>东方青龙，<code>concepts</code>龙腾四海。</p>
-</blockquote>
-<p>C++20的更新量级极大：其开创了大量新的编程模式，引入了大量语法点、标准库等等，对C++体系的影响可以与C++11相提并论。<br />
-其中更有“四大金刚”——<code>concepts</code>、<code>modules</code>、<code>ranges</code>和<code>coroutines</code>。本篇将深入浅出地探讨<code>concepts</code>这一大特性。<br />
-<del>其实concepts是C++20最“简单”的大特性之一了</del></p>
-<h1 id="pastsfinae">Past——SFINAE</h1>
-<p>concepts其实并不是一个新的“概念”(???)。</p>
-<p>模板（泛型）编程的课题可以占据C++的半壁江山。极高的设计自由度、一望无际的复用可能性、牵扯到的语法之繁杂、相关库的多样性使其一直以来都是C++语言的最重要课题，几乎没有之一。<br />
-所谓“C++其实是两门语言，带<code>template</code>的是一种，不带<code>template</code>的是另一种”的说法丝毫不为夸张。</p>
-<p>而作为一门编译型语言，在Metaprogramming中我们自然希望对模板的参数有一定约束，让函数按设计者期望的方式进行调用。<br />
-而在传统C++中，除了一些语言上的小“华点”被复用，并没有太好的办法对模板参数进行高可读性、易于维护/复用、明确的约束。</p>
-<p>C++11中提出了SFINAE(Substitution Failure Is Not An
-Error)的概念。<br />
-SFINAE在模板编程中的应用在于完成模板参数替换（即将实例化）时，如果代入<code>Ty = ...</code>会产生一些非法的表达式，则编译器会放弃这个重载（而不是继续试图<del>在绝路上狂奔</del>编译错误），转而试着寻找下一个重载进行匹配。<br />
-与SFINAE相搭配的内容还有：</p>
-<ul>
-<li>对于全特化(<em>full specialization</em>)/偏特化(<em>partial
-specialization</em>)的模板类，其与满足条件（可自动推导）的模板参数匹配优先级很高，且绑定后<strong>不会受SFINAE影响放弃</strong>。<br />
-</li>
-<li>C++中，对于自动模板参数，其推导遵循最简原则（即优先尝试将令参数不带任何
-<em>cvref</em> 修饰来实例化）。</li>
-</ul>
-<p><del>（感觉又噎着了，赶紧上代码润润嗓子）</del><br />
-最简推导原则： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//完美转发的场景</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(Ty&amp;&amp; arg)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> x = <span class="number">2</span>;</span><br><span class="line"></span><br><span class="line"><span class="built_in">fun</span>(<span class="number">1</span>); <span class="comment">//Ty = int，虽然Ty = int&amp;&amp;同样“能用”，但最简原则，不加引用优先</span></span><br><span class="line"><span class="built_in">fun</span>(x); <span class="comment">//Ty = int&amp;（比较显然，毕竟int就不能编译了）</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//一些其它的函数调用</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">bar</span><span class="params">(Ty arg)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="built_in">bar</span>(<span class="number">1</span>); <span class="comment">//Ty = int，虽然Ty确实可以是int&amp;&amp;，依然是“避重就轻”</span></span><br><span class="line"><span class="built_in">bar</span>(x); <span class="comment">//Ty仍然是int，虽然Ty依然可以是int&amp;，但毕竟int arg&#123;x&#125;;是合法的，所以编译器不会“闲着没事干”</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//std::forward</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function">std::<span class="type">remove_reference_t</span>&lt;Ty&gt;&amp; <span class="title">forward</span><span class="params">(std::<span class="type">remove_reference_t</span>&lt;Ty&gt;&amp; arg)</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> arg;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure></p>
-<blockquote>
-<p>常见的非法表达式：</p>
-<ul>
-<li>（实例化代码中）建立了对void的引用；</li>
-<li>试图对<code>void</code>或其它 <em>不完整的类型</em>
-计算<code>sizeof</code>；</li>
-<li><strong>试图访问类的某个<code>typedef</code>或静态成员等，但该成员不存在</strong>；（SFINAE中最为常用之者）</li>
-</ul>
-</blockquote>
-<p>C++中，在<code>&lt;algorithm&gt;</code>的老STL算法库中经常能看到<code>std::enable_if_t</code>的声明，其封装了<code>std::enable_if</code>这一<code>struct</code>。</p>
-<blockquote>
-<p>C++中一定要分清模板函数的重载(overload)和特化(specialization)两个概念。特化有全特化(full
-specialization)和偏特化(partial specialization)两种。<br />
-模板函数只有“重载”和“全特化”，模板类只有“全特化”和“偏特化”。<br />
-对于模板函数，C++在匹配参数时若发现一个模板函数存在重载，则按照以下步骤决策：<br />
-- 先判定函数列表是否匹配，排除不匹配的重载选项；<br />
--
-若重载选项中一个是模板函数，一个是非模板函数，且非模板函数的形参列表和当前参数不需要隐式转换时，选择非模板函数；<br />
--
-否则，若可以通过自动匹配模板函数来令模板函数的形参列表和当前参数匹配，且不需要隐式转换时，选择实例化一个模板函数；<br />
-- 否则认为是存在歧义而编译失败。</p>
-</blockquote>
-<blockquote>
-<p>注意：任何<code>template</code>的声明（变量、函数、类）无论基本还是特化，<strong>自身都不会产生任何编译代码</strong>；必须有调用方实例化之时，编译的程序才会有这部分代码（比如对于函数来说，存在指向该函数的指针）。<br />
-核心点就是<strong>特化(specialization)和实例化(instanitation)是不同的概念</strong>。<br />
-相对地，任何非<code>template</code>的声明则都会产生编译代码（除非在Release版本中被编译器优化掉）。</p>
-</blockquote>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(Ty)</span></span>&#123;&#125; <span class="comment">//fun没有任何可执行代码</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;&gt;</span><br><span class="line"><span class="type">void</span> <span class="built_in">fun</span>&lt;<span class="type">int</span>&gt;(<span class="type">int</span>)&#123;&#125; <span class="comment">//fun至此仍然未产生任何可执行代码，因为这只是一个模板函数的特化，不是实例化</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;   </span><br><span class="line">    <span class="built_in">fun</span>(<span class="string">&#x27;o&#x27;</span>); <span class="comment">//实例化了一个fun&lt;char&gt;，至此程序中拥有了一个指向函数fun&lt;char&gt;的函数指针</span></span><br><span class="line">    <span class="built_in">fun</span>(<span class="number">2.3</span>); <span class="comment">//同理</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>模板类则有全特化和偏特化之分，标志为是否是<code>template&lt;&gt;</code>。<br />
-一旦出现<code>template&lt;&gt;</code>，说明其指定了模板的全部参数，则为全特化，否则为偏特化。
-C++匹配模板参数时，若该模板存在特化，则匹配优先级为全特化&gt;偏特化&gt;基本模板，其即为<code>&lt;type_traits&gt;</code>中诸多utility的实现支撑原理之一。<br />
-且C++的模板参数匹配遵循最简原则（无需隐式转换的原始类型优先级最高，引用、指针、<code>const</code>/<code>volatile</code>修饰等优先级后置）。</p>
-</blockquote>
-<p><code>&lt;type_traits&gt;</code>中提供了一个<code>remove_reference_t</code>封装<code>remove_reference</code>，来在模板编程中获取一个类型名移除引用信息的结果：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">remove_reference</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">using</span> type = Ty;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">remove_reference</span>&lt;Ty&amp;&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">using</span> type = Ty;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">remove_reference</span>&lt;Ty&amp;&amp;&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">using</span> type = Ty;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">using</span> <span class="type">remove_reference_t</span> = <span class="keyword">typename</span> remove_reference&lt;Ty&gt;::type;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="built_in">static_assert</span>(std::<span class="type">is_same_t</span>&lt;<span class="type">remove_reference_t</span>&lt;<span class="type">int</span>&amp;&gt;,<span class="type">int</span>&gt;); <span class="comment">//注意比较类型不能用operator==</span></span><br><span class="line"></span><br></pre></td></tr></table></figure></p>
-<h1 id="presentconcepts">Present——concepts？</h1>
-<p>C++20与"concepts"有关的关键字有两个：<code>concept</code>和<code>requires</code>。其中，<br />
--
-<code>concept</code>声明一个“概念”，其本质是一个编译期的模板<code>bool</code>变量。其必须作为一个模板变量声明，并以编译期常量(compile-time
-constant)初始化之。如： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> example = <span class="literal">true</span>; <span class="comment">//一个永远为真的concept</span></span><br><span class="line"><span class="comment">//其实它的本质就是</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">bool</span> equivlant_cpvar = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> small = <span class="built_in">sizeof</span>(Ty) &lt; <span class="number">4</span>; <span class="comment">//对于sizeof()小于4的类型，获得一个true的编译期常量</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">static_assert</span>(small&lt;<span class="type">int</span>&gt;);</span><br><span class="line"><span class="built_in">static_assert</span>(!small&lt;<span class="type">double</span>&gt;);</span><br></pre></td></tr></table></figure></p>
-<ul>
-<li><code>requires</code>则既可以作为specifier修饰一个模板（进行约束），亦是定义concepts元素的一部分。</li>
-</ul>
-<h2 id="requires作为约束提示字">requires作为约束提示字</h2>
-<p>作为前者时，其可以出现在template的多种可能位置<del>（C++20为了避免过多争端，对各方势力采取绥靖政策而接受了多种不同写法）</del>。<br />
-通过requires显式约束时，变量可以是一个<code>concept</code>或编译期的<code>bool</code>变量：
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//#1</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt; <span class="title">requires</span><span class="params">(small&lt;Ty&gt;)</span></span></span><br><span class="line"><span class="function"><span class="keyword">class</span> smallvector</span>&#123;&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">//#2</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt; <span class="type">void</span> <span class="title">func</span><span class="params">(Ty arg)</span> <span class="title">requires</span><span class="params">(small&lt;Ty&gt; &amp;&amp; std::is_nothrow_destructible&lt;Ty&gt;)</span></span></span><br><span class="line"><span class="function"><span class="comment">//Main body can be omitted(just declaration)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-而隐式约束时，其必须是一个concept<del>（所以可能需要对一些旧的interface手动套皮）</del>。<br />
-对于单模板变量的约束，其空置变量数必须为1（具体地，实例化时会将该模板参数填入该concept的第一个模板参数中，若其仍有后续非默认参数则必须指定之）：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Tx</span>,<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> two_template_parameters = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;two_template_parameters&lt;<span class="type">int</span>&gt; Ty&gt; <span class="comment">//相当于约束 two_template_parameters&lt;Ty,int&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">()</span></span>&#123;&#125;</span><br></pre></td></tr></table></figure></p>
-<p>C++14起大幅扩大了auto的适用范围，约束auto模板变量的方法也非常<del>奇怪</del>简单：
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(std::default_formattable&lt;<span class="type">char</span>&gt; <span class="keyword">auto</span> x)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line"></span><br><span class="line">&#125;J</span><br></pre></td></tr></table></figure></p>
-<h2 id="requires作为concepts一部分">requires作为concepts一部分</h2>
-<p>requires可以发起一个子句，语法是<code>requires (init_params)&#123;...&#125;</code>。<br />
-其中，init_params为可选项，如果加上了括号，则其中可以放置一些参数（如同写出函数的实参一样），可在下面的内嵌约束中使用。
-大括号内可以添加任意数量的内嵌约束语句(nested
-constraints)，以分号分隔且存在逻辑与的关系（当且仅当内嵌约束全部满足时，该requires解析为<code>true</code>）。
-Nested constraints的分类如下：</p>
-<ul>
-<li>简单约束：一个任意的表达式，该表达式合法（可以通过编译）时通过；<br />
-</li>
-<li>变量约束:
-<code>requires</code>加上一个编译期的<code>bool</code>变量，该变量为<code>true</code>时通过；<br />
-</li>
-<li>复合约束：语法为<code>&#123;expr&#125; (noexcept) (-&gt; [concept])</code>，通过条件如下：
-<ol type="1">
-<li>expr必须能通过编译（和“简单约束”相同）；<br />
-</li>
-<li>若声明了noexcept，则expr必须被声明为<code>noexcept(true)</code>；<br />
-</li>
-<li>若指定了后继的<code>-&gt; [concept]</code>（所谓"trailing
-type"-后继类型），则按以下的步骤校验：
-<ul>
-<li>将<code>decltype(expr)</code>代入至后继的concept中（作为第一个变量，规则可以参考模板隐式约束），</li>
-<li>该concept也必须最终解析为<code>true</code>。</li>
-</ul></li>
-</ol>
-上述任何一个步骤失败，则该约束的解析结果为<code>false</code>。</li>
-</ul>
-<p>应用实例： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//比如现在约束一个迭代器类，要求：</span></span><br><span class="line"><span class="comment">//1. 其必须可以与同类对象比较并返回bool，且不能抛出异常；</span></span><br><span class="line"><span class="comment">//2. 其必须支持（前置）自增和自减运算；</span></span><br><span class="line"><span class="comment">//3. 其必须可以解引用并返回一个int&amp;；</span></span><br><span class="line"><span class="comment">//4. 其大小必须不大于8。</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> biint_iterators = <span class="built_in">requires</span>(Ty it) <span class="comment">//这里“幻化”出了一个变量it，可以在下文约束中使用。</span></span><br><span class="line">&#123;</span><br><span class="line">&#123;it != it&#125; <span class="keyword">noexcept</span> -&gt; std::same_as&lt;<span class="type">bool</span>&gt;;</span><br><span class="line">++it; --it;</span><br><span class="line">&#123;*it&#125; -&gt; std::same_as&lt;<span class="type">int</span>&amp;&gt;;</span><br><span class="line"><span class="function"><span class="keyword">requires</span> <span class="title">sizeof</span><span class="params">(it)</span> &lt; 8</span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
-<p>显然concepts的约束比起SFINAE等方法可读性、维护性提升了数个数量级。</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/cpp-concepts/">展开全文 >></a>
         </p>
       
 

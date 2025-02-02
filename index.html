@@ -165,7 +165,7 @@
 
         
         <a href="/index/" class="archive-article-date">
-  	<time datetime="2024-12-10T03:39:35.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-09</time>
+  	<time datetime="2024-12-10T03:39:35.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-10</time>
 </a>
         
       </header>
@@ -277,134 +277,27 @@ Jiang, Hibiscus, LingLong, Crystal, whatever:)</p>
 
 
   
-    <article id="post-cpp-lambda" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-cpp-ranges" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/cpp-lambda/">C++——浮萍lambda</a>
+      <a class="article-title" href="/cpp-ranges/">C++20——玄武ranges</a>
     </h1>
   
 
         
-        <a href="/cpp-lambda/" class="archive-article-date">
-  	<time datetime="2025-01-27T05:40:36.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-01-26</time>
+        <a href="/cpp-ranges/" class="archive-article-date">
+  	<time datetime="2025-02-02T03:51:47.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-02-02</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h1 id="匿名的函数">匿名的函数？</h1>
-<p>C++11引入的超大特性之一是 <em>lambda expression</em>
-，即匿名函数表达式。</p>
-<p>传统C/C++中，或许我们都已习惯于声明定义函数的传统模式。那么对函数进行“匿名”的意义何在？</p>
-<p>最重要的原因之一是，匿名函数的定义轻巧快捷。<br />
-由于C/C++并不允许函数内部嵌套定义函数<del>明明namespace/class/template都能嵌套的</del>，因而函数必须被“分离”定义。<br />
-但很多时候我们需要临时定义一个函数进行使用（如在调用某些算法时），如果每次都需要分别声明、调用，具名函数数大幅增加极易导致其变得臃肿，且不利于程序的维护。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">comp_stu_1</span><span class="params">(<span class="type">const</span> Stu&amp; x,<span class="type">const</span> Stu&amp; y)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> x.id - y.id;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(std::span&lt;<span class="type">const</span> Stu&gt; sp)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::ranges::<span class="built_in">sort</span>(sp,comp_stu_1);</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p><del>虽然但是，讲pre-C++11的情况为什么要用C++20的特性啊喂</del></p>
-<p>类似的匿名函数在很多现代编程语言中都存在，如python直接将<code>lambda</code>作为其关键字（相对地，即使lambda这一特性之大，C++中并没有为之引入任何新的关键字）。</p>
-<h1 id="lambda简介">lambda简介</h1>
-<blockquote>
-<p><em>lambda expression</em>
-本质上是重载了<code>operator()</code>的匿名类的一个实例。</p>
-</blockquote>
-<h2 id="声明语法">声明语法</h2>
-<p>定义 <em>lambda expression</em> 的语法形如：
-<code>[capture-list](parameter-list) mutable noexcept -&gt; return-type &#123;function-body&#125;</code>。</p>
-<ul>
-<li><p>中括号<code>[]</code>标志一个lambda表达式的开始，其中<code>capture-list</code>是捕获列表，以“捕获”lambda表达式所在命名空间的变量，并在函数内使用：</p>
-<ul>
-<li><code>&amp;var-name</code>：以引用方式捕获一个变量（非<code>const</code>引用）。若省略<code>var-name</code>，则以引用方式捕获所有变量。<br />
-</li>
-<li><code>var-name</code>：以值方式捕获一个变量。<strong>所有的lambda函数默认都带const属性，即其不能修改值捕获变量的值（除非声明为mutable，但引用则不然。）</strong><br />
-特别地，<code>=</code>表示通过值方式捕获所有变量（不含<code>this</code>）。<br />
-</li>
-<li><code>this</code>：捕获该命名空间中的<code>this</code>指针。</li>
-</ul>
-<p>不同的捕获方式以<code>,</code>相并列，通用捕获方法(<code>=</code>,<code>&amp;</code>)可以被单个变量声明特化；同一个变量不能被相冲突的捕获方法声明。
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> a = <span class="number">1</span>;</span><br><span class="line">std::vector&lt;<span class="type">int</span>&gt; vc&#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">auto</span> f1 = [=]()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">//captures vc and a by value</span></span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; a &lt;&lt; vc[<span class="number">1</span>] &lt;&lt; std::endl;</span><br><span class="line">    <span class="comment">//vc[0] = 2; //Not Compile: vc is const</span></span><br><span class="line">    <span class="comment">//a += 1; //Not Compile: a is const</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">auto</span> f2 = [=,&amp;a](<span class="type">int</span> x)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">//captures vc by value and a by reference</span></span><br><span class="line"></span><br><span class="line">    a += x; <span class="comment">//OK: ref-captured variables are modifiable</span></span><br><span class="line">    <span class="keyword">return</span> x + vc.<span class="built_in">back</span>();</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">//auto f3 = [&amp;a,a]()&#123;&#125;; //Not Compile: Conflicting statement on how to capture a</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">auto</span> f4 = [=](<span class="type">int</span> i,<span class="type">int</span> x) <span class="keyword">mutable</span></span><br><span class="line">&#123;</span><br><span class="line">    vc[i] += x; <span class="comment">//OK: Function was declared as mutable, enabling modification of value-captured variables</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">const</span> <span class="type">int</span> y = a;</span><br><span class="line"><span class="keyword">auto</span> f5 = [&amp;y]()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">//y += 1; //Not Compile: The const-status of ref-captured variable depends on the variable itself</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br></pre></td></tr></table></figure></p></li>
-<li><p><code>parameter-list</code>指参数列表，若其为空且函数未被声明为<code>mutable</code>，则可以省略。<br />
-</p></li>
-<li><p><code>mutable</code>：可选项，lambda的函数体对<code>capture-list</code>所有非引用类型变量均默认为<code>const</code>，将lambda声明为<code>mutable</code>将允许lambda内修改这些变量。<br />
-&gt;
-结合lambda本质是一个重载了<code>operator()</code>类的实例，底层原理就是lambda的<code>operator()</code>带有<code>const</code>属性，所谓“捕获”变量其实就是将之纳入类内的数据成员。<br />
-&gt;
-相应地，将一个lambda声明为<code>mutable</code>等价于将这些数据成员全部加以<code>mutable</code>修饰。<br />
-</p></li>
-<li><p><code>noexcept</code>：可选项，修饰之和以<code>noexcept</code>修饰一般函数作用相同。<br />
-</p></li>
-<li><p><code>-&gt; return-type</code>：也叫 <em>trailing return
-type</em>
-，亦是可选项，相当于指定了函数的返回类型。若省略之，则相当于函数的返回类型是<code>auto</code>（自动推导）：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> f1 = []() -&gt; <span class="type">double</span> &#123;<span class="keyword">return</span> <span class="number">1</span>;&#125;;</span><br><span class="line"><span class="comment">//等价于</span></span><br><span class="line"><span class="function"><span class="type">double</span> <span class="title">f1</span><span class="params">()</span> </span>&#123;<span class="keyword">return</span> <span class="number">1</span>;&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">auto</span> f2 = []() &#123;<span class="keyword">return</span> <span class="number">1</span>;&#125;</span><br><span class="line"><span class="comment">//等价于</span></span><br><span class="line"><span class="function"><span class="keyword">auto</span> <span class="title">f2</span><span class="params">()</span> </span>&#123;<span class="keyword">return</span> <span class="number">1</span>;&#125;</span><br></pre></td></tr></table></figure></p></li>
-<li><p><code>&#123;function-body&#125;</code>：函数体。</p></li>
-</ul>
-<p>在拥有lambda大法后，上述排序行就可以改写为：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">std::ranges::<span class="built_in">sort</span>(sp,[](<span class="type">const</span> Stu&amp; x,<span class="type">const</span> Stu&amp; y) &#123;<span class="keyword">return</span> x.id-y.id;&#125;);</span><br></pre></td></tr></table></figure>
-<p>lambda相较传统函数的优势有：</p>
-<ul>
-<li>对函数的定义和应用极为灵活，且作为函数变量传递时，和查找函数指针定义相比较更为直观、易于维护；<br />
-</li>
-<li>可以自由控制lambda内部的命名可见情况（捕获列表），且其复用性较函数指针更强；<br />
-</li>
-<li>其“临时”特性给了编译器更大优化空间，效率更高；<br />
-</li>
-<li>作为一个对象，其定义和传递相较函数指针更为自由、更加安全。</li>
-</ul>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> fid = [](<span class="type">const</span> Stu&amp; x,<span class="type">const</span> Stu&amp; y)&#123;<span class="keyword">return</span> x.id-y.id;&#125;;</span><br><span class="line">std::ranges::<span class="built_in">sort</span>(sp,fid);</span><br><span class="line"><span class="comment">//...</span></span><br><span class="line">std::<span class="built_in">println</span>(<span class="string">&quot;Difference = &#123;&#125;&quot;</span>,<span class="built_in">fid</span>(sp.<span class="built_in">front</span>(),sp.<span class="built_in">back</span>()));</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>实际上在C++20中，ranges库带来的 <em>projection</em>
-大法可以让上述排序代码更为简洁：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">std::ranges::<span class="built_in">sort</span>(sp,&#123;&#125;,&amp;Stu::id);</span><br></pre></td></tr></table></figure></p>
-</blockquote>
-<h2 id="调用方式">调用方式</h2>
-<h3 id="匿名调用">匿名调用</h3>
-<p>既然叫lambda——“匿名”函数，自然以“匿名”之法调用之为一选项：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">std::views::<span class="built_in">filter</span>(vec,[](<span class="keyword">auto</span>&amp;&amp; at)&#123;<span class="keyword">return</span> at.num &gt; <span class="number">3</span>;&#125;);</span><br></pre></td></tr></table></figure>
-<h3 id="具名调用">具名调用</h3>
-<p>通过声明一个变量将之存储，实现更为灵活的调用和复用：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> fun = [](<span class="type">int</span> ch) -&gt; <span class="type">char</span> &#123;<span class="keyword">return</span> ch + <span class="number">48</span>;&#125;;</span><br><span class="line"></span><br><span class="line">std::cout &lt;&lt; <span class="built_in">fun</span>(<span class="number">1</span>); <span class="comment">//&#x27;1&#x27;</span></span><br><span class="line">std::ranges::<span class="built_in">transform</span>(vec,fun);</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>注意，lambda表达式的变量类型<strong>只能</strong>声明为<code>auto</code>（只有编译器才知道lambda表达式的类型）。任何两个lambda表达式，即使其函数签名相同，类型也都不相同（相对地，函数签名相同的函数，其函数指针类型也相同）：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo1</span><span class="params">(<span class="type">int</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo2</span><span class="params">(<span class="type">int</span>)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="built_in">void</span> (*)(<span class="type">int</span>)ptr = foo1;</span><br><span class="line">ptr = foo2; <span class="comment">//OK</span></span><br><span class="line"><span class="built_in">static_assert</span>(std::is_same_v&lt;<span class="keyword">decltype</span>(foo1),<span class="keyword">decltype</span>(foo2)&gt;); <span class="comment">//passes</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">auto</span> fun1 = [](<span class="type">int</span>) -&gt; <span class="type">void</span> &#123;&#125;;</span><br><span class="line"><span class="comment">//decltype(fun1) fun2 = [](int) -&gt; void &#123;&#125;; //Not Compile: fun2 and fun1 are of different types, even their function signature is the same</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">auto</span> fun2 = [](<span class="type">int</span>) -&gt; <span class="type">void</span> &#123;&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">//static_assert(std::is_same_v&lt;decltype(fun1),decltype(fun2)&gt;); //Fails</span></span><br></pre></td></tr></table></figure></p>
-</blockquote>
-<h3 id="返回函数">返回函数</h3>
-<p>因为lambda函数本质上是一个对象(object)，因此可以将之安全地作为返回值进行语义传递：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">auto</span> <span class="title">fun_factory</span><span class="params">(<span class="type">int</span> x)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> [x](<span class="type">int</span> y)&#123;<span class="keyword">return</span> y + x;&#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="即时调用">即时调用</h3>
-<p>由于<code>[]()&#123;&#125;</code>就相当于声明了一个 <em>function
-object</em>，一定场景下，<del>在其后再加点括号套娃也未尝不可</del>：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">char</span> x = [&amp;](<span class="type">size_t</span> i)&#123;<span class="keyword">return</span> std::string&#123;vec[i]&#125;;&#125;(<span class="number">3</span>)[<span class="number">2</span>];</span><br></pre></td></tr></table></figure></p>
-<h2 id="底层实现">底层实现</h2>
-<p>lambda表达式因其本质，亦被称为“函数对象”( <em>function objects</em>
-)。</p>
-<p>现代C++中，“函数”("callable")泛化来说可以是以下之一：</p>
-<ul>
-<li>函数指针(function
-pointers)，从C沿袭至今的、最原始的函数形式，变量形如<code>return-type(*)(parameter-list)</code>，如<code>int(*)(int,int)</code>；<br />
-</li>
-<li>可调用对象(callable
-objects)，即重载了<code>operator()</code>类的实例，lambda表达式也是其中一种。</li>
-<li>成员函数指针(pointer to member
-functions)，符号形如<code>::*</code>，</li>
-</ul>
-<p>在C++11前，通过以下方法也可以创建一个可以捕获变量的“函数对象”：
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="type">int</span> x = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">__lambda1</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    __lambda1(<span class="type">int</span> v):x&#123;v&#125;&#123;&#125;</span><br><span class="line">    <span class="function"><span class="type">int</span> <span class="title">operator</span><span class="params">()</span><span class="params">(<span class="type">int</span> g)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> g*<span class="number">2</span> + x;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> x;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">__lambda1</span> f1&#123;x&#125;;</span><br><span class="line"></span><br><span class="line">std::cout &lt;&lt; <span class="built_in">f1</span>(<span class="number">3</span>); <span class="comment">//7</span></span><br><span class="line"></span><br></pre></td></tr></table></figure></p>
-<h1 id="历代c对lambda的改进">历代C++对lambda的改进</h1>
-<h2 id="c14">C++14</h2>
-<ol type="1">
-<li><p><code>constexpr</code>相关：随着<code>constexpr</code>函数限制的放宽<del>让constexpr函数也像一个函数</del>，所有的lambda表达式均默认成为<code>constexpr</code>（在符合编译条件前提下）。</p></li>
-<li><p>泛型(generic)-lambda：C++11引入<code>auto</code>关键字后，在函数形参列表中使用之可以便捷地创建（模板变量不具名的）函数模板，如<code>int fun(auto param);</code>。
-C++14起，lambda函数也允许使用<code>auto</code>来快速创建函数模板，极大地方便了临时调用场景下的使用（无需打出原始类型，甚至可以通过<code>auto&amp;&amp;</code>来自动匹配<code>const</code>和引用属性等）。如：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">std::ranges::<span class="built_in">filter</span>(vec,[](<span class="keyword">auto</span>&amp;&amp; v)&#123;<span class="keyword">return</span> v.<span class="built_in">back</span>() &gt; <span class="number">3</span>;&#125;);</span><br></pre></td></tr></table></figure></p></li>
-</ol>
-<h2 id="c23">C++23</h2>
-<p>此前lambda表达式被声明为<code>mutable</code>时，空的参数列表不能省略；C++23起可以省略。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> f1 = []&#123;<span class="keyword">return</span> <span class="number">1</span>;&#125; <span class="comment">//Ignoring empty parameter list</span></span><br><span class="line"><span class="keyword">auto</span> f2 = []() <span class="keyword">mutable</span> &#123;<span class="keyword">return</span> <span class="number">1</span>;&#125; <span class="comment">//pre-C++23</span></span><br><span class="line"><span class="keyword">auto</span> f3 = [] <span class="keyword">mutable</span> &#123;<span class="keyword">return</span> <span class="number">1</span>;&#125; <span class="comment">//OK since C++23</span></span><br></pre></td></tr></table></figure>
+        
 
       
 
@@ -439,7 +332,7 @@ C++14起，lambda函数也允许使用<code>auto</code>来快速创建函数模�
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/cpp-lambda/">展开全文 >></a>
+          <a class="article-more-a" href="/cpp-ranges/">展开全文 >></a>
         </p>
       
 
