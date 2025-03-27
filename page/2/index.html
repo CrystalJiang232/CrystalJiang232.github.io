@@ -152,6 +152,93 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-cpp-hierachy" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/cpp-hierachy/">C++——类继承的一隅</a>
+    </h1>
+  
+
+        
+        <a href="/cpp-hierachy/" class="archive-article-date">
+  	<time datetime="2025-03-19T13:59:38.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-03-19</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/cpp-hierachy/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+  <div>
+</article>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-nctf2024" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -529,137 +616,6 @@ injection</em> 获取 <span class="math inline">\(e\)</span>
 
 
   
-    <article id="post-cpp-ranges" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/cpp-ranges/">C++20——ranges</a>
-    </h1>
-  
-
-        
-        <a href="/cpp-ranges/" class="archive-article-date">
-  	<time datetime="2025-02-02T03:51:47.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-02-02</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="ranges简介">ranges简介</h1>
-<p><em>ranges</em>
-是一个比较抽象的概念。广义上说，任何可以按一定规则遍历的变量集合都是范围。<br />
-C++中的容器、容器的一部分可以被视为范围；被“容器工厂”函数产出的一些可迭代对象也可以被视为范围；数组、“指针+长度”的组合也可以视为范围。<br />
-更进一步地，上述范围按一定规则筛选出的子范围也可以被视为范围，比如任取一个range，取其最初的5个元素也可以组成一个range，将该range“隔三取一”的元素集合也可以组成一个range。<br />
-将其中元素按一定规则组合也可以“转化”为新的range：如创建一个滑动视窗，每次访问ranges中连续的三个元素。</p>
-<blockquote>
-<p>为什么长篇大论介绍抽象的C++哲学？<em>ranges</em>
-作为C++中的“高难”板块，对语法的掌握只决定应用的下限，而对其深入理解决定了应用的上限。</p>
-</blockquote>
-<h2 id="stlc标准库的中流砥柱">STL：C++标准库的中流砥柱</h2>
-<p>任何一种语言中对于 <em>ranges</em>
-的处理都是亟待解决的问题之一。<br />
-面对之，C++98中即引入了STL(Standard Template
-Library，标准模板库)，其核心元素为 <em>Containers</em>、
-<em>Algorithms</em> 和 <em>Iterators</em> ：</p>
-<ul>
-<li><p>Containers：容器，通过特定方式封装底层存储空间，并提供对之操作接口的类模板。如<code>std::vector</code>提供动态连续存储空间，<code>std::array</code>实现了对数组的封装，<code>std::list</code>表征双向链表，<code>std::map</code>是基于红黑树的映射集、<code>std::unordered_set</code>基于哈希表的集合，等等。标准库中除了直接处理底层存储空间的容器，还有一类被称为
-<em>Container
-Adaptor</em>（容器适配器）的类模板，其“帮助”我们进一步封装了既有的这些初始容器（以提供较为便捷的数据结构操作），如<code>std::priority_queue</code>（优先权队列）封装了<code>std::vector</code>，<code>std::queue</code>（单向队列）封装了<code>std::deque</code><del>虽然我也不知道为什么不封装<code>std::forward_list</code></del>。</p></li>
-<li><p>Algorithms：算法，本质上是函数模板，通过分别传入<code>begin</code>和<code>end</code>的“迭代器”来确定操作范围。常见的包括<code>std::sort</code>、<code>std::transform</code>、<code>std::reverse</code>等等。</p></li>
-<li><p>Iterators：迭代器，多为 <em>nested class</em>
-（嵌套类，又名“类中类”），专属于某个容器实例化后的模板类。</p></li>
-</ul>
-<p>这三者其实都可以看作是在C样式的容器、算法组件上的进阶：</p>
-<ul>
-<li>C中由于并没有类与对象的概念，因此“标准”的 <em>Containers</em>
-只有数组<code>Ty[]</code>（包括指针+长度的组合，本质上表征的都是连续的存储空间），链表等特殊数据结构则需用户自行实现。C++的标准库则极大丰富了
-<em>Containers</em> 家族；</li>
-</ul>
-<blockquote>
-<p>C++设计哲学：功能相同或相近的前提下，组件应用优先级：标准库 &gt;
-三方库 &gt;
-手搓(hand-crafting)。其理由主要有二：标准库内容多经过极大量调试，相较三方库和手写代码而言bug率极低，事实上多数时候标准库组件调用出问题时都不应先行质疑标准库；同时标准库的可迁移性最强，在不同代码间的复用性佳。</p>
-</blockquote>
-<ul>
-<li><p>C中“指针”即为迭代器，C++中面对指针可能存在的诸多问题<del>包括但不限于野指针、空指针、解引用方式错误、边界检查、<code>const</code>约束弱、指针比较语义约束弱、只能访问连续存储空间等</del>提出了
-<em>Iterators</em>
-家族，其在不改变指针使用习惯（通过重载<code>operator++()/operator++(int)</code>、<code>operator*()</code>等）的基础上将之封装，以实现对不同容器的相同语义适配（比如链表的<code>operator++()</code>重载为需要前进到下一个指针）和越界检查等。</p></li>
-<li><p>C的<code>&lt;stdlib.h&gt;</code>提供了少量的算法函数（不知有多少学过C的人听闻过<code>qsort</code>和<code>bsearch</code><del>C语言里快乐快排/二分糊作业</del>？广义上的算法函数可能多些，如<code>strcmp</code>、<code>memcpy</code>、<code>strcat</code>等等都算）。而C++依靠模板函数的优势，提供了极大量较为安全的、适配大量容器的算法函数，多分布于<code>&lt;algorithm&gt;</code>和<code>&lt;numeric&gt;</code>中。</p></li>
-</ul>
-<blockquote>
-<p>现代C++提倡尽量避免“手搓”算法函数，若存在既有的库函数则应优先使用之。实际上<code>&lt;algorithm&gt;</code>（尤其是C++20后得到<code>ranges</code>加持的版本）配合<del>到处乱飞的</del><code>lambda</code>可以应对绝大多数程序设计中遇到的轻量算法需求，如排序、查找、全排列、计数、折叠(fold)等等。</p>
-</blockquote>
-<h2 id="ranges扶摇直上">ranges：扶摇直上</h2>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/cpp-ranges/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-  <div>
-</article>
-
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
   
     <nav id="page-nav">
       <a class="extend prev" rel="prev" href="/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><span class="space">&hellip;</span><a class="page-number" href="/page/9/">9</a><a class="extend next" rel="next" href="/page/3/">Next &raquo;</a>
@@ -837,10 +793,6 @@ MathJax.Hub.Queue(function() {
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color4">C++ Libraries</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">Flag</a>
               </li>
              
               <li class="article-tag-list-item">
