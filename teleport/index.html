@@ -16,7 +16,7 @@
 <meta property="og:description" content="玲珑合集传送门兼可催更的挖坑——现代C++和密码学相关 A teleport site of blogs relavant to Modern C++ and Cryptography that also serves as a list for urging updates  Modern C++ C++11  Lambda expression Smart pointers">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2025-01-15T03:43:58.000Z">
-<meta property="article:modified_time" content="2025-03-27T23:06:25.638Z">
+<meta property="article:modified_time" content="2025-03-27T23:11:09.659Z">
 <meta property="article:author" content="Hibiscus">
 <meta name="twitter:card" content="summary">
   
@@ -215,11 +215,15 @@ href="/cpp-print/"><code>std::print</code></a></label></li>
 </ul>
 <h2 id="杂项">杂项</h2>
 <ul class="task-list">
-<li><label><input type="checkbox" />Compile-time computation<br />
+<li><label><input type="checkbox" />Elaborating classes &amp;
+hierachy<br />
 </label></li>
-<li><label><input type="checkbox" />Tag-design</label></li>
+<li><label><input type="checkbox" />Compile computation<br />
+</label></li>
+<li><label><input type="checkbox" />Tag design<br />
+</label></li>
 <li><label><input
-type="checkbox" />Triple-Specifiers(<code>inline</code>,<code>constexpr</code>,<code>noexcept</code>)<br />
+type="checkbox" />Specifiers(<code>inline</code>,<code>constexpr</code>,<code>noexcept</code>)<br />
 </label></li>
 <li><label><input
 type="checkbox" />Idioms(SFINAE,RAII,Rule-of-3/5/0,etc.)<br />
@@ -255,6 +259,11 @@ Psuedorandom</label></li>
 <li><label><input type="checkbox" checked="" /><a
 href="/lattice/">Lattice</a></label></li>
 <li><label><input type="checkbox" />Coppersmith</label></li>
+</ul>
+<h2 id="writeups">Writeups</h2>
+<ul class="task-list">
+<li><label><input type="checkbox" checked="" /><a
+href="/nctf2024">nctf2024</a></label></li>
 </ul>
 
       
@@ -368,7 +377,7 @@ href="/lattice/">Lattice</a></label></li>
                 </span>
                 <span class="tooltip-content">
                     <div class="toc-article">
-                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#modern-c"><span class="toc-number">1.</span> <span class="toc-text">Modern C++</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#c11"><span class="toc-number">1.1.</span> <span class="toc-text">C++11</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c17"><span class="toc-number">1.2.</span> <span class="toc-text">C++17</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c20"><span class="toc-number">1.3.</span> <span class="toc-text">C++20</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c23"><span class="toc-number">1.4.</span> <span class="toc-text">C++23</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9D%82%E9%A1%B9"><span class="toc-number">1.5.</span> <span class="toc-text">杂项</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#crypto"><span class="toc-number">2.</span> <span class="toc-text">Crypto</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#asymmetric-cipher"><span class="toc-number">2.1.</span> <span class="toc-text">Asymmetric Cipher</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#symmetric-cipher"><span class="toc-number">2.2.</span> <span class="toc-text">Symmetric Cipher</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#mathematics"><span class="toc-number">2.3.</span> <span class="toc-text">Mathematics</span></a></li></ol></li></ol>
+                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#modern-c"><span class="toc-number">1.</span> <span class="toc-text">Modern C++</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#c11"><span class="toc-number">1.1.</span> <span class="toc-text">C++11</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c17"><span class="toc-number">1.2.</span> <span class="toc-text">C++17</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c20"><span class="toc-number">1.3.</span> <span class="toc-text">C++20</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c23"><span class="toc-number">1.4.</span> <span class="toc-text">C++23</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9D%82%E9%A1%B9"><span class="toc-number">1.5.</span> <span class="toc-text">杂项</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#crypto"><span class="toc-number">2.</span> <span class="toc-text">Crypto</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#asymmetric-cipher"><span class="toc-number">2.1.</span> <span class="toc-text">Asymmetric Cipher</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#symmetric-cipher"><span class="toc-number">2.2.</span> <span class="toc-text">Symmetric Cipher</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#mathematics"><span class="toc-number">2.3.</span> <span class="toc-text">Mathematics</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#writeups"><span class="toc-number">2.4.</span> <span class="toc-text">Writeups</span></a></li></ol></li></ol>
                     </div>
                 </span>
             </div>
