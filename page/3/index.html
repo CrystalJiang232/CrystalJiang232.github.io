@@ -182,7 +182,7 @@ C++中的容器、容器的一部分可以被视为范围；被“容器工厂�
 <p>为什么长篇大论介绍抽象的C++哲学？<em>ranges</em>
 作为C++中的“高难”板块，对语法的掌握只决定应用的下限，而对其深入理解决定了应用的上限。</p>
 </blockquote>
-<h2 id="stlc标准库的中流砥柱">STL：C++标准库的中流砥柱</h2>
+<h1 id="stlc标准库的中流砥柱">STL：C++标准库的中流砥柱</h1>
 <p>任何一种语言中对于 <em>ranges</em>
 的处理都是亟待解决的问题之一。<br />
 面对之，C++98中即引入了STL(Standard Template
@@ -216,7 +216,7 @@ Adaptor</em>（容器适配器）的类模板，其“帮助”我们进一步�
 <blockquote>
 <p>现代C++提倡尽量避免“手搓”算法函数，若存在既有的库函数则应优先使用之。实际上<code>&lt;algorithm&gt;</code>（尤其是C++20后得到<code>ranges</code>加持的版本）配合<del>到处乱飞的</del><code>lambda</code>可以应对绝大多数程序设计中遇到的轻量算法需求，如排序、查找、全排列、计数、折叠(fold)等等。</p>
 </blockquote>
-<h2 id="ranges扶摇直上">ranges：扶摇直上</h2>
+<h1 id="ranges扶摇直上">ranges：扶摇直上</h1>
 <p>上述介绍了传统C++中STL的三大组件。在现代C++的诸版本中，它们也都有所迭代提升，如C++11中大量新容器、新算法的加入（包括<code>unordered_set</code>等哈希容器、<code>&lt;algorithm&gt;</code>中<code>any_of</code>和<code>is_heap</code>等等）使之被称为“STL的第二春”。</p>
 <p>在C++20中，<em>ranges</em> 的加入则无疑是为C++
 STL家族增添了极为得力的干将。<em>ranges</em>
@@ -226,17 +226,17 @@ STL家族增添了极为得力的干将。<em>ranges</em>
 </li>
 <li>Views/Ranges factory/adaptors，“范围/视图 工厂/适配器”。</li>
 </ul>
-<h3
-id="algorithms可读性与可靠性的双提升">Algorithms：可读性与可靠性的双提升</h3>
-<h4 id="概论">概论</h4>
+<h2
+id="algorithms可读性与可靠性的双提升">Algorithms：可读性与可靠性的双提升</h2>
+<h3 id="概论">概论</h3>
 <p><em>Ranges Algorithms</em>
 在C++20中被引入<code>&lt;algorithm&gt;</code>库中，其主要提供的是既有STL
 Algorithm的ranges版本（即实现的算法与既有函数完全相同），亦有少量新函数。<br />
 其标志是置于命名空间<code>std::ranges</code>而非<code>std</code>中。</p>
 <p>用法上的异同，从以下代码中即能略窥一二：</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">std::vector&lt;<span class="type">int</span>&gt; vc&#123;<span class="number">2</span>,<span class="number">3</span>,<span class="number">5</span>,<span class="number">7</span>,<span class="number">11</span>,<span class="number">0</span>&#125;;</span><br><span class="line"></span><br><span class="line">std::<span class="built_in">sort</span>(vc.<span class="built_in">begin</span>(),vc.<span class="built_in">end</span>()); </span><br><span class="line">std::ranges::<span class="built_in">sort</span>(vc); <span class="comment">//simple, isn&#x27;t it?</span></span><br><span class="line">std::ranges::<span class="built_in">sort</span>(vc.<span class="built_in">begin</span>(),vc.<span class="built_in">end</span>()); <span class="comment">//Also works</span></span><br><span class="line"></span><br><span class="line">std::ranges::<span class="built_in">sort</span>(vc,[](<span class="type">int</span> x,<span class="type">int</span> y)&#123;<span class="keyword">return</span> x&gt;y;&#125;);</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">constexpr</span> <span class="type">bool</span> <span class="keyword">operator</span>==(<span class="type">int</span> v) <span class="type">const</span> &#123;<span class="keyword">return</span> v == <span class="number">7</span>;&#125;</span><br><span class="line">&#125;Se;</span><br><span class="line"></span><br><span class="line">std::ranges::<span class="built_in">sort</span>(vc.<span class="built_in">begin</span>(),Se); <span class="comment">//Novel usage #1</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h4
-id="迭代器-哨兵对锚定范围更为自由">迭代器-哨兵对：锚定范围更为自由</h4>
+<h3
+id="迭代器-哨兵对锚定范围更为自由">迭代器-哨兵对：锚定范围更为自由</h3>
 <p>以<code>std::ranges::sort</code>为例，其<code>operator()</code>提供的两个重载如下：</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">std::<span class="function">ranges::<span class="type">borrowed_iterator_t</span>&lt;_Rng&gt; <span class="title">operator</span><span class="params">()</span>&lt;_Rng, _Pr, _Pj&gt;<span class="params">(_Rng &amp;&amp;_Range, _Pr _Pred = &#123;&#125;, _Pj _Proj = &#123;&#125;)</span></span>;</span><br><span class="line"><span class="function">_It <span class="title">operator</span><span class="params">()</span>&lt;_It, _Se, _Pr, _Pj&gt;<span class="params">(_It _First, _Se _Last, _Pr _Pred = &#123;&#125;, _Pj _Proj = &#123;&#125;)</span></span>;</span><br></pre></td></tr></table></figure>
 <p>从函数签名看，最直观的一点不同在于ranges
@@ -250,14 +250,14 @@ pair</em>，形如<code>vc.begin()</code>-<code>vc.end()</code>)，而是
 <p>同时，由于C++
 Concepts并不会进行语义上的约束，故亦存在非常有趣且实用的用法，比如所谓的<code>std::unreachable_sentinel</code>就是一个“不可达”的哨兵，可以用于开拓无限range供使用：</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">unreachable_sentinel_t</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line">    <span class="keyword">constexpr</span> <span class="type">bool</span> <span class="keyword">operator</span>==(Ty&amp;&amp;) <span class="type">const</span> <span class="keyword">noexcept</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="keyword">constexpr</span> <span class="keyword">inline</span> <span class="type">unreachable_sentinel_t</span> unreachable_sentinel = &#123;&#125;;</span><br></pre></td></tr></table></figure>
-<h4
-id="极精妙之剑法映射-projection">极精妙之剑法：“映射”-Projection</h4>
+<h3
+id="极精妙之剑法映射-projection">极精妙之剑法：“映射”-Projection</h3>
 <p>回顾ranges
 algorithm的形参，<code>_Pr</code>是我们熟悉的“比较函数”(predicate)，<code>_Pj</code>则是新元素-“映射”(projection)。<br />
 <code>_Pj</code>是一个非常精巧有趣的设计，从调用效果而言其会令所有元素均经过<code>_Proj</code>“处理”一次（即<code>_Proj</code>应为一个接受单个元素类型的可调用对象）。由于其调用时用到了<code>std::invoke</code>，
 因而其能接受多种方式完成这个语义转换，其中不乏非常简洁清晰的版本：</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">T</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span> a;</span><br><span class="line">    <span class="type">int</span> b;</span><br><span class="line">    std::string c;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">std::vector&lt;T&gt; vc&#123;&#125;;</span><br><span class="line"><span class="comment">//...</span></span><br><span class="line">std::ranges::<span class="built_in">sort</span>(vc,&#123;&#125;,[](<span class="keyword">auto</span>&amp;&amp; x)&#123;<span class="keyword">return</span> x.a+x.c.<span class="built_in">length</span>();&#125;)</span><br><span class="line"><span class="comment">//This might seems differ little from traditional predicate lambdas in trivial usages, yet consider this...</span></span><br><span class="line">std::ranges::<span class="built_in">sort</span>(vc,[](<span class="keyword">auto</span>&amp;&amp; x)&#123;<span class="keyword">return</span> x.a;&#125;) <span class="comment">//Conventional approach</span></span><br><span class="line">std::ranges::<span class="built_in">sort</span>(vc,&#123;&#125;,&amp;T::a); <span class="comment">//Surprise!</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h4 id="函数对象而非函数遁形于adl">函数对象而非函数：“遁形”于ADL</h4>
+<h3 id="函数对象而非函数遁形于adl">函数对象而非函数：“遁形”于ADL</h3>
 <p>另外，细心者不难发现ranges
 algorithm并不是以函数形式存在，而是以重载了<code>operator()</code>的函数对象形式表现。<br />
 如此是为了避免ADL(Argument-Dependent
@@ -277,7 +277,7 @@ Lookup)也是和SFINAE、Rule-of-three/five-zero等并列的C++著名“几大�
 href="/cpp-hierachy/">C++类与继承基础全解</a></p>
 </blockquote>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">namespace</span> N</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">T</span>&#123;&#125;;</span><br><span class="line">    <span class="keyword">class</span> <span class="title class_">_F</span></span><br><span class="line">    &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">operator</span><span class="params">()</span><span class="params">(T&amp;)</span> <span class="type">const</span> </span>&#123;&#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="type">static</span> <span class="keyword">constexpr</span> <span class="keyword">inline</span> _F f = &#123;&#125;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">(T&amp; arg)</span></span>&#123;&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    N::T var&#123;&#125;;</span><br><span class="line">    <span class="built_in">f</span>(var); <span class="comment">//OK: invokes ::f(T&amp;),does not use ADL to somehow seek N::f::operator()(T&amp;)</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h4 id="concepts行于">Concepts：行于</h4>
+<h3 id="concepts行于">Concepts：行于</h3>
 <p>随着另一“金刚” Concepts的引入，所有的Ranges
 Algorithm都有concepts约束之，极大地保证了调用语义的正确性。<br />
 在经典的C++中，这一约束以 <em>Legacy Iterator Specification</em>
@@ -320,7 +320,62 @@ algorithm中，其则是直接了当地用concepts约束了迭代器类应当满
 <p>对concepts语法有一定了解就不难完整地解读上述约束：<br />
 在满足双向迭代器要求的基础上，满足<code>sized_sentinel_for</code>和<code>totally_ordered</code>，同时对于标定的<code>iter_difference_t</code>（迭代器差值类型）的一个实例，本迭代器与该实例进行<code>operator+</code>（含左右和加减的重载）、加/减复合赋值都会返回<code>It&amp;</code>或<code>It</code>，并且支持下标运算后返回一个引用类型（详情参阅C++标准库）。</p>
 <p>显然<code>_It = int</code>必定无法满足上述约束，而既有的随机访问迭代器（主要是<code>std::vector</code>和原始指针）都满足之。</p>
-<h3 id="viewsranges的灵魂">Views：Ranges的灵魂</h3>
+<h2 id="viewsranges的灵魂">Views：Ranges的灵魂</h2>
+<p>至此来说，ranges algorithm依然“只是”STL
+Algorithm加上了一些<code>concepts</code>约束和多了几层打包工作<del>而已</del>。Ranges迷人的灵魂所在，亦作为其中最复杂迷离的要素，还是在"Views"——视图之上。</p>
+<h3
+id="语法向namespace-views-和-operator">语法向：<code>namespace views</code>
+和 <code>operator|</code></h3>
+<p>视图是一种特殊的函数对象，其被定义在<code>&lt;ranges&gt;</code>的<code>namespace std::ranges::views</code>中。但由于库中存在声明：<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">namespace</span> std</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">namespace</span> views = ranges::views;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+因此，调用视图对象时只需要使用<code>std::views::XXX</code>即可。</p>
+<blockquote>
+<p>注释：所有的视图对象都是轻量级、且能被平凡地复制( <em>trivially
+copyable</em> )的。</p>
+</blockquote>
+<p>在调用方式方面，大多数视图支持以下几种调用方式：</p>
+<ul>
+<li>直接调用（即传统的<code>operator()</code>），如<code>std::views::filter(vc,[](int v)&#123;return v&gt;3;&#125;)</code>。<br />
+</li>
+<li>串联调用，又名“管道操作符”-"pipeline
+operator"，即<code>operator|</code>，如此做会间接调用右侧视图对象的<code>operator()</code>，并将左操作数作为第一形参放入其中。</li>
+</ul>
+<blockquote>
+<p>串联调用支持将多种<code>views</code>操作连接在一起的原因类似于流插入/输出运算符<code>operator&lt;&lt;</code>/<code>operator&gt;&gt;</code>，利用了其从左向右的结合性，同时每次调用都会返回一个（类似）自身的对象。</p>
+</blockquote>
+<p>因此，以下几种调用方法是等价的：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">std::vector&lt;<span class="type">int</span>&gt; vc&#123;<span class="number">6</span>,<span class="number">5</span>,<span class="number">5</span>,<span class="number">3</span>,<span class="number">7</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">auto</span> fn = [](<span class="type">int</span> v)&#123;<span class="keyword">return</span> v&gt;<span class="number">3</span>;&#125;</span><br><span class="line">std::views::<span class="built_in">filter</span>(vc,fn);</span><br><span class="line">vc | std::views::<span class="built_in">filter</span>(fn);</span><br></pre></td></tr></table></figure>
+<h3 id="逻辑向随心所欲不逾矩的组合">逻辑向：“随心所欲不逾矩”的组合</h3>
+<p>有了前面的<code>operator|</code>铺垫，现在也就不难理解views<del>容易用上头</del>的原因了：<br />
+Ranges Library提供的原子函数(atomic
+functions)颇为丰富，语法分类来看，这些函数一部分属于"Ranges factory" -
+范围工厂，可根据给定参数产生一个新的Range；一部分属于"Ranges adaptor" -
+容器适配器，可作用于既有Range上并产生一个操作过的Range；有少量函数二者皆然（取决于其形参）。<br />
+这些函数多处于<code>std::views::</code>中，亦有少量在<code>std::ranges</code>内。</p>
+<blockquote>
+<p>严格地，由于Ranges的惰性计算机制，这里的“操作过的Range”事实上不太准确：任何Range在被“使用”前均都不会进行任何计算。详见下一节内容。</p>
+</blockquote>
+<p>这些操作涵盖了编程实践中对于Ranges的大部分“需求”，如：</p>
+<ul>
+<li>只读型：过滤(filter)、分隔(stride)、分块(chunk)、取舍(drop/count)等；<br />
+</li>
+<li>视图型：滑动(slide)、相邻(adjacent)等；<br />
+</li>
+<li>修改型：转化(transform)等；<br />
+</li>
+<li>工厂型：枚举(enumerate)、压缩(zip)、迭代(iota)、重复(repeat)等。</li>
+</ul>
+<blockquote>
+<p>在C++20中只引入了16个views，C++23又向其中添加了16个，C++26依然会继续添加。</p>
+</blockquote>
+<p>由此，C++20被称为继C++11后又一个划时代的C++版本也就不难理解了。C++11颠覆了许多传统C++的代码写法，而C++20的ranges亦然：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">std::vector&lt;<span class="type">int</span>&gt; vc&#123;&#125;;</span><br><span class="line"><span class="comment">//...</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">auto</span>&amp;&amp; [x,y] : vc | std::views::<span class="built_in">filter</span>([](<span class="type">int</span> x)&#123;<span class="keyword">return</span> x &gt; <span class="number">0</span>;&#125;) </span><br><span class="line">                  |std::views::<span class="built_in">take</span>(<span class="number">10</span>) | std::views::enumerate)</span><br><span class="line">            &#123;</span><br><span class="line">                  std::<span class="built_in">println</span>(<span class="string">&quot;No.#&#123;&#125;: score = &#123;&#125;&quot;</span>,x,y);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="设计向惰性视图分秒必争">设计向：惰性视图，分秒必争</h3>
+<p>上述所有组合产生的ranges对象都是一个<strong>惰性的</strong>可迭代对象，类似于python的<code>generator object</code>。<br />
+惰性对象的含义在于，对ranges进行管道组合的时候并不会执行任何计算（或者让ranges
+factory开工什么的），计算发生的时机是调用之时。<br />
+可以理解为，ranges对象实际上是一份该如何进行ranges的产生与变换的“说明书”，进行管道组合等操作只是在改说明书（而非其中出现的目标range）。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">std::vector&lt;<span class="type">int</span>&gt; vc&#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>&#125;;</span><br><span class="line"><span class="keyword">auto</span> rng = vc | std::views::reverse | std::views::<span class="built_in">transform</span>([](<span class="type">int</span> x)&#123;<span class="keyword">return</span> std::format(<span class="string">&quot;&#123;&#125;&quot;</span>,x);&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">//No invocation of the lambda function, visit of the vector or calling std::format until here: the view is lazy</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">auto</span> x : rng)</span><br><span class="line">&#123;</span><br><span class="line">      <span class="comment">//The iteration starts, thus the ranges object gets working</span></span><br><span class="line">      std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,x);</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
       
 
