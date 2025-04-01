@@ -8,13 +8,15 @@
   <link rel="dns-prefetch" href="https://crystaljiang232.github.io">
   <title>C++——类继承的一隅 | 玲珑</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="article">
+  <meta name="description" content="聊现代C++，缘何又要回退到“继承”的基本概念上？  类和继承：温故而知新 类基本特性概述 作为一门OOP(Object-Oriented Programming)语言，类和继承的相关概念和语法无疑是C++的立身之本。 C++中类(class)的概念由C语言的结构体(struct)衍生而来，在C++中二者除成员的默认访问权限、默认继承方式(private&#x2F;public)外，其余是完">
+<meta property="og:type" content="article">
 <meta property="og:title" content="C++——类继承的一隅">
 <meta property="og:url" content="https://crystaljiang232.github.io/cpp-hierachy/index.html">
 <meta property="og:site_name" content="玲珑">
+<meta property="og:description" content="聊现代C++，缘何又要回退到“继承”的基本概念上？  类和继承：温故而知新 类基本特性概述 作为一门OOP(Object-Oriented Programming)语言，类和继承的相关概念和语法无疑是C++的立身之本。 C++中类(class)的概念由C语言的结构体(struct)衍生而来，在C++中二者除成员的默认访问权限、默认继承方式(private&#x2F;public)外，其余是完">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2025-03-19T13:59:38.000Z">
-<meta property="article:modified_time" content="2025-03-24T04:44:43.384Z">
+<meta property="article:modified_time" content="2025-04-01T02:23:37.095Z">
 <meta property="article:author" content="Hibiscus">
 <meta property="article:tag" content="Modern C++">
 <meta name="twitter:card" content="summary">
@@ -173,7 +175,87 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        
+        <blockquote>
+<p>聊现代C++，缘何又要回退到“继承”的基本概念上？</p>
+</blockquote>
+<h1 id="类和继承温故而知新">类和继承：温故而知新</h1>
+<h2 id="类基本特性概述">类基本特性概述</h2>
+<p>作为一门OOP(Object-Oriented
+Programming)语言，类和继承的相关概念和语法无疑是C++的立身之本。</p>
+<p>C++中类(<code>class</code>)的概念由C语言的结构体(<code>struct</code>)衍生而来，在C++中二者除成员的默认访问权限、默认继承方式(private/public)外，其余是完全等价的。<br />
+类可以拥有数据成员(data member)和函数成员(function
+member)，其可以是静态(static)或非静态的。<br />
+类的静态成员可以通过类或者类的成员来访问，非静态成员则只允许通过类的成员来访问；对于非静态的数据成员，每个类的实例都保有该数据成员的一个实例。因此，类中只有<strong>非静态的数据成员</strong>才占有空间（依<code>operator sizeof</code>获取，若一个类里没有任何的非静态数据成员，则其大小为最小值1。）</p>
+<blockquote>
+<p><code>sizeof</code>的两个特例：内存对齐(memory
+alignment)问题和虚类(virtual classes)的隐式虚指针(vptr)。</p>
+</blockquote>
+<p>“一笔带过”初始化问题：对于类的<code>static</code>数据成员，编写者可以在类外指定一次类内成员的初始化值（没有<code>static</code>关键字），若不指定，其则会默认采用
+<em>zero-initialization</em>（零初始化）的方式初始化。<br />
+特别地，<code>static const</code>的数据成员必须被初始化，但其初始化可以在类体内进行，如<code>static constexpr size_t T = 65537;</code></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">T</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="type">int</span> x;</span><br><span class="line">    <span class="type">static</span> <span class="type">int</span> y;</span><br><span class="line">    <span class="function">std::string <span class="title">get</span><span class="params">()</span></span>&#123;<span class="keyword">return</span> <span class="string">&quot;1&quot;</span>;&#125;</span><br><span class="line">    <span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">nihao</span><span class="params">()</span></span>&#123;std::cout &lt;&lt; <span class="string">&quot;1&quot;</span> &lt;&lt; std::endl;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> T::y = <span class="number">5</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    T t&#123;&#125;;</span><br><span class="line">    t.x += t.y;</span><br><span class="line">    t.<span class="built_in">nihao</span>();</span><br><span class="line">    T::<span class="built_in">nihao</span>();</span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,t.<span class="built_in">get</span>());</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>所有类都拥有6个特殊成员函数：构造(constructor)、复制构造(copy
+constructor)、移动构造(move constructor)、复制赋值(copy assignment
+operator)、移动赋值(move assignment operator)、析构(destructor)。<br />
+用户若不定义这些函数，则编译器将自动生成之。默认生成的三个构造函数和析构函数的函数体为空，其中移动构造函数和析构函数自动声明为<code>noexcept</code>；三个构造函数在初始化列表中会分别用(变量声明中的初始化列表/原对象的对应变量/原对象的对应变量转化为右值后)初始化自身的成员变量。若依此法得到的任一变量的初始化不能通过编译，则该默认生成的构造函数不可用。</p>
+<blockquote>
+<p>更多有关移动构造/移动赋值/移动语义/右值引用可参阅：<a
+href="/cpp-rrefs/">C++——右值引用和移动语义</a></p>
+</blockquote>
+<p>上述初始化方法的特例是"POD(Plain Old
+Data)-types"（C++17后弃置了这种说法，改为 <em>aggreate-type</em> -
+聚合类型）。<br />
+简单理解，POD/aggreate-types就是长得像C中的<code>struct</code>的类型，其所有数据成员都是<code>public</code>的，且没有定义任何的前五类特殊函数（也不能显式声明为<code>= default;</code>）。<br />
+对它们可以通过依次指定每个成员的方式来初始化（若参数个数小于变量数，则只默认初始化后续的变量），名为“聚合初始化”，此时传参只允许使用大括号<code>&#123;&#125;</code>。</p>
+<blockquote>
+<p><del>这里感觉又可以开一个关于C++初始化的新坑</del>，不过C++的初始化确实可讲的也非常非常多</p>
+</blockquote>
+<blockquote>
+<p>聚合类型可以拥有<code>private</code>/<code>public</code>的函数成员，但不能是虚类，其所有的数据成员也应是
+<em>fundamental type</em>（基本类型）或聚合类型。</p>
+</blockquote>
+<h2 id="类的继承">类的继承</h2>
+<h3 id="继承和虚继承">继承和虚继承</h3>
+<p>类的继承有普通继承和虚继承两种。继承时需要声明继承方式（若不声明，<code>class</code>默认以<code>private</code>，<code>struct</code>默认以<code>public</code>）。可以在继承方式前/后声明<code>virtual</code>，此时表明是虚继承，对于虚继承的类，其继承链上的每个类的数据/函数成员在本类中只会有一份副本（先声明者优先）。</p>
+<p>比如这个经典的多继承消除二义性的实例：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">B</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">B</span>(<span class="type">int</span> _x):x&#123;_x&#125;&#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">int</span> <span class="title">visit</span><span class="params">()</span></span>&#123;<span class="keyword">return</span> x;&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> x;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">D1</span>:<span class="keyword">virtual</span> <span class="keyword">public</span> B</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">D1</span>(<span class="type">int</span> _x):B&#123;_x&#125;&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">D2</span>:<span class="keyword">virtual</span> <span class="keyword">public</span> B</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">D2</span>(<span class="type">int</span> _x):B&#123;_x&#125;&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">D3</span>:<span class="keyword">public</span> D1,<span class="keyword">public</span> D2</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">D3</span>(<span class="type">int</span> _x):D1&#123;_x&#125;,D2&#123;_x&#125;,B&#123;<span class="number">3</span>&#125;&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>其中几个要点：</p>
+<ul>
+<li>声明虚基类时必须在根基类之下声明，且直接基类的继承方式都必须被声明为<code>virtual</code>（但<code>D3</code>继承<code>D1</code>、<code>D2</code>时不需要声明<code>virtual</code>）。<br />
+</li>
+<li>编译器会依次调用所有直接基类的构造函数（依<strong>继承</strong>声明顺序），但若其直接基类是虚基类，则会回溯至<strong>最顶层虚基类</strong>的构造函数开始向下构造。</li>
+</ul>
+<h3 id="继承成员访问权限和赋值兼容">继承成员、访问权限和赋值兼容</h3>
+<p>类继承时，会继承被继承类<strong>所有的函数成员和数据成员</strong>，但只有基类<code>protected</code>和<code>public</code>的成员才能被派生类直接访问（<code>private</code>成员依然存在于派生类中，只是不能被直接访问）。<br />
+这点是“赋值兼容原则”的基础，即一个派生类对象（或其地址）可以被用于初始化基类引用或指针，因为基类的成员是派生类成员的真子集。<br />
+作为一门编译期语言，C++中一个对象能够访问的成员（包括函数成员、数据成员的寻址、调用及访问权限控制等）是由<strong>该变量的当前类型决定的</strong>，而非由对象本身决定（对象本身不存储任何类型信息，RTII(Runtime
+Type Identity Information，运行时类信息)除外）。</p>
+<p>因此，如果一个对象被绑定至其基类的指针或引用，通过基类引用<code>Base&amp;</code>只能访问基类有的函数/成员变量，而不能访问派生类新定义/重写的函数/成员变量，同时访问权限均以基类的定义为准（就如同派生类从未存在过）。</p>
+<blockquote>
+<p>即使是下面将述的虚函数，其访问权限依然由引用类型类内的定义为基准。</p>
+</blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Base</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">()</span></span>&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Derived</span>: <span class="keyword">public</span> Base</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">()</span></span>&#123;&#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">()</span></span>&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Derived d&#123;&#125;;</span><br><span class="line">    Base&amp; b = d;</span><br><span class="line">    <span class="comment">//d.fun(); //Error: fun() is private in this context</span></span><br><span class="line">    b.<span class="built_in">fun</span>(); <span class="comment">//OK, invokes Base::fun() instead of Derived::fun()</span></span><br><span class="line">    <span class="comment">//b.foo(); //Error: foo() is not a member of class Base</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="虚类和虚函数">虚类和虚函数</h3>
+<p>虚函数通过<code>virtual</code>关键字声明。若派生类中某函数和基类虚函数的签名相同，则该函数也会自动成为虚函数。<strong>为了保证语义一致，依然建议在编程实践中派生类的对应函数上依然加上<code>virtual</code>。</strong></p>
+<blockquote>
+<p>成员函数的函数签名（<del>不考虑C++17的<code>noexcept</code>风波</del>）由函数名、形参列表和<code>const</code>属性决定。（可以认为<code>const</code>属性是形参列表的一部分，事实上成员函数的调用协定采用<code>thiscall</code>，即函数传参时本质是将调用实例的地址传入了（隐式的）第一个参数，为一个变量类型为该类<code>C</code>指针<code>C*</code>、参数名为<code>this</code>的形参；若该函数被<code>const</code>修饰，则认为其变量类型是<code>const C*</code>。）</p>
+</blockquote>
+<p>虚函数的实现原理是 <em>vptr</em> （虚指针） 和 <em>vtbl</em>
+（虚表）。带有虚函数的类被称为虚类(virtual
+classes)，继承了虚类的类也自动成为虚类。<br />
+所有虚类都会隐式地具有一个数据成员
+vptr，因而虚类所占的内存空间会偏大一个指针的<code>sizeof</code>。</p>
+<p>动态多态性的实现原理：<br />
+编译器会将获取虚函数的地址，并依虚表的次序将之填入一段静态的内存空间内（这段内存可以认为是一个指针的数组），派生类会继承基类的虚表。若一个派生类重写(override)了某个虚函数，则该派生类会将基类该虚函数对应位置的地址，重写为派生类重写函数的地址。<br />
+所有该类实例的构造函数中，其vptr都会被赋值为这个指针数组的起始地址（本质是一个二级指针）。<br />
+基类（或任何虚类的引用/指针等）调用虚函数时，会获取当前实例的vptr，随后到该类的虚表中根据函数签名查找偏移量，以确定最终调用虚函数的地址，因而称为“动态多态性”——函数寻址和传参是在运行时而非编译时进行。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>实践中由于其在运行时才能确定函数寻址和传参，因而一方面动态多态性的效率远不如静态多态性，另一方面其亦留下了很多漏洞攻击的空间(<del>pwn警告</del>)。实践中若需要实现类似动态多态性的功能，还有另一选项CRTP(Curiously
+Recursive Template
+Parameter，奇异递归模板参数)，其是一种较高阶的<code>template</code>运用技巧，可以在编译期实现基类引用调用派生类函数的效果，缺点是应用难度比较大且容易带来代码膨胀的问题<del><code>template</code>通病</del>。参考<a
+href="/cpp-idioms">C++——“俗语”盛宴</a></p>
+</blockquote>
 
       
 
@@ -270,6 +352,15 @@
   
 <nav id="article-nav">
   
+    <a href="/cpp-ranges/" id="article-nav-newer" class="article-nav-link-wrap">
+      <i class="icon-circle-left"></i>
+      <div class="article-nav-title">
+        
+          C++20——ranges
+        
+      </div>
+    </a>
+  
   
     <a href="/nctf2024/" id="article-nav-older" class="article-nav-link-wrap">
       <div class="article-nav-title">NCTF2024 Crypto Official Writeup</div>
@@ -299,7 +390,7 @@
                 </span>
                 <span class="tooltip-content">
                     <div class="toc-article">
-                    没有目录
+                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%B1%BB%E5%92%8C%E7%BB%A7%E6%89%BF%E6%B8%A9%E6%95%85%E8%80%8C%E7%9F%A5%E6%96%B0"><span class="toc-number">1.</span> <span class="toc-text">类和继承：温故而知新</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%B1%BB%E5%9F%BA%E6%9C%AC%E7%89%B9%E6%80%A7%E6%A6%82%E8%BF%B0"><span class="toc-number">1.1.</span> <span class="toc-text">类基本特性概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%B1%BB%E7%9A%84%E7%BB%A7%E6%89%BF"><span class="toc-number">1.2.</span> <span class="toc-text">类的继承</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%A7%E6%89%BF%E5%92%8C%E8%99%9A%E7%BB%A7%E6%89%BF"><span class="toc-number">1.2.1.</span> <span class="toc-text">继承和虚继承</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%A7%E6%89%BF%E6%88%90%E5%91%98%E8%AE%BF%E9%97%AE%E6%9D%83%E9%99%90%E5%92%8C%E8%B5%8B%E5%80%BC%E5%85%BC%E5%AE%B9"><span class="toc-number">1.2.2.</span> <span class="toc-text">继承成员、访问权限和赋值兼容</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%99%9A%E7%B1%BB%E5%92%8C%E8%99%9A%E5%87%BD%E6%95%B0"><span class="toc-number">1.2.3.</span> <span class="toc-text">虚类和虚函数</span></a></li></ol></li></ol></li></ol>
                     </div>
                 </span>
             </div>
