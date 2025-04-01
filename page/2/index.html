@@ -540,12 +540,44 @@ vptr，因而虚类所占的内存空间会偏大一个指针的<code>sizeof</co
 编译器会将获取虚函数的地址，并依虚表的次序将之填入一段静态的内存空间内（这段内存可以认为是一个指针的数组），派生类会继承基类的虚表。若一个派生类重写(override)了某个虚函数，则该派生类会将基类该虚函数对应位置的地址，重写为派生类重写函数的地址。<br />
 所有该类实例的构造函数中，其vptr都会被赋值为这个指针数组的起始地址（本质是一个二级指针）。<br />
 基类（或任何虚类的引用/指针等）调用虚函数时，会获取当前实例的vptr，随后到该类的虚表中根据函数签名查找偏移量，以确定最终调用虚函数的地址，因而称为“动态多态性”——函数寻址和传参是在运行时而非编译时进行。</p>
+<p>上述纯文字讲述可能稍有抽象，留一张参考图：<img
+src="/img/post_pics/vptr.png" title="vptr and vtbl demostration"
+alt="vptr" /> 依此图对vptr和vtbl的实现原理做进一步讲解。<br />
+从右侧的C++函数代码来看，这是非常典型的继承结构。A类定义了两个虚函数<code>vfunc1</code>和<code>vfunc2</code>，如图。在程序<strong>开始运行时</strong>会获取这两个虚函数的地址，并且填入A类所对应的vtbl中，形如<code>0x401ed0</code>和<code>0x401f10</code>。最后的空地址则起到类似于C样式字符串中“结束符”的作用，标志着vtbl（虚表）的结束。<br />
+对于B类，其公有继承了类A，这里需要注意的有两点：</p>
+<ul>
+<li>如此前所述，虽然A类的两个<code>int</code>数据成员<code>m_data1</code>，<code>m_data2</code>被声明为<code>private</code>，但它们依然会被继承（占据了内存空间），只是在B类内不可访问而已。<br />
+</li>
+<li>B类会先将A类的vtbl复制一份（目标虚函数的地址），但由于B类<strong>重写</strong>了<code>vfunc1</code>，则在B类的vtbl中，对应<code>vfunc1</code>的地址会被重写为<code>B::vfunc1</code>的地址<code>0x401f80</code>。<strong>同时因为B类没有重写<code>vfunc2</code>，因此<code>vfunc2</code>的地址依然是<code>A::vfunc2</code>的不变。</strong></li>
+</ul>
+<blockquote>
+<p>假设B类新定义了一个虚函数<code>vfunc3</code>，则其地址在vtbl中会被追加在<code>vfunc2</code>之后；B的派生类的与虚函数有关的规则同上。</p>
+</blockquote>
+<blockquote>
+<p>vptr和vtbl只处理和虚函数有关的问题；对于非虚函数，其地址和访问以另一种类似<code>static</code>的表形式实现，相信读者在理解vptr和vtbl的访问逻辑后能无师自通之。</p>
+</blockquote>
+<p>对于C类，逻辑基本和上述相同。需要留意的是C类定义了一个<code>m_data1</code>，<del>但由于C++并没有虚数据成员的概念(bushi)，</del>，结果就是类C中保有两份<code>m_data1</code>的副本，一份是继承自A类的<code>A::m_data1</code>（显然类C内不可直接访问之），另一份是自身定义的<code>m_data1</code>。</p>
+<p>现在观察一下虚函数的调用底层原理：<br />
+左侧<code>a</code>、<code>b</code>和<code>c</code>分别是A、B、C三个类的对象。每个虚类对象的实例都会保有一个vptr（一个二级指针），对于同一类的实例，其存储的地址是相同的（都是本类vtbl的起始地址）。<br />
+现在假设我们用一个A类的引用指向对象b：<code>A&amp; ra = b;</code>。观察左侧图中b对象加粗黑框的内容，这就是赋值兼容原则下，通过A类引用能访问到B类的全部成员（即A类既有的成员）。</p>
+<blockquote>
+<p>可见赋值兼容原则的基础就是基类的成员会被全部继承，并在派生类的内存中优先排列。</p>
+</blockquote>
+<p>此时：</p>
+<ul>
+<li>若调用<code>ra.vfunc1();</code>，由于<code>vfunc1</code>是虚函数，因此程序会根据该对象的vptr，获取到B类的vtbl；随后根据既定的偏移量（A类中，<code>vfunc1</code>处于vtbl中下标为<code>0</code>的位置），找到了对应函数<code>B::vfunc1</code>并开始调用。<br />
+</li>
+<li>若调用<code>ra.vfunc2();</code>，同理，但因为B类没有重写<code>vfunc2</code>，因此B类的vtbl中下标<code>1</code>依然指向<code>A::vfunc2</code>，因此最终未被重写的函数<code>A::vfunc2</code>被调用。<br />
+</li>
+<li>若调用<code>ra.func1();</code> 或
+<code>ra.func2();</code>，这两个函数并不是虚函数，因此程序只能寻址到<code>A::func1</code>和<code>A::func2</code>（程序没有提供任何能寻址到<code>B::func2()</code>的机制，毕竟当使用类型为<code>A&amp;</code>的引用变量<code>ra</code>时，其就决定了只能按A类的方式解读该对象的内存。</li>
+</ul>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"></span><br></pre></td></tr></table></figure>
 <blockquote>
 <p>实践中由于其在运行时才能确定函数寻址和传参，因而一方面动态多态性的效率远不如静态多态性，另一方面其亦留下了很多漏洞攻击的空间(<del>pwn警告</del>)。实践中若需要实现类似动态多态性的功能，还有另一选项CRTP(Curiously
 Recursive Template
 Parameter，奇异递归模板参数)，其是一种较高阶的<code>template</code>运用技巧，可以在编译期实现基类引用调用派生类函数的效果，缺点是应用难度比较大且容易带来代码膨胀的问题<del><code>template</code>通病</del>。参考<a
-href="/cpp-idioms">C++——“俗语”盛宴</a></p>
+href="">C++——“俗语”盛宴</a></p>
 </blockquote>
 
       
