@@ -689,6 +689,8 @@ C++14起，lambda函数也允许使用<code>auto</code>来快速创建函数模�
 <li><p>此前lambda表达式被声明为<code>mutable</code>时，空的参数列表不能省略；C++23起可以省略。<br />
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> f1 = []&#123;<span class="keyword">return</span> <span class="number">1</span>;&#125; <span class="comment">//Ignoring empty parameter list</span></span><br><span class="line"><span class="keyword">auto</span> f2 = []() <span class="keyword">mutable</span> &#123;<span class="keyword">return</span> <span class="number">1</span>;&#125; <span class="comment">//pre-C++23</span></span><br><span class="line"><span class="keyword">auto</span> f3 = [] <span class="keyword">mutable</span> &#123;<span class="keyword">return</span> <span class="number">1</span>;&#125; <span class="comment">//OK since C++23</span></span><br></pre></td></tr></table></figure></p></li>
 </ol>
+<h1 id="结语">结语</h1>
+<p>lambda函数自C++11引入以来，即已成为提高开发效率、增强程序可读性和易维护性的利器，极为适合日常应用中“轻巧”函数的定义、调用与传递，同时其部分特性（捕获控制、默认<code>constexpr</code>等）也为编译器为之优化、进而提升效率提供了更多空间。</p>
 
       
 
