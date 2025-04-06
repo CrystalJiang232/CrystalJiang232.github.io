@@ -152,6 +152,216 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-cpp-3compare" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/cpp-3compare/">C++20——operator&lt;=&gt;</a>
+    </h1>
+  
+
+        
+        <a href="/cpp-3compare/" class="archive-article-date">
+  	<time datetime="2024-12-20T23:21:39.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-21</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <blockquote>
+<p>离散数学的联动？</p>
+</blockquote>
+<h1 id="前言">前言</h1>
+<p>C++20中，“比较”这一司空见惯的操作迎来了新客：<br />
+头文件<code>&lt;compare&gt;</code>，以及三向比较操作符(three-way
+comparison
+operator)：<code>&lt;=&gt;</code>。<del>至今不解为何世多谓之“飞船操作符”(spaceship
+operator)</del></p>
+<blockquote>
+<p>回顾：C++传统的比较操作符有六种：<code>&lt;</code>、<code>&lt;=</code>、<code>&gt;</code>、<code>&gt;=</code>、<code>==</code>、<code>!=</code>。<br />
+且C++20前并没有“互偶”运算符的概念，默认下其并不会认为<code>a == b</code>的结果就一定是<code>!(a != b)</code>（事实上如此做是符合逻辑的）。<br />
+同时C++20前使用内置运算符进行比较时，必须进行两次比较才能确定两个值的大小关系（大于、小于或等于）：
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Widget</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Widget</span>(<span class="type">int</span> dt):data&#123;dt&#125;&#123;&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="comment">//便于演示，都用友元（考考你：友元和static区别在哪？）</span></span><br><span class="line">    <span class="keyword">friend</span> <span class="type">bool</span> <span class="keyword">operator</span>==(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> x.data == y.data;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">friend</span> <span class="type">bool</span> <span class="keyword">operator</span>!=(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> !(x == y); <span class="comment">//虽然效率不是最高，但多数时候不得不这么写代码，尤其是operator==涉及比较对象多而繁琐时</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">friend</span> <span class="type">bool</span> <span class="keyword">operator</span>&lt;(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> x.data &lt; y.data; <span class="comment">//烦不烦.sage</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">friend</span> <span class="type">bool</span> <span class="keyword">operator</span>&lt;=(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> x.data &lt;= y.data; <span class="comment">//烦不烦！</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">friend</span> <span class="type">bool</span> <span class="keyword">operator</span>&gt;(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> x.data &gt; y.data; <span class="comment">//还没完呢a.a</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">friend</span> <span class="type">bool</span> <span class="keyword">operator</span>&gt;=(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> x.data &gt;= y.data; <span class="comment">//...</span></span><br><span class="line">    &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> data;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">compare_obj</span><span class="params">(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(x &gt; y)</span><br><span class="line">    &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;x &gt; y&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span>(x &lt; y)</span><br><span class="line">    &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;x &lt; y&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;x == y&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+</blockquote>
+<h1 id="新比较系统简要介绍">新比较系统简要介绍</h1>
+<h2 id="新操作符">新操作符</h2>
+<p><code>operator&lt;=&gt;</code>是一个二元操作符，隐式调用的表达式为<code>a &lt;=&gt; b</code>；其结合优先级、顺序与其它比较运算符一致。<br />
+对于所有的可进行“传统”比较的基本类型(fundamental
+types)，C++20都为之内置了<code>operator&lt;=&gt;</code>。<br />
+调用<code>operator&lt;=&gt;</code>时均应包含<code>&lt;compare&gt;</code>头文件（亦可依C++20之modules，<code>import</code>之）。</p>
+<h2 id="新比较对象">新比较对象</h2>
+<p><code>&lt;compare&gt;</code>中定义了<code>std::strong_ordering</code>、<code>std::weak_ordering</code>和<code>std::partial_ordering</code>中的一种，对应离散数学中的强序、弱序和偏序关系。<br />
+<code>operator&lt;=&gt;</code>的期望返回类型应是上述三种比较结果的一种。</p>
+<blockquote>
+<p>偏序、弱序和强序关系来看，比较的严格程度递增。<br />
+偏序关系中，任意两个元素间可能无法比较；<br />
+弱序关系中，任意两个元素间必定可以比较，但比较结果的“相等”不蕴含可替换性（即，对于比较<code>a==b</code>成立时，<code>f(a)==f(b)</code>不一定成立）；<br />
+强序关系中，任意两个元素间必定可以比较，且比较结果的“相等”蕴含可替换性。</p>
+</blockquote>
+<p>对于基本类型，<code>operator&lt;=&gt;</code>的返回值只会是<code>std::strong_ordering</code>或<code>std::partial_ordering</code>中的一种（显然基本类型的“相等”都蕴含了可替换性）。<br />
+当且仅当对浮点类型(floating point
+types)进行比较时，返回<code>std::partial_ordering</code>（浮点集合中的NaN无法和任何浮点数比较）；其它比较时均返回<code>std::strong_ordering</code>。</p>
+<p>每个类型的内置<code>static constexpr</code>成员如下：</p>
+<ul>
+<li>偏序关系，<code>greater</code>、<code>less</code>、<code>equivalent</code>和<code>unordered</code>；<br />
+</li>
+<li>弱序关系，<code>greater</code>、<code>less</code>、<code>equivalent</code>；<br />
+</li>
+<li>强序关系，<code>greater</code>、<code>less</code>、<code>equal</code>。</li>
+</ul>
+<p><strong>可以认为，三向比较操作符就是一次完成了大/等/小的比较，将比较结果存储为一个tag型的对象。</strong></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">auto</span> c1 = <span class="number">1</span> &lt;=&gt; <span class="number">2</span>; <span class="comment">//c1是std::strong_ordering::less</span></span><br><span class="line"></span><br><span class="line">    <span class="type">int</span> a&#123;&#125;,b&#123;&#125;;</span><br><span class="line">    <span class="type">int</span> *pa&#123;&amp;a&#125;,*pb&#123;&amp;b&#125;;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">auto</span> c2 = pa &lt;=&gt; pb; <span class="comment">//c2的类型为std::strong_ordering</span></span><br><span class="line"></span><br><span class="line">    <span class="type">double</span> aa&#123;&#125;,bb&#123;&#125;;</span><br><span class="line">    <span class="keyword">auto</span> c3 = aa &lt;=&gt; bb; <span class="comment">//c3是std::partial_ordering::equivalent</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1
+id="c20语言上对operator的支持">C++20语言上对operator&lt;=&gt;的支持</h1>
+<p>语言层面上，C++20让比较运算符又迈出了关键一步。</p>
+<h2 id="运算符的自动填充">运算符的自动“填充”</h2>
+<ul>
+<li>如果一个类定义了<code>operator&lt;=&gt;</code>且返回的是上述三种ordering中的一种，则编译器将自动为之生成<code>&lt;</code>、<code>&lt;=</code>、<code>&gt;</code>、<code>&gt;=</code>四种运算符（自动封装并调用<code>operator&lt;=&gt;</code>实现）。<br />
+</li>
+<li>如果一个类定义了<code>operator==</code>或<code>operator!=</code>且返回的是<code>bool</code>，则编译器将自动为之生成另一个（调用已定义的运算符，结果逻辑取反）。</li>
+</ul>
+<blockquote>
+<p>上述自动生成的运算符均可以被覆写（自行定义即可），编译器优先使用user-defined的运算符。</p>
+</blockquote>
+<p>老规矩，附上实例： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Widget</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="keyword">friend</span> <span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="built_in">operator</span>&lt;=&gt;(<span class="type">const</span> Widget&amp; x,<span class="type">const</span> Widget&amp; y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> x.data&lt;=&gt;y.data;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">friend</span> <span class="keyword">constexpr</span> <span class="type">bool</span> <span class="keyword">operator</span>==(<span class="type">const</span> Widget&amp;,<span class="type">const</span> Widget&amp;)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>; <span class="comment">//Debug</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> data;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Widget a&#123;<span class="number">2</span>&#125;,b&#123;<span class="number">3</span>&#125;;</span><br><span class="line">    std::cout &lt;&lt; (a &lt; b) &lt;&lt; std::endl; <span class="comment">//true</span></span><br><span class="line">    std::cout &lt;&lt; (a &lt;= b) &lt;&lt; std::endl; <span class="comment">//false</span></span><br><span class="line">    std::cout &lt;&lt; (a != b) &lt;&lt; std::endl; <span class="comment">//true</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure></p>
+<h2
+id="将满足条件的同类比较运算符声明为-default">将满足条件的同类比较运算符声明为
+=default</h2>
+<p>同时C++20中支持对满足 <em>一定条件</em>
+的类的比较函数通过<code>= default</code>声明，指示编译器自动生成之。</p>
+<blockquote>
+<p><em>一定条件</em>
+指该类的所有数据成员都应该可以被<code>operator&lt;=&gt;</code>和同类对象比较（三向/相等）。</p>
+</blockquote>
+<ul>
+<li>对于自动生成的三向运算符，类<code>Ty</code>应声明为<code>auto operator&lt;=&gt;(const Ty&amp;) const = default;</code>或<code>friend auto operator&lt;=&gt;(const Ty&amp;,const Ty&amp;) = default;</code>。<br />
+此时<code>auto</code>的类型由编译器推导，取所有数据成员比较返回comparison
+object中对应<strong>最弱</strong>的比较结果；返回值类型若手动指定，则不能强于该最弱的比较类型。<br />
+</li>
+<li>对于自动生成的相等运算符，类<code>Ty</code>应声明为<code>bool operator==(const Ty&amp;) const = default;</code>或<code>friend bool operator==(const Ty&amp;,const Ty&amp;) = default;</code>。</li>
+</ul>
+<blockquote>
+<p>可以为默认生成的运算符添加<code>constexpr</code>和<code>noexcept</code>修饰符，当然前者要求下辖比较运算符都是<code>constexpr</code>。</p>
+</blockquote>
+<blockquote>
+<p>“自动”比较内涵：按变量声明顺序逐个比较，若比较结果不为相等(equivalent或equal)或全部比较结束（直至最后一个仍为相等），则返回之。</p>
+</blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">stu</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">stu</span>(std::string_view sv,<span class="type">int</span> sc):<span class="built_in">id</span>(sv),<span class="built_in">score</span>(sc)&#123;&#125;</span><br><span class="line">    <span class="keyword">auto</span> <span class="built_in">operator</span>&lt;=&gt;(<span class="type">const</span> nihao&amp;,<span class="type">const</span> nihao&amp;) = <span class="keyword">default</span>; <span class="comment">//auto可以被指定为任意一种ordering（不能强于数据成员中最弱的比较类型）</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    std::string id;</span><br><span class="line">    <span class="type">int</span> score;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>C++20中，对于既往有同类比较运算符的类（如<code>std::string</code>支持和同类比较，行为类似C中的<code>strcmp</code>），均已经添加了<code>operator&lt;=&gt;</code>。<br />
+如此来看，其实三向比较的思想也并不新鲜——<code>strcmp</code>就是一种三向比较（返回值大于0/0/小于0），最初的动机即为对于比较时间开销可能较大的object，一次完成对大/等/小的比较并存储起来。<br />
+C++20的comparison
+object相比之的进步在于大幅增强了语义约束，使程序设计的语义更为清晰，可读性和维护性更佳，同时统一并专用化了比较接口（<del>现代C++哲学唠嗑时间</del>）</p>
+</blockquote>
+<h2 id="特例">特例</h2>
+<p>特别地，如果一个类的<code>operator&lt;=&gt;</code>被声明为<code>= default;</code>则该类也会自动生成<code>operator==</code>。</p>
+<h1 id="探究比较对象的性质与应用">探究比较对象的性质与应用</h1>
+<p>为了支持和以往的比较类型有类似的interface，这几种关系都支持了和0做比较（必须是字面量的零，否则报编译错误/UB）。<br />
+结合<code>if</code>的clause-initialization，可以极大地提升程序的可维护性，使执行逻辑更加简洁：
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(<span class="type">int</span> arg)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(<span class="keyword">auto</span> cp = arg &lt;=&gt; <span class="number">335</span>; cp &gt; <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        std::clog &lt;&lt; <span class="string">&quot;Overheat!&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure></p>
+<blockquote>
+<p>MSVC中利用C++20的新关键字<code>consteval</code>与一些其它有趣的既有语法特性实现了对之的约束，赏析以下代码：
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">Literal_zero</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">Literal_zero_is_expected</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">consteval</span> <span class="title">Literal_zero</span><span class="params">(<span class="type">int</span> _val)</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(_val != <span class="number">0</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="built_in">Literal_zero_is_expected</span>();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">bool</span> <span class="keyword">operator</span>&gt;(std::strong_ordering odr,Literal_zero) <span class="keyword">noexcept</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> odr == std::strong_ordering::greater;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+</blockquote>
+<blockquote>
+<p>其设置了两道哨兵：</p>
+<ul>
+<li>其一，如果传入的不是一个字面量，则被<code>consteval</code>的语义约束（<code>consteval</code>函数必须在编译期被调用，但显然传入这个参数不满足约束）；<br />
+</li>
+<li>其二，若传入的字面量不为零，则试图调用<code>Literal_zero_is_expected()</code>函数，但该函数既不是<code>constexpr</code>也不是<code>consteval</code>，无法在编译期被调用，因而报错。</li>
+</ul>
+</blockquote>
+<p>另一个性质和离散数学有关：由于偏序-弱序-强序对这种二元关系的约束严格程度递增，因而从语义的角度出发，应当允许更强的比较关系向更弱的比较关系转换，并相应地阻止反方向的转换。<br />
+C++中同样如此：如，<code>std::strong_ordering</code>拥有<code>operator std::weak_ordering</code>和<code>operator std::partial_ordering</code>。</p>
+<p>同时关于和零比较/拓展运算符的返回结果的一些补充：<br />
+对于返回结果<code>cp</code>，</p>
+<ul>
+<li>当且仅当返回greater（无论类型，下同），<code>cp &gt; 0</code>成立；<br />
+</li>
+<li>当且仅当返回less，<code>cp &lt; 0</code>成立；<br />
+</li>
+<li>当且仅当返回equal/equivalent，<code>cp == 0</code>成立；<br />
+</li>
+<li>如果返回值是<code>std::partial_ordering::unordered</code>，则<strong>有且仅有</strong><code>cp != 0</code>成立，其余均不成立。<br />
+</li>
+<li>对于其它的返回值，<code>&gt;=</code>就是<code>&lt;</code>的结果取反，以此类推。</li>
+</ul>
+<h1 id="结语">结语</h1>
+<p>比较运算符的进步明显源于人们在编程实践中的需求，而其又反作用于人们的编程实践中，消除了编写语义重复的运算符重载这一场景，亦为简单类的比较提供了语义更为清晰、简洁的方法(<code>= default;</code>依然还是如此优雅)。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/C-C/C-20//" class="article-tag-list-link color1">C++20</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/cpp-3compare/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+  <div>
+</article>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-cryptohack" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -260,220 +470,6 @@ exp即为获得(iv+密文)后直接传回交互式窗口，decode即可。</p>
       
         <p class="article-more-link">
           <a class="article-more-a" href="/cryptohack/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-  <div>
-</article>
-
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-cpp-return" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/cpp-return/">C++——&#34;return&#34;的沧海桑田</a>
-    </h1>
-  
-
-        
-        <a href="/cpp-return/" class="archive-article-date">
-  	<time datetime="2024-12-13T02:36:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-13</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <blockquote>
-<p>一个最为简单的<code>return x;</code>语句是C++中出现频率最高的语句之一。为了将这一语句的效率发挥到极致，历代C++都在其上下了极大功夫。</p>
-</blockquote>
-<h1 id="不就是一个return嘛">不就是一个return嘛？</h1>
-<p>是的，确实就是一个<code>return</code>。</p>
-<p>C语言的所有变量都符合现代C++的<em>trivial
-types</em>的定义，即当一个变量被赋值时，只需要将该值对应内存空间的数据简单地copy到当前变量对应的内存空间。<br />
-对于 <em>trivial</em>
-的类来说，return确实只是将变量的值丢回到函数栈存储返回值之处（随后再销毁其它局部变量等等）。</p>
-<p>但C++作为一门面向对象的编译期语言，其揭示了一点——这一表面风平浪静的过程实则暗藏汹涌。<br />
-因为某一片具备数据、可使用的内存距离C++中的“对象”概念完全不能相提并论。</p>
-<blockquote>
-<p>这也是C/C++对于堆内存分配的“看法”迥异之处：C的<code>malloc</code>/<code>free</code>实际上不会对内存做任何事情（只是“申请”并获得使用权），顶多算上<code>calloc</code>的零初始化；</p>
-<p>而C++中的<code>new</code>实际上涉及分配内存-&gt;调用构造函数两步，具体地，你可以认为<code>operator new</code>就是一个<code>calloc</code>加上一个<code>thiscall</code>函数的调用：
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function">Ty* <span class="keyword">operator</span> <span class="title">new</span><span class="params">(<span class="type">size_t</span> size)</span> <span class="comment">//C++中operator new的最常用函数重载，在隐式调用时size_t会自动传递</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Ty* ptr = <span class="built_in">static_cast</span>&lt;Ty*&gt;(<span class="built_in">malloc</span>(size));</span><br><span class="line"></span><br><span class="line">    <span class="comment">//随后，我们假设一个函数的ctor在调用时实际上具备Ty::Ty(Ty* where,...)的形式。</span></span><br><span class="line">    <span class="comment">//其就是将本来隐式传递的this写成了显式的形式，参考python中的self和C++23的deducing this。</span></span><br><span class="line">    Ty::<span class="built_in">Ty</span>(ptr);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> ptr;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-</blockquote>
-<h1
-id="return背后的风云及传统c的应付之策">return背后的风云及传统C++的“应付”之策</h1>
-<p>现在我们假设希望去返回一个值，在C语言中由于并没有明确的“对象”概念——即使是<code>struct</code>也无异于具有特殊内存layout的fundamental
-types而已；<br />
-因此在返回时，可以直接从源内存块复制数据到目标内存块，随后释放源内存块的内存占用（栈/堆皆然）。以一个对应用途的、比较知名的C函数来说就是可以单纯地<code>memcpy</code>。</p>
-<blockquote>
-<p>C语言中确实有<code>memmove</code>这一函数，但其与C++的移动语义云云无关——其只是提供了在源内存和目标内存重叠时，保证数据可以正确覆写的保证。</p>
-</blockquote>
-<p>而在C++中却不是这样：对象可以认为是内存之上的上层建筑，获得对象时要先分配内存再调用构造函数，销毁对象时需要先调用析构函数再释放内存。<br />
-由此，直观的<code>return</code>解决方案就应运而生：以<code>return</code>的值作为参数，分配新内存并构造新对象，随后析构原对象、释放原内存即可。<br />
-但对于存在大型类的C++，如此做的弊端也非常明显：</p>
-<ul>
-<li>（复制）构造函数、析构函数可能会涉及到大量的其它操作，时间、资源开销较大；<br />
-</li>
-<li>C++的OOP思想决定了资源是由对象所“拥有”的，涉及到保有资源对象的相关操作时，或存在大量不必要的复制-析构操作（如堆内存），或很难/无法依此法安全地完成资源所有权的转移（如文件句柄）。</li>
-</ul>
-<p>举个有趣的实例：不知各位在初学C++，观察复制构造函数的作用时，是否有思索——即使是一念间，下面这段函数有些蹊跷？<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">S</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">S</span>(<span class="type">int</span> _x):<span class="built_in">x</span>(_x)&#123;&#125;</span><br><span class="line">    <span class="built_in">S</span>(<span class="type">const</span> S&amp; from):<span class="built_in">x</span>(from.x * <span class="number">2</span>)&#123;&#125;</span><br><span class="line">    <span class="built_in">S</span>(S&amp;&amp; from):<span class="built_in">x</span>(from.x*<span class="number">3</span>)&#123;&#125;</span><br><span class="line">    ~<span class="built_in">S</span>()&#123;std::cout &lt;&lt; x &lt;&lt; <span class="string">&#x27; &#x27;</span>;&#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> x;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">S <span class="title">single</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> S&#123;<span class="number">1</span>&#125;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">S <span class="title">transfer</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    S w&#123;<span class="built_in">single</span>()&#125;;</span><br><span class="line">    <span class="keyword">return</span> w;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    S a&#123;<span class="built_in">transfer</span>()&#125;;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>事实上，即使到了C++23，依然无法绝对把握地预测上述代码的输出——（在遵循标准下）不同的编译器给出的不同优化结果都会导致输出不同。<br />
-这也是纷争来源之始端：只要拥有non-trivial的复制/移动构造函数（甚至不涉及赋值，涉及赋值更麻烦），就有很多的<del>胡来</del>优化空间。<br />
-比如，<code>single()</code>返回的S到底是要copy一次返回（传统C++）还是move一次返回（C++11）？（剧透：C++17起，<code>single()</code>必须遵循
-<em>prvalue sematics</em>
-,意即其既不会copy也不会move<del>(surprise!)</del><br />
-再比如，<code>transfer()</code>明明初始化w后啥都没干，返回的时候是copy，还是move，还是都不调用？</p>
-<p>从C++98的观点来看（忽略移动构造函数），<code>single()</code>返回时需要复制构造一次，<code>transfer()</code>返回时亦然，故<code>std::cout</code>应当输出<code>1 2 4</code>。</p>
-<blockquote>
-<p>但其实即使是C++98的编译器编译运行之，依然不一定会输出上述结果。</p>
-</blockquote>
-<h1 id="c11move-sematics-comes-to-the-rescue吗">C++11："move sematics
-comes to the rescue"吗？</h1>
-<p>其中，第二条也是C++的一大痛点，因而C++11提出了右值引用和移动语义的概念，语言层面上支持了我们通过函数等来完成转移资源的操作。<br />
-作为配套，C++11提出了 <em>move-eligible</em>
-这一概念，通过它来规范一种"Automatic Move"。</p>
-<blockquote>
-<p>以下标志着一个具有<strong>自动存储周期(automatic storage
-duration)变量</strong>的表达式都是 <em>move-eligible</em>
-（可移动）的：<br />
--
-其为一个非易失(non-<code>volatile</code>)对象类型，<strong>或一个非易失对象的右值引用（此项C++20中加入）</strong>；<br />
-- 且其在函数体内被声明/作为函数体内的参数出现。</p>
-</blockquote>
-<p>从C++11开始，对于<code>return x;</code>这条语句用于初始化一个临时对象时，其规定调用构造函数的重载决议会执行两次：<br />
--
-第一次决议将x视为一个右值(rvalue?)；但若第一轮重载决议<strong>失败</strong>，或其成功但未选择移动构造函数（所谓选择函数的形参不是纯粹的“右值引用”），则继续执行第二轮<br />
-- 第二次决议时，x就会被视为一个左值(lvalue)。</p>
-<p>这里可见的最大的疑点就在第一轮重载决议的“失败”定义。比如，选到<code>= delete;</code>的函数算不算失败？若有多个函数的形参复合要求且优先级相同（即制造了歧义(ambiguity)），是遵循此条规则进行第二轮重载决议还是直接报错？<br />
-不同版本中，不同编译器都给出了诸多不同的实现、决策方式。</p>
-<blockquote>
-<p>关于C++11——C++20的规则细讲，可以参考<a
-target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/language/return">cppreference</a>。<br />
-两轮重载决议带来的最大问题就是很多奇特的现象，主要出在所谓“未选择移动构造函数”上。</p>
-</blockquote>
-<p>下述代码中，<code>f1()</code>在C++23前不能通过编译，<code>f2()</code>则通过隐式转换“逃过一劫”：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">T</span>&#123;&#125;;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">U</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">U</span>(T&amp;&amp;)&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function">T&amp;&amp; <span class="title">f1</span><span class="params">()</span></span>&#123;<span class="keyword">return</span> T&#123;&#125;;&#125;</span><br><span class="line"><span class="function">U <span class="title">f2</span><span class="params">()</span></span>&#123;<span class="keyword">return</span> T&#123;&#125;;&#125; </span><br></pre></td></tr></table></figure>
-<p>C++11起，由于第一轮重载决议会先将up看作右值，因此可以调用移动构造函数初始化返回值。<br />
-C++11以前，若通过一些其它方式禁用了up的复制构造，则其将不能被返回：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">std::unique_ptr&lt;<span class="type">int</span>&gt; <span class="title">f3</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::unique_ptr&lt;<span class="type">int</span>&gt; up&#123;&#125;;</span><br><span class="line">    <span class="keyword">return</span> up;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>C++20前若第一轮重载决议没有选择移动构造函数（必须是“move
-constructor”），则会回退到传统C++的重载决策(rr视为左值)进而无法使该段程序ill-formed：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">std::unique_ptr&lt;<span class="type">int</span>&gt; <span class="title">f4</span><span class="params">(std::unique_ptr&lt;<span class="type">int</span>&gt;&amp;&amp; rr)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> rr;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h1 id="c23终究利落地斩断万缕过往">C++23：终究利落地斩断万缕过往</h1>
-<p>对于二次重载决议的纷争不休，C++23最终选择给出了一个干净利落的解决方案：移除此前搭建的诸多为了保证兼容性而留下的设施，最大化"Automatic
-move"的适用范围。<br />
-C++23起，只要<code>return exp;</code>中的exp是 <em>move-eligible</em>
-的， 那么该表达式就会被视为 <strong><em>xvalue</em></strong> 。
-当然，如此做也有一定的副作用：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span>&amp; <span class="title">fun</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> x = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">return</span> x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 这段代码一直以来都是C++中演示悬挂引用(<em>dangling
-reference</em>)的完美示范，而C++23起这段代码将不能通过编译（因为x将被视作xvalue）。<br />
-<del>（当然，如果你执意要创造一个悬挂引用，可以把返回值类型改成<code>int&amp;&amp;</code>）</del></p>
-<blockquote>
-<p>预告：C++26中对于上述悬挂引用的规定作出了更新，现在若一个函数返回的引用值绑定至临时对象上，则该程序非良构(ill-formed)。<del>相当于悬挂引用return渐渐成为历史</del></p>
-</blockquote>
-<h1 id="nrvourvoc优化之谜">NRVO/URVO：C++优化之谜</h1>
-<p>回到最开始的那个函数套娃传递的实例（不要笑——这种套娃传递初始化构造是非常常见的），在许多场景下其编译结果依然有优化空间：<br />
-与其让编译器调用几次移动构造函数，不如甚至直接略去这个过程，让最上层的栈函数直接控制最底层函数构造的对象栈空间。<br />
-事实上，早在移动语义提出之前的C++98，就已经允许了编译器执行这样的优化（“优化”掉部分<code>return</code>函数中对<strong>可能带副作用</strong>的复制构造函数的调用）。</p>
-<p>这样的优化场景有两种：<br />
-- 返回值的表达式是一个纯右值(<em>prvalue</em>)表达式，称为"URVO"(Unnamed
-Return Value Optimization)；<br />
--
-返回值的表达式是一个本地变量的表达式，但编译器可以预知该变量在一定代码块内不会变化（相当于可以“预判”其返回值/状态），称为"NRVO"(Named
-Return Value Optimization)。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">std::string <span class="title">getstr</span><span class="params">(<span class="type">int</span> var)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> std::format(<span class="string">&quot;&#123;0&#125; &#123;0&#125; &#123;0&#125;&quot;</span>,var);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">std::string <span class="title">process</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::string base = <span class="built_in">getstr</span>(<span class="number">3</span>);</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">    <span class="keyword">return</span> base;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,<span class="built_in">process</span>());</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>如上，C++23中在没有任何优化的情况下，至少需要调用<code>std::string</code>的移动构造函数两次。<br />
-但实际上<code>getstr(int)</code>函数中初始化一个对象后直接<code>return</code>了，显然它的栈空间是可以复用的；同时<code>process()</code>中并没有对<code>base</code>进行任何其它操作就直接返回，因而其移动也可以省略。</p>
-<p>C++17提出了 <em>prvalue sematics</em>
-的概念，要求编译器对纯右值表达式（包括潜在需要隐式调用转换构造函数的返回值）进行复制省略优化（<strong>一定不会</strong>调用移动/复制构造函数）。
-对于以下代码： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Test</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Test</span>()&#123;&#125;</span><br><span class="line">    <span class="built_in">Test</span>(<span class="type">const</span> Test&amp;)&#123;std::<span class="built_in">println</span>(<span class="string">&quot;copy ctor&quot;</span>);&#125;</span><br><span class="line">    <span class="built_in">Test</span>(Test&amp;&amp;) <span class="keyword">noexcept</span> &#123;std::<span class="built_in">println</span>(<span class="string">&quot;move ctor&quot;</span>);&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">auto</span> v = []&#123;<span class="keyword">return</span> Test&#123;&#125;;&#125;();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> C++17的 <em>prvalue sematics</em> (a.k.a.
-guaranteed copy elision) 保证了上述代码不会有任何输出。</p>
-<p>但对于NRVO来说，有两个指导于实践中的要点：<br />
-1.
-C++只是允许了这种optimization的存在，对其优化程度则未做任何规定/明确，最终优化/编译结果亦因编译器及编译设置而异：<br />
-比如将上述代码中<code>main</code>函数的第一行改为 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> v = []&#123;Test t&#123;&#125;; <span class="keyword">return</span> t;&#125;();</span><br></pre></td></tr></table></figure>
-此时程序运行输出可能为空也可能不为空。</p>
-<blockquote>
-<p>严格来说，C++23前这段代码的输出很大程度上取决于v的初始化声明方式（参见“两轮重载决议”）。<br />
-C++23保证了这段代码若有输出，则一定是"move ctor"。</p>
-</blockquote>
-<ol start="2" type="1">
-<li>NRVO的返回值不能有任何修饰（必须只是一个变量名）。因此<code>return std::move(local)</code>是不被建议的写法（如此做会disable
-NRVO）。<br />
-C++23前，在部分返回引用/move-only类型时可能需要用<code>std::move</code>来保证一定的兼容性，但随着C++23统一将
-<em>move-eligible</em>
-的本地变量视为xvalue，现在依然建议绝大部分场景直接<code>return local;</code>即可。</li>
-</ol>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">std::string <span class="title">ret</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::string val&#123;&#125;;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">    <span class="keyword">return</span> val; <span class="comment">//Left room for NRVO Optimization: invocation of move ctor not necessary</span></span><br><span class="line">    <span class="comment">//return std::move(val); //Try not to code this: surpresses NRVO</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h1 id="结语">结语</h1>
-<p>C++23起，<code>return x;</code>的诸多用法和语义得以被归一化；<br />
-从程序设计的角度来说，除少数需要移动一些<code>volatile</code>、<code>static</code>等变量的场景，其它情况下均使用最简单的<code>return x;</code>即可获得最大效率。</p>
-<p>无论是学习编程语言，还是学习、工作与生活中处理各种问题，都尽量应当摒弃"take
-it for granted"的思维。<br />
-对一些司空见惯之现象深入探究，方能助自身视野格局突破惰性之樊笼，逐渐得以游走自如于空阔之境。</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/cpp-return/">展开全文 >></a>
         </p>
       
 
@@ -686,6 +682,10 @@ MathJax.Hub.Queue(function() {
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">长文精选</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color1">C++20</a>
               </li>
             
             <div class="clearfix"></div>

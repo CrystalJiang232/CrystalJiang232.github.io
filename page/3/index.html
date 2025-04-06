@@ -152,6 +152,272 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-cpp-hierachy" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/cpp-hierachy/">C++——类继承的一隅</a>
+    </h1>
+  
+
+        
+        <a href="/cpp-hierachy/" class="archive-article-date">
+  	<time datetime="2025-04-02T13:59:38.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-04-02</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="类基本特性概述">类基本特性概述</h1>
+<p>作为一门OOP(Object-Oriented
+Programming)语言，类和继承的相关概念和语法无疑是C++的立身之本。</p>
+<p>C++中类(<code>class</code>)的概念由C语言的结构体(<code>struct</code>)衍生而来，在C++中二者除成员的默认访问权限、默认继承方式(private/public)外，其余是完全等价的。<br />
+类可以拥有数据成员(data member)和函数成员(function
+member)，其可以是静态(static)或非静态的。<br />
+类的静态成员可以通过类或者类的成员来访问，非静态成员则只允许通过类的成员来访问；对于非静态的数据成员，每个类的实例都保有该数据成员的一个实例。因此，类中只有<strong>非静态的数据成员</strong>才占有空间（依<code>operator sizeof</code>获取，若一个类里没有任何的非静态数据成员，则其大小为最小值1。）</p>
+<blockquote>
+<p><code>sizeof</code>的两个特例：内存对齐(memory
+alignment)问题和虚类(virtual classes)的隐式虚指针(vptr)。</p>
+</blockquote>
+<p>“一笔带过”初始化问题：对于类的<code>static</code>数据成员，编写者可以在类外指定一次类内成员的初始化值（没有<code>static</code>关键字），若不指定，其则会默认采用
+<em>zero-initialization</em>（零初始化）的方式初始化。<br />
+特别地，<code>static const</code>的数据成员必须被初始化，但其初始化可以在类体内进行，如<code>static constexpr size_t T = 65537;</code></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">T</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="type">int</span> x;</span><br><span class="line">    <span class="type">static</span> <span class="type">int</span> y;</span><br><span class="line">    <span class="function">std::string <span class="title">get</span><span class="params">()</span></span>&#123;<span class="keyword">return</span> <span class="string">&quot;1&quot;</span>;&#125;</span><br><span class="line">    <span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">nihao</span><span class="params">()</span></span>&#123;std::cout &lt;&lt; <span class="string">&quot;1&quot;</span> &lt;&lt; std::endl;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> T::y = <span class="number">5</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    T t&#123;&#125;;</span><br><span class="line">    t.x += t.y;</span><br><span class="line">    t.<span class="built_in">nihao</span>();</span><br><span class="line">    T::<span class="built_in">nihao</span>();</span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,t.<span class="built_in">get</span>());</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>所有类都拥有6个特殊成员函数：构造(constructor)、复制构造(copy
+constructor)、移动构造(move constructor)、复制赋值(copy assignment
+operator)、移动赋值(move assignment operator)、析构(destructor)。<br />
+用户若不定义这些函数，则编译器将自动生成之。默认生成的三个构造函数和析构函数的函数体为空，其中移动构造函数和析构函数自动声明为<code>noexcept</code>；三个构造函数在初始化列表中会分别用(变量声明中的初始化列表/原对象的对应变量/原对象的对应变量转化为右值后)初始化自身的成员变量。若依此法得到的任一变量的初始化不能通过编译，则该默认生成的构造函数不可用。</p>
+<blockquote>
+<p>更多有关移动构造/移动赋值/移动语义/右值引用可参阅：<a
+href="/cpp-rrefs/">C++——右值引用和移动语义</a></p>
+</blockquote>
+<p>上述初始化方法的特例是"POD(Plain Old
+Data)-types"（C++17后弃置了这种说法，改为 <em>aggreate-type</em> -
+聚合类型）。<br />
+简单理解，POD/aggreate-types就是长得像C中的<code>struct</code>的类型，其所有数据成员都是<code>public</code>的，且没有定义任何的前五类特殊函数（也不能显式声明为<code>= default;</code>）。<br />
+对它们可以通过依次指定每个成员的方式来初始化（若参数个数小于变量数，则只默认初始化后续的变量），名为“聚合初始化”，此时传参只允许使用大括号<code>&#123;&#125;</code>。</p>
+<blockquote>
+<p><del>这里感觉又可以开一个关于C++初始化的新坑</del>，不过C++的初始化确实可讲的也非常非常多</p>
+</blockquote>
+<blockquote>
+<p>聚合类型可以拥有<code>private</code>/<code>public</code>的函数成员，但不能是虚类，其所有的数据成员也应是
+<em>fundamental type</em>（基本类型）或聚合类型。</p>
+</blockquote>
+<h1 id="类的继承">类的继承</h1>
+<h2 id="继承和虚继承">继承和虚继承</h2>
+<p>类的继承有普通继承和虚继承两种。继承时需要声明继承方式（若不声明，<code>class</code>默认以<code>private</code>，<code>struct</code>默认以<code>public</code>）。<br />
+可以在继承方式前/后声明<code>virtual</code>声明为虚继承，虚继承下对于最末端的派生类，被虚继承的类（该类的所有直接派生类都需要声明为虚继承）的成员只会保有一个副本，其构造函数的调用发生于其它非虚基类的构造函数之前。</p>
+<p>构造函数的调用优先级如下：</p>
+<ol type="1">
+<li>所有虚基类的构造函数；</li>
+<li>所有直接基类的构造函数；<br />
+</li>
+<li>所有数据成员的构造函数；<br />
+</li>
+<li>自身的构造函数。</li>
+</ol>
+<p>对于同为直接基类的构造函数，调用顺序由函数<strong>继承声明</strong>顺序决定；对于同为数据成员的构造函数，调用顺序由<strong>变量声明</strong>顺序决定（总之和初始化列表的顺序无关）。<br />
+若初始化列表所“展现”的构造函数调用顺序与实际顺序不一致，部分编译器会给出<code>warning</code>。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;print&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">B</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">B</span>(<span class="type">int</span> _x):x&#123;_x&#125;&#123;std::<span class="built_in">println</span>(<span class="string">&quot;B::B()&quot;</span>);&#125;</span><br><span class="line">    <span class="function"><span class="type">int</span> <span class="title">visit</span><span class="params">()</span></span>&#123;<span class="keyword">return</span> x;&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> x;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">D1</span>:<span class="keyword">virtual</span> <span class="keyword">public</span> B</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">D1</span>(<span class="type">int</span> _x):B&#123;_x&#125;&#123;std::<span class="built_in">println</span>(<span class="string">&quot;D1::D1()&quot;</span>);&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">D2</span>:<span class="keyword">virtual</span> <span class="keyword">public</span> B</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">D2</span>(<span class="type">int</span> _x):B&#123;_x&#125;&#123;std::<span class="built_in">println</span>(<span class="string">&quot;D2::D2()&quot;</span>);&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">D3</span>:<span class="keyword">public</span> D1,<span class="keyword">public</span> D2</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">D3</span>(<span class="type">int</span> _x):B&#123;<span class="number">3</span>&#125;,D2&#123;_x&#125;,D1&#123;_x&#125;&#123;std::<span class="built_in">println</span>(<span class="string">&quot;D3::D3()&quot;</span>);&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    D3 d&#123;<span class="number">2</span>&#125;;</span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,d.<span class="built_in">visit</span>()); </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>输出：（<del>不考虑<code>[-Wreorder]</code>的<code>warning</code></del>）
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">B::B()</span><br><span class="line">D1::D1()</span><br><span class="line">D2::D2()</span><br><span class="line">D3::D3()</span><br><span class="line">3</span><br></pre></td></tr></table></figure></p>
+<h2 id="继承成员访问权限和赋值兼容">继承成员、访问权限和赋值兼容</h2>
+<p>类继承时，会继承被继承类<strong>所有的函数成员和数据成员</strong>，但只有基类<code>protected</code>和<code>public</code>的成员才能被派生类直接访问（<code>private</code>成员依然存在于派生类中，只是不能被直接访问）。<br />
+这点是“赋值兼容原则”的基础，即一个派生类对象（或其地址）可以被用于初始化基类引用或指针，因为基类的成员是派生类成员的真子集。<br />
+作为一门编译期语言，C++中一个对象能够访问的成员（包括函数成员、数据成员的寻址、调用及访问权限控制等）是由<strong>该变量的当前类型决定的</strong>，而非由对象本身决定（对象本身不存储任何类型信息，RTII(Runtime
+Type Identity Information，运行时类信息)除外）。</p>
+<p>因此，如果一个对象被绑定至其基类的指针或引用，通过基类引用<code>Base&amp;</code>只能访问基类有的函数/成员变量，而不能访问派生类新定义/重写的函数/成员变量，同时访问权限均以基类的定义为准（就如同派生类从未存在过）。</p>
+<blockquote>
+<p>即使是下面将述的虚函数，其访问权限依然由引用类型类内的定义为基准。</p>
+</blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Base</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">()</span></span>&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Derived</span>: <span class="keyword">public</span> Base</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">()</span></span>&#123;&#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">()</span></span>&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Derived d&#123;&#125;;</span><br><span class="line">    Base&amp; b = d;</span><br><span class="line">    <span class="comment">//d.fun(); //Error: fun() is private in this context</span></span><br><span class="line">    b.<span class="built_in">fun</span>(); <span class="comment">//OK, invokes Base::fun() instead of Derived::fun()</span></span><br><span class="line">    <span class="comment">//b.foo(); //Error: foo() is not a member of class Base</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="虚类和虚函数">虚类和虚函数</h2>
+<p>虚函数通过<code>virtual</code>关键字声明。若派生类中某函数和基类虚函数的签名相同，则该函数也会自动成为虚函数。<strong>为了保证语义一致，依然建议在编程实践中派生类的对应函数上依然加上<code>virtual</code>。</strong></p>
+<blockquote>
+<p>类成员函数的函数签名由函数名（含该类的命名空间约束）、形参列表和
+<em>cvref</em> (<code>const</code>、<code>volatile</code>、引用)
+属性决定。（<em>cvref</em> 中的 <em>cv</em>
+属性本质上是形参列表的一部分，由于成员函数的调用协定采用<code>thiscall</code>，即函数传参时本质是将调用实例的地址传入了（隐式的）第一个参数，为一个变量名为<code>this</code>，变量类型为
+<em>cv</em> +指针修饰的形参； <em>ref</em>
+只是约束了允许绑定至的对象类型，<code>&amp;</code>约束左值，<code>&amp;&amp;</code>约束右值，空则不约束之）。</p>
+</blockquote>
+<p>虚函数的实现原理是 <em>vptr</em> （虚指针） 和 <em>vtbl</em>
+（虚表）。带有虚函数的类被称为虚类(virtual
+classes)，继承了虚类的类也自动成为虚类。<br />
+所有虚类都会隐式地具有一个数据成员
+vptr，因而虚类所占的内存空间会偏大一个指针的<code>sizeof</code>。</p>
+<p>动态多态性的实现原理：<br />
+编译器会将获取虚函数的地址，并依虚表的次序将之填入一段静态的内存空间内（这段内存可以认为是一个指针的数组），派生类会继承基类的虚表。若一个派生类重写(override)了某个虚函数，则该派生类会将基类该虚函数对应位置的地址，重写为派生类重写函数的地址。<br />
+所有该类实例的构造函数中，其vptr都会被赋值为这个指针数组的起始地址（本质是一个二级指针）。<br />
+基类（或任何虚类的引用/指针等）调用虚函数时，会获取当前实例的vptr，随后到该类的vtbl中查找地址偏移量，以确定最终调用虚函数的地址。因而这一调用机制被称为“动态多态性”——函数寻址和传参是在运行时而非编译时进行。</p>
+<p>上述纯文字讲述可能稍有抽象，留一张参考图：<img
+src="/img/post_pics/vptr.png" title="vptr and vtbl demostration"
+alt="vptr" /> 依此图对vptr和vtbl的实现原理做进一步讲解。<br />
+从右侧的C++函数代码来看，这是非常典型的继承结构。A类定义了两个虚函数<code>vfunc1</code>和<code>vfunc2</code>，如图。在程序<strong>开始运行时</strong>会获取这两个虚函数的地址，并且填入A类所对应的vtbl中，形如<code>0x401ed0</code>和<code>0x401f10</code>。最后的空地址则起到类似于C样式字符串中“结束符”的作用，标志着vtbl（虚表）的结束。<br />
+对于B类，其公有继承了类A，这里需要注意的有两点：</p>
+<ul>
+<li>如此前所述，虽然A类的两个<code>int</code>数据成员<code>m_data1</code>，<code>m_data2</code>被声明为<code>private</code>，但它们依然会被继承（占据了内存空间），只是在B类内不可访问而已。<br />
+</li>
+<li>B类会先将A类的vtbl复制一份（目标虚函数的地址），但由于B类<strong>重写</strong>了<code>vfunc1</code>，则在B类的vtbl中，对应<code>vfunc1</code>的地址会被重写为<code>B::vfunc1</code>的地址<code>0x401f80</code>。<strong>同时因为B类没有重写<code>vfunc2</code>，因此<code>vfunc2</code>的地址依然是<code>A::vfunc2</code>的不变。</strong></li>
+</ul>
+<blockquote>
+<p>假设B类新定义了一个虚函数<code>vfunc3</code>，则其地址在vtbl中会被追加在<code>vfunc2</code>之后；B的派生类的与虚函数有关的规则同上。</p>
+</blockquote>
+<blockquote>
+<p>vptr和vtbl只处理和虚函数有关的问题；对于非虚函数，其地址和访问以另一种类似<code>static</code>的表形式实现，相信读者在理解vptr和vtbl的访问逻辑后能无师自通之。</p>
+</blockquote>
+<p>对于C类，逻辑基本和上述相同。需要留意的是C类定义了一个<code>m_data1</code>，<del>但由于C++并没有虚数据成员的概念(bushi)，</del>，结果就是类C中保有两份<code>m_data1</code>的副本，一份是继承自A类的<code>A::m_data1</code>（显然类C内不可直接访问之），另一份是自身定义的<code>m_data1</code>。</p>
+<p>现在观察一下虚函数的调用底层原理：<br />
+左侧<code>a</code>、<code>b</code>和<code>c</code>分别是A、B、C三个类的对象。每个虚类对象的实例都会保有一个vptr（一个二级指针），对于同一类的实例，其存储的地址是相同的（都是本类vtbl的起始地址）。<br />
+现在假设我们用一个A类的引用指向对象b：<code>A&amp; ra = b;</code>。观察左侧图中b对象加粗黑框的内容，这就是赋值兼容原则下，通过A类引用能访问到B类的全部成员（即A类既有的成员）。</p>
+<blockquote>
+<p>可见赋值兼容原则的基础就是基类的成员会被全部继承，并在派生类的内存中优先排列。</p>
+</blockquote>
+<p>此时：</p>
+<ul>
+<li>若调用<code>ra.vfunc1();</code>，由于<code>vfunc1</code>是虚函数，因此程序会根据该对象的vptr，获取到B类的vtbl；随后根据既定的偏移量（A类中，<code>vfunc1</code>处于vtbl中下标为<code>0</code>的位置），找到了对应函数<code>B::vfunc1</code>并开始调用。<br />
+</li>
+<li>若调用<code>ra.vfunc2();</code>，同理，但因为B类没有重写<code>vfunc2</code>，因此B类的vtbl中下标<code>1</code>依然指向<code>A::vfunc2</code>，因此最终未被重写的函数<code>A::vfunc2</code>被调用。<br />
+</li>
+<li>若调用<code>ra.func1();</code> 或
+<code>ra.func2();</code>，这两个函数并不是虚函数，因此程序只能寻址到<code>A::func1</code>和<code>A::func2</code>（程序没有提供任何能寻址到<code>B::func2()</code>的机制，毕竟当使用类型为<code>A&amp;</code>的引用变量<code>ra</code>时，其就决定了只能按A类的方式解读该对象的内存）。<br />
+</li>
+<li>即使<code>b</code>类新定义了一个虚函数<code>vfunc3()</code>，即通过<code>b</code>的vptr可以寻址到<code>B::vfunc3()</code>，但由于现在的引用类型是<code>A&amp;</code>，寻址是通过A类的vtbl偏移量进行，而A类并不知道该如何寻址到<code>vfunc3</code>（因为其在类A中没有定义），因此<code>ra.vfunc3()</code>这一语句不能通过编译。</li>
+</ul>
+<blockquote>
+<p>实践中由于其在运行时才能确定函数寻址和传参，因而一方面动态多态性的效率远不如静态多态性，另一方面其亦留下了很多漏洞攻击的空间(<del>pwn警告</del>)。实践中若需要实现类似动态多态性的功能，还有另一选项CRTP(Curiously
+Recursive Template
+Parameter，奇异递归模板参数)，其是一种较高阶的<code>template</code>运用技巧，可以在编译期实现基类引用调用派生类函数的效果，缺点是应用难度比较大且容易带来代码膨胀的问题<del><code>template</code>通病</del>。参考<a
+href="">C++——“俗语”盛宴</a></p>
+</blockquote>
+<h2 id="纯虚函数和访问权限的差分">纯虚函数和访问权限的差分</h2>
+<p>长篇大论了这么多有关vptr和vtbl的机制，若能通晓之，也就不难理解纯虚函数和抽象类的底层逻辑了。<br />
+纯虚函数的声明就是将虚函数的主体以<code>= 0;</code>替代。放在vptr和vtbl的机制来看，显然其意义在于让该类的vtbl对应下标存储的地址置空(<code>0</code>,<code>NULL</code>,<code>nullptr</code>)。<br />
+显然程序运行中不能寻址一个地址为<code>NULL</code>的函数。因而：</p>
+<ul>
+<li>底层来看，该类派生类的vtbl中，该位置的地址被重写之前；<br />
+</li>
+<li>顶层来看，该类派生类中，该纯虚函数被定义（给出实现）之前；</li>
+</ul>
+<p>这个派生类都是抽象类，即不能创建对象的实例。</p>
+<hr />
+<p>结合此前关于类继承中访问权限区分的相关机制，结合访问权限差分，可以衍生出一些虚函数的有趣用法：</p>
+<ul>
+<li>基类将虚函数声明为<code>private</code>，则派生类能重写之，但不能访问基类未被重写的该函数；纯虚函数其理类似。<br />
+</li>
+<li>派生类将虚函数声明为<code>private</code>（基类依然声明为<code>public</code>），则只有派生类实例被基类引用绑定时，在类外可以访问该函数。</li>
+</ul>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Base</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">encrypt</span><span class="params">()</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="comment">/*...*/</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Derived</span>:<span class="keyword">public</span> Base</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">visit</span><span class="params">()</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="comment">//this-&gt;encrypt(); //Error: encrypt() is private in this context</span></span><br><span class="line">        <span class="comment">//Equivalent to that Base::encrypt() is unable to be visited directly outside class Base, disregarding the approach </span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2
+id="c11的干将override和final修饰符">C++11的“干将”：<code>override</code>和<code>final</code>修饰符</h2>
+<blockquote>
+<p>为了避免既有代码命名冲突问题，这两个关键字(keyword)并未作为保留字(reserved)，意即其可以作为变量名、类名等，其修饰作用只在特定位置生效（<del>又不是Java，<code>final</code>随便用</del>）</p>
+</blockquote>
+<p>C++11引入了<code>override</code>和<code>final</code>两个修饰符，这两个修饰符并不会生成可执行代码，只是在编译阶段为程序语义提供了更为明确的指引。</p>
+<blockquote>
+<p>对于C++一类的编译型语言，注释之外也有很多声明、定义等，或于一定条件下，或必定——不会生成可执行代码。<br />
+作为一门常用于大型程序开发的语言，这些不生成可执行代码的修饰符，代表着无数的语义约束，亦代表着程序设计者与自我、与上下游的合作者、与标准库和三方库、与编译器的永无止境的合作与博弈。</p>
+</blockquote>
+<p><code>override</code>关键字用于修饰一个虚函数，等价于显式声明了这个虚函数会重写了基类虚函数（纯虚函数亦然，亦即覆写了既有vtbl的函数地址）。<strong>若其没有做到“覆写虚函数”这一点，或其本身不是虚函数，编译阶段将报错。</strong></p>
+<p>其起到的检查作用颇为实用，因派生类欲覆写虚函数时，若不慎导致函数签名不一致，则将无法重写既有虚函数，而是创建了一个新的虚函数。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Base</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">show</span><span class="params">()</span></span>&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Derived</span>: <span class="keyword">public</span> Base</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">show</span><span class="params">(<span class="type">int</span> x)</span></span>&#123;&#125; <span class="comment">//Paremeter list differs</span></span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">sh0w</span><span class="params">()</span></span>&#123;&#125; <span class="comment">//Function name differs</span></span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">show</span><span class="params">()</span> <span class="type">const</span> </span>&#123;&#125; <span class="comment">//const-specifier differs</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>尽管返回值类型不是函数签名的一部分，但重写虚函数时，重写函数的返回值类型必须和既有虚函数相同，否则将产生编译错误。<br />
+相对地，如果只是普通成员函数（或其它可以明确优先级的命名空间场景下）的同名覆盖则没有对函数签名做出任何约束。</p>
+</blockquote>
+<p>此时，派生类相当于定义了三个新的虚函数，基类的虚函数则未被重写。<br />
+而加上<code>override</code>关键字则<del>可以手动产生一个编译错误</del>，可以让编程者意识到自身函数签名的相关问题：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Base</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">show</span><span class="params">()</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Derived</span>: <span class="keyword">public</span> Base</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">//Not Compile: &#x27;virtual void Derived::show() const&#x27; marked &#x27;override&#x27;, but does not override</span></span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">show</span><span class="params">()</span> <span class="type">const</span> <span class="keyword">override</span> </span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;  </span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<hr />
+<p><code>final</code>关键字则可以用于修饰一个虚函数或一个类。<code>final</code>修饰的虚函数不能被重写（可以和<code>override</code>叠加）；其修饰的类不能被继承（修饰类时，将之置于类名后）。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Base</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">show</span><span class="params">()</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Derived</span>: <span class="keyword">public</span> Base</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">show</span><span class="params">()</span> <span class="keyword">override</span> <span class="keyword">final</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Derived2</span>: <span class="keyword">public</span> Derived</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">//Not compile: virtual function &#x27;virtual void Derived2::show()&#x27; overriding final function</span></span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">show</span><span class="params">()</span> <span class="keyword">override</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Derived3</span> <span class="keyword">final</span>: <span class="keyword">public</span> Derived</span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">//Not compile: cannot derive from &#x27;final&#x27; base &#x27;Derived3&#x27; in derived type &#x27;Derived4&#x27;</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Derived4</span>: <span class="keyword">public</span> Derived3</span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h1 id="浅谈友元">浅谈友元</h1>
+<p>友元通过<code>friend</code>关键字声明。一旦使用<code>friend</code>关键字，则被声明(declare)的函数/类所处的命名空间就是在<strong>当前类外的命名空间</strong>，不是当前类的成员函数（因而也就没有隐式<code>this</code>指针，可以被视为一种特殊的<code>static</code>函数）。</p>
+<blockquote>
+<p>事实上从访问方式来看，<code>static</code>函数和友元函数的唯二区别之一是是否加域解析符<code>::</code>。<br />
+另一个区别是，<code>static</code>函数依然具有访问权限的属性，但<code>friend</code>由于本来就被“放置”在了类外，因而不存在访问权限的问题。<br />
+在类外给出其定义(definition)时，不应再加<code>friend</code>/<code>static</code>关键字。</p>
+</blockquote>
+<p>其作用也很简单：被友元声明的函数/类可以访问自身类的<code>protected</code>和<code>private</code>成员。注意友元声明必须是<strong>前向性</strong>的，意即此“特权”必须在友元声明出现后才会生效。<br />
+友元声明不具有对称性和传递性。一个类的派生类/基类也不是本类的友元。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">A</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">private</span>:   </span><br><span class="line">    <span class="type">int</span> x;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">friend</span> <span class="keyword">class</span> <span class="title class_">B</span>; <span class="comment">//B is a friend class declared in the global namespace</span></span><br><span class="line">    <span class="function"><span class="keyword">friend</span> <span class="type">void</span> <span class="title">fun</span><span class="params">(<span class="type">const</span> A&amp;)</span></span>; <span class="comment">//fun(const A&amp;) is a friend function declared in the global namespace</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">//Currently B and fun() still has no definition</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(<span class="type">const</span> A&amp; a)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,a.x);</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>前向性声明的一段应用示例：
+C++20后，为令<code>class C</code>能被格式化，希望将<code>std::formatter&lt;C,char&gt;</code>置为其友元。显然，我们应当先完成对<code>class C</code>的定义（各类数据/函数成员设置）后再定义<code>std::formatter&lt;C,char&gt;</code>，此时就会用到前向声明：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;print&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">C</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> x;</span><br><span class="line">    <span class="keyword">friend</span> std::formatter&lt;C,<span class="type">char</span>&gt;; <span class="comment">//前向声明</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;C,<span class="type">char</span>&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="title">parse</span><span class="params">(std::format_parse_context&amp; fpc)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> fpc.<span class="built_in">begin</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">auto</span> <span class="title">format</span><span class="params">(<span class="type">const</span> C&amp; c,std::format_context&amp; fc)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> std::format_to(fc,<span class="string">&quot;C:&#123;:^5d&#125;&quot;</span>,c.x);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h1 id="结语">结语</h1>
+<p>类和对象提供的封装性、继承性、多态性对于任何OOP语言来说都极为重要，而不同的语言对于OOP中概念的支持、实现及底层逻辑可能大相径庭。<br />
+作为一门追求高效、简洁和语义清晰的编译期语言，学习运用C++语言进行面向对象的程序设计时，除了对应用规则更加通晓之外，还应对其底层实现有所涉猎。<br />
+如此方能更好地理解各种语法规则，并对现代C++的特性缘由、设计哲学有所知晓；并在和编译器、标准库、其它程序设计者和自身既有的代码更好地合作共进。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/cpp-hierachy/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+  <div>
+</article>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-nctf2024" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -529,234 +795,6 @@ injection</em> 获取 <span class="math inline">\(e\)</span>
 
 
   
-    <article id="post-cpp-lambda" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/cpp-lambda/">C++——“浮萍”lambda</a>
-    </h1>
-  
-
-        
-        <a href="/cpp-lambda/" class="archive-article-date">
-  	<time datetime="2025-01-26T13:40:36.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-01-26</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="匿名的函数">匿名的函数？</h1>
-<p>C++11引入的超大特性之一是 <em>lambda expression</em>
-，即匿名函数表达式。</p>
-<p>传统C/C++中，或许我们都已习惯于声明定义函数的传统模式。那么对函数进行“匿名”的意义何在？</p>
-<p>最重要的原因之一是，匿名函数的定义轻巧快捷。<br />
-由于C/C++并不允许函数内部嵌套定义函数<del>明明namespace/class/template都能嵌套的</del>，因而函数必须被“分离”定义。<br />
-但很多时候我们需要临时定义一个函数进行使用（如在调用某些算法时），如果每次都需要分别声明、调用，具名函数数大幅增加极易导致其变得臃肿，且不利于程序的维护。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">comp_stu_1</span><span class="params">(<span class="type">const</span> Stu&amp; x,<span class="type">const</span> Stu&amp; y)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> x.id - y.id;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(std::span&lt;<span class="type">const</span> Stu&gt; sp)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::ranges::<span class="built_in">sort</span>(sp,comp_stu_1);</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p><del>虽然但是，讲pre-C++11的情况为什么要用C++20的特性啊喂</del></p>
-<p>类似的匿名函数在很多现代编程语言中都存在，如python直接将<code>lambda</code>作为其关键字（相对地，即使lambda这一特性之大，C++中并没有为之引入任何新的关键字）。</p>
-<hr />
-<h1 id="lambda简介">lambda简介</h1>
-<blockquote>
-<p><em>lambda expression</em>
-本质上是重载了<code>operator()</code>的匿名类的一个实例。</p>
-</blockquote>
-<h2 id="声明语法">声明语法</h2>
-<p>定义 <em>lambda expression</em> 的语法形如：
-<code>[capture-list](parameter-list) mutable noexcept -&gt; return-type &#123;function-body&#125;</code>。</p>
-<ul>
-<li><p>中括号<code>[]</code>标志一个lambda表达式的开始，其中<code>capture-list</code>是捕获列表，以“捕获”lambda表达式所在命名空间的变量，并在函数内使用：</p>
-<ul>
-<li><code>&amp;var-name</code>：以引用方式捕获一个变量（非<code>const</code>引用）。若省略<code>var-name</code>，则以引用方式捕获所有变量。<br />
-</li>
-<li><code>var-name</code>：以值方式捕获一个变量。<strong>所有的lambda函数默认都带const属性，即其不能修改值捕获变量的值（除非声明为mutable，但引用则不然。）</strong><br />
-特别地，<code>=</code>表示通过值方式捕获所有变量。</li>
-<li><code>this</code>：在类的非静态成员函数中，捕获<code>this</code>指针。若不捕获，则不能使用<code>this</code>显式/隐式调用该类的方法。<strong>注意捕获<code>this</code>后其依然不是类的成员，不具有访问非<code>public</code>成员的权限。</strong></li>
-<li><code>*this</code>：<strong>C++17引入</strong>，在类的非静态成员函数中，为该lambda创建一个调用实例的副本(copy)，<strong>相当于按值捕获了调用者自身</strong>。</li>
-</ul>
-<p>不同的捕获方式以<code>,</code>相并列，通用捕获方法(<code>=</code>,<code>&amp;</code>)可以被单个变量声明特化；同一个变量不能被相冲突的捕获方法声明。<br />
-<strong>C++20起，声明<code>=</code>或<code>&amp;</code>蕴含捕获<code>this</code></strong>，但形如<code>[=,this]</code>或<code>[&amp;,this]</code>的捕获声明是合法的（不作冲突计）；<code>this</code>和<code>*this</code>的声明相冲突。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> a = <span class="number">1</span>;</span><br><span class="line">std::vector&lt;<span class="type">int</span>&gt; vc&#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">auto</span> f1 = [=]()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">//captures vc and a by value</span></span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; a &lt;&lt; vc[<span class="number">1</span>] &lt;&lt; std::endl;</span><br><span class="line">    <span class="comment">//vc[0] = 2; //Not Compile: vc is const</span></span><br><span class="line">    <span class="comment">//a += 1; //Not Compile: a is const</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">auto</span> f2 = [=,&amp;a](<span class="type">int</span> x)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">//captures vc by value and a by reference</span></span><br><span class="line"></span><br><span class="line">    a += x; <span class="comment">//OK: ref-captured variables are modifiable</span></span><br><span class="line">    <span class="keyword">return</span> x + vc.<span class="built_in">back</span>();</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">//auto f3 = [&amp;a,a]()&#123;&#125;; //Not Compile: Conflicting statement on how to capture a</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">auto</span> f4 = [=](<span class="type">int</span> i,<span class="type">int</span> x) <span class="keyword">mutable</span></span><br><span class="line">&#123;</span><br><span class="line">    vc[i] += x; <span class="comment">//OK: Function was declared as mutable, enabling modification of value-captured variables</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">const</span> <span class="type">int</span> y = a;</span><br><span class="line"><span class="keyword">auto</span> f5 = [&amp;y]()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">//y += 1; //Not Compile: The const-status of ref-captured variable depends on the variable itself</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">A</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">int</span> <span class="title">get</span><span class="params">()</span> </span>&#123;<span class="keyword">return</span> val;&#125;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">some_const_func</span><span class="params">()</span></span>&#123;&#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="type">int</span>&amp; <span class="title">get2</span><span class="params">()</span> </span>&#123;<span class="keyword">return</span> val;&#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">()</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">auto</span> fa = [<span class="keyword">this</span>]&#123;<span class="keyword">return</span> <span class="built_in">get</span>();&#125;; <span class="comment">//Explicit capture of this</span></span><br><span class="line">        <span class="keyword">auto</span> fb = [=]&#123;<span class="keyword">return</span> <span class="built_in">get</span>();&#125;; <span class="comment">//Since C++20: Implicit capture of this</span></span><br><span class="line">        <span class="keyword">auto</span> fc = [&amp;,<span class="keyword">this</span>]&#123;<span class="keyword">return</span> <span class="built_in">get</span>();&#125; <span class="comment">//universal statement and this can co-exist</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">//auto fd = [this]&#123;return val;&#125; //Not Compile: fd can&#x27;t access private member val</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">//auto fe = [this,*this]&#123;&#125; //Not Compile: conflicting statement of capturing this</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">//auto ff = [*this]&#123;return get();&#125; //Not Compile: A captured by value, captured-by-value variables are const in lambda by default</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">auto</span> fg = [*<span class="keyword">this</span>]&#123;<span class="built_in">some_const_func</span>();&#125; <span class="comment">//OK</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">auto</span> fh = [*<span class="keyword">this</span>](<span class="type">int</span> t) <span class="keyword">mutable</span> &#123;<span class="built_in">get2</span>() += <span class="number">1</span>;&#125; <span class="comment">//mutable stated, works(yet now it does not affect the original copy A)</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> val;</span><br><span class="line">&#125;；</span><br></pre></td></tr></table></figure></li>
-<li><p><code>parameter-list</code>指参数列表，若其为空且函数未被声明为<code>mutable</code>，则可以省略。<br />
-</p></li>
-<li><p><code>mutable</code>：可选项，lambda的函数体对<code>capture-list</code>所有非引用类型变量均默认为<code>const</code>，将lambda声明为<code>mutable</code>将允许lambda内修改这些变量。<br />
-&gt;
-结合lambda本质是一个重载了<code>operator()</code>类的实例，底层原理就是lambda的<code>operator()</code>带有<code>const</code>属性，所谓“捕获”变量其实就是将之纳入类内的数据成员。<br />
-&gt;
-相应地，将一个lambda声明为<code>mutable</code>等价于将这些数据成员全部加以<code>mutable</code>修饰。<br />
-</p></li>
-<li><p><code>noexcept</code>：<strong>C++23引入</strong>，可选项，修饰之和以<code>noexcept</code>修饰一般函数作用相同。<br />
-</p></li>
-<li><p><code>-&gt; return-type</code>：也叫 <em>trailing return
-type</em>
-，相当于函数签名中指定函数的返回类型。<strong>C++14起为可选项，若省略之，则相当于函数的返回类型是<code>auto</code></strong>：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> f1 = []() -&gt; <span class="type">double</span> &#123;<span class="keyword">return</span> <span class="number">1</span>;&#125;;</span><br><span class="line"><span class="comment">//equivalent to</span></span><br><span class="line"><span class="function"><span class="type">double</span> <span class="title">f1</span><span class="params">()</span> </span>&#123;<span class="keyword">return</span> <span class="number">1</span>;&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//since C++14</span></span><br><span class="line"><span class="keyword">auto</span> f2 = []() &#123;<span class="keyword">return</span> <span class="number">1</span>;&#125;</span><br><span class="line"><span class="comment">//equivalent to</span></span><br><span class="line"><span class="function"><span class="keyword">auto</span> <span class="title">f2</span><span class="params">()</span> </span>&#123;<span class="keyword">return</span> <span class="number">1</span>;&#125;</span><br></pre></td></tr></table></figure></p></li>
-<li><p><code>&#123;function-body&#125;</code>：函数体。</p></li>
-</ul>
-<p>在拥有lambda大法后，上述排序行就可以改写为：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">std::ranges::<span class="built_in">sort</span>(sp,[](<span class="type">const</span> Stu&amp; x,<span class="type">const</span> Stu&amp; y) &#123;<span class="keyword">return</span> x.id-y.id;&#125;);</span><br></pre></td></tr></table></figure>
-<p>lambda相较传统函数的优势有：</p>
-<ul>
-<li>对函数的定义和应用极为灵活，且作为函数变量传递时，和查找函数指针定义相比较更为直观、易于维护；<br />
-</li>
-<li>可以自由控制lambda内部的命名可见情况（捕获列表），且其复用性较函数指针更强；<br />
-</li>
-<li>其“临时”特性给了编译器更大优化空间，效率更高；<br />
-</li>
-<li>作为一个对象，其定义和传递相较函数指针更为自由、更加安全。</li>
-</ul>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> fid = [](<span class="type">const</span> Stu&amp; x,<span class="type">const</span> Stu&amp; y)&#123;<span class="keyword">return</span> x.id-y.id;&#125;;</span><br><span class="line">std::ranges::<span class="built_in">sort</span>(sp,fid);</span><br><span class="line"><span class="comment">//...</span></span><br><span class="line">std::<span class="built_in">println</span>(<span class="string">&quot;Difference = &#123;&#125;&quot;</span>,<span class="built_in">fid</span>(sp.<span class="built_in">front</span>(),sp.<span class="built_in">back</span>()));</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>实际上在C++20中，ranges库带来的 <em>projection</em>
-大法可以让上述排序代码更为简洁：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">std::ranges::<span class="built_in">sort</span>(sp,&#123;&#125;,&amp;Stu::id);</span><br></pre></td></tr></table></figure></p>
-</blockquote>
-<h2 id="调用方式">调用方式</h2>
-<h3 id="匿名调用">匿名调用</h3>
-<p>既然叫lambda——“匿名”函数，自然以“匿名”之法调用之为一选项：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">std::views::<span class="built_in">filter</span>(vec,[](<span class="keyword">auto</span>&amp;&amp; at)&#123;<span class="keyword">return</span> at.num &gt; <span class="number">3</span>;&#125;);</span><br></pre></td></tr></table></figure>
-<h3 id="具名调用">具名调用</h3>
-<p>通过声明一个变量将之存储，实现更为灵活的调用和复用：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> fun = [](<span class="type">int</span> ch) -&gt; <span class="type">char</span> &#123;<span class="keyword">return</span> ch + <span class="number">48</span>;&#125;;</span><br><span class="line"></span><br><span class="line">std::cout &lt;&lt; <span class="built_in">fun</span>(<span class="number">1</span>); <span class="comment">//&#x27;1&#x27;</span></span><br><span class="line">std::ranges::<span class="built_in">transform</span>(vec,fun);</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>注意，lambda表达式的变量类型<strong>只能</strong>声明为<code>auto</code>（只有编译器才知道lambda表达式的类型）。任何两个lambda表达式，即使其函数签名相同，类型也都不相同（相对地，函数签名相同的函数，其函数指针类型也相同）：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo1</span><span class="params">(<span class="type">int</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo2</span><span class="params">(<span class="type">int</span>)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="built_in">void</span> (*)(<span class="type">int</span>)ptr = foo1;</span><br><span class="line">ptr = foo2; <span class="comment">//OK</span></span><br><span class="line"><span class="built_in">static_assert</span>(std::is_same_v&lt;<span class="keyword">decltype</span>(foo1),<span class="keyword">decltype</span>(foo2)&gt;); <span class="comment">//passes</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">auto</span> fun1 = [](<span class="type">int</span>) -&gt; <span class="type">void</span> &#123;&#125;;</span><br><span class="line"><span class="comment">//decltype(fun1) fun2 = [](int) -&gt; void &#123;&#125;; //Not Compile: fun2 and fun1 are of different types, even their function signature is the same</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">auto</span> fun2 = [](<span class="type">int</span>) -&gt; <span class="type">void</span> &#123;&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">//static_assert(std::is_same_v&lt;decltype(fun1),decltype(fun2)&gt;); //Fails</span></span><br></pre></td></tr></table></figure></p>
-</blockquote>
-<h3 id="返回函数">返回函数</h3>
-<p>因为lambda函数本质上是一个对象(object)，因此可以将之安全地作为返回值进行语义传递：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">auto</span> <span class="title">fun_factory</span><span class="params">(<span class="type">int</span> x)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> [x](<span class="type">int</span> y)&#123;<span class="keyword">return</span> y + x;&#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="即时调用">即时调用</h3>
-<p>由于<code>[]()&#123;&#125;</code>就相当于声明了一个 <em>function
-object</em>，一定场景下，<del>在其后再加点括号套娃也未尝不可</del>：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">char</span> x = [&amp;](<span class="type">size_t</span> i)&#123;<span class="keyword">return</span> std::string&#123;vec[i]&#125;;&#125;(<span class="number">3</span>)[<span class="number">2</span>];</span><br></pre></td></tr></table></figure></p>
-<h2 id="底层实现">底层实现</h2>
-<p>lambda表达式因其本质，亦被称为“函数对象”( <em>function objects</em>
-)。</p>
-<p>现代C++中，“函数”("callable")泛化来说可以是以下之一：</p>
-<ul>
-<li>函数指针(function
-pointers)，从C沿袭至今的、最原始的函数形式，变量形如<code>return-type(*)(parameter-list)</code>，如<code>int(*)(int,int)</code>；<br />
-</li>
-<li>可调用对象(callable
-objects)，即重载了<code>operator()</code>类的实例，lambda表达式也是其中一种。<br />
-</li>
-<li>成员指针(pointer to member)，符号形如<code>::*</code>。</li>
-</ul>
-<p>在C++11前，通过以下方法也可以创建一个可以捕获变量的“函数对象”：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> x = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">__lambda1</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    __lambda1(<span class="type">int</span> v):x&#123;v&#125;&#123;&#125;</span><br><span class="line">    <span class="function"><span class="type">int</span> <span class="title">operator</span><span class="params">()</span><span class="params">(<span class="type">int</span> g)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> g*<span class="number">2</span> + x;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> x;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">__lambda1</span> f1&#123;x&#125;;</span><br><span class="line"></span><br><span class="line">std::cout &lt;&lt; <span class="built_in">f1</span>(<span class="number">3</span>); <span class="comment">//7</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>考虑上述的实例，C++中lambda的可能看似“匪夷所思”的特性就不难解释了：</p>
-<ul>
-<li>捕获的变量并不改变其属性（是否<code>const</code>、何种引用等等），但由于<code>operator()</code>带有<code>const</code>属性，因此不能更改按值捕获的变量；但可以通过非<code>const</code>引用更改外部变量的值。<br />
-</li>
-<li>对于<code>mutable</code>的lambda，相当于给所有的捕获变量都加上了<code>mutable</code>修饰。</li>
-</ul>
-<blockquote>
-<p>C++20引入<code>&lt;ranges&gt;</code>时，所有STL
-Algorithm函数的ranges版本都采用了“函数对象”的实现方式，以此来避免ADL(Argument-Dependent
-Lookup)。</p>
-</blockquote>
-<hr />
-<h1 id="历代c对lambda的改进">历代C++对lambda的改进</h1>
-<h2 id="c14">C++14</h2>
-<ol type="1">
-<li><p><code>constexpr</code>相关：随着<code>constexpr</code>函数限制的放宽<del>让constexpr函数也像一个函数</del>，所有的lambda表达式均默认成为<code>constexpr</code>（在符合编译条件前提下）。</p></li>
-<li><p>泛型(generic)-lambda：C++11引入<code>auto</code>关键字后，在函数形参列表中使用之可以便捷地创建（模板变量不具名的）函数模板，如<code>int fun(auto param);</code>。
-C++14起，lambda函数也允许使用<code>auto</code>来快速创建函数模板，极大地方便了临时调用场景下的使用（无需打出原始类型，甚至可以通过<code>auto&amp;&amp;</code>来自动匹配<code>const</code>和引用属性等）。如：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">std::ranges::<span class="built_in">filter</span>(vec,[](<span class="keyword">auto</span>&amp;&amp; v)&#123;<span class="keyword">return</span> v.<span class="built_in">back</span>() &gt; <span class="number">3</span>;&#125;);</span><br></pre></td></tr></table></figure></p></li>
-<li><p>指定初始化：C++14起，在使用值捕获一个变量时，可以在其后指定其初始化的方式（默认是通过复制构造函数初始化），如同在构造函数中传参进初始化列表一样。<br />
-如此可以自定义一个变量的初始化方式（复制或移动，或调用其它构造函数等等），使得
-<em>move-only</em> 的类型也可以被lambda捕获。 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> x = <span class="number">3</span>;</span><br><span class="line"><span class="keyword">auto</span> what_add = [a = x * <span class="number">2</span>](<span class="type">int</span> t)&#123;<span class="keyword">return</span> <span class="built_in">pow</span>(t,a);&#125;;</span><br><span class="line"></span><br><span class="line">std::unique_ptr&lt;<span class="type">int</span>&gt; up;</span><br><span class="line"><span class="keyword">auto</span> take = [ptr = std::<span class="built_in">move</span>(up)](<span class="type">int</span> u)&#123;std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,u + *ptr;)&#125;;</span><br></pre></td></tr></table></figure></p></li>
-<li><p>返回类型推导：C++14起，不指定 <em>trailing return type</em>
-时函数返回类型可以自动推导（为<code>auto</code>），见上。</p></li>
-</ol>
-<h2 id="c17">C++17</h2>
-<ol type="1">
-<li>增加了对于<code>*this</code>的捕获，见上。</li>
-</ol>
-<h2 id="c20">C++20</h2>
-<ol type="1">
-<li><p>C++20起，可以在捕获声明<code>[]</code>后，添加模板声明<code>&lt;class T&gt;</code>/<code>&lt;typename T&gt;</code>，以此更为“丝滑”地达成模板参数复用的效果。例如：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> fun = []&lt;<span class="keyword">class</span> Ty&gt;(Ty&amp;&amp; arg)&#123;&#125;;</span><br></pre></td></tr></table></figure></p></li>
-<li><p>C++20起，捕获声明<code>[=]</code>或<code>[&amp;]</code>蕴含捕获<code>this</code>，但其与<code>this</code>的显式声明不冲突，具体见上。</p></li>
-</ol>
-<h2 id="c23">C++23</h2>
-<ol type="1">
-<li><p>允许对lambda表达式指定<code>noexcept</code>属性，见上。</p></li>
-<li><p>此前lambda表达式被声明为<code>mutable</code>时，空的参数列表不能省略；C++23起可以省略。<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> f1 = []&#123;<span class="keyword">return</span> <span class="number">1</span>;&#125; <span class="comment">//Ignoring empty parameter list</span></span><br><span class="line"><span class="keyword">auto</span> f2 = []() <span class="keyword">mutable</span> &#123;<span class="keyword">return</span> <span class="number">1</span>;&#125; <span class="comment">//pre-C++23</span></span><br><span class="line"><span class="keyword">auto</span> f3 = [] <span class="keyword">mutable</span> &#123;<span class="keyword">return</span> <span class="number">1</span>;&#125; <span class="comment">//OK since C++23</span></span><br></pre></td></tr></table></figure></p></li>
-</ol>
-<h1 id="结语">结语</h1>
-<p>lambda函数自C++11引入以来，即已成为提高开发效率、增强程序可读性和易维护性的利器，极为适合日常应用中“轻巧”函数的定义、调用与传递，同时其部分特性（捕获控制、默认<code>constexpr</code>等）也为编译器为之优化、进而提升效率提供了更多空间。</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/cpp-lambda/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-  <div>
-</article>
-
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
   
     <nav id="page-nav">
       <a class="extend prev" rel="prev" href="/page/2/">&laquo; Prev</a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/">4</a><a class="page-number" href="/page/5/">5</a><span class="space">&hellip;</span><a class="page-number" href="/page/9/">9</a><a class="extend next" rel="next" href="/page/4/">Next &raquo;</a>
@@ -938,6 +976,10 @@ MathJax.Hub.Queue(function() {
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">长文精选</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color1">C++20</a>
               </li>
             
             <div class="clearfix"></div>
