@@ -16,7 +16,7 @@
 <meta property="og:description" content="可变参数模板(variadic templates)是C++11引入的重大特性之一，其对元编程(metaprogramming)产生了极为深远的影响。 ... 可变参数函数 对C语言有了解的读者一定对这个符号不陌生：其用于表示一个可变参数函数(variadic function)。 C语言中定义的va_list、va_start、va_arg和va_end几个宏都和可变参数的访问有关；">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2025-04-07T02:26:39.000Z">
-<meta property="article:modified_time" content="2025-04-09T02:40:18.825Z">
+<meta property="article:modified_time" content="2025-04-10T08:49:31.625Z">
 <meta property="article:author" content="Hibiscus">
 <meta property="article:tag" content="Modern C++">
 <meta name="twitter:card" content="summary">
@@ -185,7 +185,13 @@ C语言中定义的<code>va_list</code>、<code>va_start</code>、<code>va_arg</
 声明一个可变参数函数的语法为：在其最后一个形参后添加一个<code>,...</code>，最经典的莫过于<code>printf</code>的函数签名：<br />
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">printf</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* format,...)</span>;</span><br></pre></td></tr></table></figure></p>
 <blockquote>
-<p>实际上<code>...</code>前的<code>,</code>是可选的，但由于</p>
+<p>实际上<code>...</code>前的<code>,</code>是可选的，但C++26起将不再接受这种写法。原因之一是若不加<code>,</code>以区分之，碰上现代C++的
+<em>variadic template</em> 会出现难以分辨二者的情况，如：<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span>... Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(Ty...,...)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span>... Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">(Ty......)</span></span>; <span class="comment">//???</span></span><br></pre></td></tr></table></figure>
+（不要笑，这种写法确实在特定场景（如显式指定模板参数）还是有意义的，当然自动推导模板参数时，可变参数函数包会因优先级靠后而置空）</p>
+</blockquote>
+<blockquote>
+<p>C/早期C++中的许多“陋习”在更新的C/C++版本中都逐渐被废弃，除可变函数参数声明外，其它的典例包括隐式返回值（早期C定义函数时可以不声明返回值，此时默认返回类型是<code>int</code>，C99后已不支持此写法）、指针类型的隐式转换（C中支持<code>void*</code>向任意指针类型的隐式转换，但C++要求必须显式指明之）等。</p>
 </blockquote>
 <p>正是因为可变参数函数的存在，我们方能向<code>printf</code>和其它函数<del>扔一大堆乱七八糟的东西</del>传递不同数目的参数。其使得即使在一门编译期语言中，我们亦无需为仅存在传参个数之差分的同个函数，编写不同的重载。</p>
 <p>但C语言的一些“包袱”实际上对C++，尤其是现代C++而言不够适用，推动着C++去不断发展推进，以新的语法/库特性解决这些诉求。</p>
@@ -431,6 +437,15 @@ C++26在对参数包的访问上更进了一步，提出了 <em>pack indexing</e
 
   
 <nav id="article-nav">
+  
+    <a href="/crypto/ntru/" id="article-nav-newer" class="article-nav-link-wrap">
+      <i class="icon-circle-left"></i>
+      <div class="article-nav-title">
+        
+          ntru
+        
+      </div>
+    </a>
   
   
     <a href="/cpp/concepts/" id="article-nav-older" class="article-nav-link-wrap">

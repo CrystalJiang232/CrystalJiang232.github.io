@@ -152,187 +152,149 @@
           <div id="js-content" class="content-ll">
             
   
-    <article id="post-cpp/variadic" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-cpp/foldexpr" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/cpp/variadic/">C++——可变参数模板</a>
+      <a class="article-title" href="/cpp/foldexpr/">foldexpr</a>
     </h1>
   
 
         
-        <a href="/cpp/variadic/" class="archive-article-date">
-  	<time datetime="2025-04-07T02:26:39.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-04-07</time>
+        <a href="/cpp/foldexpr/" class="archive-article-date">
+  	<time datetime="2025-04-09T08:14:03.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-04-09</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>可变参数模板(variadic
-templates)是C++11引入的重大特性之一，其对元编程(metaprogramming)产生了极为深远的影响。</p>
-<h1 id="section"><code>...</code></h1>
-<h2 id="可变参数函数">可变参数函数</h2>
-<p>对C语言有了解的读者一定对这个符号不陌生：其用于表示一个可变参数函数(variadic
-function)。<br />
-C语言中定义的<code>va_list</code>、<code>va_start</code>、<code>va_arg</code>和<code>va_end</code>几个宏都和可变参数的访问有关；出于兼容性<del>和可变参数模板的长期缺失</del>C++也支持了这种写法。<br />
-声明一个可变参数函数的语法为：在其最后一个形参后添加一个<code>,...</code>，最经典的莫过于<code>printf</code>的函数签名：<br />
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">printf</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* format,...)</span>;</span><br></pre></td></tr></table></figure></p>
-<blockquote>
-<p>实际上<code>...</code>前的<code>,</code>是可选的，但由于</p>
+        <blockquote>
+<p>Collapse.</p>
 </blockquote>
-<p>正是因为可变参数函数的存在，我们方能向<code>printf</code>和其它函数<del>扔一大堆乱七八糟的东西</del>传递不同数目的参数。其使得即使在一门编译期语言中，我们亦无需为仅存在传参个数之差分的同个函数，编写不同的重载。</p>
-<p>但C语言的一些“包袱”实际上对C++，尤其是现代C++而言不够适用，推动着C++去不断发展推进，以新的语法/库特性解决这些诉求。</p>
-<h2 id="参数包大小问题">参数包大小问题</h2>
-<p>其一，其自身并不携带任何的大小信息（<del>某种意义上也算C语言的“通病”了，</del>包括C样式字符串、C样式数组（还有指针+长度的组合），虽然在效率和性能开销上确实做到了极致，但从开发和维护的角度来看过于极端），导致对可变参数的访问是不安全的（容易“漏掉”信息、越界或被栈溢出攻击<del>pwn警告</del>）。<br />
-事实上C语言对此从语言层面上几乎毫无办法，只能在实现中直接或间接地传递参数个数：间接的典例就是<code>printf</code>的格式串，每个<code>%</code>格式说明符（escape-character<code>%%</code>除外）代表了一个需要被访问的参数。</p>
+<h1 id="a.k.a.-reduce">a.k.a. Reduce?</h1>
+<p><a
+target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/language/fold">cppreference</a>中对于
+<em>fold expression</em> 的介绍非常简洁明了：</p>
 <blockquote>
-<p>若<code>%</code>的个数和传递参数的个数不一致则会导致栈溢出（参数的访问混乱，以至越界）。</p>
+<p>Reduces(folds) a pack over a binary operator.</p>
 </blockquote>
-<h2 id="类型安全问题">类型安全问题</h2>
-<p>其二，除了越界访问的问题，可变参数访问时的类型安全性同样没有保障，参考下面一段代码：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">sum</span><span class="params">(<span class="type">int</span> count,...)</span></span><br><span class="line">&#123;</span><br><span class="line">    va_list ls;</span><br><span class="line">    <span class="type">int</span> total = <span class="number">0</span>;</span><br><span class="line">    va_start(ls,count);</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;count;++i)</span><br><span class="line">    &#123;</span><br><span class="line">        total += va_arg(ls,<span class="type">int</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    va_end(ls);</span><br><span class="line">    <span class="keyword">return</span> total;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>即，将一个参数包在一个二元运算符上<del>“约减”（笔者自创的翻译.cpp，以后还是先用"reduce"原名比较好）</del>。</p>
 <blockquote>
-<p>先解读一下<code>va_list</code>、<code>va_arg</code>、<code>va_start</code>和<code>va_end</code>的作用：<br />
-<code>va_list</code>本质上是一个指针类型，实现中多为<code>char*</code>或<code>void*</code>，以保证其能以1Byte的最小“分度”访问内存。<br />
-<code>va_start</code>接受两个参数，第一为<code>va_list</code>类型，第二为代表参数包大小的<code>int</code>，如<code>va_start(ls,count);</code>意为给<code>ls</code>赋值，使之可以<del>安全地</del>访问<code>count</code>个参数。因为可变参数<code>...</code>会通过函数栈进行传递，<code>va_start</code>时赋<code>ls</code>以栈的起始地址。<br />
-<code>va_arg(ls,int)</code>调用时，会将<code>ls</code>往后“移动”<code>sizeof(int)</code>，返回一个<code>int</code>型的值，底层来看就是以<code>int</code>型的方式读取了<code>va_arg</code>开始的一段内存。参考以下代码：<br />
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//Suppose that ls is of type char* and sizeof(char) == 1</span></span><br><span class="line"><span class="comment">//In this &quot;function&quot;, actually the parameter should be a secondary pointer(so that the value of &quot;ls&quot; can be modified externally)</span></span><br><span class="line"><span class="comment">//So a macro function(similar to templates) would be like:</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> va_arg(ls,t) </span></span><br><span class="line"></span><br><span class="line"><span class="comment">//va_arg(ls,int) is like:</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">fun</span><span class="params">(<span class="type">char</span>** ptr)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span> ret = *(<span class="type">int</span>*)(*ptr);</span><br><span class="line">    *ptr += <span class="keyword">sizeof</span>(<span class="type">int</span>);</span><br><span class="line">    <span class="keyword">return</span> ret;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-但如此的问题也很显然：要么存在某种方法传递给定参数的类型，要么就只能“希望”函数调用者能够正确地传递所有类型——C语言中如此已经算是一种奢求，更无论类型乱飞的C++了。</p>
+<p>参考“Lattice
+Reduction”的翻译“格基规约”，"reduce"译为“规约”庶几尚可。</p>
+</blockquote>
+<p><em>reduce</em>
+是一种处理序列元素的方法，其主要参数是元素序列<code>ls</code>和一个二元函数<code>f</code>，和一个（可选的）初始值<code>I</code>。<br />
+其伪代码可表示如下： <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">//reduce(ls,f)</span><br><span class="line">I = ls[0];</span><br><span class="line">for(i : ls[1:])</span><br><span class="line">&#123;</span><br><span class="line">    I = f(I,i);</span><br><span class="line">&#125;</span><br><span class="line">return I;</span><br><span class="line"></span><br><span class="line">//reduce(ls,f,I)</span><br><span class="line">for(i : ls)</span><br><span class="line">&#123;</span><br><span class="line">    I = f(I,i);</span><br><span class="line">&#125;</span><br><span class="line">return I;</span><br></pre></td></tr></table></figure></p>
+<p>可见没有初始值<code>I</code>时，其本质就是将<code>ls</code>的第一个元素取作初始值，并在剩余的元素上执行<code>reduce</code>操作。</p>
+<blockquote>
+<p><em>fold</em> 在操作上和 <em>reduce</em> 类似，但一般区分
+<em>fold</em> 和 <em>reduce</em>
+的标志就是初始值（前者默认必须有初值，后者默认可选）。</p>
 </blockquote>
 <blockquote>
-<p>还是可以举<code>printf</code>的例子：如格式说明符中<code>%f</code>、<code>%lf</code>和<code>%sf</code>之区别极为重要，因为<code>va_list</code>不仅不知道该如何解读当前的这段内存（只能看格式说明符），还不知道两个相邻参数的
-分隔点在哪，只能靠<code>+sizeof(Current_type)</code>来“摸瞎”式地前进，一旦一个类型参数传递错误，其会直接导致后续内存读取全部出错（<del>传参界的OFB，失去同步警告</del>）</p>
+<p>语义上，可以认为 <em>reduce</em>
+涉及的二元操作符（函数）应满足交换律和结合律，而 <em>fold</em>
+没有这一要求。<br />
+C++23<del>给ranges
+algorithm添油加醋时</del>考虑到由于C++的<code>concept</code>只能约束语法而非语义，故为避免歧义，新加入的fold家族算法都采用了
+<em>fold</em>
+之名；又考虑到初始值的需求，故其中存在<code>fold_left_first</code>等变种，将在后续详述之。</p>
 </blockquote>
-<h2 id="类与对象概念的举步维艰">类与对象概念的举步维艰</h2>
-<p>其三，不同于“同是内存，众生平等”的C语言，C++中类与对象的概念在其中变得非常棘手。<br />
-因为<code>...</code>毕竟是源于C的概念，其在栈参数传递时只会简单粗暴地将原对象的内存空间数据<code>memcpy</code>过来。但与类的动态内存管理必须使用<code>new</code>/<code>delete</code>而非<code>malloc</code>/<code>free</code>一样，对于类和对象如此操作亦会导致一系列的问题，如：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;print&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;cstdarg&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Bar</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">	<span class="built_in">Bar</span>()</span><br><span class="line">	&#123;</span><br><span class="line">		std::<span class="built_in">println</span>(<span class="string">&quot;ctor @ &#123;&#125;&quot;</span>,<span class="built_in">static_cast</span>&lt;<span class="type">void</span>*&gt;(<span class="keyword">this</span>));</span><br><span class="line">	&#125;</span><br><span class="line">	~<span class="built_in">Bar</span>()</span><br><span class="line">	&#123;</span><br><span class="line">		std::<span class="built_in">println</span>(<span class="string">&quot;dtor @ &#123;&#125;&quot;</span>,<span class="built_in">static_cast</span>&lt;<span class="type">void</span>*&gt;(<span class="keyword">this</span>));</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(<span class="type">int</span> x,...)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	va_list ls&#123;&#125;;</span><br><span class="line">	<span class="built_in">va_start</span>(ls, x);</span><br><span class="line">	<span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>;i &lt; x;++i)</span><br><span class="line">	&#123;</span><br><span class="line">		std::<span class="built_in">println</span>(<span class="string">&quot;addr = &#123;&#125;&quot;</span>, <span class="built_in">static_cast</span>&lt;<span class="type">void</span>*&gt;(std::<span class="built_in">addressof</span>(<span class="built_in">va_arg</span>(ls, Bar))));</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="built_in">va_end</span>(ls);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	Bar x&#123;&#125;;</span><br><span class="line">	<span class="built_in">fun</span>(<span class="number">3</span>, x, x, x);</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 输出示例：<br />
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">ctor @ 0x891b9ff714</span><br><span class="line">addr = 0x891b9ff6f8</span><br><span class="line">addr = 0x891b9ff700</span><br><span class="line">addr = 0x891b9ff708</span><br><span class="line">dtor @ 0x891b9ff714</span><br></pre></td></tr></table></figure> 发现什么问题了咩？<br />
-构造/析构函数只对在<code>0x891b9ff714</code>的<code>Bar</code>生效过：明明<code>va_arg</code>“像是”访问了三个<code>Bar</code>的内存空间，但它们根本没调用过构造/析构函数——以C++之理明之，即“尚不算一个对象”，因为它们是被<code>malloc</code>+<code>memcpy</code>的组合“构建”起来的（而非<code>operator new</code>）。</p>
+<h1 id="语法">语法</h1>
+<p>C++中 <em>fold expression</em> 主要针对的是可变模板参数包(variadic
+template parameter pack)。</p>
 <blockquote>
-<p>严格地，此时访问这三个<code>Bar</code>的成员函数实际上是UB(Undefined
-Behavior)。</p>
+<p>下述内容默认读者具有可变模板参数的基本知识，若不然，可移步<a
+href="/cpp/variadic/">C++——可变模板参数</a>作参考。</p>
 </blockquote>
-<h1
-id="还是...但是template">还是<code>...</code>，但是<code>template</code></h1>
-<p>C++11引入的可变参数模板正是对在可变参数需求下，满足访问安全、类和对象语义明确的“解药”。</p>
+<p>其调用语法有四种：假设存在二元操作符 <em>op</em> ，参数包
+<em>pack</em> （和初始值 <em>init</em>）：</p>
+<ol type="1">
+<li>一元右折叠(unary right fold): <em>(pack op ...)</em><br />
+</li>
+<li>一元左折叠(unary left fold): <em>(... op pack)</em><br />
+</li>
+<li>二元右折叠(binary right fold): <em>(pack op ... op init)</em><br />
+</li>
+<li>二元左折叠(binary left fold): <em>(init op ... op pack)</em></li>
+</ol>
+<p>其中，<em>op</em>
+是C++的32个二元运算符之一；二元折叠中两个操作符必须一致。<br />
+<em>pack</em> 必须是一个未展开的参数包，<em>init</em>
+则不允许是一个未展开的参数包，同时二者都不能含有优先级高于 <em>op</em>
+的操作符（若有，则必须以括号<code>()</code>保护之）。</p>
+<p>假设 <em>pack</em> 中的参数分别为
+<em>(E1,E2,...,En)</em>，则上述展开的结果如下：</p>
+<ul>
+<li><em>(pack op ...) = (((E1 op E2) op E3) ... op En)</em>；<br />
+</li>
+<li><em>(... op pack) = (())</em></li>
+</ul>
 <blockquote>
-<p>与“可变参数函数”不同的是，可变参数模板更像一个静态/编译期的策略（因为<code>template</code>本身就是一个编译期概念），而可变参数函数更像动态/运行时的策略（函数寻址、传参等都是运行时的概念和行为，参考虚函数的实现）。</p>
+<p>对于一元左/右折叠，若参数包为空，则当且仅当操作符为[逻辑与<code>&amp;&amp;</code>，逻辑或<code>||</code>，逗号<code>,</code>之一]时程序才能通过编译，此时其值分别为<code>false</code>、<code>true</code>和<code>void</code>。否则将报编译错误。</p>
 </blockquote>
-<h2 id="声明">声明</h2>
-<p>可变参数模板通过<code>...</code>声明，其必须是模板参数列表的最后一个参数，位置在<code>class</code>/<code>typename</code>后，标识符之前；函数、变量、类以及<code>concepts</code>都可以使用之。<br />
-使用时<code>Types</code>被称为模板参数包(Template paramter
-pack)，其大小可以是<strong>零</strong>或任意正数。类型为模板参数包的函数形参，称为函数参数包(Function
-parameter pack)：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(<span class="type">const</span> Types&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">fun</span>(<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>); <span class="comment">//Types = int,int,int; args = 1,2,3</span></span><br><span class="line"><span class="built_in">fun</span>(<span class="string">&quot;ni hao&quot;</span>); <span class="comment">//Types = const char*; args= &quot;ni hao&quot;</span></span><br><span class="line"><span class="built_in">fun</span>(); <span class="comment">//Types and args are empty</span></span><br></pre></td></tr></table></figure>
-<h2 id="大小">大小</h2>
-<p>对于一个参数包，C++11引入了<code>sizeof...</code>运算符。其特性和<code>sizeof</code>类似（作为编译期运算符），应用于一个模板参数包或者函数参数包以获取其长度，如：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(<span class="type">const</span> Types&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125; &#123;&#125;&quot;</span>,<span class="keyword">sizeof</span>...(Types),<span class="keyword">sizeof</span>...(args));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">fun</span>(<span class="number">1</span>); <span class="comment">//Output: 1 1</span></span><br><span class="line"><span class="built_in">fun</span>(<span class="string">&quot;&quot;</span>,std::string&#123;&#125;,<span class="number">6.24</span>); <span class="comment">//Output: 3 3</span></span><br><span class="line"><span class="built_in">fun</span>(); <span class="comment">//Output: 0 0</span></span><br></pre></td></tr></table></figure>
-<h2 id="扩展">扩展</h2>
-<p>上述例中的<code>Types</code>是<strong>模板参数包</strong>，需要将之扩展(expand)才能正常使用，类似于Python中对一个可迭代对象使用<del>解引用运算符</del><code>*</code>来将之展开。</p>
+<p>简单的应用实例：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="type">size_t</span>... Ns&gt;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">size_t</span> mul_result = (Ns * ...);</span><br><span class="line"></span><br><span class="line"><span class="built_in">static_assert</span>(mul_result&lt;<span class="number">3</span>,<span class="number">3</span>,<span class="number">5</span>&gt; == <span class="number">45</span>); <span class="comment">//passes</span></span><br><span class="line"><span class="built_in">static_assert</span>(mul_result&lt;<span class="number">256</span>,<span class="number">512</span>,<span class="number">0</span>&gt; == <span class="number">0</span>); <span class="comment">//passes</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="type">bool</span>... vals&gt;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">bool</span> disjunction_v = (vals &amp;&amp; ...);</span><br><span class="line"></span><br><span class="line"><span class="built_in">static_assert</span>(disjunction_v&lt;<span class="literal">true</span>,<span class="literal">true</span>,<span class="literal">false</span>&gt; == <span class="literal">false</span>); <span class="comment">//passes</span></span><br><span class="line"><span class="built_in">static_assert</span>(disjunction_v&lt;&gt; == <span class="literal">false</span>); <span class="comment">//passes</span></span><br><span class="line"><span class="comment">//static_assert(mul_result&lt;&gt; == 0); //Not compile: pack is empty for binary operator *</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="type">size_t</span>... Ns&gt;</span><br><span class="line"><span class="comment">//constexpr size_t add_init = (Ns + ... + 1*2); //Not Compile: precedence of * is higher than operator + in fold expression</span></span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">size_t</span> add_init = (Ns + ... + (<span class="number">1</span>*<span class="number">2</span>)); <span class="comment">//OK</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h1 id="应用场景">应用场景</h1>
+<p><em>fold expression</em>
+最大的应用场景在于让很多必须递归展开参数包的函数、结构体、变量等能够一次完成展开定义，保证可读性的同时最大限度减弱了模板膨胀带来的代码体积增大、效率下降等负面影响。</p>
+<p>如现在定义一个类似python的<code>print</code>函数<del>先当C++23的<code>std::print</code>不存在，反正人家也不支持括号一套直接输出.cpp</del>：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(Types&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    (std::cout &lt;&lt; ... &lt;&lt; args);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>); <span class="comment">//Output: 123</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;Hello C++&quot;</span>,<span class="number">23</span>,<span class="string">&#x27;!&#x27;</span>); <span class="comment">//Output: Hello C++23!</span></span><br></pre></td></tr></table></figure>
+<p>在没有 <em>fold expression</em>
+语言层面的支持时，其只能按照如下方式实现：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Type,<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(Type&amp;&amp; type,Types&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::cout &lt;&lt; type;</span><br><span class="line">    <span class="built_in">print</span>(std::forward&lt;Types&gt;(args)...);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Type&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(Type&amp;&amp; type)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::cout &lt;&lt; type;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>代码编写更加繁琐的同时，由于上述编译时每次调用都会产生<code>sizeof...(Types) + 1</code>个新的实例<del>忽略少得可怜的参数包组合恰好全等的概率</del>。<br />
+递归代码运行效率偏低的同时，产生可执行文件的体积会大幅增加。<br />
+相对地，对于 <em>fold expression</em>
+编写的参数包每次调用只会产生一个新的实例。</p>
+<p>进阶的应用除了<del>玩转各种<code>operator</code></del>，还有对参数包中的每个元素“处理”的玩法。如若希望上述的<code>print</code>函数能够像python一样自定义sep和end（当然都是编译期指定），可以如此：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="type">char</span> sep,<span class="type">char</span> end,<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(Types&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ((std::cout &lt;&lt; args &lt;&lt; sep),...);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(Types&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">print</span>&lt;<span class="string">&#x27; &#x27;</span>,<span class="string">&#x27;\n&#x27;</span>&gt;(std::forward&lt;Types&gt;(args)...);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <blockquote>
-<p>作为一门强编译型语言，C++26前，对参数包只有<strong>获取大小</strong>和<strong>扩展</strong>两个合法操作，后者相当于临时“放弃”了其作为参数包的特性。</p>
+<p>由于折叠表达式的循环操作只能施加于元素上，因此此处只能退而求其次——利用<del>万能的</del><code>operator,</code>来完成输出。</p>
 </blockquote>
-<p>C++中，对一个参数包触发扩展的方式为在其标识符后跟上<code>...</code>；扩展同样也是编译期操作。如：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(Types... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(args...); <span class="comment">//Expand args</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">fun</span>(<span class="string">&quot;123&quot;</span>); <span class="comment">//Invokes printf(&quot;123&quot;)</span></span><br><span class="line"><span class="built_in">fun</span>(<span class="string">&quot;%.2f&quot;</span>,<span class="number">3</span>); <span class="comment">//Invokes printf(&quot;%.2f&quot;,3)</span></span><br><span class="line"><span class="comment">//fun(8); //Not compile: Invokes printf(8), which is an invalid call(cannot convert int to const char*)</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>最后一行无法编译的原因：不同于Python等解释型语言，C++在编译期必须确定将调用的表达式（此时为<code>printf(8)</code>），随后校验发现这条语句是非法的（很显然）。<br />
-拓展模板参数包的实例：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="keyword">auto</span> <span class="title">foo</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> std::<span class="built_in">make_tuple</span>&lt;Types...&gt;();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">foo</span>&lt;<span class="type">int</span>&gt;(); <span class="comment">//Gets std::tuple&lt;int&gt;</span></span><br><span class="line"><span class="built_in">foo</span>&lt;std::string,<span class="type">char</span>*&gt;(); <span class="comment">//Gets std::tuple&lt;std::string,char*&gt;</span></span><br><span class="line">foo&lt;&gt;(); <span class="comment">//Gets std::tuple&lt;&gt;</span></span><br></pre></td></tr></table></figure>
-<p>若我们希望同时拓展函数类型和函数参数（常见于函数“转发”中），则应将两个参数包“打包”后再写<code>...</code>，此时会将两者解包后再应用对应的函数。如最著名的<code>std::forward</code>：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(Types&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">fun</span>(std::forward&lt;Types&gt;(args)...); <span class="comment">//Expanded both Types and args</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="type">double</span> x&#123;&#125;;</span><br><span class="line"><span class="built_in">func</span>(<span class="number">1</span>); <span class="comment">//Invokes fun(std::forward&lt;int&amp;&amp;&gt;(1));</span></span><br><span class="line"><span class="built_in">func</span>(<span class="string">&quot;&quot;</span>,x); <span class="comment">//Invokes fun(std::forward&lt;const char*&amp;&gt;(&quot;&quot;),std::forward&lt;double&amp;&gt;(x));</span></span><br></pre></td></tr></table></figure></p>
+<p>假设需对模板/函数参数包<code>args</code>中的每个元素，通过函数<code>f</code>处理<del>transform</del>后再用于折叠表达式，则应将<code>args</code>用<code>f</code>包裹（此时不要加<code>...</code>展开）后再根据需求应用折叠表达式的语法（相当于把<strong>可变模板的语法搬过来</strong>）。如：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(Types&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    (std::cout &lt;&lt; ... &lt;&lt; std::<span class="built_in">addressof</span>&lt;Types&gt;(args));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <blockquote>
-<p>关于<code>std::forward</code>、函数转发时的类型保持问题、<code>Types&amp;&amp;...</code>的来由等，可参见<a
-href="/cpp/rrefs/">C++——右值引用和移动语义</a>。<code>Types&amp;&amp;</code>亦有“万能参数包”之名。</p>
+<p>tips：保留左右值属性的目的是为了触发<code>std::addressof</code>对右值的“截胡”，避免输出无意义的变量临时地址（因为右值引用在函数体内是左值；参考<a
+href="/cpp/rrefs/">C++——右值引用与移动语义</a>。</p>
 </blockquote>
+<h1 id="注意事项">注意事项</h1>
+<h2 id="固若金汤的concept">固若金汤的<code>concept</code></h2>
+<p>由于表达式的折叠展开不太直观<del>且又在模板的刀尖上乱舞</del>，
+<em>fold expression</em>
+出错时报错信息的可读性预期会很差。因此应用时，建议使用C++20的具名<code>concept</code>来前置约束之，结合折叠表达式在模板变量中的应用，不需大费周章即可防患于未然。如：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> correctly_outputable = <span class="built_in">requires</span>(Ty&amp;&amp; arg)</span><br><span class="line">&#123;</span><br><span class="line">    &#123;std::cout &lt;&lt; arg&#125; -&gt; std::same_as&lt;std::ostream&amp;&gt;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(Types&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    (std::cout &lt;&lt; ... &lt;&lt; args);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>假设现在有一个<del>手搓失败的</del>类，<del>不小心</del>忘记重载了<code>operator&lt;&lt;</code>，然后被打包进了<code>func</code>输出，约束和不约束的报错信息可读性大相径庭：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">ErrorOutput</span></span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ErrorOutput e&#123;&#125;;</span><br><span class="line">    <span class="built_in">func</span>(<span class="string">&quot;Object representation:\n&quot;</span>,e,<span class="number">7</span>,<span class="number">10.29</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>由于重载的“贪心”机制，若不加以约束，编译器会尝试将所有可能的左操作数为<code>std::ostream&amp;</code>的<code>operator&lt;&lt;</code>重载都尝试一遍：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">main.cpp: In instantiation of &#x27;void func(Types&amp;&amp; ...) [with Types = &#123;const char (&amp;)[24], ErrorOutput&amp;, int, double&#125;]&#x27;:</span><br><span class="line">main.cpp:24:9:   required from here</span><br><span class="line">   24 |     func(&quot;Object representation:\n&quot;,e,7,10.29);</span><br><span class="line">      |     ~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span><br><span class="line">main.cpp:13:16: error: no match for &#x27;operator&lt;&lt;&#x27; (operand types are &#x27;std::basic_ostream&lt;char&gt;&#x27; and &#x27;ErrorOutput&#x27;)</span><br><span class="line">   13 |     (std::cout &lt;&lt; ... &lt;&lt; args);</span><br><span class="line">      |     ~~~~~~~~~~~^~~~~~~~~~~~~~~</span><br><span class="line">(more than 400 lines omitted)</span><br><span class="line">/usr/local/include/c++/14.2.0/ostream:774:39: note: the expression &#x27;is_class_v&lt;_Tp&gt; [with _Tp = std::basic_ostream&lt;char, std::char_traits&lt;char&gt; &gt;&amp;]&#x27; evaluated to &#x27;false&#x27;</span><br><span class="line">  774 |     concept __derived_from_ios_base = is_class_v&lt;_Tp&gt;</span><br><span class="line">      |                                       ^~~~~~~~~~~~~~~</span><br></pre></td></tr></table></figure>
+<p>若以如下方法约束<code>func</code>，报错信息的可读性就会大幅提升：
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(Types&amp;&amp;... args)</span> <span class="title">requires</span> <span class="params">(correctly_outputable&lt;Types&gt; &amp;&amp; ...)</span> <span class="comment">/**/</span></span></span><br></pre></td></tr></table></figure></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">main.cpp: In function &#x27;int main()&#x27;:</span><br><span class="line">main.cpp:24:9: error: no matching function for call to &#x27;func(const char [24], ErrorOutput&amp;, int, double)&#x27;</span><br><span class="line">   24 |     func(&quot;Object representation:\n&quot;,e,7,10.29);</span><br><span class="line">      |     ~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span><br><span class="line">main.cpp:11:6: note: candidate: &#x27;template&lt;class ... Types&gt; void func(Types&amp;&amp; ...) requires (correctly_outputable&lt;Types&gt; &amp;&amp; ...)&#x27;</span><br><span class="line">   11 | void func(Types&amp;&amp;... args) requires( correctly_outputable&lt;Types&gt; &amp;&amp; ...)</span><br><span class="line">      |      ^~~~</span><br><span class="line">main.cpp:11:6: note:   template argument deduction/substitution failed:</span><br><span class="line">main.cpp:11:6: note: constraints not satisfied</span><br><span class="line">main.cpp: In substitution of &#x27;template&lt;class ... Types&gt; void func(Types&amp;&amp; ...) requires (correctly_outputable&lt;Types&gt; &amp;&amp; ...) [with Types = &#123;const char (&amp;)[24], ErrorOutput&amp;, int, double&#125;]&#x27;:</span><br><span class="line">main.cpp:24:9:   required from here</span><br><span class="line">   24 |     func(&quot;Object representation:\n&quot;,e,7,10.29);</span><br><span class="line">      |     ~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span><br><span class="line">main.cpp:11:6:   required by the constraints of &#x27;template&lt;class ... Types&gt; void func(Types&amp;&amp; ...) requires (correctly_outputable&lt;Types&gt; &amp;&amp; ...)&#x27;</span><br><span class="line">main.cpp:11:66: note: the expression &#x27;(correctly_outputable&lt;Types&gt; &amp;&amp; ...) [with Types = &#123;const char (&amp;)[24], ErrorOutput&amp;, int, double&#125;]&#x27; evaluated to &#x27;false&#x27;</span><br><span class="line">   11 | void func(Types&amp;&amp;... args) requires( correctly_outputable&lt;Types&gt; &amp;&amp; ...)</span><br><span class="line">      |           </span><br></pre></td></tr></table></figure>
+<p><del>虽然这已经扯到<code>concept</code>的优点上了，</del>归根结底还是<code>concept</code>在模板编程中应用的重要性，尤其是在
+<em>fold expression</em> 一类的复杂场景中；详见<a
+href="/cpp/concepts/">C++——Concepts</a>。</p>
+<h2 id="非模板的替代方案">非模板的替代方案</h2>
+<p>同时，尽管 <em>fold expression</em>
+是一个效率非常高的解决方案，但并不推荐滥用之。<br />
+由于其作用在参数包上，因此本质上依然是在进行模板编程——而模板编程受制于实例化的编译、运行开销及其必须在编译期执行的属性，部分问题仍然提倡用非模板的方式解决。如在参数类型可预测且相同的前提下，可以使用<code>std::initializer_list&lt;Ty&gt;</code>来进行参数打包，对编译期“打表”的要求可以通过<code>constexpr</code>或<code>consteval</code>约束之。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">constexpr</span> <span class="type">int</span> <span class="title">sum</span><span class="params">(std::initializer_list&lt;<span class="type">int</span>&gt; ls)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> std::<span class="built_in">accumulate</span>(ls.<span class="built_in">begin</span>(),ls.<span class="built_in">end</span>(),<span class="number">0</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">constexpr</span> <span class="type">int</span> <span class="title">prod</span><span class="params">(std::initializer_list&lt;<span class="type">int</span>&gt; ls)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> std::<span class="built_in">accumulate</span>(ls.<span class="built_in">begin</span>(),ls.<span class="built_in">end</span>(),<span class="number">1</span>,[](<span class="type">int</span> x,<span class="type">int</span> y)&#123;<span class="keyword">return</span> x*y;&#125;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="type">size_t</span> N,std::<span class="type">enable_if_t</span>&lt;N &gt;= <span class="number">2</span>,<span class="type">int</span>&gt; = <span class="number">0</span>&gt;</span><br><span class="line"><span class="keyword">constexpr</span> std::array&lt;<span class="type">int</span>,N&gt; <span class="built_in">fib_N</span>()</span><br><span class="line">&#123;</span><br><span class="line">    std::array&lt;<span class="type">int</span>,N&gt; res&#123;<span class="number">1</span>,<span class="number">1</span>&#125;;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;N<span class="number">-2</span>;++i)</span><br><span class="line">    &#123;</span><br><span class="line">        res[i<span class="number">+2</span>] = res[i] + res[i<span class="number">+1</span>];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> res;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="应用难度与注释">应用难度与注释</h2>
+<p>从应用经验看 <em>fold expression</em>
+的应用难度比较高，很多情况下其展开式并不那么直观，若编写/注释不当易对可读性产生较大影响（主要原因之一是<code>...</code>后置）。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Tys&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(Tys&amp;&amp;... args)</span> <span class="title">requires</span> <span class="params">(((<span class="keyword">sizeof</span>(Tys) &lt; <span class="number">7</span> &amp;&amp; std::is_trivially_copy_constructible_v&lt;Tys&gt;) &amp;&amp; ...) &amp;&amp; <span class="keyword">sizeof</span>...(Tys) &lt; <span class="number">7</span>)</span> </span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">/*...*/</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <blockquote>
-<p>应通过多编写代码实践来理解“拓展”法的精髓，便于灵活运用的同时，也有助于学习C++17的
-<em>fold expression</em>。</p>
-</blockquote>
-<p>通过<code>()</code>把握“拓展”的时机非常重要，需根据编写代码的意图来判断：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function">std::string <span class="title">debug_rep</span><span class="params">(Ty&amp;&amp; arg)</span> </span>&#123;<span class="comment">/*...*/</span>&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(Types&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">//print_stuffs(debug_rep(args...)); //Error: didn&#x27;t expanded the args properly</span></span><br><span class="line">    <span class="built_in">print_stuffs</span>(<span class="built_in">debug_rep</span>(args)...); <span class="comment">//Correct</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>假设调用<code>print_stuffs(A,B,C)</code>，那么第一种（错误的）写法相当于扩展成了：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">print_stuffs</span>(<span class="built_in">debug_rep</span>(A,B,C));</span><br></pre></td></tr></table></figure>
-显然不是我们意图中的形式。第二种写法方能正确地扩展成：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">print_stuffs</span>(<span class="built_in">debug_rep</span>(A),<span class="built_in">debug_rep</span>(B),<span class="built_in">debug_rep</span>(C));</span><br></pre></td></tr></table></figure></p>
-<p>同时C++规定对于每个实例化的参数包，若其被使用（传递）则必须在其函数体/类体内被扩展(expanded)；但<code>sizeof...</code>恰好相反（不允许扩展解包，必须应用于整个参数包上）：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">(Types... args)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(Types... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">//foo(args); //Not compile: Parameter pack(disregarding template or function) must be expanded for passing</span></span><br><span class="line">    <span class="built_in">foo</span>(args...); <span class="comment">//OK</span></span><br><span class="line">    <span class="keyword">sizeof</span>...(args); <span class="comment">//OK: Use operator sizeof... on the intact parameter pack</span></span><br><span class="line">    <span class="comment">//sizeof...(args...); //Not compile: invalid syntax(operator sizeof... can only accept parameter pack as operand, not individual arguments)</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="递归调用">递归调用</h2>
-<p>当我们对一个包只能扩展之时，如何才能使用它呢？C++11给出的解法是使用参数个数差分+递归调用。<br />
-具体地，我们定义一个<code>print</code>函数：<del>（万能引用炫技警告）</del><br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty,<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(Ty&amp;&amp; arg,Types&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::cout &lt;&lt; std::forward&lt;Ty&gt;(arg) &lt;&lt; std::endl;</span><br><span class="line">    <span class="built_in">print</span>(std::forward&lt;Types&gt;(args)...);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(Ty&amp;&amp; arg)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::cout &lt;&lt; std::forward&lt;Ty&gt;(arg) &lt;&lt; std::endl;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 考虑如下的调用：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">print</span>(<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>);</span><br></pre></td></tr></table></figure>
-其存在以下的调用链：<code>print&lt;int,int,int&gt;(1,2,3)</code> -&gt;
-<code>print&lt;int,int&gt;(2,3)</code> -&gt;
-<code>print&lt;int,int&gt;(3)</code>。<br />
-其中，最后一次由于可变参数包为空，在进行模板重载决议时，编译器会选择非可变参数版本的<code>print</code>，进而终止递归。</p>
-<blockquote>
-<p>如此调用时，非可变参数版本的<code>print</code>必须被声明在作用域中，否则其会递归至试图调用<code>print()</code>而不能通过编译（上述调用链也是在编译时即确定）。</p>
-</blockquote>
-<h2
-id="可变模板递归的应用以stdtuple为例">可变模板递归的应用：以<code>std::tuple</code>为例</h2>
-<blockquote>
-<p>上善若水，水善利万物而不争。</p>
-</blockquote>
-<p>很多C++11引入的库特性都离不开 <em>variadic
-template</em>，对其深入了解亦有助于理解一些看似较为奇怪的语法规定。<br />
-最为经典的例子莫过于<code>std::tuple</code>。其就依靠了递归定义来实现<del>不然你怎么往里面塞远多于<code>std::pair</code>的两个类型</del>，下述为MSVC中<code>std::tuple</code>的实现节选：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;&gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">tuple</span>&lt;&gt; &#123; <span class="comment">// empty tuple</span></span><br><span class="line">    <span class="comment">/*Blogger&#x27;s note: ~90 lines omitted and there&#x27;re no data members in this class template*/</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">class</span> <span class="title class_">_This</span>, <span class="keyword">class</span>... _Rest&gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">tuple</span>&lt;_This, _Rest...&gt; : <span class="keyword">private</span> tuple&lt;_Rest...&gt; &#123; <span class="comment">// recursive tuple definition</span></span><br><span class="line">    <span class="comment">/*Blogger&#x27;s note: ~400 lines omitted*/</span></span><br><span class="line">    _Tuple_val&lt;_This&gt; _Myfirst; <span class="comment">// the stored element</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>其中<code>_Tuple_val</code>是一个用于储存单个元素的<code>struct</code>模板。显然其利用了空<code>tuple</code>终止递归的特性。<br />
-<code>tuple</code>的应用极为广泛，如需要返回多个返回值时，其是除了单独定义一个<code>struct</code>外的最佳选择；标准库中的大量函数返回值也应用到了<code>tuple</code>（尤其是C++20后的
-<em>ranges library</em>）。同时为了保证 <em>cvref</em>
-属性正确传递、接受多种可行的构造方式等，<del>结合 <em>ranges library
-</em> 的
-<code>zip</code>风波，</del>C++23中<code>std::tuple</code>的构造函数数量已经达到了恐怖的26个。</p>
-<p>至于应用上的缺点，除了递归模板定义导致的代码膨胀外，访问<code>std::tuple</code>中的元素也并非易事<del>毕竟这不是Python，不能直接<code>operator[]</code></del>。<br />
-C++11中一般采用<code>std::get</code>或<code>std::tie</code>来获取元素，前者需要指定一个编译期常量作为其第一模板参数，后者结合<code>std::ignore</code>可以实现对不同参数的选择性“打包”：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">std::tuple&lt;<span class="type">int</span>,<span class="type">int</span>,<span class="type">int</span>&gt; tp&#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> a&#123;&#125;,b&#123;&#125;;</span><br><span class="line">a = std::<span class="built_in">get</span>&lt;<span class="number">2</span>&gt;(tp); <span class="comment">//a = 3</span></span><br><span class="line">b = std::<span class="built_in">get</span>&lt;<span class="number">0</span>&gt;(tp); <span class="comment">//b = 1</span></span><br><span class="line"><span class="comment">//a = std::get&lt;b&gt;(tp); //Not Compile: the index must be a compile-time constant</span></span><br><span class="line"></span><br><span class="line">std::<span class="built_in">tie</span>(std::ignore,a,b) = tp; <span class="comment">//a,b = 2,3</span></span><br><span class="line">tp = std::<span class="built_in">tie</span>(a,b,a); <span class="comment">//OK: tp&#x27;s value has been modified to (2,3,2)</span></span><br></pre></td></tr></table></figure>
-<blockquote>
-<p><code>std::tuple</code>的最大魅力之一在于其可以储存引用类型，这也是上述<code>std::tie</code>能够实现“双向赋值”的原理之一，建议通过“手搓”一个<code>std::tie</code>来理解其底层实现。注意<code>std::tie</code>返回一个<code>std::tuple</code>，且其只能接受左值参数。</p>
-</blockquote>
-<p>C++17引入 <em>structured binding</em>
-后，对<code>tuple</code>内参数的获取无疑便捷了不少<del>有Python那味了</del>：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> [x,y,z] = tp; <span class="comment">//x,y,z = 1,2,3</span></span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>注意此处<code>x</code>、<code>y</code>、<code>z</code>的类型实际上是<code>int&amp;&amp;</code>——其由
-<em>structured binding</em> 的特性所致。<br />
-详见<a
-href="/cpp/structured_binding/">C++——结构绑定</a><del>当然目前这个链接还打不开，因为还在咕</del></p>
-</blockquote>
-<h1 id="前行fold-expression-和-pack-indexing">前行：fold expression 和
-pack indexing</h1>
-<p>而上述递归调用的缺点也非常明显，即为模板膨胀(template
-inflation)导致的调用效率偏低和代码膨胀，同时模板重载的可读性也欠佳。</p>
-<blockquote>
-<p>模板膨胀常发生在递归调用模板处。<br />
-以上述的<code>print</code>为例，由于编译器需要实例化每一个涉及到的模板函数，因此必须生成<code>print&lt;int,int,int&gt;</code>、<code>print&lt;int,int&gt;</code>和<code>print&lt;int&gt;</code>的代码。<br />
-对于较简单的函数调用实例尚且如此，一些递归定义的类模板等膨胀将更为严重（特别是涉及嵌套类、模板类内的模板函数等时）。</p>
-</blockquote>
-<p>因此C++17中提出了 <em>fold expression</em>
-，让许多使用可变模板参数的递归实现都可改为“迭代”实现，在进一步提高可读性和维护性的同时，极大提高了可变参数模板的使用效率。<br />
-如，上述<code>print</code>函数使用 <em>fold expression</em>
-可以写作：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(Types&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    (std::cout &lt;&lt; ... &lt;&lt; std::forward&lt;Types&gt;(args));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-调用<code>print(1,2,3)</code>会展开作：<code>std::cout &lt;&lt; std::forward&lt;int&amp;&amp;&gt;(1) &lt;&lt; std::forward&lt;int&amp;&amp;&gt;(2) &lt;&lt; std::forward&lt;int&amp;&amp;&gt;(3)</code>。</p>
-<blockquote>
-<p>有关 <em>fold expression</em> 的更多内容可移步：<a
-href="/cpp/foldexpr/">C++——折叠表达式</a><del>这个链接同样还在咕，遥遥无期的那种</del></p>
-</blockquote>
-<p>当然 <em>fold expression</em>
-也并非万金油，也存在大量的不能用其简化调用的情况。<br />
-C++26在对参数包的访问上更进了一步，提出了 <em>pack indexing</em>
-的概念，允许了通过编译期的<code>size_t</code>对参数包进行寻址的方法，效果概览如下：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Tys&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(Tys&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">if</span> <span class="title">constexpr</span><span class="params">(<span class="keyword">sizeof</span>...(args))</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        std::<span class="built_in">println</span>(<span class="string">&quot;The last argument is: &#123;&#125;&quot;</span>,std::forward&lt;Tys...[<span class="keyword">sizeof</span>...(Tys)<span class="number">-1</span>]&gt;(args...[<span class="keyword">sizeof</span>...(Tys) - <span class="number">1</span>]));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        std::<span class="built_in">println</span>(<span class="string">&quot;The argument pack is empty!&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>); <span class="comment">//Output: The last argument is: 3</span></span><br><span class="line"><span class="built_in">print</span>(); <span class="comment">//Output: The argument pack is empty!</span></span><br></pre></td></tr></table></figure></p>
-<blockquote>
-<p>事实上C++26前结合模板的<code>size_t</code>参数可以实现类似下标访问的效果（<del>不然你猜C++11就有的<code>std::get</code>是干啥的</del>），如：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="type">size_t</span> N,<span class="keyword">class</span> Type,<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="keyword">auto</span>&amp;&amp; <span class="title">visit</span><span class="params">(Type&amp;&amp; arg,Types&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">if</span> <span class="title">constexpr</span><span class="params">(N == <span class="number">0</span>)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> std::forward&lt;Type&gt;(arg);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> <span class="built_in">constexpr</span>(N &lt; <span class="keyword">sizeof</span>...(args))</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">visit</span>&lt;N<span class="number">-1</span>&gt;(std::forward&lt;Types&gt;(args));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">static_assert</span>(<span class="literal">false</span>,<span class="string">&quot;Pack index out of range&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>当然从表达编译期约束之意上，上述形式已接近最优解。<br />
+缓解此问题的方法还是回归到前两点：使用具名<code>concept</code>分解约束（避免使用SFINAE等可读性较差的方法），并尽可能采用<code>ranges</code>等非模板的函数方案。</p>
 </blockquote>
 <h1 id="结语">结语</h1>
-<p>有言称C++可以分成不带模板的C++和带模板的C++两种语言；而可变参数模板无疑是后者中极重要的支柱之一。<br />
-熟能生巧、深入理解之能极大地提高自身的代码开发效率，并能面对繁杂的标准库和三方库时游刃有余。</p>
+<p><em>fold expression</em>
+在可变模板参数包的应用中，堪称一柄难以驾驭的利剑；初看其语法和约束或许有些绕人（且需要大量的预备知识以理解之），但只需在实践中多加运用体会，加以在注释、运用范围、<code>concept</code>辅助等要点处多加注意，定能在自身对现代C++的理解更为通透的同时，充分感受到游走于模板之间的惬意。</p>
 
       
 
@@ -367,7 +329,7 @@ C++26在对参数包的访问上更进了一步，提出了 <em>pack indexing</e
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/cpp/variadic/">展开全文 >></a>
+          <a class="article-more-a" href="/cpp/foldexpr/">展开全文 >></a>
         </p>
       
 
@@ -399,20 +361,20 @@ C++26在对参数包的访问上更进了一步，提出了 <em>pack indexing</e
 
 
   
-    <article id="post-cpp/concepts" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-crypto/ntru" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/cpp/concepts/">C++20——concepts</a>
+      <a class="article-title" href="/crypto/ntru/">ntru</a>
     </h1>
   
 
         
-        <a href="/cpp/concepts/" class="archive-article-date">
-  	<time datetime="2025-04-06T02:37:44.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-04-06</time>
+        <a href="/crypto/ntru/" class="archive-article-date">
+  	<time datetime="2025-04-09T06:38:03.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-04-09</time>
 </a>
         
       </header>
@@ -420,225 +382,31 @@ C++26在对参数包的访问上更进了一步，提出了 <em>pack indexing</e
     <div class="article-entry" itemprop="articleBody">
       
         <blockquote>
-<p><del>concepts是C++20最“简单”的大特性之一了</del></p>
+<p>NTRU——<del>格密码入坑到入土一条龙</del></p>
 </blockquote>
-<p>C++20的更新量级极大：其开创了大量新的编程模式，引入了大量语法点、标准库等等，对C++体系的影响可以与C++11相提并论。<br />
-其中更有“四大金刚”——<code>concepts</code>、<code>modules</code>、<code>ranges</code>和<code>coroutines</code>。本篇将深入浅出地探讨<code>concepts</code>这一大特性。</p>
-<h1 id="pastsfinae">Past——SFINAE</h1>
-<p>"Substitution Failure Is Not An Error"<br />
-其在元编程(metaprogramming)和模板重载决议时发挥重要作用：<br />
-当将推导的模板参数，或将指定的模板参数代入模板列表“失败”时，被代入的模板将从重载备选集中被移除。</p>
-<h2 id="sfinae详解">SFINAE详解</h2>
-<p>当实例化一个模板时，显然需要对该模板内所有带模板参数的元素，以给定的模板参数进行代入。<br />
-SFINAE阶段，代入的目标对象只包括<strong>函数类型</strong>和<strong>其它模板参数</strong>中的所有<strong>类型(types)及表达式(expressions)</strong>；只有在此阶段遇到的错误会被视为
-<em>SFINAE Errors</em>
-，触发重载决议前的筛选机制（将之移除而非卡出一个编译错误）。</p>
+<p>NTRU(Nth-degree TRunctuated polynomial
+Unit)，即“N次截断多项式单元”，是格密码中极为知名、应用较广的一种加密原理。</p>
+<h1 id="截断多项式">截断多项式？</h1>
+<h1 id="密钥生成">密钥生成</h1>
 <blockquote>
-<p>C++会先将显式给定的模板参数进行代入，随后再执行模板参数推导(template
-parameter deduction)，再代入推导的参数及默认参数。</p>
+<p>定义函数 <span class="math inline">\(T(d_{1},d_{2}) (d_{1} + d_{2}
+&lt; q)\)</span> 表示系数 <span class="math inline">\(\{1,-1}\)</span>
+<strong>计数</strong>分别为 <span
+class="math inline">\(\{d_{1},d_{2}\}\)</span> 的多项式 <span
+class="math inline">\(f \in R_{q}\)</span> 的集合。<br />
+如，<span class="math inline">\(f = x^{6} + x^{3} - x^{2} + x - 1 \in
+R_{7}\)</span> 满足 <span class="math inline">\(f \in
+T(3,2)\)</span>。</p>
 </blockquote>
-<p>代入目标对象“失败”示例：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//Example of substituting template parameters in types and expressions used to determine function type</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function">Ty&amp; <span class="title">fun</span><span class="params">(Ty* arg = <span class="literal">nullptr</span>)</span> <span class="title">noexcept</span><span class="params">(<span class="keyword">sizeof</span>(Ty) &lt; <span class="number">4</span>)</span></span>&#123;&#125; <span class="comment">//#1</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//Ty is used in determining return type and function parameter list(substituting type), and noexcept specifier(substituting expression)</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">()</span></span>&#123;&#125; <span class="comment">//#2</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">()</span></span>&#123;Ty arg;&#125; <span class="comment">//#3</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">()</span></span>&#123;std::<span class="built_in">println</span>(<span class="string">&quot;ni hao&quot;</span>);&#125; <span class="comment">//#4</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">fun</span>&lt;<span class="type">void</span>&gt;(); <span class="comment">//Triggers a SFINAE Error for function template #1: attempting to create reference to void / obtaining sizeof(void)</span></span><br><span class="line">    <span class="comment">//Thus #1 is discarded from overload resolution set, and #2 is chosen and instanated</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">foo</span>&lt;<span class="type">void</span>&gt;(); <span class="comment">//This DOES NOT trigger a SFINAE Error, since the &quot;substitution failure&quot; occurs in the function body</span></span><br><span class="line">    <span class="comment">//Thus this line will not compile for ambiguity</span></span><br><span class="line">    <span class="comment">//If removing #4, then the error would be trying to create an object of type void</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>可以发现，运用SFINAE的重点在于将潜在的错误点置于模板参数列表、函数类型涉及的表达式中，而非函数体内（函数体内的代码解析优先级非常低）。<br />
-常见的 <em>SFINAE Errors</em> 有：</p>
-<ul>
-<li>数组类：尝试创建一个非正整数长度的数组、函数数组、引用数组、<code>void</code>类型的数组；<br />
-</li>
-<li>域解析符<code>::</code>类：当尝试使用域解析符时，
-<ul>
-<li>左操作数不是一个类名/命名空间名；<br />
-</li>
-<li>右操作数试图访问的成员不存在；<br />
-</li>
-<li>右操作数试图访问的成员属性不符（预期成员属性是一个类型/非类型/模板，但访问到的成员属性不匹配）；<br />
-</li>
-</ul></li>
-<li>引用类：尝试创建指向引用的指针、<code>void</code>的引用；<br />
-</li>
-<li>其它：对非类型的模板参数，赋予了一个不合法的类型（包括不能实现转换）</li>
-</ul>
-<blockquote>
-<p>注意代入模板参数后，出现的“引用的引用”会触发<strong>引用折叠(reference
-collasping)</strong>而非错误，详见<a
-href="/cpp/rrefs/">C++——右值引用和移动语义</a></p>
-</blockquote>
-<h2 id="type_traits有关"><code>&lt;type_traits&gt;</code>有关</h2>
-<p>C++11引入的<code>&lt;type_traits&gt;</code>带来了极大量基于SFINAE和模板匹配、可用于识别给定类型参数的traits。几个示例如下：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>,std::<span class="type">enable_if_t</span>&lt;!std::is_array_v&lt;Ty&gt;,<span class="type">int</span>&gt; = <span class="number">0</span>&gt;</span><br><span class="line"><span class="type">void</span> <span class="built_in">func</span>(Ty arg);</span><br></pre></td></tr></table></figure>
-<p>对于初次接触SFINAE的读者而言，上述模板声明会显得非常拗口难解。实际上其作用就是约束了<code>func</code>的参数，要求其不能是数组类型。<br />
-<code>std::is_array_v</code>是一个<code>bool</code>类型的变量模板，接受一个类型参数实例化，返回该类型参数是否为数组类型；<br />
-而<code>std::enable_if_t</code>（及其C++14前的原型<code>std::enable_if</code>）则是一个由类型偏特化(partial
-specialization)铸就的非常精巧的traits之一。其实现如下：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="type">bool</span> Cond, <span class="keyword">class</span> <span class="title class_">Ty</span> = <span class="type">void</span>&gt;</span><br><span class="line"><span class="keyword">struct</span> enable_if</span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">enable_if</span>&lt;<span class="literal">true</span>,Ty&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">using</span> type = Ty;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="type">bool</span> Cond,<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">using</span> <span class="type">enable_if_t</span> = <span class="keyword">typename</span> enable_if::type; <span class="comment">//No need for &quot;typename&quot; since C++20</span></span><br></pre></td></tr></table></figure></p>
-<p>可见<code>enable_if</code>存在一个偏特化的模板，当第一个模板参数<code>Cond</code>为<code>true</code>时，匹配的偏特化模板中存在一个别名声明<code>type = Ty</code>；否则匹配的一般模板为空。<br />
-而<code>enable_if_t</code>则利用了SFINAE，若<code>Cond</code>为<code>true</code>，则<code>enable_if_t</code>这个语句是合法的，否则不合法（域解析符试图访问的成员不存在）。<br />
-在应用时，可以将待判定条件<code>Cond</code>置为其第一参数，<code>int</code>置为其第二参数，并赋予默认值<code>= 0</code>：如此即可实现<code>Cond</code>为<code>true</code>时，剩余模板参数自动推导并匹配成功（宏观上，该模板可以被实例化）；<code>Cond</code>为<code>false</code>时，该模板不能被实例化。</p>
-<blockquote>
-<p>这个<code>0</code>的<code>int</code>型模板参数没有任何意义，只是为了满足语法要求。理论上完全可以采用其它模板参数来满足语法限制，比如将类型替换为<code>char</code>：<code>template&lt;class Ty,std::enable_if_t&lt;Ty,char&gt; = 0&gt;</code>。注意不能替换为<code>void</code>（因为不允许创建<code>void</code>类型的对象）。</p>
-</blockquote>
-<p>梳理至此，读者应也不难<del>一眼</del>看出该模板对<code>Ty</code>的约束了。<br />
-但很显然利用SFINAE进行模板约束时，写出的代码可读性非常堪忧，毕竟上述还是非常简单的单一约束的状况。<br />
-来看一个（相对）很简单的标准库中双约束示例（<code>std::make_unique</code>实现）：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">_EXPORT_STD <span class="keyword">template</span> &lt;<span class="keyword">class</span> <span class="title class_">_Ty</span>, <span class="type">enable_if_t</span>&lt;is_array_v&lt;_Ty&gt; &amp;&amp; extent_v&lt;_Ty&gt; == <span class="number">0</span>, <span class="type">int</span>&gt; = <span class="number">0</span>&gt;</span><br><span class="line">_NODISCARD_SMART_PTR_ALLOC _CONSTEXPR23 unique_ptr&lt;_Ty&gt; <span class="built_in">make_unique</span>(<span class="type">const</span> <span class="type">size_t</span> _Size) &#123; <span class="comment">// make a unique_ptr</span></span><br><span class="line">    <span class="keyword">using</span> _Elem = <span class="type">remove_extent_t</span>&lt;_Ty&gt;;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">unique_ptr</span>&lt;_Ty&gt;(<span class="keyword">new</span> _Elem[_Size]());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><del>宏看不懂没关系，</del>模板的约束条件是：<code>Ty</code>是一个数组类型，并且其大小(Extent)为零（形如<code>int[]</code>）。</p>
-<h2 id="出路在何">出路在何？</h2>
-<p>SFINAE应用中依然存在着诸多缺点，因而C++也在不断探索，并为程序设计者提供了诸多出路：<em>tag
-dispatch</em>，C++17的<code>if constexpr</code>，以及下方将述的重头戏——C++20的<code>concepts</code>。</p>
-<blockquote>
-<p>上述几种方式都是辅助“决议”型的方法。若只是希望在一定条件下产生一个编译错误，可以改用<code>static_assert</code>。<br />
-但这亦为其不能用于模板实例化选择的原因：<code>static_assert</code>的生效域是在函数体/类体的内部（对于模板而言），任何含有<code>static_assert(false)</code>的语句被实例化（将被编译）会立即产生编译错误，且显然根据定义其不属于
-<em>SFINAE Errors</em>。<br />
-唯一的例外是结合<code>if constexpr</code>使用（本质上依然是令该行不被实例化）。详见<a
-href="/cpp/constexpr/">C++——编译期运算</a></p>
-</blockquote>
-<h1 id="presentconcepts">Present——concepts</h1>
-<p>C++20与"concepts"有关的关键字有两个：<code>concept</code>和<code>requires</code>。</p>
-<h2 id="concept"><code>concept</code></h2>
-<ul>
-<li><p><code>concept</code>声明一个“概念”，其本质是一个编译期的模板<code>bool</code>变量。其必须以一个编译期布尔常量(compile-time
-boolean constant)初始化之。如： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> example = <span class="literal">true</span>; <span class="comment">//A concept that always evaluate to be true</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//Its equivalent compile-time boolean constant is like:</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">bool</span> equivlant_cpvar = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> small = <span class="built_in">sizeof</span>(Ty) &lt; <span class="number">4</span>; <span class="comment">//For sizeof(Ty) &lt; 4, evaluates to a compile-time boolean constant of true</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">static_assert</span>(small&lt;<span class="type">int</span>&gt;);</span><br><span class="line"><span class="built_in">static_assert</span>(!small&lt;<span class="type">double</span>&gt;);</span><br></pre></td></tr></table></figure></p></li>
-<li><p><code>requires</code>则既可以作为specifier修饰一个模板（进行约束），亦是定义concepts元素的一部分。</p></li>
-</ul>
-<h2 id="requires作为约束提示字"><code>requires</code>作为约束提示字</h2>
-<p>通过requires显式约束模板变量时，操作数可以是任意于编译期能解析为<code>bool</code>的变量。</p>
-<blockquote>
-<p>C++11引入的<code>&lt;type_traits&gt;</code>中定义了极大量用于解析类型特征，并生成<code>constexpr bool</code>的变量模板。</p>
-</blockquote>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt; <span class="title">requires</span> <span class="params">(small&lt;Ty&gt;)</span></span></span><br><span class="line"><span class="function"><span class="keyword">class</span> smallvector</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;  <span class="title">requires</span><span class="params">(!small&lt;Ty&gt; &amp;&amp; std::is_nothrow_destructible&lt;Ty&gt;)</span> </span>&#123;&#125; <span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(Ty)</span></span>;</span><br></pre></td></tr></table></figure>
-<h2
-id="requires作为concepts一部分"><code>requires</code>作为concepts一部分</h2>
-<p>requires可以发起一个子句，语法是<code>requires (init_params)&#123;...&#125;</code>。<br />
-其中，init_params为可选项，如果加上了括号，则其中可以放置一些参数（如同写出函数的实参一样），可在下面的内嵌约束中使用。
-大括号内可以添加任意数量的内嵌约束语句(nested
-constraints)，以分号分隔且存在逻辑与的关系（当且仅当内嵌约束全部满足时，该requires解析为<code>true</code>）。
-Nested constraints的分类如下：</p>
-<ul>
-<li>简单约束：一个任意的表达式，该表达式合法（可以通过编译）时通过；<br />
-</li>
-<li>变量约束:
-<code>requires</code>加上一个编译期的<code>bool</code>变量，该变量为<code>true</code>时通过；<br />
-</li>
-<li>复合约束：语法为<code>&#123;expr&#125; (noexcept) (-&gt; [concept])</code>，通过条件如下：
-<ol type="1">
-<li>expr必须能通过编译（和“简单约束”相同）；<br />
-</li>
-<li>若声明了noexcept，则expr必须被声明为<code>noexcept(true)</code>；<br />
-</li>
-<li>若指定了后继的<code>-&gt; [concept]</code>（所谓"trailing
-type"-后继类型），则按以下的步骤校验：
-<ul>
-<li>将<code>decltype(expr)</code>代入至后继的concept中（作为第一个变量，规则可以参考模板隐式约束），</li>
-<li>该concept也必须最终解析为<code>true</code>。</li>
-</ul></li>
-</ol>
-上述任何一个步骤失败，则该约束的解析结果为<code>false</code>。</li>
-</ul>
-<p>如现在希望约束一个迭代器类，要求：</p>
-<ol type="1">
-<li>其必须可以与同类对象比较并返回bool，且不能抛出异常；</li>
-<li>其必须支持（前置）自增和自减运算；</li>
-<li>其必须可以解引用并返回一个int&amp;；</li>
-<li>其大小必须不大于8。</li>
-</ol>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> biint_iterators = <span class="built_in">requires</span>(Ty it) <span class="comment">//这里“幻化”出了一个变量it，可以在下文约束中使用。</span></span><br><span class="line">&#123;</span><br><span class="line">&#123;it != it&#125; <span class="keyword">noexcept</span> -&gt; std::same_as&lt;<span class="type">bool</span>&gt;;</span><br><span class="line">++it; --it;</span><br><span class="line">&#123;*it&#125; -&gt; std::same_as&lt;<span class="type">int</span>&amp;&gt;;</span><br><span class="line"><span class="function"><span class="keyword">requires</span> <span class="title">sizeof</span><span class="params">(it)</span> &lt; 8</span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>显然concepts的约束比起SFINAE等方法可读性、维护性提升了数个数量级。</p>
-<h2 id="concepts的无数花式用法">concepts的无数花式用法</h2>
-<p>前文提到C++标准委员会的<del>绥靖政策</del>导致了大量奇奇怪怪的concepts用法被选入标准。以对函数模板的约束为例，如下将具述之：<br />
-假设存在一个一元模板<code>cpt</code>，</p>
-<ol type="1">
-<li><p>常规写法：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt; <span class="comment">/*p1*/</span> <span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(Ty arg)</span> <span class="comment">/*p2*/</span> </span>&#123;&#125;</span><br></pre></td></tr></table></figure>
-在p1或p2插入<code>requires cpt&lt;Ty&gt;</code>皆可（总结：在模板参数/函数形参声明后）。</p></li>
-<li><p>融合写法：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;cpt Ty&gt; <span class="type">void</span> <span class="title">func</span><span class="params">(Ty arg)</span> </span>&#123;&#125;</span><br></pre></td></tr></table></figure></p></li>
-</ol>
-<blockquote>
-<p>本质上这种写法是将<code>Ty</code>代入<code>cpt</code>的第一个参数，因此若<code>cpt</code>是一个多元模板，可以手动指定后续参数，如<code>template&lt;cpt&lt;int&gt; Ty&gt;</code>
-等价于施加了<code>requires cpt&lt;Ty,int&gt;</code>的约束。<br />
-注意为避免编译链接冲突等，C++规定在这种“融合”写法中默认模板参数无效（因而若存在默认模板参数，你仍需手动指定之）。最“实用”的例子形如：<code>template&lt;std::formattable&lt;char&gt; Ty&gt;</code>。</p>
-</blockquote>
-<ol start="3" type="1">
-<li>和<code>auto</code>结合的写法，直接约束<code>auto</code>推导的模板形参、非类型模板参数、模板变量：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(cpt <span class="keyword">auto</span> arg)</span></span>; <span class="comment">//constraining function template&#x27;s argument list</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;cpt <span class="keyword">auto</span> arg&gt; <span class="type">void</span> <span class="title">func</span><span class="params">()</span></span>; <span class="comment">//constraining non-type template parameter</span></span><br><span class="line">cpt <span class="keyword">auto</span> bar = ...; <span class="comment">//constraining variable template</span></span><br></pre></td></tr></table></figure></li>
-</ol>
-<h2 id="注意事项">注意事项</h2>
-<ul>
-<li><p><code>concept</code><strong>自身不能被约束</strong>，如果需要复用既有<code>concept</code>，请在初始化表达式中指明：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> one = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;one Ty&gt;</span><br><span class="line"><span class="keyword">concept</span> two = <span class="literal">true</span>; <span class="comment">//Not compile: concepts cannot be constrained, disregarding implicitly(as this) or explicitly using `requires`</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> three = one&lt;Ty&gt; &amp;&amp; <span class="literal">true</span>; <span class="comment">//OK, Correct approach of using existing concepts</span></span><br></pre></td></tr></table></figure></p></li>
-<li><p><code>concept</code><strong>不能重载或特化</strong>；<br />
-</p></li>
-<li><p><code>concept</code>一定是模板，不能<del>空手套白狼</del>定义一个模板参数个数少于1的<code>concept</code>。<br />
-</p></li>
-<li><p>若一个模板<code>requires</code>的<code>(expr)</code>被解析为<code>false</code>，则其行为类似于
-<em>SFINAE
-Error</em>，即会将之从重载候选表中移除；但如果表达式<code>expr</code>的解析本身是非法的，则其不属于SFINAE的范畴，会无视条件直接报编译错误（即使甚至没有对该<code>concept</code>涉及的模板进行重载决议，如下述情况中存在非模板的重载<code>void f(int)</code>）。解析非法除了表达式出现了类似"
-<em>SFINAE Error</em>
-"的情况外，其类型只要不是<code>bool</code>亦会触发这一机制（不会进行隐式转换）：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">S</span> </span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">constexpr</span> <span class="keyword">operator</span> <span class="title">bool</span><span class="params">()</span> <span class="type">const</span> </span>&#123; <span class="keyword">return</span> <span class="built_in">sizeof</span>(Ty) &lt;= <span class="number">4</span>; &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt; <span class="title">requires</span> <span class="params">(S&lt;Ty&gt;&#123;&#125;)</span></span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">(Ty)</span></span>; <span class="comment">// #1</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">(<span class="type">int</span>)</span></span>; <span class="comment">// #2</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">g</span><span class="params">()</span> </span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">f</span>(<span class="number">0</span>); <span class="comment">// error: S&lt;int&gt;&#123;&#125; does not have type bool when checking #1,</span></span><br><span class="line">        <span class="comment">// even though #2 is a better match</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>修改方式为将<code>requires</code>子句改为
-<code>requires (static_cast&lt;bool&gt;(S&lt;Ty&gt;&#123;&#125;))</code>。<br />
-再考虑下面这种情况，复用上述的<code>struct S</code>：
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt; <span class="title">requires</span> <span class="params">(<span class="type">bool</span>(S&lt;Ty&gt;&#123;&#125;))</span></span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;&gt;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">()</span></span>;</span><br><span class="line"></span><br></pre></td></tr></table></figure></p></li>
-</ul>
-<h1
-id="future浅谈底层原理和进阶应用">Future——浅谈底层原理和进阶应用</h1>
-<p><code>concept</code>和<code>requires</code>是SFINAE、<code>constexpr bool</code>的进阶，但后者在元编程(metaprogramming)中的作用依然不可动摇。</p>
-<h2 id="模板特化和重载">模板特化和重载</h2>
-<p>传统模板接受一个模板参数后，</p>
-<ul>
-<li>若存在既有重载，则会优先选择之（即不会进行模板实例化）；<br />
-</li>
-<li>否则，若存在模板特化，则会优先选择匹配的模板特化，并且特化程度越高，优先级越高；<br />
-</li>
-<li>最后再选择最为通用的模板。</li>
-</ul>
-<blockquote>
-<p>函数模板重载(overload)和特化(specialization)的区别：<br />
-若函数模板被重载（重载的函数不是模板函数），则该重载函数必定会生成可执行代码，且在程序运行时会具有地址入口（除非其因未被调用等原因被编译器优化掉）。<br />
-但若函数模板被特化，其依然不一定会生成可执行代码，取决于是否有对该特化模板函数的调用（导致其发生了实例化）。</p>
-<p>同时，被特化的函数模板必须能够由原模板所“生成”（相当于，若以参数<code>Ty</code>特化原模板，则该函数的签名必须形如将<code>Ty</code>代入原模板后，生成的函数签名）；<br />
-而重载则不存在此限制，可以自由指定返回值、形参列表等等。</p>
-<p>无论是何种模板，其必须实例化(instanlize)后才会生成可执行代码，存在函数地址入口。<br />
-对于一个未被实例化的模板，其中允许存在<strong>部分</strong>不能通过编译的语句。</p>
-</blockquote>
-<p>如：（为展示重载相关，以函数为例）</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(Ty)</span></span>&#123;&#125; <span class="comment">//#1: Primative template</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;&gt;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(<span class="type">int</span>)</span></span>&#123;&#125; <span class="comment">//#2: Explicit specialization</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//template&lt;&gt;</span></span><br><span class="line"><span class="comment">//char func(double)&#123;&#125; //Not Compile: no instance of function template &quot;func&quot; matches the specified type </span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">()</span></span>&#123;&#125; <span class="comment">//OK: A overload function, doesn&#x27;t need to obey the requirements of template specialization</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(<span class="type">int</span>)</span></span>&#123;&#125; <span class="comment">//#3</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">func</span>(<span class="number">1</span>); <span class="comment">//Invocation priority: #3 &gt; #2 &gt; #1</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>编译后生成的代码中，只会有后两个<code>void func()</code>和<code>void func(int)</code>的地址入口（不考虑优化）。</p>
-<h2
-id="concepts和constexpr-bool">concepts和<code>constexpr bool</code></h2>
-<p>目前<code>&lt;concepts&gt;</code>提供的许多标准“概念”的实现，或多或少都转发了<code>&lt;type_traits&gt;</code>的既有<code>constexpr bool</code>变量模板。<br />
-由于后者的本质还是模板变量和模板变量的特化，因此模板的偏特化通过给出特化程度的差分，实现匹配优先级的区别。<br />
-下面给出两个（模仿）<code>&lt;type_traits&gt;</code>的实例，其分别使用了变量模板特化和类模板特化：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">bool</span> is_array_v = <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">bool</span> is_array_v&lt;Ty[]&gt; = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>,<span class="type">size_t</span> N&gt;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">bool</span> is_array_v&lt;Ty[N]&gt; = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">remove_reference</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">using</span> type = Ty;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">remove_reference</span>&lt;Ty&amp;&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">using</span> type = Ty;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">remove_reference</span>&lt;Ty&amp;&amp;&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">using</span> type = Ty;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">//since C++14, official &quot;forwarding&quot;</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">using</span> <span class="type">remove_reference_t</span> = <span class="keyword">typename</span> remove_reference&lt;Ty&gt;::type;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>相对地，<code>concept</code><strong>不支持重载/特化</strong>，试图重定义一个<code>concept</code>（或“特化”之）会导致编译错误。</p>
-<h2 id="从sfinae到requires">从SFINAE到<code>requires</code></h2>
-<p>SFINAE的一大缺点是，对于应用了同样的约束条件的同名类模板，任意两个模板的SFINAE约束条件的交集必须是空集（或，“互斥”）。<br />
-否则当代入的模板参数处在二者交集时，由于SFINAE只会将匹配失败的模板列表从备选项中移除（而不会进行优先级判断等），故会因歧义而产生编译错误。<br />
-带来的最大问题出现在一个约束是另一个约束子集的情况：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>,std::<span class="type">enable_if_t</span>&lt;!std::is_array_v&lt;Ty&gt;,<span class="type">int</span>&gt; = <span class="number">0</span>&gt;</span><br><span class="line"><span class="type">void</span> <span class="built_in">fun</span>(Ty); <span class="comment">//#1</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>,std::<span class="type">enable_if_t</span>&lt;!std::is_array_v&lt;Ty&gt; &amp;&amp; !std::is_reference_v&lt;Ty&gt;,<span class="type">int</span>&gt; = <span class="number">0</span>&gt;</span><br><span class="line"><span class="type">void</span> <span class="built_in">fun</span>(Ty); <span class="comment">//#2</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> a&#123;&#125;;</span><br><span class="line">    <span class="type">int</span>&amp; b&#123;a&#125;;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">fun</span>(b); <span class="comment">//#1</span></span><br><span class="line">    <span class="built_in">fun</span>(a); <span class="comment">//Not Compile - Ambiguious: #1 and #2 both matches, SFINAE does not offer mechanism to distinguish the conjunction logics or something</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>因此，标准库中不少既有实现都为了避此嫌而在<code>enable_if</code>中“大排长龙”，如书接上回的<code>make_unique</code>，三个重载的签名如下：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">std::unique_ptr&lt;_Ty, std::default_delete&lt;_Ty&gt;&gt; &lt;<span class="keyword">typename</span> _Ty, std::<span class="type">enable_if_t</span>&lt;std::is_array_v&lt;_Ty&gt; &amp;&amp; std::extent_v&lt;_Ty, <span class="number">0U</span>&gt; == <span class="number">0</span>, <span class="type">int</span>&gt; &lt;unnamed&gt; = <span class="number">0</span>&gt; <span class="built_in">make_unique</span>(<span class="type">size_t</span> _Size);</span><br><span class="line"></span><br><span class="line">std::unique_ptr&lt;_Ty, std::default_delete&lt;_Ty&gt;&gt; &lt;<span class="keyword">typename</span> _Ty, <span class="keyword">typename</span> ..._Types, std::<span class="type">enable_if_t</span>&lt;!std::is_array_v&lt;_Ty&gt;, <span class="type">int</span>&gt; &lt;unnamed&gt; = <span class="number">0</span>&gt; <span class="built_in">make_unique</span>(_Types &amp;&amp;..._Args);</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> &lt;<span class="keyword">typename</span> _Ty, <span class="keyword">typename</span> ..._Types, std::<span class="type">enable_if_t</span>&lt;std::extent_v&lt;_Ty, <span class="number">0U</span>&gt; != <span class="number">0</span>, <span class="type">int</span>&gt; &lt;unnamed&gt; = <span class="number">0</span>&gt; <span class="built_in">make_unique</span>(_Types &amp;&amp;...);</span><br></pre></td></tr></table></figure>
-<p>而对于<code>requires</code>，其用法相对就讲究了不少：若进行模板匹配时，给定的模板参数可以满足两个模板的<code>concept</code>约束要求，则满足<strong>一个模板的约束蕴含了另一个模板的约束</strong>时，能够选择该约束更高的模板；否则将因歧义而编译失败。<br />
-定义约束A蕴含约束B：将二者都拆解成原子约束(atomic
-constraint)后，逻辑上B是A的真子集。<br />
-如此做的优点非常明显，即若欲定义一个具有更严格约束的模板，只需在<code>requires</code>或定义<code>concept</code>时，在既有约束后以逻辑与<code>&amp;&amp;</code>追加一些东西即可，不需要回头考虑既有模板的问题。</p>
-<blockquote>
-<p><del>经典转发<code>&lt;type_traits&gt;</code>警告</del></p>
-</blockquote>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> array = std::is_array_v&lt;Ty&gt;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> unextented_array = array&lt;Ty&gt; &amp;&amp; std::extent_v&lt;Ty&gt; == <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;array Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">()</span></span>&#123;&#125; <span class="comment">//#1</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;unextented_array Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">()</span></span>&#123;&#125; <span class="comment">//#2</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">f</span>&lt;<span class="type">int</span>[<span class="number">3</span>]&gt;(); <span class="comment">//Conceivibly #1</span></span><br><span class="line">    <span class="built_in">f</span>&lt;<span class="type">int</span>[]&gt;(); <span class="comment">//#2, Not ambiguious as SFINAE would otherwise do</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>C++认为每个<code>concept</code>都仅由三个部件组成：逻辑与、逻辑或、原子约束。<br />
-注意原子约束具有<strong>唯一性</strong>，只有同名的约束才是相同的。换言之，即使两个原子约束解析的结果一定一致，其也属于不同的原子约束，如定义一个<code>concept B = A;</code>，<code>A</code>和<code>B</code>依然属于不同的原子约束。<br />
-同时原子约束虽有其名，但其不一定是<code>concept</code>，应理解作最小的<code>constexpr bool</code>单元。如：<code>requires(true &amp;&amp; std::convertible_to&lt;int,char&gt; || std::is_trivial_v&lt;const char*&gt;)</code>，其中出现了字面量-<code>true</code>、<code>concept</code>-<code>std::convertible_to</code>、<code>constexpr bool</code>模板变量-<code>std::is_trivial_v</code>，三者都是原子约束。<br />
-<del>什么？你问为什么<code>requires</code>后面可以接不是<code>concept</code>的表达式？那自然是因为<code>requires</code>的一定是<code>concept</code>，若表达式自身不然，则会自动转化成匿名<code>concept</code></del></p>
-</blockquote>
-<p>这里就出现了一些非常奇怪的坑，引用<a
-target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/language/constraints">cppreference</a>的例子：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">T</span>&gt;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">bool</span> is_meowable = <span class="literal">true</span>;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">T</span>&gt;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">bool</span> is_cat = <span class="literal">true</span>;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">T</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> Meowable = is_meowable&lt;T&gt;;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">T</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> BadMeowableCat = is_meowable&lt;T&gt; &amp;&amp; is_cat&lt;T&gt;;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">T</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> GoodMeowableCat = Meowable&lt;T&gt; &amp;&amp; is_cat&lt;T&gt;;</span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;Meowable T&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f1</span><span class="params">(T)</span></span>; <span class="comment">// #1</span></span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;BadMeowableCat T&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f1</span><span class="params">(T)</span></span>; <span class="comment">// #2</span></span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;Meowable T&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f2</span><span class="params">(T)</span></span>; <span class="comment">// #3</span></span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;GoodMeowableCat T&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f2</span><span class="params">(T)</span></span>; <span class="comment">// #4</span></span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">g</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">f1</span>(<span class="number">0</span>); <span class="comment">// error, ambiguous:</span></span><br><span class="line">           <span class="comment">// the is_meowable&lt;T&gt; in Meowable and BadMeowableCat forms distinct atomic</span></span><br><span class="line">           <span class="comment">// constraints that are not identical (and so do not subsume each other)</span></span><br><span class="line"> </span><br><span class="line">    <span class="built_in">f2</span>(<span class="number">0</span>); <span class="comment">// OK, calls #4, more constrained than #3</span></span><br><span class="line">           <span class="comment">// GoodMeowableCat got its is_meowable&lt;T&gt; from Meowable</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>虽然<code>Meowable</code>和<code>is_meowable</code>的解析结果必定相同（事实上前者直接转发了后者），但其依然属于不同的原子约束，因而在对<code>f1</code>实例化阶段进行模板匹配时，会因存在歧义而报错。</p>
-<h1 id="总结">总结</h1>
-<p><code>concept</code>对于元编程(metaprogramming)是一次巨大更新，其极大提高了模板约束的复用性、可读性与可维护性，让本晦涩难懂的模板约束语句变得极为清晰。<br />
-学习<code>concept</code>前仍因掌握与模板、SFINAE等有关的基础知识，<code>concept</code>并非完全取代既有的几种模板约束机制，而是对其的有益补充。</p>
+<h1 id="加密">加密</h1>
+<h1 id="解密">解密</h1>
+<h1 id="公钥攻击与数学难题">公钥攻击与数学难题</h1>
+<p>NTRU作为一种公钥密码体制，其依然依赖于数学难题来实现公钥与私钥间的“陷门”特征——即从公钥推导出私钥在理论上是可行的。<br />
+已知公钥时推导私钥的方法如下：<br />
+假设公钥为 <span class="math inline">\(f =
+\sum_{i=0}^{n}f_{i}x^{i}\)</span>，即 <span
+class="math inline">\(\{f_{i}\}\)</span> 是多项式 <span
+class="math inline">\(f\)</span> 各项的系数。</p>
 
       
 
@@ -652,32 +420,17 @@ target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/language/
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">C++20</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
         		</li>
       		
 		</ul>
 	</div>
 
       
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/cpp/concepts/">展开全文 >></a>
+          <a class="article-more-a" href="/crypto/ntru/">展开全文 >></a>
         </p>
       
 
@@ -711,7 +464,7 @@ target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/language/
   
   
     <nav id="page-nav">
-      <a class="extend prev" rel="prev" href="/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><span class="space">&hellip;</span><a class="page-number" href="/page/10/">10</a><a class="extend next" rel="next" href="/page/3/">Next &raquo;</a>
+      <a class="extend prev" rel="prev" href="/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><span class="space">&hellip;</span><a class="page-number" href="/page/11/">11</a><a class="extend next" rel="next" href="/page/3/">Next &raquo;</a>
     </nav>
   
 
