@@ -6,15 +6,24 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="https://crystaljiang232.github.io">
-  <title>Tag: Modern C++ | 玲珑</title>
+  <title>计系实验——&#34;BOMBLAB&#34;Writeup | 玲珑</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="玲珑">
-<meta property="og:url" content="https://crystaljiang232.github.io/tags/Modern-C/index.html">
+  <meta name="description" content="Crypto手勇闯Reverse新手村现状  背景介绍 这不是CTF比赛，而是一次平平无奇的“拆弹”实验。 实验要求：  给了一个可执行文件.&#x2F;bomb，要求解析其每一阶段逻辑，将答案存储在.&#x2F;bomb.txt中。  本质上是一道逆向分析题。 本意这是想让人去用命令行的gdb等去磕汇编代码，但显然上千行的汇编还是稍微有些难顶，因而有必要让IDA这一逆向“外挂”助人一臂之力。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="计系实验——&quot;BOMBLAB&quot;Writeup">
+<meta property="og:url" content="https://crystaljiang232.github.io/rev-decipher/index.html">
 <meta property="og:site_name" content="玲珑">
+<meta property="og:description" content="Crypto手勇闯Reverse新手村现状  背景介绍 这不是CTF比赛，而是一次平平无奇的“拆弹”实验。 实验要求：  给了一个可执行文件.&#x2F;bomb，要求解析其每一阶段逻辑，将答案存储在.&#x2F;bomb.txt中。  本质上是一道逆向分析题。 本意这是想让人去用命令行的gdb等去磕汇编代码，但显然上千行的汇编还是稍微有些难顶，因而有必要让IDA这一逆向“外挂”助人一臂之力。">
 <meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://crystaljiang232.github.io/img/post_pics/CSrev/1.png">
+<meta property="og:image" content="https://crystaljiang232.github.io/img/post_pics/CSrev/2.png">
+<meta property="og:image" content="https://crystaljiang232.github.io/img/post_pics/CSrev/3.png">
+<meta property="og:image" content="https://crystaljiang232.github.io/img/post_pics/CSrev/4.png">
+<meta property="article:published_time" content="2025-04-13T07:55:10.000Z">
+<meta property="article:modified_time" content="2025-04-13T15:28:08.616Z">
 <meta property="article:author" content="Hibiscus">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://crystaljiang232.github.io/img/post_pics/CSrev/1.png">
   
     <link rel="alternative" href="/atom.xml" title="玲珑" type="application/atom+xml">
   
@@ -150,546 +159,446 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
-  
-  
+            <article id="post-rev-decipher" class="article article-type-post " itemscope itemprop="blogPost">
+  <div class="article-inner">
     
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      计系实验——&#34;BOMBLAB&#34;Writeup
+    </h1>
+  
+
+        
+        <a href="/rev-decipher/" class="archive-article-date">
+  	<time datetime="2025-04-13T07:55:10.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-04-13</time>
+</a>
+        
+      </header>
     
+    <div class="article-entry" itemprop="articleBody">
+      
+        <blockquote>
+<p><del>Crypto手勇闯Reverse新手村现状</del></p>
+</blockquote>
+<h1 id="背景介绍">背景介绍</h1>
+<p>这不是CTF比赛，而是一次<del>平平无奇</del>的“拆弹”实验。<br />
+实验要求：</p>
+<ul>
+<li>给了一个可执行文件<del><code>./bomb</code></del>，要求解析其每一阶段逻辑，将答案存储在<code>./bomb.txt</code>中。</li>
+</ul>
+<p>本质上是一道逆向分析题。<br />
+本意这是想让人去用命令行的gdb等去磕汇编代码，但显然上千行的汇编还是稍微有些难顶，因而有必要让IDA这一逆向“外挂”助人一臂之力。<br />
+当然IDA此处利用的主要功能还是反编译协助生成伪C代码进行分析，虽然可读性依然极低（毕竟作为编译期语言，变量名和很多结构体之类的内存特征都被抹去，加上各种<del>乱七八糟的寄存器横跳</del>导致令人眼花缭乱的类型转换，以及各种调用协定+系统底层函数串门袭扰——<br />
+<strong>但总归是好过汇编吧！！！</strong></p>
+<h1 id="程序流程梳理">程序流程梳理</h1>
+<p>娴熟地IDA启动，bomb拖入，一通OK，找main函数，f5的结果形如：<br />
+<img src="/img/post_pics/CSrev/1.png" alt="mainfunc" /></p>
+<p>可以大致看出程序的主要流程（初始化以及六个衔接的阶段）。</p>
+<blockquote>
+<p><del>题目的<code>.tar</code>中明明提供了<code>main</code>函数啊喂</del></p>
+</blockquote>
+<blockquote>
+<p>IDA进行分析的经验法则：敢于“不求甚解”，即对于一些语义不太明确的函数/变量区域等，若能通过一些其它手段（调试、搜索、基础知识和盲猜等）确定其功能/含义，则应相信自身对含义的解析正确并继续分析。<del>有时候看不懂不是自身的锅</del></p>
+</blockquote>
+<p>不难推断出<code>read_line()</code>就是一个取一行字符串的函数。查看其反编译代码后，可发现其中还有一些过长字符串截断和已读字符串总数统计等小功能。<br />
+略去无关紧要的部分，直接开始逐个<code>phase</code>点进去反编译分析：</p>
+<blockquote>
+<p>由于每个人的题目数据不同，加之笔者并非专业Re手，因此题解和解析均仅供参考，欢迎读者交流、指正。</p>
+</blockquote>
+<h1 id="阶段一">阶段一</h1>
+<blockquote>
+<p>最友好的一个阶段<del>签到题.sage</del></p>
+</blockquote>
+<h2 id="反编译代码">反编译代码</h2>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">__int64 __fastcall <span class="title function_">phase_1</span><span class="params">(__int64 a1)</span></span><br><span class="line">&#123;</span><br><span class="line">  __int64 result; <span class="comment">// rax</span></span><br><span class="line"></span><br><span class="line">  result = strings_not_equal(a1, <span class="string">&quot;I can see Russia from my house!&quot;</span>);</span><br><span class="line">  <span class="keyword">if</span> ( (_DWORD)result )</span><br><span class="line">    explode_bomb();</span><br><span class="line">  <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="解析">解析</h2>
+<p>虽然逐行阅读后<del>可以发现一种废话文学的美</del>，但易看出只需要让<code>a1</code>字符串与后续字符串内容相同即可。</p>
+<blockquote>
+<p>“废话文学”是因为由汇编重组成C时，只能还原程序的（大体）执行流程而不能完全还原源代码。源代码完全可以形如：<br />
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">phase_1</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* x)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span>(!strings_not_equal(x,<span class="string">&quot;I can see Russia from my house!&quot;</span>))</span><br><span class="line">    &#123;</span><br><span class="line">        explode_bomb();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<del>什么？你问我为什么返回值我置而不顾？我也不知道，但反正不重要，孩子对调用协定也没什么研究，不要强求一个crypto手太多</del></p>
+</blockquote>
+<p>解为：<code>I can see Russia from my house!</code></p>
+<h1 id="阶段二">阶段二</h1>
+<p>反编译代码：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">unsigned</span> __int64 __fastcall <span class="title function_">phase_2</span><span class="params">(__int64 a1)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">int</span> *v1; <span class="comment">// rbx</span></span><br><span class="line">  <span class="type">int</span> v3[<span class="number">4</span>]; <span class="comment">// [rsp+0h] [rbp-38h] BYREF</span></span><br><span class="line">  <span class="type">char</span> v4; <span class="comment">// [rsp+10h] [rbp-28h] BYREF</span></span><br><span class="line">  <span class="type">unsigned</span> __int64 v5; <span class="comment">// [rsp+18h] [rbp-20h]</span></span><br><span class="line"></span><br><span class="line">  v5 = __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">  read_six_numbers(a1, v3);</span><br><span class="line">  <span class="keyword">if</span> ( v3[<span class="number">0</span>] || v3[<span class="number">1</span>] != <span class="number">1</span> )</span><br><span class="line">    explode_bomb();</span><br><span class="line">  v1 = v3;</span><br><span class="line">  <span class="keyword">do</span></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">if</span> ( v1[<span class="number">2</span>] != *v1 + v1[<span class="number">1</span>] )</span><br><span class="line">      explode_bomb();</span><br><span class="line">    ++v1;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">while</span> ( v1 != (<span class="type">int</span> *)&amp;v4 );</span><br><span class="line">  <span class="keyword">return</span> v5 - __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="解析-1">解析</h2>
+<p>略去各种奇怪的变量和系统函数调用，核心有几点：</p>
+<ul>
+<li><p>调用<code>read_six_numbers</code>函数，这个函数会从<code>a1</code>中读取6个数字(<code>int</code>)并存储在<code>v3</code>开始的数组中，并且<code>scanf</code>的返回值不能小于5（否则GG）；<br />
+</p></li>
+<li><p>第一个<code>if</code>翻译一下，约束了<code>v3[0] == 0 &amp;&amp; v3[1] == 1</code>；<br />
+</p></li>
+<li><p><code>do_while</code>循环结合<code>if</code>应当翻译成这样：
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;<span class="number">4</span>;++i)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span>(v3[i+<span class="number">2</span>] != v3[i] + v3[i+<span class="number">1</span>])</span><br><span class="line">    &#123;</span><br><span class="line">        explode_bomb();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<blockquote>
+<p>上述“转译”过程对逆向者的C语言功底要求还是极高的，尤其是涉及内存布局和指针的部分；可以自行体会和复现一下这部分“转译”是怎么进行的。</p>
+</blockquote></li>
+</ul>
+<p>转译完成后的逻辑就很简单了，即希望我们读取的6个数字能构成前2项为(0,1)的斐波那契数列。</p>
+<p>解为：<code>0 1 1 2 3 5</code></p>
+<h1 id="阶段三">阶段三</h1>
+<h2 id="反编译代码-1">反编译代码</h2>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">unsigned</span> __int64 __fastcall <span class="title function_">phase_3</span><span class="params">(__int64 a1)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">int</span> v1; <span class="comment">// eax</span></span><br><span class="line">  <span class="type">int</span> v3; <span class="comment">// [rsp+0h] [rbp-18h] BYREF</span></span><br><span class="line">  <span class="type">int</span> v4; <span class="comment">// [rsp+4h] [rbp-14h] BYREF</span></span><br><span class="line">  <span class="type">unsigned</span> __int64 v5; <span class="comment">// [rsp+8h] [rbp-10h]</span></span><br><span class="line"></span><br><span class="line">  v5 = __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">  <span class="keyword">if</span> ( (<span class="type">int</span>)__isoc99_sscanf(a1, <span class="string">&quot;%d %d&quot;</span>, &amp;v3, &amp;v4) &lt;= <span class="number">1</span> )</span><br><span class="line">    explode_bomb();</span><br><span class="line">  <span class="keyword">switch</span> ( v3 )</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">case</span> <span class="number">0</span>:</span><br><span class="line">      v1 = <span class="number">104</span>;</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> <span class="number">1</span>:</span><br><span class="line">      v1 = <span class="number">735</span>;</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> <span class="number">2</span>:</span><br><span class="line">      v1 = <span class="number">815</span>;</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> <span class="number">3</span>:</span><br><span class="line">      v1 = <span class="number">943</span>;</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> <span class="number">4</span>:</span><br><span class="line">      v1 = <span class="number">924</span>;</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> <span class="number">5</span>:</span><br><span class="line">      v1 = <span class="number">93</span>;</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> <span class="number">6</span>:</span><br><span class="line">      v1 = <span class="number">757</span>;</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> <span class="number">7</span>:</span><br><span class="line">      v1 = <span class="number">208</span>;</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">default</span>:</span><br><span class="line">      explode_bomb();</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> ( v4 != v1 )</span><br><span class="line">    explode_bomb();</span><br><span class="line">  <span class="keyword">return</span> v5 - __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="解析-2">解析</h2>
+<blockquote>
+<p><del>难得的第三关比第二关简单的一天</del></p>
+</blockquote>
+<p>没啥好说的，很容易就看出有七组可能解，随便选一组。</p>
+<p>解为： <code>0 104</code>（不唯一）</p>
+<h1 id="阶段四">阶段四</h1>
+<blockquote>
+<p>原来实验中“选做题”的出现不是师出无名……</p>
+</blockquote>
+<h2 id="反编译代码-2">反编译代码</h2>
+<p>和本题有关的函数有两个，除了<code>phase_4</code>外还有一个<code>func4</code>。</p>
+<h3 id="phase_4"><code>phase_4</code></h3>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">unsigned</span> __int64 __fastcall <span class="title function_">phase_4</span><span class="params">(__int64 a1)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">unsigned</span> <span class="type">int</span> v2; <span class="comment">// [rsp+0h] [rbp-18h] BYREF</span></span><br><span class="line">  <span class="type">int</span> v3; <span class="comment">// [rsp+4h] [rbp-14h] BYREF</span></span><br><span class="line">  <span class="type">unsigned</span> __int64 v4; <span class="comment">// [rsp+8h] [rbp-10h]</span></span><br><span class="line"></span><br><span class="line">  v4 = __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">  <span class="keyword">if</span> ( (<span class="type">unsigned</span> <span class="type">int</span>)__isoc99_sscanf(a1, <span class="string">&quot;%d %d&quot;</span>, &amp;v3, &amp;v2) != <span class="number">2</span> || v2 - <span class="number">2</span> &gt; <span class="number">2</span> )</span><br><span class="line">    explode_bomb();</span><br><span class="line">  <span class="keyword">if</span> ( v3 != (<span class="type">unsigned</span> <span class="type">int</span>)func4(<span class="number">7LL</span>, v2) )</span><br><span class="line">    explode_bomb();</span><br><span class="line">  <span class="keyword">return</span> v4 - __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="func4"><code>func4</code></h3>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">__int64 __fastcall <span class="title function_">func4</span><span class="params">(<span class="type">int</span> a1, __int64 a2)</span></span><br><span class="line">&#123;</span><br><span class="line">  __int64 result; <span class="comment">// rax</span></span><br><span class="line">  <span class="type">int</span> v3; <span class="comment">// r12d</span></span><br><span class="line"></span><br><span class="line">  result = <span class="number">0LL</span>;</span><br><span class="line">  <span class="keyword">if</span> ( a1 &gt; <span class="number">0</span> )</span><br><span class="line">  &#123;</span><br><span class="line">    result = (<span class="type">unsigned</span> <span class="type">int</span>)a2;</span><br><span class="line">    <span class="keyword">if</span> ( a1 != <span class="number">1</span> )</span><br><span class="line">    &#123;</span><br><span class="line">      v3 = func4((<span class="type">unsigned</span> <span class="type">int</span>)(a1 - <span class="number">1</span>), a2) + a2;</span><br><span class="line">      <span class="keyword">return</span> v3 + (<span class="type">unsigned</span> <span class="type">int</span>)func4((<span class="type">unsigned</span> <span class="type">int</span>)(a1 - <span class="number">2</span>), (<span class="type">unsigned</span> <span class="type">int</span>)a2);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="解析-3">解析</h2>
+<p>单论<code>phase_4</code>的逻辑实际上还是比较简单的，约束整理：</p>
+<ul>
+<li>读取两个整数<del>并且还必须是两个整数</del>，并且要求<code>v2 - 2 &lt;= 2</code>；<br />
+</li>
+<li><code>v3 == func4(7,v2)</code></li>
+</ul>
+<blockquote>
+<p><code>v2 - 2 &gt; 2</code>中，由于<code>v2</code>的变量类型是<code>unsigned int</code>，因此最终的约束是
+<code>v2 &lt;= 4 &amp;&amp; v2 &gt;= 2</code>。</p>
+</blockquote>
+<blockquote>
+<p>强制类型转换的处理应更为灵活：有些可以忽略，而有些则需认真考量之。<br />
+主要原因是这些转换多数并不是源代码中显式出现，或与变量的隐式转换有关（如返回值类型<code>int</code>但调用函数使用了一个<code>unsigned long long</code>来接收），或与编译过程中寄存器类型横跳有关<del>反正寄存器都在那，<code>ax</code>变<code>rax</code>/<code>eax</code>/<code>sax</code>等等就是编译器大手一挥的事(bushi)</del>，具体对逆向逻辑是否有影响无法一概而论。</p>
+</blockquote>
+<p>而<code>func4</code>不难看出是一个递归函数，其递归定义如下：对于<code>f(i)</code>(<code>i &gt;= 0</code>，此处忽略<code>v2</code>的不变传递)，</p>
+<ul>
+<li><code>f(0) == 0</code>；<br />
+</li>
+<li><code>f(1) == v2</code>；</li>
+<li><code>f(i) == f(i-1) + f(i-2) + v2 (i &gt;= 2)</code>。</li>
+</ul>
+<p>数学上应该也碰到过不少这种递归定义，由于<code>i == 7</code>，因此手动计算即可满足要求。<br />
+取合法的<code>v2 = 2</code>时：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">i</th>
+<th style="text-align: center;">0</th>
+<th style="text-align: center;">1</th>
+<th style="text-align: center;">2</th>
+<th style="text-align: center;">3</th>
+<th style="text-align: center;">4</th>
+<th style="text-align: center;">5</th>
+<th style="text-align: center;">6</th>
+<th style="text-align: center;">7</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">f(i)</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">2</td>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">8</td>
+<td style="text-align: center;">14</td>
+<td style="text-align: center;">24</td>
+<td style="text-align: center;">40</td>
+<td style="text-align: center;">66</td>
+</tr>
+</tbody>
+</table>
+<p>解为：<code>66 2</code>（不唯一）</p>
+<h1 id="阶段五">阶段五</h1>
+<blockquote>
+<p>Crypto入门之古典密码？</p>
+</blockquote>
+<h2 id="反编译代码-3">反编译代码</h2>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">unsigned</span> __int64 __fastcall <span class="title function_">phase_5</span><span class="params">(__int64 a1)</span></span><br><span class="line">&#123;</span><br><span class="line">  __int64 i; <span class="comment">// rax</span></span><br><span class="line">  <span class="type">char</span> v3[<span class="number">7</span>]; <span class="comment">// [rsp+1h] [rbp-17h] BYREF</span></span><br><span class="line">  <span class="type">unsigned</span> __int64 v4; <span class="comment">// [rsp+8h] [rbp-10h]</span></span><br><span class="line"></span><br><span class="line">  v4 = __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">  <span class="keyword">if</span> ( (<span class="type">unsigned</span> <span class="type">int</span>)string_length() != <span class="number">6</span> )</span><br><span class="line">    explode_bomb();</span><br><span class="line">  <span class="keyword">for</span> ( i = <span class="number">0LL</span>; i != <span class="number">6</span>; ++i )</span><br><span class="line">    v3[i] = array_0[*(_BYTE *)(a1 + i) &amp; <span class="number">0xF</span>];</span><br><span class="line">  v3[<span class="number">6</span>] = <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">if</span> ( (<span class="type">unsigned</span> <span class="type">int</span>)strings_not_equal(v3, <span class="string">&quot;flames&quot;</span>) )</span><br><span class="line">    explode_bomb();</span><br><span class="line">  <span class="keyword">return</span> v4 - __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="解析-4">解析</h2>
+<blockquote>
+<p>反编译代码在某些情况下还是可能让人发懵的——比如函数调用的传参问题<del>需要“自行体会”</del>。</p>
+</blockquote>
+<p>整理约束时起手就遇上了“意外”：出现了一个没有形参的<code>string_length()</code>，但点进看<code>string_length()</code>的反编译代码却是这样的：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">__int64 __fastcall <span class="title function_">string_length</span><span class="params">(_BYTE *a1)</span></span><br><span class="line">&#123;</span><br><span class="line">  __int64 result; <span class="comment">// rax</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> ( !*a1 )</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0LL</span>;</span><br><span class="line">  LODWORD(result) = <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">do</span></span><br><span class="line">  &#123;</span><br><span class="line">    ++a1;</span><br><span class="line">    result = (<span class="type">unsigned</span> <span class="type">int</span>)(result + <span class="number">1</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">while</span> ( *a1 );</span><br><span class="line">  <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>该函数本身就是一个非常正常的<code>strlen</code><del>高仿</del>实现，但反编译代码中调用方没有传递参数。<br />
+如上情景和函数调用协定有关。本次程序中所有函数的调用协定都采用了<code>__fastcall</code>，<code>__fastcall</code>调用的特点：</p>
+<ul>
+<li>前2个(x86)/前4个(x64)整型参数使用速度更快的寄存器*CX和*DX传递；x64的Linux更为复杂，最前2个整型参数通过<code>RDI</code>、<code>RSI</code>传递；</li>
+<li>其余参数从右至左压栈；<br />
+</li>
+<li>被调用者(x86)/调用者(x64)负责清理栈。</li>
+</ul>
+<p>回到<code>main</code>函数中，以<code>phase_5</code>的调用前后为例，可以发现有如下汇编代码片段：<del>关键时候还是得回去磕汇编</del></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">call    phase_defused</span><br><span class="line">lea     rdi, aSoYouGotThatOn ; &quot;So you got that one.  Try this one.&quot;</span><br><span class="line">call    _puts</span><br><span class="line">call    read_line</span><br><span class="line">mov     rdi, rax</span><br><span class="line">call    phase_5</span><br><span class="line">call    phase_defused</span><br><span class="line">lea     rdi, aGoodWorkOnToTh ; &quot;Good work!  On to the next...&quot;</span><br></pre></td></tr></table></figure>
+<p><code>read_line</code>会将返回值（一个<code>const char*</code>）放在<code>rax</code>中，随后<code>mov rdi,rax</code>将<code>rax</code>的值移入<code>rdi</code>中，再调用<code>phase_5</code>时<code>rdi</code>就是隐式的第一参数。</p>
+<p>虽然看上去<code>phase_5</code>“接受”了这个形参，但因为其并没有改变<code>rdi</code>的值，因此再去<code>call string_length</code>时<code>rdi</code>还是第一参数，因而上述调用其实就是<code>string_length(a1)</code>，亦即获取<code>a1</code>指向字符串的长度（<code>a1</code>的类型被标注为<code>__int64</code>，本质上就是x64系统下指针的数据类型，参考C++的<code>std::ptrdiff_t</code>）。</p>
+<p>需要注意的是，阶段六中还会出现一次相同的情况（“消失的第一参数”）。</p>
+<blockquote>
+<p>各位无需担心编程的问题——毕竟作为<del>不那么高级的</del>高级语言，编程时函数的调用方式一定为<code>string_length(str)</code>（也就是只要<del>不像可变参数越界那样</del>乱搞，函数参数传递一定是正确的）。<br />
+此现象是因为IDA反汇编时，由于其“观测”到<code>phase_5</code>中没有对<code>rdi</code>进行操作，故会以为调用<code>string_length</code>时没有传参——毕竟IDA的反汇编的目标不是对函数语义进行检查，亦不是去完全重构原函数，而是为了将汇编语言的逻辑以尽可能“眼熟”的方式展现出来。同时不自动填充参数的另一个原因是<code>phase_5</code>自身并不知道谁在调用它，或给它传递的参数如何。</p>
+</blockquote>
+<blockquote>
+<p><del>当然即使不知道汇编语言和调用协定之类的逻辑，盲猜也能知道这个函数获取的就是传入字符串的长度</del></p>
+</blockquote>
+<p>解决这一小插曲后，对于一个目标字符串<code>char v3[7]</code>，其进行了一次单表映射加密，令<code>v3[i] = array_0[a1[i] &amp; 0xF]</code>（翻译后）；<br />
+需满足的目标约束是令字符串<code>v3</code>为<code>"flames"</code>。</p>
+<p>首先找到<code>array_0</code>，双击<code>array_0</code>可以在栈内存区中找到其定义：<br />
+<img src="/img/post_pics/CSrev/2.png" alt="Stack" /></p>
+<blockquote>
+<p>实际上这片内存被称为“字符串常量区”，C/C++程序开始运行时会在栈中开辟一段只读内存区，存放所有的字符串常量，即<del>妇孺皆知</del>的<code>const char*</code>。<br />
+因此其中也能发现一些有趣的内容，<del>包括但不限于So you think you can
+stop the bomb with ctrl-c, do you?</del></p>
+</blockquote>
+<p>直接逐个目标字符搜索其下标，即为令<code>a1[i] &amp; 0xF</code>应达成的目标值；为令<code>a1[i]</code><del>在<code>string.printable</code>中</del>可以打印，给目标下标加上16的整数倍后转化成字符即可，解同样不唯一。</p>
+<blockquote>
+<p>如果当作CTF-Crypto题的话，应试着尽可能高效地写出Python解题代码：<br />
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> string <span class="keyword">import</span> ascii_letters <span class="keyword">as</span> lts</span><br><span class="line"></span><br><span class="line">sec = <span class="string">&quot;maduiersnfotvbyl&quot;</span></span><br><span class="line">ls = [sec.index(i) <span class="keyword">for</span> i <span class="keyword">in</span> <span class="string">&quot;flames&quot;</span>]</span><br><span class="line">res = <span class="string">&#x27;&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> ls:</span><br><span class="line">    <span class="keyword">while</span> <span class="keyword">not</span> <span class="built_in">chr</span>(i) <span class="keyword">in</span> lts:</span><br><span class="line">        i += <span class="number">0x10</span></span><br><span class="line">    res += <span class="built_in">chr</span>(i)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(res)</span><br></pre></td></tr></table></figure></p>
+</blockquote>
+<p>解为：<code>IOAPEG</code>（不唯一）</p>
+<h1 id="阶段六">阶段六</h1>
+<h2 id="反编译代码-4">反编译代码</h2>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">unsigned</span> __int64 __fastcall <span class="title function_">phase_6</span><span class="params">(__int64 a1)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">int</span> *v1; <span class="comment">// r13</span></span><br><span class="line">  __int64 i; <span class="comment">// r14</span></span><br><span class="line">  __int64 v3; <span class="comment">// rbx</span></span><br><span class="line">  __int64 j; <span class="comment">// rsi</span></span><br><span class="line">  <span class="type">int</span> v5; <span class="comment">// ecx</span></span><br><span class="line">  <span class="type">int</span> v6; <span class="comment">// eax</span></span><br><span class="line">  _QWORD *v7; <span class="comment">// rdx</span></span><br><span class="line">  __int64 v8; <span class="comment">// rbx</span></span><br><span class="line">  __int64 v9; <span class="comment">// rax</span></span><br><span class="line">  __int64 v10; <span class="comment">// rdx</span></span><br><span class="line">  __int64 v11; <span class="comment">// rax</span></span><br><span class="line">  __int64 v12; <span class="comment">// rdx</span></span><br><span class="line">  __int64 v13; <span class="comment">// rax</span></span><br><span class="line">  <span class="type">int</span> v14; <span class="comment">// ebp</span></span><br><span class="line">  <span class="type">int</span> v16[<span class="number">8</span>]; <span class="comment">// [rsp+0h] [rbp-88h] BYREF</span></span><br><span class="line">  __int64 v17; <span class="comment">// [rsp+20h] [rbp-68h]</span></span><br><span class="line">  __int64 v18; <span class="comment">// [rsp+28h] [rbp-60h]</span></span><br><span class="line">  __int64 v19; <span class="comment">// [rsp+30h] [rbp-58h]</span></span><br><span class="line">  __int64 v20; <span class="comment">// [rsp+38h] [rbp-50h]</span></span><br><span class="line">  __int64 v21; <span class="comment">// [rsp+40h] [rbp-48h]</span></span><br><span class="line">  __int64 v22; <span class="comment">// [rsp+48h] [rbp-40h]</span></span><br><span class="line">  <span class="type">unsigned</span> __int64 v23; <span class="comment">// [rsp+58h] [rbp-30h]</span></span><br><span class="line"></span><br><span class="line">  v23 = __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">  v1 = v16;</span><br><span class="line">  read_six_numbers(a1, v16);</span><br><span class="line">  <span class="keyword">for</span> ( i = <span class="number">1LL</span>; ; ++i )</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">if</span> ( (<span class="type">unsigned</span> <span class="type">int</span>)(*v1 - <span class="number">1</span>) &gt; <span class="number">5</span> )</span><br><span class="line">      explode_bomb();</span><br><span class="line">    <span class="keyword">if</span> ( (<span class="type">int</span>)i &gt; <span class="number">5</span> )</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    v3 = i;</span><br><span class="line">    <span class="keyword">do</span></span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">if</span> ( *v1 == v16[v3] )</span><br><span class="line">        explode_bomb();</span><br><span class="line">      ++v3;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">while</span> ( (<span class="type">int</span>)v3 &lt;= <span class="number">5</span> );</span><br><span class="line">    ++v1;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">for</span> ( j = <span class="number">0LL</span>; j != <span class="number">6</span>; ++j )</span><br><span class="line">  &#123;</span><br><span class="line">    v5 = v16[j];</span><br><span class="line">    v6 = <span class="number">1</span>;</span><br><span class="line">    v7 = &amp;node1;</span><br><span class="line">    <span class="keyword">if</span> ( v5 &gt; <span class="number">1</span> )</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">do</span></span><br><span class="line">      &#123;</span><br><span class="line">        v7 = (_QWORD *)v7[<span class="number">1</span>];</span><br><span class="line">        ++v6;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">while</span> ( v6 != v5 );</span><br><span class="line">    &#125;</span><br><span class="line">    *(&amp;v17 + j) = (__int64)v7;</span><br><span class="line">  &#125;</span><br><span class="line">  v8 = v17;</span><br><span class="line">  v9 = v18;</span><br><span class="line">  *(_QWORD *)(v17 + <span class="number">8</span>) = v18;</span><br><span class="line">  v10 = v19;</span><br><span class="line">  *(_QWORD *)(v9 + <span class="number">8</span>) = v19;</span><br><span class="line">  v11 = v20;</span><br><span class="line">  *(_QWORD *)(v10 + <span class="number">8</span>) = v20;</span><br><span class="line">  v12 = v21;</span><br><span class="line">  *(_QWORD *)(v11 + <span class="number">8</span>) = v21;</span><br><span class="line">  v13 = v22;</span><br><span class="line">  *(_QWORD *)(v12 + <span class="number">8</span>) = v22;</span><br><span class="line">  *(_QWORD *)(v13 + <span class="number">8</span>) = <span class="number">0LL</span>;</span><br><span class="line">  v14 = <span class="number">5</span>;</span><br><span class="line">  <span class="keyword">do</span></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">if</span> ( *(_DWORD *)v8 &gt; **(_DWORD **)(v8 + <span class="number">8</span>) )</span><br><span class="line">      explode_bomb();</span><br><span class="line">    v8 = *(_QWORD *)(v8 + <span class="number">8</span>);</span><br><span class="line">    --v14;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">while</span> ( v14 );</span><br><span class="line">  <span class="keyword">return</span> v23 - __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="解析-5">解析</h2>
+<p><code>phase_6</code>的代码逻辑就比较冗长了，当然一部分是因为其将全部流程均打包在了一个函数中。</p>
+<p>将程序的流程分为以下几部分：</p>
+<ol type="1">
+<li>读取六个整数存储于<code>v16</code>指向的数组中，用第一个<code>for</code>循环进行约束；<br />
+</li>
+<li>第二个<code>for</code>循环进行了链表转写的操作；<br />
+</li>
+<li>一系列非常奇怪的赋值语句；<br />
+</li>
+<li><code>do-while</code>循环再次进行约束。</li>
+</ol>
+<h3 id="part-1">Part 1</h3>
+<p>第一个<code>for</code>循环的约束逻辑：伪C部分形如<br />
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> ( i = <span class="number">1LL</span>; ; ++i )</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">if</span> ( (<span class="type">unsigned</span> <span class="type">int</span>)(*v1 - <span class="number">1</span>) &gt; <span class="number">5</span> )</span><br><span class="line">      explode_bomb();</span><br><span class="line">    <span class="keyword">if</span> ( (<span class="type">int</span>)i &gt; <span class="number">5</span> )</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    v3 = i;</span><br><span class="line">    <span class="keyword">do</span></span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">if</span> ( *v1 == v16[v3] )</span><br><span class="line">        explode_bomb();</span><br><span class="line">      ++v3;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">while</span> ( (<span class="type">int</span>)v3 &lt;= <span class="number">5</span> );</span><br><span class="line">    ++v1;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+依然还是编译-反编译带来的语义崩坏通病<del>有点类似于将语言A的句子翻译成语言B再翻译回来的感觉</del>。梳理其逻辑可以转写如下：</p>
+<ul>
+<li><code>*v1</code>访问过的所有元素（也就是<code>v16</code>的所有元素）数值必须在
+<span class="math inline">\(\[1,6]\)</span>；<br />
+</li>
+<li><code>v1</code>和<code>&amp;v16[v3]</code>都是指针，其中<code>v3</code>在<code>do-while</code>循环前的初始值必为<code>v1+1</code>，相当于其访问元素初始下标比<code>v1</code>大1。进而，<code>do-while</code>循环的约束拓展、简写后可写作“<code>v16</code>中的元素两两不同”。</li>
+</ul>
+<p>合并起来就是：<strong>v16[6]中唯一地存放了1~6这六个数字。</strong></p>
+<h3 id="part-2">Part 2</h3>
+<p>再把对应部分的伪代码搬过来： <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> ( j = <span class="number">0LL</span>; j != <span class="number">6</span>; ++j )</span><br><span class="line">&#123;</span><br><span class="line">  v5 = v16[j];</span><br><span class="line">  v6 = <span class="number">1</span>;</span><br><span class="line">  v7 = &amp;node1;</span><br><span class="line">  <span class="keyword">if</span> ( v5 &gt; <span class="number">1</span> )</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">do</span></span><br><span class="line">    &#123;</span><br><span class="line">      v7 = (_QWORD *)v7[<span class="number">1</span>];</span><br><span class="line">      ++v6;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">while</span> ( v6 != v5 );</span><br><span class="line">  &#125;</span><br><span class="line">  *(&amp;v17 + j) = (__int64)v7;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>首先又涉及到了一个栈变量<code>node1</code>，查看其内容：<br />
+<img src="/img/post_pics/CSrev/3.png" alt="node1" />
+可以发现其邻域还有<code>node2</code>，<code>node3</code>等，结合题目描述推测其与链表有关。但链表的<code>struct</code>在此处已无法还原，所以只能看循环体内对内存的操作：</p>
+<ul>
+<li>先令<code>v5 = v16[j]</code>(<del><code>j in range(6)</code></del>)，显然若<code>v5 &lt;= 1</code>，则直接令<code>v17[j] = &amp;node1</code>；<br />
+</li>
+<li>否则进入<code>do-while</code>循环，发现其寻址方式特别有趣——<code>v7 = (_QWORD *)v7[1]</code>，强制类型转换由于没有发生截断（原来是<code>__int64</code>，现在<code>QWORD</code>四字类型依然是64位，相当于将该位置开始的8Byte数据按指针的方式解读，参考C++的<code>reinterpret_cast</code>）故近似可忽略（但注意此时其已经具备了“指针”的属性，可以执行下标访问等操作）。
+随后结合<code>operator[]</code>，相当于<code>v7</code>移动到了根据<code>v7</code>后的下一个变量（即8Byte后）的“数据地址”。</li>
+</ul>
+<p>结合上图可能会更加直观：<br />
+如假设<code>v5 = 2</code>，相当于其只前进了一次，首先<code>v7 = 0x405330</code>，其获取<code>0x405338</code>开始8Byte的数据，由于x86-64架构小端序的特性，其得到的数据是<code>0x405340</code>。<br />
+随后，<code>v7</code>移动到这个“获得”的数据所对应的地址上，即现在<code>v7</code>就是<code>0x405340</code>。</p>
+<p>不难发现这一部分的链表<del>还算比较友好</del>都是“连续”存放的，<strong>除了node5的地址指向了<code>0x405210</code></strong>，回滚后发现其就是node6，该node存放“下一个结点地址”是<code>0</code>（<code>NULL</code>,<del><code>nullptr</code></del>）。</p>
+<blockquote>
+<p>由于这个Part的前置条件就是<code>v16[6]</code>覆盖了1~6的所有数字，因此此处不应出现越界之类的意外情况。</p>
+</blockquote>
+<h3 id="part-3">Part 3</h3>
+<p>这一段的伪代码会让人看着非常摸不着头脑：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">v8 = v17;</span><br><span class="line"> v9 = v18;</span><br><span class="line"> *(_QWORD *)(v17 + 8) = v18;</span><br><span class="line"> v10 = v19;</span><br><span class="line"> *(_QWORD *)(v9 + 8) = v19;</span><br><span class="line"> v11 = v20;</span><br><span class="line"> *(_QWORD *)(v10 + 8) = v20;</span><br><span class="line"> v12 = v21;</span><br><span class="line"> *(_QWORD *)(v11 + 8) = v21;</span><br><span class="line"> v13 = v22;</span><br><span class="line"> *(_QWORD *)(v12 + 8) = v22;</span><br><span class="line"> *(_QWORD *)(v13 + 8) = 0LL;</span><br></pre></td></tr></table></figure>
+<p>其涉及了大量乱飞的变量名，而这些变量名看似“空穴来风”。其源代码大概率亦并非如此编写<del>日常甩锅给IDA/反编译</del>。</p>
+<blockquote>
+<p>推测这大概率是构建<code>struct</code>的某个函数被重复调用、内联展开后的结果，解析见下。</p>
+</blockquote>
+<p>破局之法有二：首先可以试着回到反汇编代码头，查看其定义的注释：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">__int64 v8; // rbx</span><br><span class="line">__int64 v9; // rax</span><br><span class="line">__int64 v10; // rdx</span><br><span class="line">__int64 v11; // rax</span><br><span class="line">__int64 v12; // rdx</span><br><span class="line">__int64 v13; // rax</span><br><span class="line">int v14; // ebp</span><br><span class="line">int v16[8]; // [rsp+0h] [rbp-88h] BYREF</span><br><span class="line">__int64 v17; // [rsp+20h] [rbp-68h]</span><br><span class="line">__int64 v18; // [rsp+28h] [rbp-60h]</span><br><span class="line">__int64 v19; // [rsp+30h] [rbp-58h]</span><br><span class="line">__int64 v20; // [rsp+38h] [rbp-50h]</span><br><span class="line">__int64 v21; // [rsp+40h] [rbp-48h]</span><br><span class="line">__int64 v22; // [rsp+48h] [rbp-40h]</span><br></pre></td></tr></table></figure>
+<p>或者直接看栈空间：<br />
+<img src="/img/post_pics/CSrev/4.png" alt="varstk" /></p>
+<p>可以发现两点：</p>
+<ul>
+<li><code>v8</code>-<code>v13</code>是“名义上”的变量，但它们实际并不存在于C源程序中，注释亦指明之——它们实际上是寄存器在伪C中的别名。
+&gt;
+这也是一些反编译代码“废话文学”的来源，寄存器实际上是作为部分变量/返回值间赋值的“中间人”。<br />
+</li>
+<li><code>v17</code>-<code>v22</code>并非互相独立的变量，实际上它们在内存空间中的位置是连续的（其类型视为<code>__int64</code>的情况下）。事实上可以认为存在一个数组<code>arr</code>，其中<code>v17</code>就是<code>arr[0]</code>，<code>v18</code>就是<code>arr[1]</code>，以此类推，<code>v22</code>就是<code>arr[5]</code>。</li>
+</ul>
+<p>还记得此前Part
+2中给<code>*(&amp;v17 + j)</code>赋值的语句吗？结合上文分析，按变量名的角度理解，Part2等价于在将<code>node0</code>的地址写入<code>v17</code>，<code>node1</code>的地址写入<code>v18</code>，等等。<br />
+那此处的一些赋值语句就不再让人完全发懵了：<br />
+<code>*(_QWORD *)(v17 + 8)</code>其实就是<code>node0</code>中存放下一结点地址的该部分内存，对之赋值<code>v18</code><del>说c话</del>就是：<br />
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">node0.next = &amp;node(???);</span><br></pre></td></tr></table></figure></p>
+<p>而这里的(???)就是之前<code>*&amp;(v17 + 1)</code>被重写时使用的<code>node</code>地址，追溯回去也就是<code>node(v16[j])</code>。</p>
+<p>至此分析结束。<br />
+这段代码(Part2 +
+Part3)的作用是实现了链表“重组”：先建立一个链表，然后把链表中的地址用一个数组存储起来，再根据另一个index式的数组将链表重新连接。写成C语言代码应该长这样：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Node</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    <span class="type">int</span> data;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">Node</span>* <span class="title">next</span>;</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Node</span>* <span class="title">head</span> =</span> <span class="comment">/**/</span>;</span><br><span class="line"><span class="type">int</span> index_ls[<span class="number">6</span>] = <span class="comment">/**/</span>;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Node</span>* <span class="title">arr</span>[6] =</span> &#123;&#125;;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Node</span>* <span class="title">cur</span> =</span> <span class="literal">NULL</span>,*tp = <span class="literal">NULL</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;<span class="number">6</span>;++i)</span><br><span class="line">&#123;</span><br><span class="line">    cur = head;</span><br><span class="line">    <span class="type">int</span> temp = index_ls[i];</span><br><span class="line">    <span class="keyword">if</span>(temp)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> j=<span class="number">0</span>;j&lt;temp;++j)</span><br><span class="line">        &#123;</span><br><span class="line">            cur = cur-&gt;next;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    arr[i] = cur;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&lt;<span class="number">6</span>;++i)</span><br><span class="line">&#123;</span><br><span class="line">    cur = arr[i];</span><br><span class="line">    tp = cur-&gt;next;</span><br><span class="line">    cur-&gt;next = </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="part-4">Part 4</h3>
+<p>现在<code>v8</code>定位到了<code>v17</code>处，而此处其比较的约束条件是<code>*(_DWORD *)v8 &lt;= **(_DWORD **)(v8 + 8)</code>。<br />
+此处<code>_DWORD *</code>的强制类型转换说明：比较时，将其按2字（4字节，32位）的方式解读。但<code>v8</code>本身具有<code>__int64</code>的属性（是一个地址），其+8的偏移量相当于从数据部分（一个<code>int</code>）“偏”到了地址部分，再进行二阶解引用，相当于解引用了“下一个结点”的<code>int</code>。<br />
+总而言之，翻译过来就是约束<strong>按链表的访问顺序，其对应数据区的<code>int</code>应是非递减的</strong>。<br />
+因此我们直接查看node0-node5对应的<code>int</code>数据区，将之按非递减序排列，对应的下标+1即为解。</p>
+<p>数据区的<code>DWORD</code>表示：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">node编号</th>
+<th style="text-align: center;">内存数据</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;"><code>ad 03 00 00</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">2</td>
+<td style="text-align: center;"><code>e7 03 00 00</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">3</td>
+<td style="text-align: center;"><code>1b 01 00 00</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;"><code>1b 01 00 00</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">5</td>
+<td style="text-align: center;"><code>8c 01 00 00</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">6</td>
+<td style="text-align: center;"><code>db 00 00 00</code></td>
+</tr>
+</tbody>
+</table>
+<p>按小端序读取，不难得出一种非递减序为<code>6 3 4 5 1 2</code>。</p>
+<p>解为：<code>6 3 4 5 1 2</code>或<code>6 4 3 5 1 2</code></p>
+<h1 id="阶段七隐藏关">阶段七（“隐藏关”）</h1>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
       
       
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2025" class="archive-year">2025</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/cpp/foldexpr/" class="archive-article-date">
-  	<time datetime="2025-04-09T08:14:03.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-04-09</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/cpp/foldexpr/">C++——折叠表达式</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/cpp/variadic/" class="archive-article-date">
-  	<time datetime="2025-04-07T02:26:39.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-04-07</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/cpp/variadic/">C++——可变参数模板</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/cpp/concepts/" class="archive-article-date">
-  	<time datetime="2025-04-06T02:37:44.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-04-06</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/cpp/concepts/">C++20——concepts</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">C++20</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/cpp/ranges/" class="archive-article-date">
-  	<time datetime="2025-04-03T23:53:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-04-04</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/cpp/ranges/">C++20——ranges</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">C++20</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/cpp/hierachy/" class="archive-article-date">
-  	<time datetime="2025-04-02T13:59:38.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-04-02</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/cpp/hierachy/">C++——类继承的一隅</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/cpp/lambda/" class="archive-article-date">
-  	<time datetime="2025-01-26T13:40:36.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-01-26</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/cpp/lambda/">C++——lambda</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
       
-        </div></section>
+
       
+
       
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2024" class="archive-year">2024</a>
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
         </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/cpp/3compare/" class="archive-article-date">
-  	<time datetime="2024-12-20T23:21:39.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-21</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/cpp/3compare/">C++20——operator&lt;=&gt;</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/C-C/C-20//" class="article-tag-list-link color1">C++20</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
+      </div>
+    </span>
   </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/cpp/return/" class="archive-article-date">
-  	<time datetime="2024-12-13T02:36:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-13</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/cpp/return/">C++——&#34;return&#34;的沧海桑田</a>
-    </h1>
-  
+</div>
 
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=https://crystaljiang232.github.io/rev-decipher/" alt="微信分享二维码">
+    </div>
+</div>
 
-          
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
+<div class="mask js-mask"></div>
+      
+      <div class="clearfix"></div>
+    </div>
   </div>
+  <div>
 </article>
+
+
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/cpp/rrefs/" class="archive-article-date">
-  	<time datetime="2024-12-11T02:37:23.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-11</time>
-</a>
+<nav id="article-nav">
+  
+  
+    <a href="/cpp/foldexpr/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">C++——折叠表达式</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
         </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/cpp/rrefs/">C++——右值引用和移动语义</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">长文精选</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
+        
+        
+        <div class="toc-container tooltip-left">
+            <i class="icon-font icon-category"></i>
+            <div class="tooltip tooltip-east">
+                <span class="tooltip-item">
+                </span>
+                <span class="tooltip-content">
+                    <div class="toc-article">
+                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%83%8C%E6%99%AF%E4%BB%8B%E7%BB%8D"><span class="toc-number">1.</span> <span class="toc-text">背景介绍</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%A8%8B%E5%BA%8F%E6%B5%81%E7%A8%8B%E6%A2%B3%E7%90%86"><span class="toc-number">2.</span> <span class="toc-text">程序流程梳理</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%98%B6%E6%AE%B5%E4%B8%80"><span class="toc-number">3.</span> <span class="toc-text">阶段一</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%8D%E7%BC%96%E8%AF%91%E4%BB%A3%E7%A0%81"><span class="toc-number">3.1.</span> <span class="toc-text">反编译代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%A3%E6%9E%90"><span class="toc-number">3.2.</span> <span class="toc-text">解析</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%98%B6%E6%AE%B5%E4%BA%8C"><span class="toc-number">4.</span> <span class="toc-text">阶段二</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%A3%E6%9E%90-1"><span class="toc-number">4.1.</span> <span class="toc-text">解析</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%98%B6%E6%AE%B5%E4%B8%89"><span class="toc-number">5.</span> <span class="toc-text">阶段三</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%8D%E7%BC%96%E8%AF%91%E4%BB%A3%E7%A0%81-1"><span class="toc-number">5.1.</span> <span class="toc-text">反编译代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%A3%E6%9E%90-2"><span class="toc-number">5.2.</span> <span class="toc-text">解析</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%98%B6%E6%AE%B5%E5%9B%9B"><span class="toc-number">6.</span> <span class="toc-text">阶段四</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%8D%E7%BC%96%E8%AF%91%E4%BB%A3%E7%A0%81-2"><span class="toc-number">6.1.</span> <span class="toc-text">反编译代码</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#phase_4"><span class="toc-number">6.1.1.</span> <span class="toc-text">phase_4</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#func4"><span class="toc-number">6.1.2.</span> <span class="toc-text">func4</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%A3%E6%9E%90-3"><span class="toc-number">6.2.</span> <span class="toc-text">解析</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%98%B6%E6%AE%B5%E4%BA%94"><span class="toc-number">7.</span> <span class="toc-text">阶段五</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%8D%E7%BC%96%E8%AF%91%E4%BB%A3%E7%A0%81-3"><span class="toc-number">7.1.</span> <span class="toc-text">反编译代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%A3%E6%9E%90-4"><span class="toc-number">7.2.</span> <span class="toc-text">解析</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%98%B6%E6%AE%B5%E5%85%AD"><span class="toc-number">8.</span> <span class="toc-text">阶段六</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%8D%E7%BC%96%E8%AF%91%E4%BB%A3%E7%A0%81-4"><span class="toc-number">8.1.</span> <span class="toc-text">反编译代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%A3%E6%9E%90-5"><span class="toc-number">8.2.</span> <span class="toc-text">解析</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#part-1"><span class="toc-number">8.2.1.</span> <span class="toc-text">Part 1</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#part-2"><span class="toc-number">8.2.2.</span> <span class="toc-text">Part 2</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#part-3"><span class="toc-number">8.2.3.</span> <span class="toc-text">Part 3</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#part-4"><span class="toc-number">8.2.4.</span> <span class="toc-text">Part 4</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%98%B6%E6%AE%B5%E4%B8%83%E9%9A%90%E8%97%8F%E5%85%B3"><span class="toc-number">9.</span> <span class="toc-text">阶段七（“隐藏关”）</span></a></li></ol>
+                    </div>
+                </span>
+            </div>
         </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/cpp/print/" class="archive-article-date">
-  	<time datetime="2024-12-10T06:01:08.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-10</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/cpp/print/">C++23——std::print</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">C++23</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">C++ Libraries</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
+        
+    </div>
+</aside>
 
 
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
+
   
   
-    </div></section>
   
 
     
+
+  
+
+  
+
+  
 
 
           </div>
@@ -750,9 +659,9 @@
 	var yiliaConfig = {
 		mathjax: true,
 		isHome: false,
-		isPost: false,
+		isPost: true,
 		isArchive: false,
-		isTag: true,
+		isTag: false,
 		isCategory: false,
 		open_in_new: true,
 		toc_hide_index: true,

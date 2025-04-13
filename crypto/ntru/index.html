@@ -6,17 +6,17 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="https://crystaljiang232.github.io">
-  <title>ntru | 玲珑</title>
+  <title>NTRU | 玲珑</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="NTRU——格密码入坑到入土一条龙  NTRU(Nth-degree TRunctuated polynomial Unit)，即“N次截断多项式单元”，是格密码中极为知名、应用较广的一种加密原理。 截断多项式？ 密钥生成  定义函数 \(T(d_{1},d_{2}) (d_{1} + d_{2} &lt; q)\) 表示系数 \(\{1,-1}\) 计数分别为 \(\{d_">
+  <meta name="description" content="格密码入坑到入土一条龙  NTRU(Nth-degree TRunctuated polynomial Unit)，即“N次截断多项式单元”，是格密码中极为知名、应用较广的一种加密原理。 截断多项式？ 定义一个多项式 \(f \in R_{q}\) 。 密钥生成  定义函数 \(T(d_{1},d_{2}) (d_{1} + d_{2} &lt; q)\) 表示系数 \(\">
 <meta property="og:type" content="article">
-<meta property="og:title" content="ntru">
+<meta property="og:title" content="NTRU">
 <meta property="og:url" content="https://crystaljiang232.github.io/crypto/ntru/index.html">
 <meta property="og:site_name" content="玲珑">
-<meta property="og:description" content="NTRU——格密码入坑到入土一条龙  NTRU(Nth-degree TRunctuated polynomial Unit)，即“N次截断多项式单元”，是格密码中极为知名、应用较广的一种加密原理。 截断多项式？ 密钥生成  定义函数 \(T(d_{1},d_{2}) (d_{1} + d_{2} &lt; q)\) 表示系数 \(\{1,-1}\) 计数分别为 \(\{d_">
+<meta property="og:description" content="格密码入坑到入土一条龙  NTRU(Nth-degree TRunctuated polynomial Unit)，即“N次截断多项式单元”，是格密码中极为知名、应用较广的一种加密原理。 截断多项式？ 定义一个多项式 \(f \in R_{q}\) 。 密钥生成  定义函数 \(T(d_{1},d_{2}) (d_{1} + d_{2} &lt; q)\) 表示系数 \(\">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2025-04-09T06:38:03.000Z">
-<meta property="article:modified_time" content="2025-04-11T08:57:06.913Z">
+<meta property="article:modified_time" content="2025-04-12T13:35:31.532Z">
 <meta property="article:author" content="Hibiscus">
 <meta property="article:tag" content="Crypto">
 <meta name="twitter:card" content="summary">
@@ -162,7 +162,7 @@
         
   
     <h1 class="article-title" itemprop="name">
-      ntru
+      NTRU
     </h1>
   
 
@@ -176,15 +176,17 @@
     <div class="article-entry" itemprop="articleBody">
       
         <blockquote>
-<p>NTRU——<del>格密码入坑到入土一条龙</del></p>
+<p><del>格密码入坑到入土一条龙</del></p>
 </blockquote>
 <p>NTRU(Nth-degree TRunctuated polynomial
 Unit)，即“N次截断多项式单元”，是格密码中极为知名、应用较广的一种加密原理。</p>
 <h1 id="截断多项式">截断多项式？</h1>
+<p>定义一个多项式 <span class="math inline">\(f \in R_{q}\)</span>
+。</p>
 <h1 id="密钥生成">密钥生成</h1>
 <blockquote>
 <p>定义函数 <span class="math inline">\(T(d_{1},d_{2}) (d_{1} + d_{2}
-&lt; q)\)</span> 表示系数 <span class="math inline">\(\{1,-1}\)</span>
+&lt; q)\)</span> 表示系数 <span class="math inline">\(\{1,-1\}\)</span>
 <strong>计数</strong>分别为 <span
 class="math inline">\(\{d_{1},d_{2}\}\)</span> 的多项式 <span
 class="math inline">\(f \in R_{q}\)</span> 的集合。<br />
@@ -201,6 +203,17 @@ T(3,2)\)</span>。</p>
 \sum_{i=0}^{n}f_{i}x^{i}\)</span>，即 <span
 class="math inline">\(\{f_{i}\}\)</span> 是多项式 <span
 class="math inline">\(f\)</span> 各项的系数。</p>
+<blockquote>
+<p>有关格、格基规约(LLL)等相关的基础知识可以移步<a
+href="/crypto/lattice/">格</a>。</p>
+</blockquote>
+<h1 id="总结">总结</h1>
+<p>格密码是后量子密码学中极为重要的一环，而其中NTRU亦以其实现开销低等特性称为其中耀眼的新星。<br />
+学习NTRU算法的加密、解密原理时更应发挥离散数学的优雅之处——只定义“模板”，无论最终的实现是在
+<span class="math inline">\(Z_{q}\)</span>、<span
+class="math inline">\(P_{q}\)</span> 还是 <span
+class="math inline">\(R_{q}\)</span> 等等都能一通百通。<br />
+而对NTRU的格攻击则开启了基于分块矩阵的多变量、较复杂格构造的新大门。</p>
 
       
 
@@ -290,7 +303,7 @@ class="math inline">\(f\)</span> 各项的系数。</p>
       <i class="icon-circle-left"></i>
       <div class="article-nav-title">
         
-          foldexpr
+          C++——折叠表达式
         
       </div>
     </a>
@@ -324,7 +337,7 @@ class="math inline">\(f\)</span> 各项的系数。</p>
                 </span>
                 <span class="tooltip-content">
                     <div class="toc-article">
-                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%88%AA%E6%96%AD%E5%A4%9A%E9%A1%B9%E5%BC%8F"><span class="toc-number">1.</span> <span class="toc-text">截断多项式？</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AF%86%E9%92%A5%E7%94%9F%E6%88%90"><span class="toc-number">2.</span> <span class="toc-text">密钥生成</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8A%A0%E5%AF%86"><span class="toc-number">3.</span> <span class="toc-text">加密</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%A7%A3%E5%AF%86"><span class="toc-number">4.</span> <span class="toc-text">解密</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%AC%E9%92%A5%E6%94%BB%E5%87%BB%E4%B8%8E%E6%95%B0%E5%AD%A6%E9%9A%BE%E9%A2%98"><span class="toc-number">5.</span> <span class="toc-text">公钥攻击与数学难题</span></a></li></ol>
+                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%88%AA%E6%96%AD%E5%A4%9A%E9%A1%B9%E5%BC%8F"><span class="toc-number">1.</span> <span class="toc-text">截断多项式？</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AF%86%E9%92%A5%E7%94%9F%E6%88%90"><span class="toc-number">2.</span> <span class="toc-text">密钥生成</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8A%A0%E5%AF%86"><span class="toc-number">3.</span> <span class="toc-text">加密</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%A7%A3%E5%AF%86"><span class="toc-number">4.</span> <span class="toc-text">解密</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%AC%E9%92%A5%E6%94%BB%E5%87%BB%E4%B8%8E%E6%95%B0%E5%AD%A6%E9%9A%BE%E9%A2%98"><span class="toc-number">5.</span> <span class="toc-text">公钥攻击与数学难题</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">6.</span> <span class="toc-text">总结</span></a></li></ol>
                     </div>
                 </span>
             </div>
