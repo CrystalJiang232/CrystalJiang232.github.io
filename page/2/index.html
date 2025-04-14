@@ -152,19 +152,19 @@
           <div id="js-content" class="content-ll">
             
   
-    <article id="post-rev-decipher" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-misc/bomblab_wp" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/rev-decipher/">计系实验——&#34;BOMBLAB&#34;Writeup</a>
+      <a class="article-title" href="/misc/bomblab_wp/">计系实验——&#34;BOMBLAB&#34;Writeup</a>
     </h1>
   
 
         
-        <a href="/rev-decipher/" class="archive-article-date">
+        <a href="/misc/bomblab_wp/" class="archive-article-date">
   	<time datetime="2025-04-13T07:55:10.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-04-13</time>
 </a>
         
@@ -176,11 +176,9 @@
 <p><del>Crypto手勇闯Reverse新手村现状</del></p>
 </blockquote>
 <h1 id="背景介绍">背景介绍</h1>
-<p>这不是CTF比赛，而是一次<del>平平无奇</del>的“拆弹”实验。<br />
-实验要求：</p>
-<ul>
-<li>给了一个可执行文件<del><code>./bomb</code></del>，要求解析其每一阶段逻辑，将答案存储在<code>./bomb.txt</code>中。</li>
-</ul>
+<p>这不是CTF比赛，而是一次<del>平平无奇</del>的“拆弹”实验。</p>
+<p>实验要求：<br />
+给了一个可执行文件<del><code>./bomb</code></del>，要求解析其每一阶段逻辑，将答案存储在<code>./bomb.txt</code>中。</p>
 <p>本质上是一道逆向分析题。<br />
 本意这是想让人去用命令行的gdb等去磕汇编代码，但显然上千行的汇编还是稍微有些难顶，因而有必要让IDA这一逆向“外挂”助人一臂之力。<br />
 当然IDA此处利用的主要功能还是反编译协助生成伪C代码进行分析，虽然可读性依然极低（毕竟作为编译期语言，变量名和很多结构体之类的内存特征都被抹去，加上各种<del>乱七八糟的寄存器横跳</del>导致令人眼花缭乱的类型转换，以及各种调用协定+系统底层函数串门袭扰——<br />
@@ -467,6 +465,110 @@ Part3)的作用是实现了链表“重组”：先建立一个链表，然后�
 <p>按小端序读取，不难得出一种非递减序为<code>6 3 4 5 1 2</code>。</p>
 <p>解为：<code>6 3 4 5 1 2</code>或<code>6 4 3 5 1 2</code></p>
 <h1 id="阶段七隐藏关">阶段七（“隐藏关”）</h1>
+<h2 id="何谓隐藏">何谓“隐藏”</h2>
+<p>其一，其函数名为<code>secret_phase</code>(bushi)<br />
+其二，该阶段的触发不是显式进行的，而是依赖了一个名为<code>phase_defused</code>的函数，其在每个阶段结束后被调用：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">unsigned</span> __int64 <span class="title function_">phase_defused</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">char</span> v1; <span class="comment">// [rsp+8h] [rbp-70h] BYREF</span></span><br><span class="line">  <span class="type">char</span> v2; <span class="comment">// [rsp+Ch] [rbp-6Ch] BYREF</span></span><br><span class="line">  <span class="type">char</span> v3[<span class="number">88</span>]; <span class="comment">// [rsp+10h] [rbp-68h] BYREF</span></span><br><span class="line">  <span class="type">unsigned</span> __int64 v4; <span class="comment">// [rsp+68h] [rbp-10h]</span></span><br><span class="line"></span><br><span class="line">  v4 = __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">  send_msg(<span class="number">1LL</span>);</span><br><span class="line">  <span class="keyword">if</span> ( num_input_strings == <span class="number">6</span> )</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">if</span> ( (<span class="type">unsigned</span> <span class="type">int</span>)__isoc99_sscanf(&amp;unk_405910, <span class="string">&quot;%d %d %s&quot;</span>, &amp;v1, &amp;v2, v3) == <span class="number">3</span></span><br><span class="line">      &amp;&amp; !(<span class="type">unsigned</span> <span class="type">int</span>)strings_not_equal(v3, <span class="string">&quot;DrEvil&quot;</span>) )</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="built_in">puts</span>(<span class="string">&quot;Curses, you&#x27;ve found the secret phase!&quot;</span>);</span><br><span class="line">      <span class="built_in">puts</span>(<span class="string">&quot;But finding it and solving it are quite different...&quot;</span>);</span><br><span class="line">      secret_phase();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;Congratulations! You&#x27;ve defused the bomb!&quot;</span>);</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;Your instructor has been notified and will verify your solution.&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> v4 - __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注意到其前置的触发条件是<code>num_input_strings == 6</code>，而<code>num_input_strings</code>变量是在<code>read_line</code>函数（读取字符串）中被更改的。<br />
+故总结起来就是其<strong>必须在完成前六关后才能触发</strong>。</p>
+<p>里层<code>if</code>的约束条件为：</p>
+<ul>
+<li>先对一个奇怪的位置<code>0x405910</code>开始的字符串进行了<code>sscanf</code>，读取到<code>v1</code>、<code>v2</code>、<code>v3</code>中，其分别为整型、整型、字符串，要求<code>scanf</code>返回值为3；<br />
+</li>
+<li><code>strcmp(v3,"DrEvil") == 0</code>（等价）。</li>
+</ul>
+<p>回到栈空间及汇编代码中，可以看到以下片段：<br />
+<img src="/img/post_pics/CSrev/9.png" alt="stack_partition" /></p>
+<p>这个<code>0x405910</code>的位置特殊在于，其恰好在<code>char input_strings[240]</code>的隔壁。而<code>input_strings</code>只在<code>read_line</code>函数中有涉及过，查看其反编译代码：</p>
+<blockquote>
+<p>实践证明，不求甚解的可行性会随着时间、形势和目标等而不断转化。如最初我们认为对<code>read_line</code>函数不需要过于深究，但现在仍需回到其中才能探明“隐藏关”的启动方法。</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="type">char</span> *<span class="title function_">read_line</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">int</span> v0; <span class="comment">// ebp</span></span><br><span class="line">  <span class="type">const</span> <span class="type">char</span> *v1; <span class="comment">// rbx</span></span><br><span class="line">  <span class="type">int</span> v2; <span class="comment">// eax</span></span><br><span class="line">  <span class="type">int</span> v4; <span class="comment">// eax</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> ( !skip() )</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">if</span> ( infile == (FILE *)<span class="built_in">stdin</span> )</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="built_in">puts</span>(<span class="string">&quot;Error: Premature EOF on stdin&quot;</span>);</span><br><span class="line">      <span class="built_in">exit</span>(<span class="number">8</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> ( getenv(<span class="string">&quot;GRADE_BOMB&quot;</span>) )</span><br><span class="line">      <span class="built_in">exit</span>(<span class="number">0</span>);</span><br><span class="line">    infile = (FILE *)<span class="built_in">stdin</span>;</span><br><span class="line">    <span class="keyword">if</span> ( !skip() )</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="built_in">puts</span>(<span class="string">&quot;Error: Premature EOF on stdin&quot;</span>);</span><br><span class="line">      <span class="built_in">exit</span>(<span class="number">0</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  v0 = num_input_strings;</span><br><span class="line">  v1 = &amp;input_strings[<span class="number">80</span> * num_input_strings];</span><br><span class="line">  v2 = <span class="built_in">strlen</span>(v1);</span><br><span class="line">  <span class="keyword">if</span> ( v2 &gt; <span class="number">78</span> )</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;Error: Input line too long&quot;</span>);</span><br><span class="line">    v4 = num_input_strings++;</span><br><span class="line">    <span class="built_in">strcpy</span>(&amp;input_strings[<span class="number">80</span> * v4], <span class="string">&quot;***truncated***&quot;</span>);</span><br><span class="line">    explode_bomb();</span><br><span class="line">  &#125;</span><br><span class="line">  input_strings[<span class="number">80</span> * v0 - <span class="number">1</span> + v2] = <span class="number">0</span>;</span><br><span class="line">  num_input_strings = v0 + <span class="number">1</span>;</span><br><span class="line">  <span class="keyword">return</span> v1;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>不难推断，<code>input_strings</code>是一个存放了输入的<code>char[???]</code>，但显然<code>???</code>不应为<code>240</code>（因为每个字符串都预留了<code>80</code>的空间）；IDA将之标记为<code>char[240]</code>依然和编译-反编译过程等有关（<del>中途杀出来的变量搅混水</del>）。<br />
+但既然如此，鉴于<code>input_strings</code>的起始地址为<code>0x405820</code>，则对于下标为<code>i</code>的题目，存放输入字符串的地址就是<code>0x405820 + i*80</code>。<br />
+所以<code>0x405910</code>恰好就是下标为<code>3</code>，即阶段四时我们的输入。</p>
+<blockquote>
+<p>Surprise m***** f***er!(bushi)</p>
+</blockquote>
+<p>确定了<code>sscanf</code>的作用对象后，回到阶段四的答案（两个整数，以<code>66 2</code>为例），在其后再追加一个<code>DrEvil</code>即可触发隐藏关；隐藏关的输入则在第七行正常进行。</p>
+<h2 id="反编译代码-5">反编译代码</h2>
+<h3 id="secret_phase"><code>secret_phase</code></h3>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">__int64 <span class="title function_">secret_phase</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">const</span> <span class="type">char</span> *line; <span class="comment">// rdi</span></span><br><span class="line">  <span class="type">int</span> v1; <span class="comment">// ebx</span></span><br><span class="line"></span><br><span class="line">  line = (<span class="type">const</span> <span class="type">char</span> *)read_line();</span><br><span class="line">  v1 = strtol(line, <span class="number">0LL</span>, <span class="number">10</span>);</span><br><span class="line">  <span class="keyword">if</span> ( (<span class="type">unsigned</span> <span class="type">int</span>)(v1 - <span class="number">1</span>) &gt; <span class="number">0x3E8</span> )</span><br><span class="line">    explode_bomb();</span><br><span class="line">  <span class="keyword">if</span> ( (<span class="type">unsigned</span> <span class="type">int</span>)fun7((__int64)&amp;n1, v1) != <span class="number">5</span> )</span><br><span class="line">    explode_bomb();</span><br><span class="line">  <span class="built_in">puts</span>(<span class="string">&quot;Wow! You&#x27;ve defused the secret stage!&quot;</span>);</span><br><span class="line">  <span class="keyword">return</span> phase_defused();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="fun7"><code>fun7</code></h3>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">__int64 __fastcall <span class="title function_">fun7</span><span class="params">(__int64 a1, <span class="type">int</span> a2)</span></span><br><span class="line">&#123;</span><br><span class="line">  __int64 result; <span class="comment">// rax</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> ( !a1 )</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0xFFFFFFFF</span>LL;</span><br><span class="line">  <span class="keyword">if</span> ( *(_DWORD *)a1 &gt; a2 )</span><br><span class="line">    <span class="keyword">return</span> <span class="number">2</span> * (<span class="type">unsigned</span> <span class="type">int</span>)fun7(*(_QWORD *)(a1 + <span class="number">8</span>));</span><br><span class="line">  result = <span class="number">0LL</span>;</span><br><span class="line">  <span class="keyword">if</span> ( *(_DWORD *)a1 != a2 )</span><br><span class="line">    <span class="keyword">return</span> <span class="number">2</span> * (<span class="type">unsigned</span> <span class="type">int</span>)fun7(*(_QWORD *)(a1 + <span class="number">16</span>)) + <span class="number">1</span>;</span><br><span class="line">  <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="解析-6">解析</h2>
+<p>首先<code>secret_phase</code>部分还是读取了一个字符串，并将之用<code>strtol</code>函数转换为整型(<code>long</code>)。<br />
+第一个<code>if</code>的约束翻译为要求 <span class="math inline">\(v1 \in
+[1,1001]\)</span>；<br />
+第二个<code>if</code>则要求<code>fun7(&amp;n1,v1)</code>的返回值为5，因此顺势继续看向<code>fun7</code>的逻辑。</p>
+<p><code>fun7</code>接受的第一个参数是一个指针，返回值类型为<code>__int64</code>。</p>
+<blockquote>
+<p>这里可以发现<code>fun7</code>的递归调用中同样出现了“失踪”实参的情况，其原因也是<code>__fastcall</code>下寄存器<code>rsi</code>的数值没有发生改变。<br />
+理解作每次递归时<code>a2</code>的值不变即可（实现了其类似一个“静态”值的效果，如此亦能发挥<code>__fastcall</code>的优越性（复用寄存器，无需重复复制变量、进出栈，效率极高）。</p>
+</blockquote>
+<p>若<code>a1</code>为空(<code>NULL</code>,<del><code>nullptr</code></del>)，则返回
+<span class="math inline">\(2^{32} - 1\)</span>。</p>
+<blockquote>
+<p>显式指定<code>LL</code>后缀是避免默认字面量类型<code>int</code>截断（最大值
+<span class="math inline">\(2^{31} - 1\)</span>）。<br />
+趣话C/C++的字面量：C/C++对于输入的整型字面量(literals)会根据其大小“自适应”地匹配对应的数据类型，但可以通过指定后缀来覆写之。默认取在其范围内尽可能小的类型（<code>int</code>-<code>unsigned int</code>-<code>long long</code>-<code>unsigned long long</code>）；<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> a = <span class="number">1</span>; <span class="comment">//a is int(1 is of int type by default)</span></span><br><span class="line"><span class="keyword">auto</span> b = <span class="number">-3</span>; <span class="comment">//b is int(-3 is of int type by default)</span></span><br><span class="line"><span class="keyword">auto</span> c = <span class="number">1LL</span>; <span class="comment">//c is long long(default is overridden by explicit literal suffix)</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">auto</span> d = <span class="number">0xFFFFFFFF</span>; <span class="comment">//d is unsigned int(since `int` cannot contain such number as 0xFFFFFFFF)</span></span><br><span class="line"><span class="keyword">auto</span> e = <span class="number">0x7FFFFFFF</span>; <span class="comment">//e is int(actually maximum possible value of `int`)</span></span><br><span class="line"><span class="keyword">auto</span> f = <span class="number">0xFFFFFFFFFFFFFFFF</span>; <span class="comment">//f is unsigned long long</span></span><br><span class="line"><span class="keyword">auto</span> g = <span class="number">0x7FFFFFFFFFFFFFFF</span>; <span class="comment">//g is long long</span></span><br><span class="line"><span class="comment">//auto h = 0x10000000000000000; //Error: Integer constant is too big(exceeds 2^&#123;64&#125; - 1 limit of unsigned long long)</span></span><br></pre></td></tr></table></figure>
+需要注意的是C/C++中<strong>负号并不是字面量的一部分</strong>，字面量的类型仅取决于其整数部分，负号只是一个运算符。因此如<code>-0x80000000</code>并不会被视作一个取值最小的<code>int</code>，而会被视为取值最大的<code>unsigned int</code>取负<del>巧的是运算结果依然是<code>0x80000000</code></del>：<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">static_assert</span>(<span class="number">-0x80000000</span> == <span class="number">0x80000000</span>); <span class="comment">//passes</span></span><br><span class="line"><span class="built_in">static_assert</span>(<span class="number">-0xFFFFFFFFFFFFFFFF</span> == <span class="number">1</span>); <span class="comment">//passes, no error in constant resolution</span></span><br></pre></td></tr></table></figure></p>
+</blockquote>
+<p>回归题解，在<code>a1</code>不为空时，判定<code>*(_DWORD *)a1</code>和<code>a2</code>的大小关系：</p>
+<ul>
+<li>大于，返回<code>2*fun7(*(_QWORD *)(a1 + 8))</code>；<br />
+</li>
+<li>小于，返回<code>2*fun7(*(_QWORD *)(a1 + 16)) + 1</code>；<br />
+</li>
+<li>等于，返回<code>0</code>。</li>
+</ul>
+<p>有了阶段六的链表解析经验，不难看出这也是一种链表访问的结构。</p>
+<blockquote>
+<p><code>DWORD</code>和<code>QWORD</code>互化还是因为内存解读方式的问题——这个链表结点的数据区类型是2字(32位)的<code>int</code>，指针类型则是4字。</p>
+</blockquote>
+<p>点进<code>n1</code>的栈内存区，可以发现以下内容：<br />
+<img src="/img/post_pics/CSrev/5.png" alt="n1_stack" /><br />
+由此不难发现，这是一个二叉树结构，<code>n1</code>就是该二叉树的根结点；<br />
+结合地址可以判断，比较结果为大于时，返回左结点的2倍，小于时返回右子结点的2倍加1，等于时返回零。<br />
+若待解引用的结点是空结点，返回 <span class="math inline">\(2^{32} -
+1\)</span>。</p>
+<p>由于栈内存区已确定，逐个地址构建二叉树结构，随后按该规则遍历即可，二叉树结构<del>及邪道速通法</del>见下。</p>
+<blockquote>
+<p>“抄近道”：由于节点数较多，逐个寻址较为繁琐。继续往下翻，可以发现结点名似乎有所蹊跷：<br />
+<img src="/img/post_pics/CSrev/6.png" alt="nname_1" /><br />
+注意到<code>n21</code>恰好是<code>n1</code>的左子结点，<code>n22</code>恰好是<code>n1</code>的右子结点。<br />
+再往下寻址+翻栈内存，可以找到<code>n31</code><sub><code>n34</code>、<code>n41</code></sub><code>n48</code>，其中<code>n41</code>~<code>n48</code>是叶结点。<br />
+不难验证，变量名末位是在二叉树结构中层序遍历的次序。由此结合数据区内容，整理得到二叉树结构如下：<br />
+<img src="/img/post_pics/CSrev/7.jpg" alt="bintree" /></p>
+</blockquote>
+<p>但仅完成双链表的整理尚不够。回顾最开始的<code>if</code>约束，要求<code>fun7(&amp;n1,v1) == 5</code>。<br />
+而因为其中返回值传递用的都是<code>__int64</code>，显然我们不希望其中的<code>0xFFFFFFFF</code>被加入计算（或者能在某一步计算被“截断”）。</p>
+<p>又因为<code>fun7</code>的返回值只能是以下四种之一：2倍左结点返回值、2倍右结点返回值+1、<code>0</code>、<code>0xFFFFFFFF</code>；<br />
+结合该二叉树只有4层，显然我们需要获得的返回值<code>5</code>只能由<code>4+1</code>，即<code>2*2+1</code>获得。</p>
+<p>继续推断，<code>2*2+1</code>应再解作<code>2*(2*1)+1</code>（展开一个隐式的因子<code>1</code>）。按递归的逆序分析形如：</p>
+<ul>
+<li>对于第四层的某个结点，若其访问子结点，结果必定为<code>0xFFFFFFFF</code>（因为其为空），而这个值不能被传递上去，因此该结点的数值只能等于<code>v2</code>来实现截断。由于这个条件具有充要条件的属性，因此反过来，<code>v2</code>的值也只能是四个叶结点所含有的<code>int</code>之一，此时第四层的返回值就是<code>0</code>；<br />
+</li>
+<li>对于第三层，因为第四层返回的一定是<code>0</code>，再将内层表达式<code>2*1</code>转写为<code>2*((2*0)+1)</code>，不难看出其要求第三层的结点数据<code>i</code>必须小于<code>v2</code>，方能实现返回<code>(2*0)+1</code>的效果；<br />
+</li>
+<li>对于第二层，往外看一层括号，显然需要让其结点数据大于<code>v2</code>；<br />
+</li>
+<li>对于第一层，同理可得其结点数据应小于<code>v2</code>。</li>
+</ul>
+<p>除结点数据要求外，还要求该访问顺序在二叉树中可以实现。<br />
+逐个尝试可得只有<code>v2 = 0x2f</code>满足要求，即<code>v2 = 47</code>。</p>
+<p>解为：（不考虑对阶段四答案的追加）<br />
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">47</span><br></pre></td></tr></table></figure></p>
+<h1 id="txt及结果"><code>.txt</code>及结果</h1>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">I can see Russia from my house!</span><br><span class="line">0 1 1 2 3 5</span><br><span class="line">0 104</span><br><span class="line">66 2 DrEvil</span><br><span class="line">IOAPEG</span><br><span class="line">6 3 4 5 1 2</span><br><span class="line">47</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p><img src="/img/post_pics/CSrev/8.png" /></p>
+<h1 id="彩蛋c代码还原">彩蛋：C代码“还原”</h1>
+<blockquote>
+<p>咕咕咕，曲项向天咕</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
       
 
@@ -475,11 +577,37 @@ Part3)的作用是实现了链表“重组”：先建立一个链表，然后�
     <div class="article-info article-info-index">
       
       
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">wp</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">C/C++</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
       
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/闲笔//" class="article-tag-list-link color3">闲笔</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/rev-decipher/">展开全文 >></a>
+          <a class="article-more-a" href="/misc/bomblab_wp/">展开全文 >></a>
         </p>
       
 
@@ -905,6 +1033,10 @@ MathJax.Hub.Queue(function() {
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color1">C++20</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color1">C/C++</a>
               </li>
             
             <div class="clearfix"></div>
