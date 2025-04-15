@@ -228,6 +228,7 @@ class="math inline">\(q &gt; (6d + 1)p\)</span>。</li>
 class="math inline">\(q &gt; (6d + 1)p\)</span> 下自行决定，一般选择
 <span class="math inline">\(d \approx \frac{N}{3}\)</span>
 来达到较好的安全性。</p>
+<hr />
 <blockquote>
 <p>定义函数 <span class="math inline">\(T(d_{1},d_{2}) (d_{1} + d_{2}
 &lt; q)\)</span> 表示系数 <span class="math inline">\(\{1,-1\}\)</span>
@@ -273,7 +274,16 @@ class="math inline">\(R_{p}\)</span> 下后再与该环下的 <span
 class="math inline">\(f^{-1}\)</span> 相乘。</p>
 </blockquote>
 <hr />
-<p>正确性证明：</p>
+<h2 id="正确性证明">正确性证明</h2>
+<p>先在 <span class="math inline">\(R_{q}\)</span> 下计算， <span
+class="math inline">\(\begin{align*} f \cdot c &amp;= pr \codt hf + mf
+\\ f \cdot c &amp;= prg + mf \end{align*}\)</span><br />
+随后换环到 <span class="math inline">\(R_{p}\)</span> 上，显然 <span
+class="math inline">\(prg \equiv 0 (\bmod p)\)</span>，因此 <span
+class="math inline">\((fc \bmod q) \equiv fm (\bmod p)\)</span><br />
+进而 <span class="math inline">\(R_{p}\)</span> 下 <span
+class="math inline">\(fmf^{-1} = m\)</span><br />
+解密正确性得证。</p>
 <h1 id="公钥攻击与数学难题">公钥攻击与数学难题</h1>
 <p>NTRU作为一种公钥密码体制，其依然依赖于数学难题来实现公钥与私钥间的“陷门”特征——即从公钥推导出私钥在理论上是可行的。<br />
 已知公钥时推导私钥的方法如下：<br />
@@ -285,6 +295,7 @@ class="math inline">\(f\)</span> 各项的系数。</p>
 <p>有关格、格基规约(LLL)等相关的基础知识可以移步<a
 href="/crypto/lattice/">格</a>。</p>
 </blockquote>
+<h1 id="加解密攻击应用示例">加解密、攻击应用示例</h1>
 <h1 id="总结">总结</h1>
 <p>格密码是后量子密码学中极为重要的一环，而其中NTRU亦以其实现开销低等特性称为其中耀眼的新星。<br />
 学习NTRU算法的加密、解密原理时更应发挥离散数学的优雅之处——只定义“模板”，无论最终的实现是在
