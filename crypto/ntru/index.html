@@ -8,15 +8,15 @@
   <link rel="dns-prefetch" href="https://crystaljiang232.github.io">
   <title>NTRU | 玲珑</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="格密码入坑到入土一条龙  NTRU(Nth-degree TRunctuated polynomial Unit)，即“N次截断多项式单元”，是格密码中极为知名、应用较广的一种加密原理。 截断多项式？ 定义一个多项式 \(f \in R_{q}\) 。 密钥生成  定义函数 \(T(d_{1},d_{2}) (d_{1} + d_{2} &lt; q)\) 表示系数 \(\">
+  <meta name="description" content="格密码入坑到入土一条龙  NTRU(Nth-degree TRunctuated polynomial Unit)，即“N次截断多项式单元”，是格密码中极为知名、应用较广的一种加密原理。 截断多项式？ 定义一个多项式 \(f \in R_{q}\) 。 参数与密钥生成 NTRU的关键参数为 \((N,p,q,d)\)。其中，  \(N - 1\) 为多项式的最高幂数。越大">
 <meta property="og:type" content="article">
 <meta property="og:title" content="NTRU">
 <meta property="og:url" content="https://crystaljiang232.github.io/crypto/ntru/index.html">
 <meta property="og:site_name" content="玲珑">
-<meta property="og:description" content="格密码入坑到入土一条龙  NTRU(Nth-degree TRunctuated polynomial Unit)，即“N次截断多项式单元”，是格密码中极为知名、应用较广的一种加密原理。 截断多项式？ 定义一个多项式 \(f \in R_{q}\) 。 密钥生成  定义函数 \(T(d_{1},d_{2}) (d_{1} + d_{2} &lt; q)\) 表示系数 \(\">
+<meta property="og:description" content="格密码入坑到入土一条龙  NTRU(Nth-degree TRunctuated polynomial Unit)，即“N次截断多项式单元”，是格密码中极为知名、应用较广的一种加密原理。 截断多项式？ 定义一个多项式 \(f \in R_{q}\) 。 参数与密钥生成 NTRU的关键参数为 \((N,p,q,d)\)。其中，  \(N - 1\) 为多项式的最高幂数。越大">
 <meta property="og:locale" content="en_US">
-<meta property="article:published_time" content="2025-04-09T06:38:03.000Z">
-<meta property="article:modified_time" content="2025-04-12T13:35:31.532Z">
+<meta property="article:published_time" content="2025-04-15T10:38:03.000Z">
+<meta property="article:modified_time" content="2025-04-15T10:32:01.675Z">
 <meta property="article:author" content="Hibiscus">
 <meta property="article:tag" content="Crypto">
 <meta name="twitter:card" content="summary">
@@ -168,7 +168,7 @@
 
         
         <a href="/crypto/ntru/" class="archive-article-date">
-  	<time datetime="2025-04-09T06:38:03.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-04-09</time>
+  	<time datetime="2025-04-15T10:38:03.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-04-15</time>
 </a>
         
       </header>
@@ -183,19 +183,100 @@ Unit)，即“N次截断多项式单元”，是格密码中极为知名、应�
 <h1 id="截断多项式">截断多项式？</h1>
 <p>定义一个多项式 <span class="math inline">\(f \in R_{q}\)</span>
 。</p>
-<h1 id="密钥生成">密钥生成</h1>
+<h1 id="参数与密钥生成">参数与密钥生成</h1>
+<p>NTRU的关键参数为 <span
+class="math inline">\((N,p,q,d)\)</span>。其中，</p>
+<ul>
+<li><span class="math inline">\(N - 1\)</span>
+为多项式的最高幂数。越大则格攻击构造格的维度越高，密码系统越安全，但代价是运算效率会大幅下降；一般选择
+<span class="math inline">\(N \in [250,2500]\)</span>。<br />
+</li>
+<li><span class="math inline">\(p,q,d\)</span> 均为整数，要求 <span
+class="math inline">\(gcd(p,q) = 1\)</span> 且 <span
+class="math inline">\(gcd(q,N) = 1\)</span>，<span
+class="math inline">\(q &gt; (6d + 1)p\)</span>。</li>
+</ul>
+<p>NIST对NTRU的强度-推荐参数组合如下：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">强度</th>
+<th style="text-align: center;">N</th>
+<th style="text-align: center;">p</th>
+<th style="text-align: center;">q</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">标准</td>
+<td style="text-align: center;">251</td>
+<td style="text-align: center;">3</td>
+<td style="text-align: center;">128</td>
+</tr>
+<tr>
+<td style="text-align: center;">高</td>
+<td style="text-align: center;">347</td>
+<td style="text-align: center;">3</td>
+<td style="text-align: center;">128</td>
+</tr>
+<tr>
+<td style="text-align: center;">最高</td>
+<td style="text-align: center;">503</td>
+<td style="text-align: center;">3</td>
+<td style="text-align: center;">256</td>
+</tr>
+</tbody>
+</table>
+<p>参数 <span class="math inline">\(d\)</span> 可在满足 <span
+class="math inline">\(q &gt; (6d + 1)p\)</span> 下自行决定，一般选择
+<span class="math inline">\(d \approx \frac{N}{3}\)</span>
+来达到较好的安全性。</p>
 <blockquote>
 <p>定义函数 <span class="math inline">\(T(d_{1},d_{2}) (d_{1} + d_{2}
 &lt; q)\)</span> 表示系数 <span class="math inline">\(\{1,-1\}\)</span>
 <strong>计数</strong>分别为 <span
 class="math inline">\(\{d_{1},d_{2}\}\)</span> 的多项式 <span
-class="math inline">\(f \in R_{q}\)</span> 的集合。<br />
+class="math inline">\(f\)</span> 的集合。<br />
 如，<span class="math inline">\(f = x^{6} + x^{3} - x^{2} + x - 1 \in
-R_{7}\)</span> 满足 <span class="math inline">\(f \in
 T(3,2)\)</span>。</p>
 </blockquote>
+<p>选择两个多项式 <span class="math inline">\(f = \sum_{i=0}^{N-1}
+f_{i}x^{i} \in T(d+1,d)\)</span>，<span class="math inline">\(g =
+\sum_{i=0}^{N-1} g_{i}x^{i} \in T(d,d)\)</span>。</p>
+<p>再计算 <span class="math inline">\(h \equiv f^{-1}g (\bmod
+q)\)</span>，随后将 <span class="math inline">\(g\)</span>
+的记录销毁。<br />
+公钥为 <span class="math inline">\(h\)</span>，私钥为 <span
+class="math inline">\(R_{p}\)</span> 和 <span
+class="math inline">\(R_{q}\)</span> 下的 <span
+class="math inline">\(f^{-1}\)</span>（由于 <span
+class="math inline">\(p,q\)</span> 是既定参数，可以认为私钥就是 <span
+class="math inline">\(f\)</span>）。</p>
+<blockquote>
+<p><span class="math inline">\(g\)</span> 不是公钥或私钥，但知道 <span
+class="math inline">\(g\)</span> 就可以完全攻破NTRU，故其地位类似于RSA中
+<span class="math inline">\(N\)</span> 的因数分解，不应保留之。</p>
+</blockquote>
 <h1 id="加密">加密</h1>
+<p>先将明文编码为一个 <span class="math inline">\(n\)</span> 次多项式
+<span class="math inline">\(m \in \{-1,0,1\}^{N}\)</span>。<br />
+加密时另随机生成一个多项式 <span class="math inline">\(r \in
+\{-1,0,1\}^{N}\)</span>，计算 <span class="math inline">\(c \equiv ph
+\cdot r + m (\bmod q)\)</span>，输出密文 <span
+class="math inline">\(c\)</span>。</p>
 <h1 id="解密">解密</h1>
+<p>计算 <span class="math inline">\(m \equiv f^{-1} \cdot (f \cdot c
+(\bmod q)) (\bmod p)\)</span>，输出明文 <span
+class="math inline">\(m\)</span>。</p>
+<blockquote>
+<p>注意其中涉及到了“换环”，即现在 <span
+class="math inline">\(R_{q}\)</span> 下计算 <span
+class="math inline">\(f \cdot c\)</span>，将结果转到 <span
+class="math inline">\(R_{p}\)</span> 下后再与该环下的 <span
+class="math inline">\(f^{-1}\)</span> 相乘。</p>
+</blockquote>
+<hr />
+<p>正确性证明：</p>
 <h1 id="公钥攻击与数学难题">公钥攻击与数学难题</h1>
 <p>NTRU作为一种公钥密码体制，其依然依赖于数学难题来实现公钥与私钥间的“陷门”特征——即从公钥推导出私钥在理论上是可行的。<br />
 已知公钥时推导私钥的方法如下：<br />
@@ -234,6 +315,17 @@ class="math inline">\(R_{q}\)</span> 等等都能一通百通。<br />
 	</div>
 
       
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/闲笔//" class="article-tag-list-link color3">闲笔</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
 
       
 
@@ -299,18 +391,9 @@ class="math inline">\(R_{q}\)</span> 等等都能一通百通。<br />
   
 <nav id="article-nav">
   
-    <a href="/cpp/foldexpr/" id="article-nav-newer" class="article-nav-link-wrap">
-      <i class="icon-circle-left"></i>
-      <div class="article-nav-title">
-        
-          C++——折叠表达式
-        
-      </div>
-    </a>
   
-  
-    <a href="/cpp/variadic/" id="article-nav-older" class="article-nav-link-wrap">
-      <div class="article-nav-title">C++——可变参数模板</div>
+    <a href="/misc/bomblab_wp/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">计系实验——&#34;BOMBLAB&#34;Writeup</div>
       <i class="icon-circle-right"></i>
     </a>
   
@@ -337,7 +420,7 @@ class="math inline">\(R_{q}\)</span> 等等都能一通百通。<br />
                 </span>
                 <span class="tooltip-content">
                     <div class="toc-article">
-                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%88%AA%E6%96%AD%E5%A4%9A%E9%A1%B9%E5%BC%8F"><span class="toc-number">1.</span> <span class="toc-text">截断多项式？</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AF%86%E9%92%A5%E7%94%9F%E6%88%90"><span class="toc-number">2.</span> <span class="toc-text">密钥生成</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8A%A0%E5%AF%86"><span class="toc-number">3.</span> <span class="toc-text">加密</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%A7%A3%E5%AF%86"><span class="toc-number">4.</span> <span class="toc-text">解密</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%AC%E9%92%A5%E6%94%BB%E5%87%BB%E4%B8%8E%E6%95%B0%E5%AD%A6%E9%9A%BE%E9%A2%98"><span class="toc-number">5.</span> <span class="toc-text">公钥攻击与数学难题</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">6.</span> <span class="toc-text">总结</span></a></li></ol>
+                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%88%AA%E6%96%AD%E5%A4%9A%E9%A1%B9%E5%BC%8F"><span class="toc-number">1.</span> <span class="toc-text">截断多项式？</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E6%95%B0%E4%B8%8E%E5%AF%86%E9%92%A5%E7%94%9F%E6%88%90"><span class="toc-number">2.</span> <span class="toc-text">参数与密钥生成</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8A%A0%E5%AF%86"><span class="toc-number">3.</span> <span class="toc-text">加密</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%A7%A3%E5%AF%86"><span class="toc-number">4.</span> <span class="toc-text">解密</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%AC%E9%92%A5%E6%94%BB%E5%87%BB%E4%B8%8E%E6%95%B0%E5%AD%A6%E9%9A%BE%E9%A2%98"><span class="toc-number">5.</span> <span class="toc-text">公钥攻击与数学难题</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">6.</span> <span class="toc-text">总结</span></a></li></ol>
                     </div>
                 </span>
             </div>

@@ -25,7 +25,7 @@
 <meta property="og:image" content="https://crystaljiang232.github.io/img/post_pics/CSrev/7.jpg">
 <meta property="og:image" content="https://crystaljiang232.github.io/img/post_pics/CSrev/8.png">
 <meta property="article:published_time" content="2025-04-13T07:55:10.000Z">
-<meta property="article:modified_time" content="2025-04-14T05:50:40.534Z">
+<meta property="article:modified_time" content="2025-04-14T13:20:46.137Z">
 <meta property="article:author" content="Hibiscus">
 <meta property="article:tag" content="wp">
 <meta property="article:tag" content="C&#x2F;C++">
@@ -384,7 +384,7 @@ stop the bomb with ctrl-c, do you?</del></p>
 依然还是编译-反编译带来的语义崩坏通病<del>有点类似于将语言A的句子翻译成语言B再翻译回来的感觉</del>。梳理其逻辑可以转写如下：</p>
 <ul>
 <li><code>*v1</code>访问过的所有元素（也就是<code>v16</code>的所有元素）数值必须在
-<span class="math inline">\(\[1,6]\)</span>；<br />
+<span class="math inline">\([1,6]\)</span>；<br />
 </li>
 <li><code>v1</code>和<code>&amp;v16[v3]</code>都是指针，其中<code>v3</code>在<code>do-while</code>循环前的初始值必为<code>v1+1</code>，相当于其访问元素初始下标比<code>v1</code>大1。进而，<code>do-while</code>循环的约束拓展、简写后可写作“<code>v16</code>中的元素两两不同”。</li>
 </ul>
@@ -582,7 +582,7 @@ Part3)的作用是实现了链表“重组”：先建立一个链表，然后�
 <blockquote>
 <p>咕咕咕，曲项向天咕</p>
 </blockquote>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">phase_1</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
       
 
@@ -682,6 +682,15 @@ Part3)的作用是实现了链表“重组”：先建立一个链表，然后�
 
   
 <nav id="article-nav">
+  
+    <a href="/crypto/ntru/" id="article-nav-newer" class="article-nav-link-wrap">
+      <i class="icon-circle-left"></i>
+      <div class="article-nav-title">
+        
+          NTRU
+        
+      </div>
+    </a>
   
   
     <a href="/cpp/foldexpr/" id="article-nav-older" class="article-nav-link-wrap">
