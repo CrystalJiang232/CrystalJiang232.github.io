@@ -6,14 +6,14 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="https://crystaljiang232.github.io">
-  <title>计系实验——&#34;BOMBLAB&#34;Writeup | 玲珑</title>
+  <title>CSAPP-BOMBLAB Writeup | 玲珑</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="Crypto手勇闯Reverse新手村现状  背景介绍 这不是CTF比赛，而是一次平平无奇的“拆弹”实验。 实验要求： 给了一个可执行文件.&#x2F;bomb，要求解析其每一阶段逻辑，将答案存储在.&#x2F;bomb.txt中。 本质上是一道逆向分析题。 本意这是想让人去用命令行的gdb等去磕汇编代码，但显然上千行的汇编还是稍微有些难顶，因而有必要让IDA这一逆向“外挂”助人一臂之力。 当然I">
+  <meta name="description" content="Crypto手勇闯Reverse新手村现状   前言：本wp不涉及任何x86-64汇编指令（因为在写这份wp时笔者还没好好学汇编）  背景介绍 这不是CTF比赛，而是一次平平无奇的“拆弹”实验。 实验要求： 给了一个可执行文件.&#x2F;bomb，要求解析其每一阶段逻辑，将答案存储在.&#x2F;bomb.txt中。 本质上是一道逆向分析题。 本意这是想让人去用命令行的gdb等去磕汇编代码，">
 <meta property="og:type" content="article">
-<meta property="og:title" content="计系实验——&quot;BOMBLAB&quot;Writeup">
+<meta property="og:title" content="CSAPP-BOMBLAB Writeup">
 <meta property="og:url" content="https://crystaljiang232.github.io/misc/bomblab_wp/index.html">
 <meta property="og:site_name" content="玲珑">
-<meta property="og:description" content="Crypto手勇闯Reverse新手村现状  背景介绍 这不是CTF比赛，而是一次平平无奇的“拆弹”实验。 实验要求： 给了一个可执行文件.&#x2F;bomb，要求解析其每一阶段逻辑，将答案存储在.&#x2F;bomb.txt中。 本质上是一道逆向分析题。 本意这是想让人去用命令行的gdb等去磕汇编代码，但显然上千行的汇编还是稍微有些难顶，因而有必要让IDA这一逆向“外挂”助人一臂之力。 当然I">
+<meta property="og:description" content="Crypto手勇闯Reverse新手村现状   前言：本wp不涉及任何x86-64汇编指令（因为在写这份wp时笔者还没好好学汇编）  背景介绍 这不是CTF比赛，而是一次平平无奇的“拆弹”实验。 实验要求： 给了一个可执行文件.&#x2F;bomb，要求解析其每一阶段逻辑，将答案存储在.&#x2F;bomb.txt中。 本质上是一道逆向分析题。 本意这是想让人去用命令行的gdb等去磕汇编代码，">
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="https://crystaljiang232.github.io/img/post_pics/CSrev/1.png">
 <meta property="og:image" content="https://crystaljiang232.github.io/img/post_pics/CSrev/2.png">
@@ -25,7 +25,7 @@
 <meta property="og:image" content="https://crystaljiang232.github.io/img/post_pics/CSrev/7.jpg">
 <meta property="og:image" content="https://crystaljiang232.github.io/img/post_pics/CSrev/8.png">
 <meta property="article:published_time" content="2025-04-13T07:55:10.000Z">
-<meta property="article:modified_time" content="2025-04-14T13:20:46.137Z">
+<meta property="article:modified_time" content="2025-05-22T08:15:52.317Z">
 <meta property="article:author" content="Hibiscus">
 <meta property="article:tag" content="wp">
 <meta property="article:tag" content="C&#x2F;C++">
@@ -173,7 +173,7 @@
         
   
     <h1 class="article-title" itemprop="name">
-      计系实验——&#34;BOMBLAB&#34;Writeup
+      CSAPP-BOMBLAB Writeup
     </h1>
   
 
@@ -188,6 +188,9 @@
       
         <blockquote>
 <p><del>Crypto手勇闯Reverse新手村现状</del></p>
+</blockquote>
+<blockquote>
+<p>前言：本wp不涉及任何x86-64汇编指令<del>（因为在写这份wp时笔者还没好好学汇编）</del></p>
 </blockquote>
 <h1 id="背景介绍">背景介绍</h1>
 <p>这不是CTF比赛，而是一次<del>平平无奇</del>的“拆弹”实验。</p>

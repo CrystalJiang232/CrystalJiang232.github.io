@@ -6,14 +6,20 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="https://crystaljiang232.github.io">
-  <title>玲珑</title>
+  <title>C++——多线程的晨曦 | 玲珑</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="玲珑">
-<meta property="og:url" content="https://crystaljiang232.github.io/page/11/index.html">
+  <meta name="description" content="线程 线程(thread)和进程(process)都是并发计算中的重要工具。其和程序(program)的基本关系形如：  一个程序可以有多个进程，一个进程可以有多个线程；  线程是进程的执行单元，每个进程至少有一个主线程，线程不能脱离进程而存在。  从资源分配（CPU、文件描述符、内存等）上看：  进程是操作系统分配资源的基本单位，不同进程间不会相互干扰；  线程则只拥有最基">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C++——多线程的晨曦">
+<meta property="og:url" content="https://crystaljiang232.github.io/cpp/thread/index.html">
 <meta property="og:site_name" content="玲珑">
+<meta property="og:description" content="线程 线程(thread)和进程(process)都是并发计算中的重要工具。其和程序(program)的基本关系形如：  一个程序可以有多个进程，一个进程可以有多个线程；  线程是进程的执行单元，每个进程至少有一个主线程，线程不能脱离进程而存在。  从资源分配（CPU、文件描述符、内存等）上看：  进程是操作系统分配资源的基本单位，不同进程间不会相互干扰；  线程则只拥有最基">
 <meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2025-05-22T00:35:18.000Z">
+<meta property="article:modified_time" content="2025-05-22T08:50:27.769Z">
 <meta property="article:author" content="Hibiscus">
+<meta property="article:tag" content="Modern C++">
+<meta property="article:tag" content="长文精选">
 <meta name="twitter:card" content="summary">
   
     <link rel="alternative" href="/atom.xml" title="玲珑" type="application/atom+xml">
@@ -150,375 +156,259 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
-  
-    <article id="post-crypto/dlog" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+            <article id="post-cpp/thread" class="article article-type-post " itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/crypto/dlog/">离散对数——Discrete Logorithm</a>
+    <h1 class="article-title" itemprop="name">
+      C++——多线程的晨曦
     </h1>
   
 
         
-        <a href="/crypto/dlog/" class="archive-article-date">
-  	<time datetime="2024-12-10T12:18:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-10</time>
+        <a href="/cpp/thread/" class="archive-article-date">
+  	<time datetime="2025-05-22T00:35:18.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-05-22</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>离散对数问题，Discrete Logorithm
-Problem，简称DLP，是非对称密码学所依赖的极为重要的数学难题之一。<br />
-经典DLP问题描述：<br />
-给定 <span class="math inline">\(g^x \equiv c (mod p) （g,x &lt;
-p）\)</span>，由 <span class="math inline">\((g,x)\)</span> 计算 <span
-class="math inline">\(c\)</span> 很容易（快速幂取模），但由 <span
-class="math inline">\((g,c)\)</span> 计算 <span
-class="math inline">\(x\)</span> 是困难的。</p>
-<blockquote>
-<p>即使是BSGS等攻击方法，依然必须涉及“爆破”一步，即在x的可能范围内逐个数值尝试是否能让等式成立。</p>
-</blockquote>
-<p>离散数学（广义上）DLP问题描述： 设循环群 <span
-class="math inline">\(G_p\)</span> 的阶为 <span
-class="math inline">\(n\)</span>。<br />
-给定群内的任意元素 <span class="math inline">\(A \in G_p\)</span> 及
-<span class="math inline">\(x &lt; n\)</span>，计算 <span
-class="math inline">\(C = x \cdot A\)</span> 很容易，但给定 <span
-class="math inline">\(C\)</span>、<span
-class="math inline">\(A\)</span>，求解 <span
-class="math inline">\(x\)</span> 是困难的。<br />
-这里x代表A执行二元运算的次数，对于经典DLP，其为模p环下的乘法运算；对于ECDLP，其为椭圆曲线上的加法运算。</p>
-<blockquote>
-<p>给定<span class="math inline">\(C,x\)</span>，可以计算 <span
-class="math inline">\(A = x^{-1} \cdot C\)</span>，此时 <span
-class="math inline">\(x^{-1}\)</span> 应理解为 <span
-class="math inline">\(x\)</span> 在 <span
-class="math inline">\(Zmod(n)\)</span> 下的逆元。</p>
-</blockquote>
-<p>由DLP问题衍生出的 <strong><em>Diffle-Hellman</em></strong>
-密钥交换：<br />
-假设Alice和Bob希望在一个不安全的环境下进行密钥交换。他们协商密钥交换在
-<span class="math inline">\(G_p\)</span> 上进行，选定生成元 <span
-class="math inline">\(G\)</span> 并公开。<br />
-Alice和Bob分别产生一个私钥 <span class="math inline">\(d_A\)</span> 和
-<span class="math inline">\(d_B\)</span>，分别计算 <span
-class="math inline">\(A = d_A \cdot G\)</span> 与 <span
-class="math inline">\(B = d_B \cdot G\)</span>，将 <span
-class="math inline">\(A\)</span>、<span class="math inline">\(B\)</span>
-发送给对方并公开。<br />
-随后，他们再分别使用私钥和对方发送的密钥计算 <span
-class="math inline">\(AB = d_A \cdot B = d_B \cdot A\)</span>。
-在阿贝尔群上其正确性显然。<br />
-此时双方就已经完成了密钥交换，共享密钥就是AB。外人即使知道了 <span
-class="math inline">\((G_p,G,A,B)\)</span>，亦很难从中获得<span
-class="math inline">\(d_A\)</span>或<span
-class="math inline">\(d_B\)</span>，进而保证了共享密钥 <span
-class="math inline">\(AB\)</span> 的安全性。</p>
-<h1 id="攻击方法概览">攻击方法概览</h1>
+        <h1 id="线程">线程</h1>
+<p>线程(thread)和进程(process)都是并发计算中的重要工具。其和程序(program)的基本关系形如：</p>
 <ul>
-<li>暴力攻击，在n较小时，攻击者可以枚举所有的 <span
-class="math inline">\(x \in (0,n)\)</span> 逐个校验。<br />
+<li>一个程序可以有多个进程，一个进程可以有多个线程；<br />
 </li>
-<li>BSGS(Baby-step
-Giant-step，大步小步法，<del>又名“亦步亦趋”</del>)，通过制造碰撞来“用空间换时间”。</li>
+<li>线程是进程的执行单元，每个进程至少有一个主线程，线程不能脱离进程而存在。</li>
+</ul>
+<p>从资源分配（CPU、文件描述符、内存等）上看：</p>
+<ul>
+<li>进程是操作系统分配资源的基本单位，不同进程间不会相互干扰；<br />
+</li>
+<li>线程则只拥有最基本资源（栈、寄存器等），同一进程内的不同线程共享堆内存和其它系统资源。</li>
+</ul>
+<p>进行并发计算时利用线程的优势在于：线程极易被创建、销毁、切换和被调度，可以最大化对CPU多核的利用率。</p>
+<p>C++中的线程可分为四种状态：等待、活动、休眠、结束。</p>
+<ul>
+<li>非空线程被创建后立即进入待执行队列<del>不像某语言非得<code>implements</code>不说还得<code>run()</code>一下(bushi)</del>，处于等待状态；<br />
+</li>
+<li>当CPU有空余资源时，待执行队列中的线程会依次开始执行，进入活动状态；<br />
+</li>
+<li>线程在执行过程中可以主动地进入休眠(<code>sleep_for(...)</code>/<code>sleep_until(...)</code>)或等待(<code>yield()</code>)状态。休眠状态下的进程一段时间后/达到某个条件后会被“唤醒”，重新进入等待状态，新进入等待状态的线程也会自动加入待执行队列；<br />
+</li>
+<li>线程代表的函数执行完成后则进入结束状态。</li>
+</ul>
+<h1 id="stdthread"><code>std::thread</code></h1>
+<blockquote>
+<p>C++标准的宗旨在于 <em>standardizing existing best
+practice</em>，其例之一即为<code>std::thread</code>。</p>
+</blockquote>
+<p>C++11前确实存在实现多线程的方法——现在几乎无人问津，亦不推荐使用的<code>pthread</code>库。<del>当然如果读者认为线程句柄乱窜+函数指针满天飞的C样式老爷车编程非常好玩的话，不妨一试(doge)，</del>此处不再赘述<code>pthread</code>库的有关资料。</p>
+<h2 id="简介">简介</h2>
+<p>C++11中，标准库<code>&lt;thread&gt;</code>引入的<code>std::thread</code>提供了跨平台、面向对象的、语义统一的多线程支持。</p>
+<h2 id="thread类"><code>thread</code>类</h2>
+<p>每个非空线程的本质都是一个函数，故<code>thread</code>的构造必以调用函数为基础。</p>
+<h3 id="重要成员函数">重要成员函数</h3>
+<ul>
+<li><code>thread() noexcept;</code>：默认构造函数，创建<strong>空</strong>线程<br />
+</li>
+<li><code>thread(Fn&amp;&amp; fn,Args&amp;&amp;... args);</code>：以<code>std::invoke(std::forward&lt;Fn&gt;(fn),std::forward&lt;Args&gt;(args)...)</code>开启一个<strong>非空</strong>线程<br />
+</li>
+<li><code>~thread() noexcept</code>：析构函数<br />
+</li>
+<li><code>thread(const thread&amp;) = delete;</code>
+复制构造函数（已显式删除<code>= delete;</code>）<br />
+</li>
+<li><code>thread(thread&amp;&amp;) noexcept</code>：移动构造函数，调用后原<code>thread</code>将被置空</li>
 </ul>
 <blockquote>
-<p>大步小步法的空间复杂度与时间复杂度均为 <span
-class="math inline">\(O(\sqrt n)\)</span>。暴力攻击的二者显然分别为
-<span class="math inline">\(O(1)\)</span> 及 <span
-class="math inline">\(O(n)\)</span>。</p>
+<p>复制/移动赋值运算符与相应构造函数类似。</p>
+</blockquote>
+<blockquote>
+<p>关于<code>std::invoke</code>：其存在意义是统一C++中三种主流的函数调用方式：函数指针(function
+pointer)、函数成员指针(pointer to member function)、可调用对象(callable
+objects)，因为三者的调用语法并不相同。<del>又是一个新坑，哈哈</del></p>
 </blockquote>
 <ul>
-<li>Pohlig-Hellman攻击<br />
+<li><code>static unsigned hardware_concurrency()</code>：<del>一个DETERMINSTIC的函数，</del>获得当前程序运行环境的并发资源数<br />
 </li>
-<li>Pollard's kangaroo algorithm<br />
-</li>
-<li>Pollard's rho algorithm</li>
+<li><code>static std::thread::id get_id()</code>：获得当前<code>thread</code>的编号(id)，其以一个嵌套类<code>std::thread::id</code>的形式给出</li>
 </ul>
 <blockquote>
-<p>上述是较为通用的解法，对于部分 <span
-class="math inline">\(G_p\)</span>
-存在特有的攻击方法，比如ECDLP下的Smart's Attack、MOV Attack等。</p>
-<p>另外，有一些循环群可能求解 <span class="math inline">\(G_p\)</span>
-上的离散对数问题并不困难，比如 <span
-class="math inline">\(Zmod(p)\)</span> 上的加法运算可以快速求解。</p>
+<p>“并发资源数”指操作系统允许的能够同时运行的计算单元总数，多数情况下其与CPU的逻辑处理器数一致。<br />
+类<code>id</code>没有任何（接口式的）成员函数，其唯一用法是<code>bool std::operator==(std::thread::id,std::thread::id)</code>校验两个既得的<code>thread</code>标识符是否相同。</p>
 </blockquote>
-<h1 id="细讲">细讲</h1>
-<blockquote>
-<p>以下内容干货（纸面资料）过多，<del>小心噎着</del></p>
-</blockquote>
-<h2 id="bsgs-亦步亦趋">BSGS —— 亦步亦趋</h2>
-<p>BSGS本质是在试着制造碰撞，利用散列表查找复杂度为常量的优势，以空间换时间。<br />
-具体操作方法如下：设待求解 <span class="math inline">\(C = x \cdot
-G\)</span> 中的x，<br />
-记 <span class="math inline">\(T = \sqrt n\)</span>，<span
-class="math inline">\(R = G \cdot T^{-1}\)</span>；制备一个散列表集合
-<span class="math inline">\(S = {i \cdot G}，i \in [0,C)\)</span><br />
-随后遍历 <span class="math inline">\(j \in [0,C)\)</span>，若 <span
-class="math inline">\(C + j \cdot R \in S\)</span>
-，则说明碰撞成功，得到 <span class="math inline">\(x = jT +
-i\)</span>。<br />
-显然遍历中一定会存在一次碰撞。</p>
-<blockquote>
-<p>“大步小步”的命名之源：</p>
-<p>如上式，<span class="math inline">\(i\)</span> 每增加1，<span
-class="math inline">\(x\)</span> 增加1，所谓一“小步”；<span
-class="math inline">\(j\)</span> 每增加1， <span
-class="math inline">\(x\)</span> 增加 <span class="math inline">\(\sqrt
-n\)</span> ，所谓一“大步”。</p>
-<p>这种攻击思想在轮加密/类轮加密的攻击（含哈希碰撞）中也有较多应用，思路即为将密钥拆为两部分，将中间值进行碰撞。</p>
-</blockquote>
-<p><del>为了便于理解，</del>给出一段示意BSGS求解 <span
-class="math inline">\(GF_p\)</span> 下DLP问题的代码</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">dlog</span>(<span class="params">p:<span class="built_in">int</span>,c:<span class="built_in">int</span></span>) -&gt; <span class="built_in">int</span>:</span><br><span class="line">    g = <span class="number">2</span> <span class="comment">#假设目标是求解pow(2,x,p)==c中的p</span></span><br><span class="line">    t = <span class="built_in">int</span>(<span class="built_in">pow</span>(p,<span class="number">1</span>/<span class="number">2</span>))</span><br><span class="line">    r = <span class="built_in">pow</span>(<span class="number">2</span>,-t,p)</span><br><span class="line"></span><br><span class="line">    dc = &#123;&#125;</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(t):</span><br><span class="line">        dc[g] = i</span><br><span class="line">        g = (g * <span class="number">2</span>) % p</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(t):</span><br><span class="line">        <span class="keyword">if</span> c <span class="keyword">in</span> dc: <span class="comment">#找到碰撞</span></span><br><span class="line">            <span class="keyword">return</span> dc[c] + j * t</span><br><span class="line">        c = (c * r) % p</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">None</span></span><br></pre></td></tr></table></figure>
-<h2 id="pohlig-hellman-韩信点兵">Pohlig-Hellman —— 韩信点“兵”</h2>
-<p>Pohlig-Hellman
-利用了<em>群论中的</em>拉格朗日定理和中国剩余定理。<br />
-其攻击对象是<strong>阶的小因子之积</strong>过小的循环群，在这些群上，可以求解(部分)阶比较小的子群的离散对数问题；<br />
-对这些结果应用中国剩余定理，即可获得原群上离散对数问题的结果。</p>
-<blockquote>
-<p>群中的拉格朗日定理：如果 <span class="math inline">\(G_P\)</span> 是
-<span class="math inline">\(G\)</span> 的一个子群，则 <span
-class="math inline">\(ord(G_P)\)</span> 一定整除 <span
-class="math inline">\(ord(G)\)</span>。</p>
-</blockquote>
-<p>攻击成立的两个场景：<br />
-- 目标群的阶的全部因子都很小，a.k.a.“光滑数”(smooth-number)；<br />
-- 目标运算数计数 <span class="math inline">\(x\)</span>
-小于目标群的阶的小因子之积（实际上第一种情况可以看作是第二种情况的特例）。</p>
-<p>实现上，我们令 $n = $ <span
-class="math inline">\(\prod_{i=1}^m{p_i^{e_i}}\)</span>。对于每个因子
-<span class="math inline">\(f = p_i^{e_i}\)</span>，考虑 <span
-class="math inline">\(C^{&#39;} = f \cdot C\)</span>，<span
-class="math inline">\(G^{&#39;} = f \cdot G\)</span>。<br />
-此时 <span class="math inline">\(C^{&#39;}\)</span> 在群中的阶为 <span
-class="math inline">\(\frac{n}{f}x\)</span>，<span
-class="math inline">\(G^{&#39;}\)</span> 的阶则为 <span
-class="math inline">\(\frac{n}{f}\)</span>。<br />
-根据拉格朗日定理，此时以 <span class="math inline">\(G^{&#39;}\)</span>
-为生成元的子群的阶只有 <span class="math inline">\(f\)</span>，且 <span
-class="math inline">\(C^{&#39;}\)</span>
-亦在这个群上，故可以在这个低阶子群上求解DLP。<br />
-依此法求解的 <span class="math inline">\(\{x_i\}\)</span> 满足 <span
-class="math inline">\(x_i \equiv x (mod p_i^{e_i})\)</span>。</p>
 <ul>
-<li>对于第一种情况，显然 <span
-class="math inline">\({p_i^{e_i}}\)</span>
-互素，故将所有等式联立至CRT中，求出通解 <span
-class="math inline">\(x^{&#39;} = x_0 + kn&#39;\)</span>，令 <span
-class="math inline">\(k=0\)</span> 即可获得 <span
-class="math inline">\(x\)</span>。<br />
-</li>
-<li>对于第二种情况，假设存在 <span class="math inline">\(x &lt;
-r\)</span>，则可以升序求解模 <span
-class="math inline">\(p_i^{e_i}\)</span> 下的DLP，只需要求解出的 <span
-class="math inline">\(\prod_{i=1}^m{p_i^{e_i}} &gt; r\)</span>
-，即可令CRT求解出的 <span class="math inline">\(x^{&#39;}\)</span>
-模数大于 <span class="math inline">\(r\)</span>，进而获得 <span
-class="math inline">\(x\)</span>。</li>
+<li><code>void join()</code>、<code>void detach()</code>、<code>bool joinable() const</code>见下。</li>
 </ul>
-<p>还是直接上代码：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">ph_attack</span>(<span class="params">p:<span class="built_in">int</span>,c:<span class="built_in">int</span>,intact: <span class="built_in">bool</span> = <span class="literal">True</span></span>) -&gt; <span class="built_in">int</span>: <span class="comment">#仍旧是pow(2,x,p) == c</span></span><br><span class="line">    g = <span class="number">2</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">#约定，factor(x)返回一个list，每个元素是形如(prime,factor)的tuple</span></span><br><span class="line">    <span class="comment">#约定，预置了discrete_log(a,g)返回int，作用为给定(g,a)，求解群中满足a = x * g的x，其可以采用暴力攻击、BSGS等方法进行</span></span><br><span class="line">    <span class="comment">#约定，函数crt(r,m)可以对给定两个等长的列表，且m各元素互质时，求CRT问题的基础解(k=0)</span></span><br><span class="line">    rls = []</span><br><span class="line">    mls = []</span><br><span class="line"></span><br><span class="line">    n = p - <span class="number">1</span> <span class="comment">#Zmod(p)的阶</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">#对于第一种情况的攻击，即不知道x的额外信息，完全攻击每个子群</span></span><br><span class="line">    <span class="keyword">if</span> intact:</span><br><span class="line">        <span class="keyword">for</span> pm,exp <span class="keyword">in</span> factor(n):</span><br><span class="line">            cur = <span class="built_in">pow</span>(pm,exp)</span><br><span class="line">            fc = n // cur</span><br><span class="line">            temp_g = <span class="built_in">pow</span>(g,fc,p)</span><br><span class="line">            temp_c = <span class="built_in">pow</span>(c,fc,p)</span><br><span class="line">            mls.append(cur)</span><br><span class="line">            rls.append(discrete_log(temp_c,temp_g))</span><br><span class="line"></span><br><span class="line">    <span class="comment">#对于第二种情况的攻击，攻击部分子群，其实只需要记录已经求解的模数之积，伺机break</span></span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        Sentinel = <span class="built_in">pow</span>(<span class="number">2</span>,<span class="number">32</span>) <span class="comment">#x的上界</span></span><br><span class="line">        mul = <span class="number">1</span></span><br><span class="line">        <span class="keyword">for</span> pm,exp <span class="keyword">in</span> factor(n):</span><br><span class="line">            cur = <span class="built_in">pow</span>(pm,exp)</span><br><span class="line">            fc = n // cur</span><br><span class="line">            temp_g = <span class="built_in">pow</span>(g,fc,p)</span><br><span class="line">            temp_c = <span class="built_in">pow</span>(c,fc,p)</span><br><span class="line">            mls.append(cur)</span><br><span class="line">            rls.append(discrete_log(temp_c,temp_g))</span><br><span class="line">            mul *= cur</span><br><span class="line">            <span class="keyword">if</span> mul &gt; Sentinel:</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> crt(rls,mls)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="joindetach">join/detach</h3>
+<p>C++中，<code>thread</code>的重要特性之一为其是否"joinable"（可以“加入”/“归并”）。<br />
+每个管理着一个线程句柄(thread
+handle)的<code>thread</code>对象都是joinable的。</p>
 <blockquote>
-<p>因此，为使任意场景实例化的DLP问题抵抗Pohlig-Hellman攻击，该群的阶或应没有小因子（最好阶自身就是大质数），或其小因子极少且乘积极小。</p>
-<p>对于 <span class="math inline">\(Zmod(p)\)</span>
-上的离散对数问题，一般会要求p是质数的同时，<span
-class="math inline">\(\frac{p-1}{2}\)</span>
-为质数（或没有小因子）。</p>
+<p>简明起见，本标题下接下来描述一个线程是否joinable时直接用<code>true</code>/<code>false</code>简写之。</p>
+</blockquote>
+<p>显然所有新创建的非空线程状态都是<code>true</code>，空线程则为<code>false</code>；对于状态<code>true</code>的线程对象，可以令其<code>join()</code>/<code>detach()</code>。其中，</p>
+<ul>
+<li><code>join()</code>后调用者将被阻塞(block
+execution)，等待该<code>thread</code>代表线程<strong>执行结束</strong>后，调用者恢复运行。<br />
+</li>
+<li><code>detach()</code>后该子线程将从对象中“解离”并令其自由执行（不再受同级线程约束），该<code>thread</code>置空。</li>
+</ul>
 <blockquote>
-<p><span class="math inline">\(p\)</span> 是质数时，其阶 <span
-class="math inline">\(\phi(p) = p-1\)</span>，显然此时 <span
-class="math inline">\(2\)</span>
-是其阶的一个因子，令其阶的另一个因子是质数，同时约束 <span
-class="math inline">\(x&gt;2\)</span>，即可确保其最大限度地抵抗Pohlig-Hellman攻击。</p>
+<p>可以认为，若将线程开始运行比作放飞风筝，<code>join()</code>对应调用者等待风筝落地（此间操作者什么也不做），<code>detach()</code>则为剪断“风筝线”。<br />
+尽管C++的<code>&lt;thread&gt;</code>并未直接提供对线程进行更为底层操作的函数（比如强行让渡、休眠以至终止一个线程），但通过<code>get_id</code>获得底层句柄后，主线程在子线程未<code>detach()</code>时仍然具备控制之的“潜力”（如强行使其休眠、终止运行等）；但调用<code>detach()</code>后主线程就无法再“控制”该线程了（此时主线程和该线程的地位是“平等”的，想要终止其运行等只能由更上层的OS调度实现）。</p>
 </blockquote>
-<p><strong>只要一个群的阶不是质数，那么Pohlig-Hellman总能通过转而攻击子群，降低求解该群上DLP问题的复杂度。</strong></p>
-</blockquote>
-<p>sagemath中内置了求解离散对数相关的工具： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line">p = <span class="number">7</span></span><br><span class="line">E = EllipticCurve(Zmod(p),[<span class="number">0</span>,<span class="number">2</span>])</span><br><span class="line">A = E.random_point()</span><br><span class="line">G = E.gens()[<span class="number">0</span>]</span><br><span class="line"></span><br><span class="line"><span class="comment">#经典调用方法，discrete_log是一个通用化的函数，第一参数为结果，第二参数为底，内置方法就是Pohlig-Hellman和BSGS</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#指定operation相当于约定了特定的运算（对于EllipticCurve默认为&#x27;+&#x27;，对于Zmod(p)默认为&#x27;*&#x27;）</span></span><br><span class="line"><span class="built_in">print</span>(discrete_log(A,G,operation=<span class="string">&#x27;+&#x27;</span>)) </span><br><span class="line"></span><br><span class="line"><span class="comment">#还可以指定bounds=(a,b)来引导sage来利用上述Pohlig-Hellman攻击中的第二种情况</span></span><br><span class="line"><span class="built_in">print</span>(discrete_log(A,G,operation=<span class="string">&#x27;+&#x27;</span>,bounds=(<span class="number">0</span>,<span class="number">5</span>))) <span class="comment">#假设x的上界为5</span></span><br></pre></td></tr></table></figure></p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/闲笔//" class="article-tag-list-link color3">闲笔</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/crypto/dlog/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-  <div>
-</article>
-
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-cpp/print" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/cpp/print/">C++23——std::print</a>
-    </h1>
-  
-
-        
-        <a href="/cpp/print/" class="archive-article-date">
-  	<time datetime="2024-12-10T06:01:08.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-10</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h2 id="函数签名">函数签名</h2>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//namepsace std</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Args&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(std::format_string fmt,Args&amp;&amp;... args)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Args&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(FILE* <span class="type">const</span> stream,std::format_string fmt,Args&amp;&amp;... args)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Args&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(std::ostream&amp; stream,std::format_string fmt,Args&amp;&amp;... args)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>从线程句柄的角度来理解：</p>
+<p>C++中每个线程在<code>join()</code>/<code>detach()</code>后该<code>thread</code>对象就会被置空，状态自然变为<code>false</code>（故<code>thread</code>是否储存了一个线程句柄是其状态为<code>true</code>的充要条件）。<br />
+<code>join()</code>相当于“使用”了这个线程句柄，使用完后即弃置之；<code>detach()</code>等价于主动抛弃这个线程句柄。<br />
+由于线程句柄显然只能移动而不能复制，故<code>thread</code>对象被移动后，原<code>thread</code>自然也不再拥有任何句柄，状态置<code>false</code>。</p>
 <blockquote>
-<p>其中前两个在<code>&lt;print&gt;</code>中被定义，第三个在<code>&lt;ostream&gt;</code>中被定义。</p>
+<p>需要留意的是，是否拥有线程句柄和线程是否执行完成无关，线程即使未执行完成，其句柄也可以通过<code>detach()</code>主动丢弃；即使执行完成，其句柄依然有效。</p>
 </blockquote>
-<p>std::print相当于补全了现代C++在输出内容上的一大缺憾。
-C/C++传统的输入/输出至今已经历了三代：以<code>&lt;stdio.h&gt;</code>为代表的传统C样式I/O、以<code>&lt;iostream&gt;</code>为代表的C++98时代的I/O及如今<code>&lt;print&gt;</code>打头的Modern
-C++ I/O。</p>
+<p>同时为了防止线程句柄泄露，C++中<code>thread</code>对象在析构时会校验其是否依然管理一个线程句柄。若其状态为<code>true</code>（相当于该<code>thread</code>从未<code>join()</code>/<code>detach()</code>过），则会在声明为<code>noexcept</code>的析构函数中抛出一个异常（翻译过来就是调用<code>std::terminate</code>，进而<code>abort()</code>终止程序）。</p>
+<h2 id="namespace-this_thread"><code>namespace this_thread</code></h2>
+<p>C++11同时引入了<code>std::this_thread</code>命名空间，其中定义了四个与多线程控制有关的函数。</p>
 <ol type="1">
-<li><code>&lt;stdio.h&gt;</code>作为经典的输入/输出手段永不过时，其两大特性——高效、便捷堪称遥遥领先。<code>printf</code>提供了高可读性的format方案——<code>%-2d</code>就是输出整型左对齐2格，<code>%.3f</code>就是输出浮点加三位小数，即写即用。其一大缺点是作为C时代的产物，不能支持自定义类型的输出（相当于无法实现一个统一的interface，必须另起炉灶）；另一个缺点是C遗留的va_args是一个不成熟的变参数解决方案（比如没有对format-specifier和参数数量统一的校验，给极大量的segament
-fault和奇奇怪怪的bug留下了空间），且其并不能完美地传递C++的类/object。</li>
-<li><code>&lt;iostream&gt;</code>则代表着一代经典C++。其将C++区别于C的特性发挥到了极致——通过继承树提供了I/O的统一接口，同时令用户可以通过重载<code>operator&lt;&lt;</code>来便捷地自定义类型（这点甚至远胜于<code>print</code>的<code>formatter</code>特化），在OOP上则让I/O流成为对象且支持调用各种方法来对之进行操作。但其冗余过多的副作用就是输出效率远不如<code>&lt;stdio.h&gt;</code>——频繁的函数调用（每一个<code>&lt;&lt;</code>都算调用一次函数，需要不断地将<code>std::ostream&amp;</code>操作和返回，<code>inline</code>亦很难对之有很大改观）；同时格式化输出的便捷性和可读性之差一直是其痛点之一。比较一下三代C/C++格式化输出一个简单的信息：
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">output</span><span class="params">(<span class="type">double</span> temp,<span class="type">int</span> speed)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">//&lt;stdio.h&gt;</span></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Temperature: %.1f ℃. Speed: %d km/h.\n&quot;</span>,temp,speed); </span><br><span class="line"></span><br><span class="line">    <span class="comment">//&lt;iostream&gt;</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Temperature: &quot;</span> &lt;&lt; std::<span class="built_in">setpercision</span>(<span class="number">1</span>) &lt;&lt; temp &lt;&lt; <span class="string">&quot; ℃. Speed: &quot;</span> &lt;&lt; speed &lt;&lt; <span class="string">&quot;km/h.&quot;</span> &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//&lt;print&gt;</span></span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;Temperature: &#123;:.1f&#125; ℃. Speed: &#123;&#125; km/h.&quot;</span>,temp,speed);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
-<li><code>&lt;print&gt;</code>则是C++23加入的新成员，其基本继承了既有的较成功库<code>&lt;fmtlib&gt;</code>的实践。<br />
-trivial-type的格式化语法上和python的format几乎无二，相当于保留了<code>printf</code>的高可读性和高效率的同时，融合了Modern
-C++的template元素，并由此支持自定义类型格式化和类型推导。</li>
+<li><code>void yield()</code>：当前线程“让渡”自身的CPU资源，主动进入等待状态。<br />
+</li>
+<li><code>void sleep_for(const std::chrono::duration&lt;R,P&gt;&amp;)</code>：当前线程休眠一段时间。<br />
+</li>
+<li><code>void sleep_until(const std::chrono::time_point&lt;R,P&gt;&amp;)</code>：当前线程休眠直至某时间点。<br />
+</li>
+<li><code>std::thread::id get_id()</code>：获得该线程的<code>id</code>供比较。</li>
 </ol>
-<p>函数签名显然非常的straightforward，第一个重载为基础，后两个只是指定了输出流（可以传<code>FILE*</code>或<code>std::ostream&amp;</code>）。</p>
-<h2 id="stdformatter的特化">std::formatter的特化</h2>
-<p>客观来说，<code>&lt;format&gt;</code>和<code>&lt;print&gt;</code>的自定义实际上门槛相较于<code>&lt;iostream&gt;</code>的重载<code>operator&lt;&lt;</code>还是有些高。<br />
-自定义类型需要通过特化<code>std::formatter</code>来实现自定义输出。<br />
-但其优点在于开发复用上限极高，可以将任意的自定义类的format自由度提至与trivial-types相并论。</p>
+<h1 id="锁">锁</h1>
+<p>进程间的资源访问由操作系统调度，且两个进程的资源隔离性强（即运行时，一个进程几乎不会和另一个进程产生资源冲突）。<br />
+相对之下，不同线程间的资源共享程度极高（尤其在对内存的访问上），若对它们的数据读写不加以控制，则极易产生“数据竞争”(data
+race)这一现象。</p>
 <blockquote>
-<p>关于std::formatter的一切，可以移步天书般的<a
-target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/utility/format/formatter">cppreference</a>。</p>
+<p>数据竞争：当多个线程试图在同一时间读写某一片数据时，对于某些原子操作其未规定双方进行的先后顺序，继而导致程序的运行流程、输出结果不确定，甚至可能因内存访问冲突而导致程序崩溃的情况。<br />
+比如下述的代码就极易引发数据竞争，导致未定义行为(UB)：<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">std::vector&lt;<span class="type">int</span>&gt; vc;</span><br><span class="line"><span class="keyword">auto</span> fn = [&amp;](<span class="type">int</span> x)&#123;vc.<span class="built_in">push_back</span>(x);&#125;;</span><br><span class="line"></span><br><span class="line">std::array&lt;std::thread,10&gt; th;</span><br><span class="line"><span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;<span class="number">10</span>;++i)</span><br><span class="line">&#123;</span><br><span class="line">    th = std::thread&#123;fn,i&#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 </blockquote>
-<p>std::formatter特化用法精选：先从下面的代码出发，自行体会。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">CR</span></span><br><span class="line">&#123; </span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">CR</span>(<span class="type">int</span> v):<span class="built_in">speed</span>(v)&#123;&#125;</span><br><span class="line">    <span class="keyword">friend</span> <span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;CR&gt;;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> speed;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;CR&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="title">parse</span><span class="params">(std::format_parse_context&amp; fpc)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> fpc.<span class="built_in">begin</span>();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">auto</span> <span class="title">format</span><span class="params">(<span class="type">const</span> CR&amp; c,std::format_context&amp; fc)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> std::format_to(fc.<span class="built_in">out</span>(),<span class="string">&quot;Train operating at &#123;&#125; km/h&quot;</span>,c.speed);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
 <blockquote>
-<p>回顾一下：今我们希望将一个对象转化为字符串输出，该任务可以分为两步：</p>
-<p>解析格式串，将format的“需求”存储起来；</p>
-<p>根据这些“需求”，读取对象信息并将之格式化。</p>
-<p>而std::formatter的<code>parse</code>和<code>format</code>函数就分别负责执行这两个任务。</p>
+<p>常见容易引发访问冲突的“资源”包括：文件流(file stream)、堆内存(heap
+memory)等。</p>
 </blockquote>
+<hr />
+<h2 id="互斥锁">互斥锁</h2>
+<p>C++11中引入了<code>std::mutex</code>，作为“互斥锁”来保证进程间执行的安全。mutex之名为
+<em>mutal exclusion</em>，即“独占互斥量”的缩写。</p>
+<p><code>std::mutex</code>只有一个默认（无参）构造函数，<code>mutex</code>对象是<strong>不可复制/移动的</strong>（四个复制/移动相关函数/运算符全部<code>= delete;</code>）；析构函数是平凡(trivial)的。<br />
+其<code>public</code>成员函数只有三个：</p>
 <ul>
-<li>第一个函数必须具有签名<code>constexpr auto parse(std::format_parse_context&amp;);</code>（auto类型由<code>decltype(std::format_parse_context::begin())</code>确定）。<br />
-该函数必须声明为constexpr，否则编译不能通过（对于直接的调用std::format/print，C++23要求必须在编译期处理之，同时引出的就是目前格式串必须是string-constant；动态格式串另有他法）。<br />
-该函数接收的<code>std::format_parse_context&amp;</code>实际上是表征format-specifier区间的一个view，调用<code>fpc.begin()</code>会返回一个指向当前处理域':'的下一个字符的迭代器。</li>
+<li><p><code>void lock()</code>：获得该互斥锁。<strong>若该锁已经被锁定，则本函数将阻塞线程执行直至成功获得该锁。</strong>“阻塞执行”这一行为是避免访问可能带访问冲突的资源、函数等时的关键：<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">std::stack&lt;<span class="type">int</span>&gt; stk;</span><br><span class="line">std::mutex mt;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">push</span><span class="params">(<span class="type">int</span> x)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    mt.<span class="built_in">lock</span>();</span><br><span class="line">    stk.<span class="built_in">push</span>(x);</span><br><span class="line">    mt.<span class="built_in">unlock</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>如此做方能保证<code>stk</code>同一时间只有一个线程对之进行操作，防止对同一个内存位置同时读写造成UB。</p>
+<blockquote>
+<p>可以发现<code>std::mutex</code>一般会被设为全局变量，或以引用方式传入函数参数。</p>
+</blockquote></li>
+<li><p><code>void unlock()</code>：解锁。其和<code>lock()</code>操作应当“成对”出现，某线程若锁定了一个<code>mutex</code>，亦必须在退出前解锁之，否则将会造成死锁(deadlock)。<br />
+</p></li>
+<li><p><code>bool try_lock()</code>：尝试锁定（不阻塞线程执行），若锁定成功则返回<code>true</code>，否则返回<code>false</code>。</p></li>
 </ul>
 <blockquote>
-<p>插播一下“处理域”的定义：每个框或可为全空<code>&#123;&#125;</code>，或应形如<code>&#123;A:B&#125;</code>，<strong><em>其中A为一部分，':B'为一部分，可以理解为两侧分别都是可选的，用法见下：</em></strong></p>
-<p>A是index，<strong>若不指定A，则该格式字符串采用的是“自动索引”(auto-indexing)</strong>，即每遇到一个框就把下一个参数丢进去；</p>
-<p>否则为手动索引（manual-indexing），指定每个框所用参数的index（可以复用），如<code>std::println("&#123;0&#125; &#123;1&#125; &#123;0&#125;",1,2);</code>输出<code>1 2 1</code>。</p>
+<p>一些有关锁的概念：<br />
+死锁(deadlock)：因各种原因导致一个获得<code>lock</code>的操作无法完成的情况。常见有两种原因：一个线程尝试连续两次锁定一个锁（<code>lock()</code>后再<code>lock()</code>一次，本质上是UB，当然大多数C++标准库实现中，debug下都会选择抛出一个带提示信息的异常）；一个线程获得锁后没有解锁就退出（忘记<code>unlock()</code>、抛出异常、提早<code>return</code>）。<br />
+“呼应”操作(synchorized
+operations)：两个应当“成对”出现的操作，比如<code>new</code>对应<code>delete</code>、<code>lock()</code>对应<code>unlock()</code>、<code>fopen</code>对应<code>fclose</code>等。几乎所有动态“管理”资源的操作
+都应当是“呼应”的，即两个操作应当在某个操作周期内成对出现，否则会造成资源泄露（内存泄漏、死锁、文件标识符丢失等）。</p>
+</blockquote>
+<p>一些容易导致“死锁”的反面示例形如：<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">std::mutex mt;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">bad_fn</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    mt.<span class="built_in">lock</span>();</span><br><span class="line">    <span class="keyword">if</span>(???)</span><br><span class="line">    &#123;</span><br><span class="line">        mt.<span class="built_in">lock</span>(); <span class="comment">//Repeated locks: UB, the program may deadlock</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(???)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span>; <span class="comment">//Early return, the mutex is never released</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">switch</span>(???)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">case</span> ???:</span><br><span class="line">            <span class="keyword">throw</span> std::runtime_error&#123;<span class="string">&quot;&quot;</span>&#125;; <span class="comment">//Early return, the mutex is never released</span></span><br><span class="line">        <span class="comment">/*...*/</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    mt.<span class="built_in">unlock</span>(); <span class="comment">//Only when the program reaches this point, the mutex is released</span></span><br><span class="line">    <span class="comment">//If somehow this line is disregarded, the mutex is never released</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="御守stdlock_guard">御守：<code>std::lock_guard</code></h2>
+<p><code>std::mutex</code>在应用中极易出差错，故恰若对内存的管理有智能指针，对<code>mutex</code>的管理也有<code>lock_guard</code>这个包装类辅助之。</p>
 <blockquote>
-<p><strong>不允许使用混合索引（即要么全自动，要么全手动）。</strong></p>
-<p><strong>索引不允许越界，比如<code>std::println("&#123;&#125; &#123;&#125;",1)</code>不能通过编译。</strong></p>
+<p>这些类的实现都是RAII(Resource Acquisition Is
+Initialization)原则的生动实践。</p>
 </blockquote>
-<p>:B是format-specifier，形式和python/C的类似，每个框都可以自定义，不再赘述。</p>
-<p>应用实例：将一个浮点数输出两次，精度分别为4位、2位：<code>std::println("&#123;0:.4f&#125; -&gt; &#123;0:.2f&#125;",some_float);</code>。</p>
+<p><code>lock_guard</code>实际上是一个类模板，除构造和析构函数外没有其它公有成员函数。<br />
+其作用只是“代理”一个<code>mutex</code>，在析构函数中自动解锁，构造时自动锁定（可选）。其设计简单而精妙，利用析构函数的特性成功规避了大部分
+<em>early return</em> 导致的“死锁”情况：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">std::mutex mt;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">good_fn</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::lock_guard lg&#123;mt&#125;;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//The mutex is automatically unlocked at function exit, disregarding normal return, early return or returning via exception</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果不希望<code>lock_guard</code>构造时锁定一次，可以构造时传一个
+<em>tag-type</em>
+的第二参数<code>std::adopt_lock</code>进行重载决议：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">std::lock_guard lg&#123;mt,std::adopt_lock&#125;; <span class="comment">//Manages mutex `mt` yet does not lock it(assumes it has been locked)</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>同样地，<code>lock_guard</code>依然不可移动或复制。<br />
+<del>咕咕咕：什么时候讲讲<code>unique_lock</code>和<code>shared_lock</code></del></p>
 </blockquote>
-<p><strong>简而言之，该函数的任务是通过移动该迭代器来收集format的需求，并将之存储于这个struct的成员变量中，以供后续处理。</strong><br />
-该函数的返回值必须同样是一个迭代器，且该迭代器<strong>必须指向'}'（也就是format-specifier的末尾的下一个字符），否则会抛出std::format_error！</strong></p>
+<hr />
+<h1 id="future"><code>&lt;future&gt;</code></h1>
+<h2 id="异步亦趋stdasync">“异步”亦趋：<code>std::async</code></h2>
+<p>C++中创建一个异步函数使用<code>std::async</code>函数实现。<br />
+<code>std::async</code>相比<code>std::thread</code>（非空构造）的特点之一在于，其通过一个（可选的）第一参数为<code>std::launch</code>的重载来实现可选的“手动调度”：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">auto</span> f1 = std::<span class="built_in">async</span>(std::launch::async,f); <span class="comment">//Launch the thread immediately(upon available thread resources), similar to normal `thread`</span></span><br><span class="line"><span class="keyword">auto</span> f2 = std::<span class="built_in">async</span>(std::launch::deferred,f); <span class="comment">//Creates a future instance, yet deferres the launch of the thread(the thread&#x27;s life cycle is postponed until the invocation of get(), wait(), wait_for() or wait_until() method)</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">auto</span> f3 = std::<span class="built_in">async</span>(f); <span class="comment">//Same as launching with either std::launch::async depending on the platform.</span></span><br></pre></td></tr></table></figure>
+<p>因此当我们需要延迟一个线程生命周期的开始（或显式地指出这个线程的生命周期将立即开始）时，就可以传入<code>std::launch::deferred</code>/<code>std::launch::async</code>作为第一参数（实际上<code>enum class std::launch</code>也只有这两个选项）。</p>
+<p><code>std::async</code>的返回值是类模板<code>std::future</code>的一个实例。但<code>std::future</code>又为何物？其又何以操控线程生命周期何时开始？<del>稍安勿躁，且听下回分解</del></p>
+<h2 id="逆料其事stdfuture">逆料其事：<code>std::future</code></h2>
+<p>在讲解<code>std::future</code>前，先引入我们并发/异步编程中的一个重要动机：获取子线程执行结果（返回值）。</p>
+<p>在<a
+href="">cppreference</a>中对<code>thread</code>对象的介绍中，有一句描述值得玩味：<br />
+<em>The return value of the top-level function is ignored and if it
+terminates by throwing an exception, std::terminate is called.</em></p>
+<p>即，用于构建<code>thread</code>的最顶层函数的返回值将被忽略，且其亦被隐式的禁用了栈回溯(stack
+rewinding)（异常逃逸后直接调用<code>std::terminate</code>）。</p>
+<p>相较普通的函数调用，其自然引出了两个问题：</p>
 <ul>
-<li>第二个函数必须具有签名<code>auto format(const Ty&amp;,std::format_context&amp;) const;</code>（auto类型由<code>decltype(std::format_context::out())</code>确定）。<br />
-该函数必须被声明为常成员函数（后缀<code>const</code>不要漏）；对于trivial-types，const
-Ty&amp;可以被改为Ty（更改原则和其它函数的const
-int&amp;/int一类相同）。<br />
-该函数接收的<code>std::format_context&amp;</code>是一个缓存输出格式串的字符串，调用<code>fc.out()</code>会返回一个<em>back
-insert iterator</em>。</li>
+<li>函数返回运行结果最重要的方式之一——返回值，如何在并发/异步编程中实现？<br />
+</li>
+<li>线程执行仍应有异常处理，不能<code>throw</code>的情况下何以让上层函数知晓？</li>
 </ul>
+<p><code>std::future</code>给出了前者的答案，其包装类<code>std::promise</code>则回答了后者。</p>
+<hr />
 <blockquote>
-<p><em>back insert
-iterator</em>是一类简单的迭代器，其仅定义了以下的<code>public</code>成员函数：</p>
+<p>此情可待成追忆，只是当时已惘然。</p>
+</blockquote>
+<p><code>std::future</code>是一个颇为有趣的类模板，其主模板只接受单个类型参数<code>Ty</code>（两个模板特化分别是<code>void</code>和<code>Ty&amp;</code>）。</p>
+<p>线程放出多个子线程进行异步/并发工作时，其知道子线程会返回某个值（比如获取用户输入函数的<code>std::string</code>，某加密函数的<code>std::array&lt;byte,16&gt;</code>等<del>点名AES-128</del>），但在“放出”该子线程时还没有这个值——只知道子线程会在未来的某个时间点返回之。<br />
+由此出现了<code>std::future</code>的概念，<code>std::async</code>以返回<code>T</code>的函数创建线程时，返回值类型就是<code>std::future&lt;T&gt;</code>。</p>
+<h3 id="常用成员函数">常用成员函数</h3>
 <ul>
-<li><code>operator*()</code>，返回<code>*this</code>；</li>
-<li><code>operator++()</code>（含<code>operator++(int)</code>），返回<code>*this</code>且什么也不做；</li>
-<li><code>operator=(const Ty&amp;)</code>（含<code>operator=(Ty&amp;&amp;)</code>），将给定元素copy(或move)追加到容器末尾（相当于调用了<code>push_back(const Ty&amp;)</code>/<code>push_back(Ty&amp;&amp;)</code>）。</li>
+<li><code>bool valid() const</code>，返回一个<code>std::future</code>对象是否<strong>有效</strong>。每个非空构造（代表了一个异步线程）的<code>std::future</code>对象构造时都是有效的，但调用<code>get()</code>后其就失效了（且不可恢复）。<br />
+</li>
+<li><code>Ty get()</code>，调用后其会阻塞程序执行，等待子线程完成并获取其返回结果。显然其返回值类型和底层返回值类型一致；只有<strong>有效的</strong>(<code>valid()</code>)的<code>std::future</code>才能调用<code>get()</code>方法——等价于<code>get()</code>也只能调用一次。<br />
+</li>
+<li><code>void wait() const</code>，调用后其会阻塞程序执行，等待子线程完成，但不会使线程失效，亦不提取其返回值。其同样只能对有效的对象上调用（否则抛异常）。<br />
+</li>
+<li><code>std::future_status wait_for(rep) const</code>，和<code>wait()</code>区别在于若子线程在<code>rep</code>后依然未结束，则直接返回。<br />
+</li>
+<li><code>std::future_status wait_until(rep) const</code>，类似地，等待直至<code>rep</code>后不论子线程是否结束，直接返回。</li>
 </ul>
+<p><code>std::future_status</code>是一个<code>enum class</code>，其可能取值有三：<br />
+<code>deferred</code>，代表该线程尚未开始执行；<code>ready</code>，代表该线程已执行结束；<code>timeout</code>，代表该线程截至<code>wait_for/wait_until</code>函数执行完成时尚未执行完毕。</p>
 <blockquote>
-<p>事实上这些<em>iterator</em>的<code>operator=</code>有四个重载，还有两个是类的基本成员函数（即copy/move
-assignment operator）</p>
+<p>故<code>std::async</code>产生的异步线程就出现了一个诡异的函数美学：<code>t.wait_for(std::chrono::miliseconds(0))</code>（<del>为什么不先<code>using namespace std::chrono_literals</code>然后直接上<code>0ms</code></del>）就可以检验一个子线程的执行状态。<br />
+当然此类函数美学在C++史上也不是第一次了，<del>点名在C++23的部分wrapper_class加入前的<code>vc.find(1) != vc.last()</code>或者<code>str.find(1) != str.npos</code></del></p>
 </blockquote>
-<p>在C++ Standard
-library中，调用std::back_inserter(some_container)可以获得一个<em>back
-insert
-iterator</em>，some_container应具有<code>push_back</code>成员函数。</p>
-</blockquote>
-<p>该函数应当通过这个<code>fc.out()</code>来向缓冲字符串中写入字符，并返回<code>fc.out()</code>。<br />
-写入方法相对就比较五花八门了：
-最“老土”的方式无疑是直接对这个iterator逐个字符地赋值（注意右操作数只能是<code>char</code>）；<br />
-现代C++中同样有很多函数可以高效地进行此项任务，对于潜在自由度较高的object，可以先建立一个string缓存并操作之，最后再copy过去。<br />
-两个比较常用的、更为简洁的方法为复用<code>std::ranges::copy</code>和<code>std::format_to</code></p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//方法1：利用ranges库，集复制返回于一体</span></span><br><span class="line">std::string buf&#123;&#125;;</span><br><span class="line"><span class="comment">//...对buf进行操作</span></span><br><span class="line"><span class="comment">//优势在于可以按需较为灵活地截取/操作buf（ranges上分ing）</span></span><br><span class="line"><span class="keyword">return</span> std::ranges::<span class="built_in">copy</span>(buf,fc.<span class="built_in">out</span>()).out; <span class="comment">//注意返回值是一个含有in/out迭代器的struct，需要取其out</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//方法2：std::format_to直接格式化至迭代器（相应地，std::format相当于格式化至字符串，对标sprintf）</span></span><br><span class="line"><span class="keyword">return</span> std::format_to(fc.<span class="built_in">out</span>(),<span class="string">&quot;&#123;&#125;&quot;</span>,...); <span class="comment">//函数返回值就是迭代器本身</span></span><br></pre></td></tr></table></figure>
-<h3
-id="奇技淫巧既有formatter的复用"><del>奇技淫巧</del>：既有Formatter的复用</h3>
-<p>对于很多较简单的class/object，一视同仁start-from-scratch显然不是明智之举，此时对formatter的复用可令你在format间游走自如。<br />
-复用方式有二：继承复用/成员复用<br />
-还是直接看代码： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//还是以上文的CR类为例</span></span><br><span class="line"><span class="keyword">namespace</span> inheritance</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">template</span>&lt;&gt;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;CR&gt; : std::formatter&lt;<span class="type">int</span>&gt;</span><br><span class="line">    &#123;   </span><br><span class="line">        <span class="function"><span class="keyword">auto</span> <span class="title">format</span><span class="params">(<span class="type">const</span> CR&amp; c,std::format_context&amp; fc)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">        </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> std::formatter&lt;<span class="type">int</span>&gt;::format(c.speed,fc);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;; <span class="comment">//相当于用std::formatter&lt;int&gt;部分覆写了自身，parse遵循int的format-specifier</span></span><br><span class="line">    <span class="comment">//而format时需要调用父类的format方法</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">namespace</span> member</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">template</span>&lt;&gt;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;CR&gt;</span><br><span class="line">    &#123;</span><br><span class="line">        std::formatter&lt;<span class="type">int</span>&gt; fmt&#123;&#125;;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="title">parse</span><span class="params">(std::format_parse_context&amp; fpc)</span></span></span><br><span class="line"><span class="function">        </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> fmt.<span class="built_in">parse</span>(fpc);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">auto</span> <span class="title">format</span><span class="params">(<span class="type">const</span> CR&amp; c,std::format_context&amp; fc)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">        </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> fmt.format(c.speed,fc);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>显然inheritance对于较小的类（最好是只有一个需要格式化的量）来说比较友好，格式化进行更高效；<br />
-且若<code>std::convertible_to&lt;const A&amp;, B&gt;</code>（A为待格式化的类，B为继承类的<code>format</code>函数第一参数）为<code>true</code>，则可以完全继承之，<strong>比如自定义许多容器的format。</strong><br />
-member法的灵活度会更高些，甚至可以在<code>parse</code>中让迭代器在<code>format_parse_context</code>里游走来实现更高的自由度，适合于每个参数的输出格式都希望独立控制的类，如时间。<br />
-下面再附上一例应用了concepts、<code>std::span</code>等来实现<code>std::vector</code>的通用格式化方法：
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;algorithm&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;print&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;span&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;std::default_formattable&lt;<span class="type">char</span>&gt; Ty&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;std::span&lt;Ty&gt;&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="title">parse</span><span class="params">(std::format_parse_context&amp; fpc)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> fpc.<span class="built_in">begin</span>();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">auto</span> <span class="title">format</span><span class="params">(std::span&lt;Ty&gt; sp,std::format_context&amp; fc)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="comment">//我们希望实现一个类似python的list的效果，即[1,2,3]这样，此处尚未加入自定义分隔符等功能</span></span><br><span class="line">        std::string buf&#123;<span class="string">&quot;[&quot;</span>&#125;;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">const</span> <span class="keyword">auto</span>&amp; i : sp)</span><br><span class="line">        &#123;</span><br><span class="line">            buf += std::format(<span class="string">&quot;&#123;&#125;,&quot;</span>,i);</span><br><span class="line">        &#125;</span><br><span class="line">        buf.<span class="built_in">back</span>() = <span class="string">&#x27;]&#x27;</span>;</span><br><span class="line">        <span class="keyword">return</span> std::ranges::<span class="built_in">copy</span>(buf,fc.<span class="built_in">out</span>()).out;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;std::default_formattable&lt;<span class="type">char</span>&gt; Ty&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;std::vector&lt;Ty&gt;&gt; : std::formatter&lt;std::span&lt;Ty&gt;&gt;</span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">//现在可以直接格式化所有（元素类型可以被默认格式化的）vector</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::vector&lt;<span class="type">int</span>&gt; vc&#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>&#125;;</span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,vc); <span class="comment">//[1,2,3]</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>同时，<code>std::future</code>亦是可移动而不可复制的（复制构造函数和复制赋值运算符被声明为<code>= delete;</code>）。</p>
+<hr />
+<p>现在还可以揭晓之前关于<code>std::async</code>“延迟起步”子线程的答案了：<br />
+对于第一参数为<code>std::launch::deferred</code>的线程，其会在其<code>future</code>对象调用<code>get</code>/<code>wait[_for|_until]</code>成员函数后开始运行。<br />
+若只想使之起步而不想阻塞程序执行，则可以搬出<del>万能的</del><code>t.wait_for(std::chrono::miliseconds(0));</code>，随后再另行获取结果/其执行状态。</p>
+<h3 id="示例">示例</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;future&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;print&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;chrono&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std::chrono_literals;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">double</span> <span class="title">calc</span><span class="params">(<span class="type">int</span> x)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::this_thread::<span class="built_in">sleep_for</span>(std::chrono::<span class="built_in">seconds</span>(x)); <span class="comment">//Assume time consumption</span></span><br><span class="line">    <span class="keyword">return</span> (x &gt;= <span class="number">0</span>) ? (std::<span class="built_in">pow</span>(x,<span class="number">0.5</span>)) : std::<span class="built_in">sin</span>(x);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::vector&lt;std::future&lt;<span class="type">double</span>&gt;&gt; vc;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&lt;=<span class="number">10</span>;++i)</span><br><span class="line">    &#123;</span><br><span class="line">        vc.<span class="built_in">push_back</span>(std::<span class="built_in">async</span>(calc,i));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    std::this_thread::<span class="built_in">sleep_for</span>(<span class="number">5</span>s);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">auto</span>&amp; i : vc)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span>(i.<span class="built_in">valid</span>())</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">if</span>(i.<span class="built_in">wait_for</span>(<span class="number">0</span>s) != std::future_status::ready)</span><br><span class="line">            &#123;</span><br><span class="line">                std::<span class="built_in">println</span>(<span class="string">&quot;Thread isn&#x27;t ready yet!&quot;</span>);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">else</span></span><br><span class="line">            &#123;</span><br><span class="line">                std::<span class="built_in">println</span>(<span class="string">&quot;Thread execution result is &#123;&#125;&quot;</span>,i.<span class="built_in">get</span>());</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="山盟海誓stdpromise">山盟海誓：<code>std::promise</code></h2>
+<p><code>std::future</code>虽然在让线程“善始善终”方面迈出了一大步，但从线程执行过程中的“通信”来看，其依然稍显笨拙——状态的获取仅限于是否开始/结束，传递值亦只能在<code>std::async</code>构造的线程<code>return</code>时进行，且该值不能修改。<br />
+由此，出现了对异步机制更为适配的包装类<code>std::promise</code>。</p>
+<h3 id="特性">特性</h3>
+<p><code>std::promise</code>和<code>std::future</code>的模板参数赋法相同，通过<code>get_future</code>方法可以获得底层的<code>std::future</code>对象进行进一步操作。<br />
+作为包装类，其提供了相较<code>std::future</code>更强大的几个功能：</p>
+<ul>
+<li>可以多次赋值，线程可以对<code>std::promise</code>多次调用<code>set_value(_at_thread_exit)</code>成员函数来多次赋值/在线程退出时赋值。相较只能单次赋值且不可改变的<code>std::future</code>，显然其实现了线程间的动态通信更加灵活；<br />
+</li>
+<li>通过<code>set_exception(_at_thread_exit)</code>成员函数可以设置将抛出的异常（通过赋予一个exception_ptr实现）。</li>
+</ul>
+<h3 id="示例-1">示例</h3>
+<p>如，假设线程A正在等待线程B运行的结果，但它亦有自身的一些其它任务需要运行，此时可以在两个线程代表函数的形参中设置<code>std::promise</code>或<code>std::future</code>的引用用于线程间通信：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std::chrono_literals; <span class="comment">//0s</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">double</span> <span class="title">func_a</span><span class="params">(std::future&lt;<span class="type">int</span>&gt;&amp; ft)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">double</span> result&#123;<span class="number">0</span>&#125;;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span>(ft.<span class="built_in">wait_for</span>(<span class="number">0</span>s) != std::future_status_ready)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">/*Some arbitrary work*/</span></span><br><span class="line">        <span class="type">double</span> x = std::<span class="built_in">sin</span>(<span class="number">3</span>) * std::<span class="built_in">pow</span>(std::<span class="built_in">cosh</span>(<span class="number">0.5</span>),<span class="number">0.35</span>);</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i : std::views::<span class="built_in">iota</span>(<span class="number">10</span>))</span><br><span class="line">        &#123;</span><br><span class="line">            x = std::<span class="built_in">pow</span>(x,<span class="built_in">random</span>());</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        result += x;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="type">int</span> offset = ft.<span class="built_in">get</span>(); <span class="comment">//Guaranteed to complete smoothly without blocking execution</span></span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">static_cast</span>&lt;<span class="type">int</span>&gt;(result) + offset;</span><br><span class="line">    </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func_b</span><span class="params">(std::promise&lt;<span class="type">int</span>&gt;&amp; p)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">/*Simulating work*/</span></span><br><span class="line">    std::this_thread::<span class="built_in">sleep_for</span>(<span class="number">10</span>s);</span><br><span class="line"></span><br><span class="line">    p.<span class="built_in">set_value</span>(<span class="number">15</span>); <span class="comment">//Upon setting value, func_a can directly get() its value(regarded as ready)</span></span><br><span class="line">    <span class="comment">//So func_b&#x27;s following work can still proceed</span></span><br><span class="line">    <span class="comment">/*Simulating some other work*/</span></span><br><span class="line">    std::this_thread::<span class="built_in">sleep_for</span>(<span class="number">15</span>s);</span><br><span class="line"></span><br><span class="line">    p.<span class="built_in">set_value_at_thread_exit</span>(<span class="number">30</span>); <span class="comment">//Upon exiting thread, set it to another value</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::promise&lt;<span class="type">int</span>&gt; p;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">auto</span> ft1 = std::<span class="built_in">async</span>(func_a,p.<span class="built_in">get_future</span>());</span><br><span class="line">    <span class="keyword">auto</span> ft2 = std::<span class="built_in">async</span>(func_b,p);</span><br><span class="line"></span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,ft<span class="number">1.</span><span class="built_in">get</span>());</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="结语">结语</h1>
+<p>并发和异步编程是程序设计实践中的极重要课题之一；善用“”之术可以最大地让程序的执行更贴近现实中事物的运行逻辑，极大地提高程序运行效率，并符合程序在实际应用时的业务逻辑要求。<br />
+因此，C++11引入的“山珍海味”实际上只是开胃菜——其只是拉开了现代C++帷幕，后继的C++版本都在并发/异步编程上有许多大动作，包括C++20四大金刚之一的<code>coroutines</code>，皆在尽可能提高并发/异步编程的效率、可靠性、功能性与易用性。</p>
 
       
 
@@ -536,11 +426,7 @@ member法的灵活度会更高些，甚至可以在<code>parse</code>中让迭�
         		</li>
       		 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">C++23</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">C++ Libraries</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">长文精选</a>
         		</li>
       		
 		</ul>
@@ -560,17 +446,76 @@ member法的灵活度会更高些，甚至可以在<code>parse</code>中让迭�
 
 
       
-        <p class="article-more-link">
-          <a class="article-more-a" href="/cpp/print/">展开全文 >></a>
-        </p>
-      
 
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
+        </div>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=https://crystaljiang232.github.io/cpp/thread/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
       
       <div class="clearfix"></div>
     </div>
   </div>
   <div>
 </article>
+
+
+  
+<nav id="article-nav">
+  
+  
+    <a href="/crypto/aesatk/4-1/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">AES积分攻击——“启卷”章</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
 
 
 <aside class="wrap-side-operation">
@@ -586,17 +531,34 @@ member法的灵活度会更高些，甚至可以在<code>parse</code>中让迭�
         </div>
         
         
+        <div class="toc-container tooltip-left">
+            <i class="icon-font icon-category"></i>
+            <div class="tooltip tooltip-east">
+                <span class="tooltip-item">
+                </span>
+                <span class="tooltip-content">
+                    <div class="toc-article">
+                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%BA%BF%E7%A8%8B"><span class="toc-number">1.</span> <span class="toc-text">线程</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#stdthread"><span class="toc-number">2.</span> <span class="toc-text">std::thread</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E4%BB%8B"><span class="toc-number">2.1.</span> <span class="toc-text">简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#thread%E7%B1%BB"><span class="toc-number">2.2.</span> <span class="toc-text">thread类</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%87%8D%E8%A6%81%E6%88%90%E5%91%98%E5%87%BD%E6%95%B0"><span class="toc-number">2.2.1.</span> <span class="toc-text">重要成员函数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#joindetach"><span class="toc-number">2.2.2.</span> <span class="toc-text">join&#x2F;detach</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#namespace-this_thread"><span class="toc-number">2.3.</span> <span class="toc-text">namespace this_thread</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%94%81"><span class="toc-number">3.</span> <span class="toc-text">锁</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%92%E6%96%A5%E9%94%81"><span class="toc-number">3.1.</span> <span class="toc-text">互斥锁</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BE%A1%E5%AE%88stdlock_guard"><span class="toc-number">3.2.</span> <span class="toc-text">御守：std::lock_guard</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#future"><span class="toc-number">4.</span> <span class="toc-text">&lt;future&gt;</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%82%E6%AD%A5%E4%BA%A6%E8%B6%8Bstdasync"><span class="toc-number">4.1.</span> <span class="toc-text">“异步”亦趋：std::async</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%80%86%E6%96%99%E5%85%B6%E4%BA%8Bstdfuture"><span class="toc-number">4.2.</span> <span class="toc-text">逆料其事：std::future</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B8%B8%E7%94%A8%E6%88%90%E5%91%98%E5%87%BD%E6%95%B0"><span class="toc-number">4.2.1.</span> <span class="toc-text">常用成员函数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A4%BA%E4%BE%8B"><span class="toc-number">4.2.2.</span> <span class="toc-text">示例</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B1%B1%E7%9B%9F%E6%B5%B7%E8%AA%93stdpromise"><span class="toc-number">4.3.</span> <span class="toc-text">山盟海誓：std::promise</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%89%B9%E6%80%A7"><span class="toc-number">4.3.1.</span> <span class="toc-text">特性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A4%BA%E4%BE%8B-1"><span class="toc-number">4.3.2.</span> <span class="toc-text">示例</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%BB%93%E8%AF%AD"><span class="toc-number">5.</span> <span class="toc-text">结语</span></a></li></ol>
+                    </div>
+                </span>
+            </div>
+        </div>
+        
     </div>
 </aside>
 
 
 
+  
+  
+  
+
+    
 
   
+
   
-    <nav id="page-nav">
-      <a class="extend prev" rel="prev" href="/page/10/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/9/">9</a><a class="page-number" href="/page/10/">10</a><span class="page-number current">11</span><a class="page-number" href="/page/12/">12</a><a class="extend next" rel="next" href="/page/12/">Next &raquo;</a>
-    </nav>
+
   
 
 
@@ -657,8 +619,8 @@ member法的灵活度会更高些，甚至可以在<code>parse</code>中让迭�
     <script>
 	var yiliaConfig = {
 		mathjax: true,
-		isHome: true,
-		isPost: false,
+		isHome: false,
+		isPost: true,
 		isArchive: false,
 		isTag: false,
 		isCategory: false,

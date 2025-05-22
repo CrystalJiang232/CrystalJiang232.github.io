@@ -16,7 +16,7 @@
 <meta property="og:description" content="玲珑合集传送门兼可催更的挖坑——现代C++和密码学相关 A teleport site of blogs relavant to Modern C++ and Cryptography that also serves as a list for urging updates  Modern C++ C++11  Lambda expression Smart pointers">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2025-01-15T03:43:58.000Z">
-<meta property="article:modified_time" content="2025-04-14T07:23:45.615Z">
+<meta property="article:modified_time" content="2025-05-08T00:17:27.868Z">
 <meta property="article:author" content="Hibiscus">
 <meta property="article:tag" content="Crypto">
 <meta property="article:tag" content="C&#x2F;C++">
@@ -191,7 +191,8 @@ href="/cpp/lambda/">Lambda expression</a></label></li>
 href="/cpp/rrefs/">Rvalue references and move sematics</a></label></li>
 <li><label><input type="checkbox" checked="" /><a
 href="/cpp/variadic/">Variadic templates</a></label></li>
-<li><label><input type="checkbox" />Concurrency</label></li>
+<li><label><input type="checkbox" checked="" /><a
+href="/cpp/thread/">Multithreading</a></label></li>
 <li><label><input type="checkbox" />Attributes</label></li>
 <li><label><input type="checkbox" /><code>explicit</code>,
 range-<code>for</code></label></li>
@@ -274,12 +275,22 @@ href="/crypto/block/pad/">Block Cipher: Padding</a></label></li>
 Psuedorandom</label></li>
 <li><label><input type="checkbox" />Hash Functions</label></li>
 </ul>
+<h3 id="aes-integral-attack-specials">AES Integral Attack Specials</h3>
+<ul class="task-list">
+<li><label><input type="checkbox" checked="" /><a
+href="/crypto/aesatk/4-1/">Phase 1: Present</a></label></li>
+<li><label><input type="checkbox" />Phase 2: Future</label></li>
+<li><label><input type="checkbox" />Phase 3: Beyond</label></li>
+</ul>
 <h2 id="mathematics">Mathematics</h2>
 <ul class="task-list">
 <li><label><input type="checkbox" checked="" /><a
 href="/crypto/lattice/">Lattice</a></label></li>
 <li><label><input type="checkbox" />Coppersmith</label></li>
-<li><label><input type="checkbox" />NTRU</label></li>
+<li><label><input type="checkbox" checked="" /><a
+href="/crypto/ntru/">NTRU</a></label></li>
+<li><label><input type="checkbox" checked="" /><a
+href="/crypto/lattice-2/">Lattice 2.0</a></label></li>
 </ul>
 <h2 id="writeups">Writeups</h2>
 <ul class="task-list">
@@ -424,7 +435,7 @@ href="/crypto/wp/nctf2024/">nctf2024</a></label></li>
                 </span>
                 <span class="tooltip-content">
                     <div class="toc-article">
-                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#modern-c"><span class="toc-number">1.</span> <span class="toc-text">Modern C++</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#c11"><span class="toc-number">1.1.</span> <span class="toc-text">C++11</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c17"><span class="toc-number">1.2.</span> <span class="toc-text">C++17</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c20"><span class="toc-number">1.3.</span> <span class="toc-text">C++20</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c23"><span class="toc-number">1.4.</span> <span class="toc-text">C++23</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c26"><span class="toc-number">1.5.</span> <span class="toc-text">C++26</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#miscellaneous"><span class="toc-number">1.6.</span> <span class="toc-text">Miscellaneous</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#crypto"><span class="toc-number">2.</span> <span class="toc-text">Crypto</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#asymmetric-cipher"><span class="toc-number">2.1.</span> <span class="toc-text">Asymmetric Cipher</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#symmetric-cipher"><span class="toc-number">2.2.</span> <span class="toc-text">Symmetric Cipher</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#mathematics"><span class="toc-number">2.3.</span> <span class="toc-text">Mathematics</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#writeups"><span class="toc-number">2.4.</span> <span class="toc-text">Writeups</span></a></li></ol></li></ol>
+                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#modern-c"><span class="toc-number">1.</span> <span class="toc-text">Modern C++</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#c11"><span class="toc-number">1.1.</span> <span class="toc-text">C++11</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c17"><span class="toc-number">1.2.</span> <span class="toc-text">C++17</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c20"><span class="toc-number">1.3.</span> <span class="toc-text">C++20</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c23"><span class="toc-number">1.4.</span> <span class="toc-text">C++23</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c26"><span class="toc-number">1.5.</span> <span class="toc-text">C++26</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#miscellaneous"><span class="toc-number">1.6.</span> <span class="toc-text">Miscellaneous</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#crypto"><span class="toc-number">2.</span> <span class="toc-text">Crypto</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#asymmetric-cipher"><span class="toc-number">2.1.</span> <span class="toc-text">Asymmetric Cipher</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#symmetric-cipher"><span class="toc-number">2.2.</span> <span class="toc-text">Symmetric Cipher</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#aes-integral-attack-specials"><span class="toc-number">2.2.1.</span> <span class="toc-text">AES Integral Attack Specials</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#mathematics"><span class="toc-number">2.3.</span> <span class="toc-text">Mathematics</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#writeups"><span class="toc-number">2.4.</span> <span class="toc-text">Writeups</span></a></li></ol></li></ol>
                     </div>
                 </span>
             </div>
