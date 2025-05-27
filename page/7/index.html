@@ -152,6 +152,389 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-crypto/wp/nctf2024" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/crypto/wp/nctf2024/">NCTF2024 Crypto Official Writeup</a>
+    </h1>
+  
+
+        
+        <a href="/crypto/wp/nctf2024/" class="archive-article-date">
+  	<time datetime="2025-03-19T13:59:04.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-03-19</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>Hibiscus
+为<del>鸽到2025年的nctf2024</del>命制了三道Crypto题，下述为官方Writeup。</p>
+<blockquote>
+<p>NCTF2024 Crypto部分附件：<a
+target="_blank" rel="noopener" href="https://github.com/CrystalJiang232/nctf2024-Crypto">github</a><br />
+NCTF2024 全部附件：<a
+target="_blank" rel="noopener" href="https://https://github.com/X1cT34m/NCTF2024">github</a></p>
+</blockquote>
+<h1 id="sign">Sign</h1>
+<blockquote>
+<p>这是恢复互联网的密钥，密码是实时生成的三万个随机数。</p>
+</blockquote>
+<h2 id="解析">解析</h2>
+<p><del>签到题</del>，主要是两部分：MT19937的逆向、和基于AGCD问题的FHE（全同态加密）。</p>
+<p>显然我们的目标就是恢复<code>string</code>。而题目对<code>string</code>实行了逐字节加密，具体地：
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> m <span class="keyword">in</span> string:</span><br><span class="line">    f = FHE()</span><br><span class="line">    s = long_to_bytes(Random().getrandbits(<span class="number">20000</span>))</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> s[<span class="number">4</span>:]:</span><br><span class="line">        Keys.extend(f.encrypt([i]))</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> s[:<span class="number">4</span>]:</span><br><span class="line">        Keys.extend(f.encrypt([i * (m &amp; <span class="number">0x03</span>) % <span class="number">0x101</span>]))</span><br><span class="line">        m &gt;&gt;= <span class="number">2</span></span><br></pre></td></tr></table></figure>
+对于每一个字节，分别初始化了一个<code>FHE</code>、使用<code>Random().getrandbits(20000)</code>拿到了20000位随机数，将随机数的后19968位加密后直接输出，前32位用于和<code>string</code>的当前字节<code>m</code>按一个自定义规则进行加密。</p>
+<p>python中<code>getrandbits(n)</code> 在 <span class="math inline">\(n
+&gt; 32\)</span>
+时会多次调用<code>getrandbits(32)</code>，将新随机数拼接在既有随机数的高位。如此，显然我们需要利用这个大随机数的后（低）19968位来预测前（高）32位的值。<br />
+已知完整的一组<code>state</code>的情况下随机数预测部分的资料/既有脚本都比较多<del>实在不行问deepseek</del>，这里不再赘述。任务由此变成了解密FHE。</p>
+<blockquote>
+<p>FHE（全同态加密）相关：对于一个加/解密系统 <span
+class="math inline">\((E,D)\)</span> 和其域下任意的 <span
+class="math inline">\((m_i,c_i)\)</span>，<br />
+若其满足 <span class="math inline">\(E(\sum_{i=1}^{n} m_i) =
+\sum_{i=1}{n} c_i\)</span> 且 <span
+class="math inline">\(D(\sum_{i=1}^{n} c_i) = \sum_{i=1}^{n}
+m_i\)</span>，则称其是（完全）加法同态的；<br />
+若其满足 <span class="math inline">\(E(\prod_{i=1}^{n} m_i) =
+\prod_{i=1}{n} c_i\)</span> 且 <span
+class="math inline">\(D(\prod_{i=1}^{n} c_i) = \prod_{i=1}^{n}
+m_i\)</span>，则称其是（完全）乘法同态的；<br />
+若 <span class="math inline">\((E,D)\)</span>
+既是加法同态又是乘法同态的，则称之为全同态加密系统。</p>
+</blockquote>
+<p>再观察<code>FHE</code>的加密逻辑：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">FHE</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="variable language_">self</span>.p = getPrime(<span class="number">77</span>)</span><br><span class="line">        <span class="variable language_">self</span>.pubkeys = []</span><br><span class="line">        <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">16</span>):</span><br><span class="line">            <span class="variable language_">self</span>.pubkeys.append(<span class="variable language_">self</span>.p * getrandint(<span class="number">177</span>) + (getrandint(<span class="number">17</span>) &lt;&lt; <span class="number">8</span>))</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">encrypt</span>(<span class="params">self,msg:<span class="built_in">list</span>[<span class="built_in">int</span>] | <span class="built_in">bytes</span></span>):</span><br><span class="line">        result = []</span><br><span class="line">        <span class="keyword">for</span> m <span class="keyword">in</span> msg:</span><br><span class="line">            tmp = <span class="number">0</span></span><br><span class="line">            shuffle_base = urandom(<span class="number">16</span>)</span><br><span class="line">            <span class="keyword">for</span> i <span class="keyword">in</span> shuffle_base:</span><br><span class="line">                x,y = <span class="built_in">divmod</span>(i,<span class="number">16</span>)</span><br><span class="line">                tmp += x*<span class="variable language_">self</span>.pubkeys[y] + y*<span class="variable language_">self</span>.pubkeys[x]</span><br><span class="line">            result.append(tmp + m)</span><br><span class="line">        <span class="keyword">return</span> result</span><br></pre></td></tr></table></figure>
+<p>初始化时，其会选定一个质数 <span class="math inline">\(p\)</span>
+，随后生成了一个公钥集 <span
+class="math inline">\(\{pk_i\}\)</span>，其中 <span
+class="math inline">\(pk_i = pa_i + 256*b_i\)</span>，<span
+class="math inline">\(\log_{2}a_i \approx 177\)</span>，<span
+class="math inline">\(\log_{2}b_i \approx 17\)</span>。<br />
+每次加密 <span class="math inline">\(m &lt;
+256\)</span>，选择公钥集的一个随机小系数（各维度不大于16）的线性组合，与
+<span class="math inline">\(m\)</span> 求和得到密文。</p>
+<p>首先考虑解密逻辑：AGCD-FHE的解密关键点在于获得私钥 <span
+class="math inline">\(p\)</span>。<br />
+获得 <span class="math inline">\(p\)</span> 后，对于任意密文 <span
+class="math inline">\(c = k_1p + 256*k_2 + m\)</span>，<span
+class="math inline">\(m &lt; 256\)</span>、<span
+class="math inline">\(256*k_2 &lt; p\)</span>时不难证明存在 <span
+class="math inline">\(m \equiv (c \bmod p) \bmod 256\)</span>。</p>
+<blockquote>
+<p>此处不难发现FHE（全同态加密）性质的具体体现：<br />
+记加密函数为 <span class="math inline">\(E\)</span>，显然 <span
+class="math inline">\(Z_{256}\)</span> 下 <span
+class="math inline">\(E(\sum_{i=1}{n} m_i) = \sum_{i=1}{n}
+c_i\)</span>。解密亦然，在 <span class="math inline">\(n\)</span>
+不太大时近似认为其是完全加法同态的。<br />
+同理可知其也存在乘法同态，但基于AGCD的FHE在进行密文乘时误差累积非常快，因而某种意义上只能算“部分”乘法同态。相比之下如RSA就满足<strong>完全</strong>乘法同态。</p>
+</blockquote>
+<p>而对AGCD-FHE的攻击可以通过构造格进行。</p>
+<blockquote>
+<p>AGCD(Approximate Greatest Common
+Divisor)/近似最大公约数问题简介：<br />
+已知 <span class="math inline">\(\{pq_1 + e_1,pq_2 + e_2, \cdots, pq_n +
+e_n\}\)</span>，满足 <span class="math inline">\(e_i &lt;&lt;
+p\)</span>， 求 <span class="math inline">\(p\)</span>。<br />
+可以发现其相较传统的GCD问题“无非”就是多了误差 <span
+class="math inline">\(e_i\)</span>，但这会让求最大公约数的经典算法全部失效，必须另辟蹊径。</p>
+</blockquote>
+<p>以上述AGCD的参数名为例：<br />
+记 <span class="math inline">\(x_i = pq_i + e_i\)</span>，注意到存在
+<span class="math inline">\(x_0q_i - x_iq_0 = e_0q_i -
+e_iq_0\)</span>，其中 <span class="math inline">\(\{x_i\}\)</span>
+均已知，<span class="math inline">\(\{q_i\}\)</span> 是未知的整数，<span
+class="math inline">\(\{e_i\}\)</span> 是未知的小整数。<br />
+构造格的矩阵等式如下：</p>
+<p><span class="math inline">\(\begin{bmatrix}q_1 &amp; q_2 &amp; \cdots
+&amp; q_n &amp; q_0 \end{bmatrix} \cdot \begin{bmatrix} \\ -x_0 \\ &amp;
+-x_0 \\ &amp;&amp; \ddots \\ &amp;&amp;&amp; -x_0 \\ x_1 &amp; x_2 &amp;
+\cdots &amp; x_n &amp; 2^{\rho + 1} \end{bmatrix} = \begin{bmatrix}
+e_1q_0 - e_0q_1 &amp; e_2q_0 - e_0q_2 &amp; \cdots &amp; e_nq_0 - e_0q_n
+&amp; q_{0}2^{\rho+1} \end{bmatrix}\)</span></p>
+<p>显然锚定的是格中的短向量（<span class="math inline">\(2^{\rho +
+1}\)</span> 用于配平），对格进行规约即可还原出 <span
+class="math inline">\(q_0\)</span>，随后计算 <span
+class="math inline">\(e_0 \equiv x_0 (\bmod q_0)\)</span>、<span
+class="math inline">\(p = \frac{x_0-e_0}{q_0}\)</span>。<br />
+获得 <span class="math inline">\(p\)</span>
+后，完成对加密后数字的解密，随后MT19937逆向+预测随机数后，梳理下后续的模乘逻辑等步骤就都比较普通了。</p>
+<h2 id="完整exp">完整exp</h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># sage</span></span><br><span class="line"><span class="built_in">__import__</span>(<span class="string">&#x27;os&#x27;</span>).environ[<span class="string">&#x27;TERM&#x27;</span>] = <span class="string">&#x27;xterm&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> sage.<span class="built_in">all</span> <span class="keyword">import</span> * </span><br><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> functools <span class="keyword">import</span> reduce</span><br><span class="line"><span class="keyword">from</span> random <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> Crypto.Util.Padding <span class="keyword">import</span> unpad</span><br><span class="line"><span class="keyword">from</span> Crypto.Cipher <span class="keyword">import</span> AES</span><br><span class="line"><span class="keyword">from</span> hashlib <span class="keyword">import</span> md5</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">inv_shift_right</span>(<span class="params">x:<span class="built_in">int</span>,bit:<span class="built_in">int</span>,mask:<span class="built_in">int</span> = <span class="number">0xffffffff</span></span>) -&gt; <span class="built_in">int</span>:</span><br><span class="line">    tmp = x </span><br><span class="line">    <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">32</span>//bit):</span><br><span class="line">        tmp = x ^^ tmp &gt;&gt; bit &amp; mask</span><br><span class="line">    <span class="keyword">return</span> tmp</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">inv_shift_left</span>(<span class="params">x:<span class="built_in">int</span>,bit:<span class="built_in">int</span>,mask:<span class="built_in">int</span> = <span class="number">0xffffffff</span></span>) -&gt; <span class="built_in">int</span>:</span><br><span class="line">    tmp = x</span><br><span class="line">    <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">32</span>//bit):</span><br><span class="line">        tmp = x ^^ tmp &lt;&lt; bit &amp; mask</span><br><span class="line">    <span class="keyword">return</span> tmp</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">rev_extract</span>(<span class="params">y:<span class="built_in">int</span></span>) -&gt; <span class="built_in">int</span>:</span><br><span class="line">    y = inv_shift_right(y,<span class="number">18</span>)</span><br><span class="line">    y = inv_shift_left(y,<span class="number">15</span>,<span class="number">4022730752</span>)</span><br><span class="line">    y = inv_shift_left(y,<span class="number">7</span>,<span class="number">2636928640</span>)</span><br><span class="line">    y = inv_shift_right(y,<span class="number">11</span>)</span><br><span class="line">    <span class="keyword">return</span> y</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">exp_mt19937</span>(<span class="params">output:<span class="built_in">list</span></span>) -&gt; <span class="built_in">int</span>:</span><br><span class="line">    <span class="keyword">assert</span> <span class="built_in">len</span>(output) == <span class="number">624</span></span><br><span class="line">    cur_stat = [rev_extract(i) <span class="keyword">for</span> i <span class="keyword">in</span> output]</span><br><span class="line">    r = Random()</span><br><span class="line">    r.setstate((<span class="number">3</span>, <span class="built_in">tuple</span>([<span class="built_in">int</span>(i) <span class="keyword">for</span> i <span class="keyword">in</span> cur_stat] + [<span class="number">624</span>]), <span class="literal">None</span>))</span><br><span class="line">    <span class="keyword">return</span> r.getrandbits(<span class="number">32</span>)</span><br><span class="line"></span><br><span class="line">io = remote(<span class="string">&#x27;39.106.16.204&#x27;</span>,<span class="number">24259</span>)</span><br><span class="line">io.recvuntil(<span class="string">b&#x27;:&#x27;</span>)</span><br><span class="line">aes_cipher = <span class="built_in">bytes</span>.fromhex(io.recvline().strip().decode())</span><br><span class="line">io.sendlineafter(<span class="string">b&#x27;:&#x27;</span>,<span class="string">b&#x27;&#x27;</span>)</span><br><span class="line">msg = []</span><br><span class="line"><span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">30000</span>):</span><br><span class="line">    io.recvuntil(<span class="string">b&#x27;[+]&#x27;</span>)</span><br><span class="line">    msg.append(<span class="built_in">int</span>(io.recvline().strip().decode()))</span><br><span class="line"></span><br><span class="line">io.close()</span><br><span class="line">msg = [msg[i:i+<span class="number">2500</span>] <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,<span class="number">30000</span>,<span class="number">2500</span>)]</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">d1 = []</span><br><span class="line"><span class="keyword">for</span> dx <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">12</span>):</span><br><span class="line">    cp = msg[dx]</span><br><span class="line"></span><br><span class="line">    mt = matrix(ZZ,<span class="number">21</span>,<span class="number">21</span>)</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">20</span>):</span><br><span class="line">        mt[i,i] = cp[-<span class="number">1</span>]</span><br><span class="line">        mt[-<span class="number">1</span>,i] = cp[i]</span><br><span class="line">    </span><br><span class="line">    const = <span class="number">2</span> ^ <span class="number">30</span></span><br><span class="line">    mt[-<span class="number">1</span>,-<span class="number">1</span>] = const</span><br><span class="line">    mt = mt.LLL()</span><br><span class="line"></span><br><span class="line">    temp = <span class="built_in">abs</span>(mt[<span class="number">0</span>,-<span class="number">1</span>])</span><br><span class="line">    <span class="keyword">assert</span> temp % const == <span class="number">0</span></span><br><span class="line"></span><br><span class="line">    q0 = temp / const</span><br><span class="line">    e0 = ZZ(cp[-<span class="number">1</span>] % q0)</span><br><span class="line">    p = ZZ((cp[-<span class="number">1</span>] - e0) / q0)</span><br><span class="line"></span><br><span class="line">    d1.append(<span class="built_in">list</span>(<span class="built_in">map</span>(<span class="keyword">lambda</span> x: x % p % <span class="number">256</span>,cp)))</span><br><span class="line"></span><br><span class="line">d2 = <span class="string">b&#x27;&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> dx <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">12</span>):</span><br><span class="line">    ran_output = [bytes_to_long(<span class="built_in">bytes</span>(d1[dx][i:i+<span class="number">4</span>])) <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,<span class="number">2496</span>,<span class="number">4</span>)]</span><br><span class="line">    invmul_key = [<span class="built_in">pow</span>(i,-<span class="number">1</span>,<span class="number">0x101</span>) <span class="keyword">for</span> i <span class="keyword">in</span> long_to_bytes(exp_mt19937(ran_output[::-<span class="number">1</span>]))]</span><br><span class="line"></span><br><span class="line">    res = []</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">4</span>):</span><br><span class="line">        res.append(invmul_key[i] * d1[dx][-<span class="number">4</span> + i] % <span class="number">0x101</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">assert</span> <span class="built_in">all</span>(<span class="number">0</span> &lt;= i &lt; <span class="number">4</span> <span class="keyword">for</span> i <span class="keyword">in</span> res)</span><br><span class="line">    res.reverse()</span><br><span class="line">    d2 += <span class="built_in">bytes</span>([reduce(<span class="keyword">lambda</span> x,y: <span class="number">4</span>*x+y,res)])</span><br><span class="line">    </span><br><span class="line"><span class="built_in">print</span>(unpad(AES.new(md5(d2).digest(),AES.MODE_ECB).decrypt(aes_cipher),<span class="number">16</span>).decode())</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h1 id="arcahv">Arcahv</h1>
+<blockquote>
+<p>Delightful.</p>
+</blockquote>
+<h2 id="解析-1">解析</h2>
+<p>题如其名 —— <em>Arcahv</em>，聚合，大杂烩。<br />
+核心考点包括 RSA LSB Orcale <del>Pro Max版</del>，LCG，Coppersmith。</p>
+<h3 id="rsa-lsb-orcale">RSA LSB Orcale</h3>
+<p>最简单的RSA LSB Orcale应是RSA Parity
+Orcale（奇偶Orcale，每次解密返回结果的奇偶性），此时攻击所需要的次数为
+<span class="math inline">\(\lceil \log_{2}N \rceil\)</span>。<br />
+同样地，如果LSB Orcale每次返回的值是解密结果对 <span
+class="math inline">\(2^{k}\)</span> 取模的结果，则解密所需要的次数应为
+<span class="math inline">\(\lceil log_{2^{k}}N = \lceil
+\frac{log_{2}N}{k} \rceil\)</span>。</p>
+<p>本题首先大幅约束了解密次数，旨在考验各位师傅对于 Parity
+Orcale的理解和数论推导。</p>
+<blockquote>
+<p>Parity
+Orcale的核心就是“溢出”导致的余数变化，以及我们根据RSA的乘法同态能构造出使解密结果为
+<span class="math inline">\(Cm (\bmod N)\)</span> 的密文。</p>
+</blockquote>
+<p>通过在 <span class="math inline">\(Z_{p}\)</span> 下将密文乘以 <span
+class="math inline">\(C^{e}\)</span>，我们解密得到的明文即为 <span
+class="math inline">\(m^{&#39;} = Cm \bmod N\)</span>。显然存在等式
+<span class="math inline">\(m^{&#39;} + kN =
+Cm\)</span>。本题中由于我们可以得到 <span
+class="math inline">\(m^{&#39;} \bmod 256\)</span>，因而亦令 $ C =
+256$。由此，<br />
+- 若 <span class="math inline">\(k = 0\)</span>，由于 <span
+class="math inline">\(256m \equiv 0 (\bmod 256)\)</span>，则显然 <span
+class="math inline">\(m^{&#39;} \bmod 256 = 0\)</span>。<br />
+- 若 <span class="math inline">\(k \neq 0\)</span>，则 <span
+class="math inline">\(m^{&#39;} \equiv kN (\bmod 256)\)</span>。又因为
+<span class="math inline">\(N\)</span> 必为奇数，<span
+class="math inline">\(gcd(N,256) = 1\)</span>，因而 <span
+class="math inline">\(Z_{256}\)</span> 下 <span
+class="math inline">\(N^{-1}\)</span> 存在，即可以计算 <span
+class="math inline">\(k \equiv m^{&#39;}N^{-1} (\bmod
+256)\)</span>。<br />
+又 <span class="math inline">\(m^{&#39;} \in (0,N)\)</span>，推定 <span
+class="math inline">\(256m = m^{&#39;} + kN \in (kN,(k+1)N)\)</span>，即
+<span class="math inline">\(m \in
+(\frac{k}{256}N,\frac{k+1}{256}N)\)</span>。</p>
+<p>重复上述步骤（每次将上一次得到的 <span
+class="math inline">\(m\)</span> 在 <span
+class="math inline">\(Z_{N}\)</span> 下乘以 <span
+class="math inline">\(256\)</span>），每次可以将原明文 <span
+class="math inline">\(m\)</span> 的取值范围缩小至原来的 <span
+class="math inline">\(\frac{1}{256}\)</span>，近似于获得了高8位的信息。</p>
+<p>同时，题目中原明文是 <span class="math inline">\(p \in
+(0,2^{1024})\)</span>，在交互次数有限的情况下，应选择跳过前127次交互（因为已知这127次交互必定会得到
+<span class="math inline">\(k = 0\)</span>；注意明文仍需直接乘以 <span
+class="math inline">\(2^{1016e} \bmod N\)</span>）。最终我们近似可以得到
+<code>r1.p</code> 的高600位信息。</p>
+<h3 id="lcg">LCG</h3>
+<p>LCG部分是非常经典的PRNG逆向。<br />
+本题中LCG没有给出任何参数<del>而且还被玩坏了</del>，但难度依然不大。唯一稍微有些迷惑性的点就是不会告诉你随机数的分隔点在哪里，但通过简单分析<del>乱糊+瞎猜</del>和获得随机数后的存在性校验也不难从一堆<code>unsigned long long</code>里得到五个LCG的连续输出随机数。</p>
+<p>得到随机数后，由于LCG的参数 <span
+class="math inline">\((p,a,b)\)</span>
+均未知，因此需要通过这些随机数来从前向后逐个恢复，这里只讲恢复 <span
+class="math inline">\(p\)</span>。<br />
+记恢复的随机数序列为 <span class="math inline">\(\{x_i\} (i \in
+[0,5))\)</span>，<br />
+<span class="math inline">\(x_{i+1} \equiv ax_i + b \bmod p, x_{i+2}
+\equiv ax_{i+1} + b \bmod p \rightarrow x_{i+2}-x_{i+1} \equiv
+a(x_{i+1}-x_i) \bmod p\)</span>。<br />
+再记 <span class="math inline">\(x_{i+1}-x_{i} = D_{i} (i \in
+[0,4))\)</span>，既有 <span class="math inline">\(D_{i+2} \equiv
+aD_{i+1} \bmod p, D_{i+1} \equiv aD_i \bmod p \rightarrow D^{2}_{i+1}
+\equiv D_{i+2}D_{i} \bmod p\)</span>，即 <span
+class="math inline">\(D^{2}_{i+1} - D_{i+2}D_{i} \equiv 0 \bmod
+p\)</span>。<br />
+对上式取 <span class="math inline">\(i =
+0,1\)</span>，得到的二式取最大公约数（即 <span
+class="math inline">\(gcd(D^{2}_{2} - D_{3}D_{1}, D^{2}_{1} -
+D_{2}D_{0})\)</span>），即有很大概率得到 <span
+class="math inline">\(p\)</span>。</p>
+<blockquote>
+<p>可以发现5个连续随机数是LCG参数完全未知时下还原 <span
+class="math inline">\(p\)</span>
+所需的最小数目，因此构造的最大公约数经常会掺杂一些其它的小因子，简单<code>factor</code>一下的成功率还是不低的。</p>
+</blockquote>
+<p>得到 <span class="math inline">\(p\)</span>
+后依述推导过程中的部分式即可得到 <span
+class="math inline">\(a,b\)</span>，过程不再赘述。<br />
+至于被“玩坏”的LCG，注意到作为种子的AES密钥<code>key</code>只有128位长，而LCG的
+<span class="math inline">\(p\)</span>
+为1024位，因此只需一直向前逆向，即可认为第一个遇到的不大于128位的数就是<code>key</code>。</p>
+<blockquote>
+<p>相当于整道 <em>Arcahv</em>
+两次应用到了“小明文攻击”的思想，即已知明文的部分信息的前提下攻击可以另辟蹊径，<del>同时也强调了密码学应用中pad的重要性</del></p>
+</blockquote>
+<h3 id="coppersmith">Coppersmith</h3>
+<p>RSA LSB Orcale中并没有获得 <span class="math inline">\(p\)</span>
+的全部信息，但已知其高位的情况下即可通过 Coppersmith 对 <span
+class="math inline">\(N\)</span>
+进行分解，具体构造方法也非常简单<del>而且没有技巧</del>，同样不再赘述。</p>
+<h2 id="完整exp-1">完整exp</h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line"><span class="built_in">__import__</span>(<span class="string">&#x27;os&#x27;</span>).environ[<span class="string">&#x27;TERM&#x27;</span>] = <span class="string">&#x27;xterm&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> sage.<span class="built_in">all</span> <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> Crypto.Cipher <span class="keyword">import</span> AES</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">hexify_send</span>(<span class="params">num:<span class="built_in">int</span></span>) -&gt; <span class="built_in">bytes</span>:</span><br><span class="line">    <span class="keyword">return</span> long_to_bytes(num).<span class="built_in">hex</span>().encode()</span><br><span class="line"></span><br><span class="line">io = remote(<span class="string">&#x27;39.106.16.204&#x27;</span>,<span class="number">28575</span>)</span><br><span class="line"><span class="comment"># io = process([&#x27;python3&#x27;,&#x27;arcahv.py&#x27;])</span></span><br><span class="line"></span><br><span class="line">io.sendlineafter(<span class="string">b&#x27;&gt;&#x27;</span>,<span class="string">b&#x27;1&#x27;</span>)</span><br><span class="line"></span><br><span class="line">io.recvuntil(<span class="string">b&#x27;:&#x27;</span>)</span><br><span class="line">enc_flag = <span class="built_in">int</span>(io.recvline().strip().decode(),<span class="number">16</span>)</span><br><span class="line">io.recvuntil(<span class="string">b&#x27;:&#x27;</span>)</span><br><span class="line">enc_hint = <span class="built_in">int</span>.from_bytes(<span class="built_in">bytes</span>.fromhex(io.recvline().strip().decode()),<span class="string">&#x27;little&#x27;</span>)</span><br><span class="line">io.recvuntil(<span class="string">b&#x27;:&#x27;</span>)</span><br><span class="line">enc_hint2 = <span class="built_in">bytes</span>.fromhex(io.recvline().strip().decode())</span><br><span class="line"></span><br><span class="line"><span class="comment"># RSA LSB Orcale</span></span><br><span class="line"></span><br><span class="line">m = enc_hint</span><br><span class="line">omit_count = <span class="number">127</span></span><br><span class="line">io.sendlineafter(<span class="string">b&#x27;&gt;&#x27;</span>,<span class="string">b&#x27;2&#x27;</span>)</span><br><span class="line">io.recvuntil(<span class="string">b&#x27;(&#x27;</span>)</span><br><span class="line">rn = <span class="built_in">int</span>(io.recvuntil(<span class="string">b&#x27;,&#x27;</span>,drop=<span class="literal">True</span>).strip().decode(),<span class="number">16</span>)</span><br><span class="line">re = <span class="built_in">int</span>(io.recvuntil(<span class="string">b&#x27;)&#x27;</span>,drop=<span class="literal">True</span>).strip().decode(),<span class="number">16</span>)</span><br><span class="line"></span><br><span class="line">upper_bound = reduce(<span class="keyword">lambda</span> x,y:floor(x/<span class="number">256</span>),<span class="built_in">range</span>(omit_count),rn)</span><br><span class="line"></span><br><span class="line">lower_bound = <span class="number">0</span></span><br><span class="line">single_mul = <span class="built_in">pow</span>(<span class="number">256</span>,re,rn)</span><br><span class="line">inv = <span class="built_in">pow</span>(rn,-<span class="number">1</span>,<span class="number">256</span>)</span><br><span class="line"></span><br><span class="line">m = m * <span class="built_in">pow</span>(single_mul,omit_count,rn) % rn</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">75</span>):</span><br><span class="line">    m = <span class="built_in">int</span>(m * single_mul % rn)</span><br><span class="line">    </span><br><span class="line">    io.sendlineafter(<span class="string">b&#x27;?&#x27;</span>,<span class="string">b&#x27;y&#x27;</span>)</span><br><span class="line">    io.sendlineafter(<span class="string">b&#x27;:&#x27;</span>,hexify_send(m))</span><br><span class="line">    io.recvuntil(<span class="string">b&#x27;:&#x27;</span>)</span><br><span class="line">    this = <span class="built_in">int</span>(io.recvline().strip().decode()[:<span class="number">2</span>],<span class="number">16</span>)</span><br><span class="line"></span><br><span class="line">    k = <span class="built_in">int</span>(-this * inv % <span class="number">256</span>)</span><br><span class="line">    ttl = (upper_bound - lower_bound) / <span class="number">256</span></span><br><span class="line"></span><br><span class="line">    lower_bound += ceil(k * ttl)</span><br><span class="line">    upper_bound = lower_bound + floor(ttl)</span><br><span class="line"></span><br><span class="line">res_pp = lower_bound</span><br><span class="line"></span><br><span class="line"><span class="comment"># LCG</span></span><br><span class="line"></span><br><span class="line">io.sendlineafter(<span class="string">b&#x27;&gt;&#x27;</span>,<span class="string">b&#x27;3&#x27;</span>)</span><br><span class="line">ls = []</span><br><span class="line"><span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">80</span>):</span><br><span class="line">    io.sendlineafter(<span class="string">b&#x27;?&#x27;</span>,<span class="string">b&#x27;y&#x27;</span>)</span><br><span class="line">    ls.append(<span class="built_in">int</span>(io.recvline().strip().decode()))</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">hexstr = <span class="string">&#x27;&#x27;</span>.join(<span class="built_in">hex</span>(i)[<span class="number">2</span>:].zfill(<span class="number">16</span>) <span class="keyword">for</span> i <span class="keyword">in</span> ls)</span><br><span class="line">lcgnums = [<span class="built_in">int</span>(hexstr[i:i+<span class="number">256</span>],<span class="number">16</span>) <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,<span class="built_in">len</span>(hexstr),<span class="number">256</span>)]</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">A = [lcgnums[i+<span class="number">1</span>]-lcgnums[i] <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">4</span>)]</span><br><span class="line">p = gcd(A[<span class="number">1</span>]^<span class="number">2</span> - A[<span class="number">2</span>]*A[<span class="number">0</span>],A[<span class="number">2</span>]^<span class="number">2</span> - A[<span class="number">3</span>]*A[<span class="number">1</span>])</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> <span class="keyword">not</span> isPrime(p):</span><br><span class="line">    p = factor(p)[-<span class="number">1</span>][<span class="number">0</span>]</span><br><span class="line"></span><br><span class="line"><span class="keyword">assert</span> isPrime(p)</span><br><span class="line"></span><br><span class="line">a = <span class="built_in">int</span>(A[<span class="number">1</span>] * <span class="built_in">int</span>(<span class="built_in">pow</span>(A[<span class="number">0</span>],-<span class="number">1</span>,p)) % p)</span><br><span class="line">b = <span class="built_in">int</span>((lcgnums[<span class="number">1</span>] - a * lcgnums[<span class="number">0</span>]) % p)</span><br><span class="line"></span><br><span class="line">cur = Zmod(p)(lcgnums[<span class="number">0</span>])</span><br><span class="line">count = <span class="number">0</span></span><br><span class="line"><span class="keyword">while</span> <span class="built_in">int</span>(cur).bit_length() &gt; <span class="number">128</span>:</span><br><span class="line">    cur = (cur - b) * <span class="built_in">pow</span>(a,-<span class="number">1</span>,p)</span><br><span class="line">    count += <span class="number">1</span></span><br><span class="line"></span><br><span class="line">key = <span class="built_in">int</span>(cur).to_bytes(<span class="number">16</span>,<span class="string">&#x27;big&#x27;</span>)</span><br><span class="line">res_n = <span class="built_in">int</span>.from_bytes(AES.new(key,AES.MODE_ECB).decrypt(enc_hint2),<span class="string">&#x27;big&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Coppersmith</span></span><br><span class="line">P.&lt;x&gt; = Zmod(res_n)[]</span><br><span class="line">rt = (res_pp + x).small_roots(X=<span class="number">2</span>^<span class="number">453</span>,beta=<span class="number">0.4</span>)[<span class="number">0</span>]</span><br><span class="line"></span><br><span class="line">p0 = <span class="built_in">int</span>(res_pp + rt)</span><br><span class="line"></span><br><span class="line"><span class="keyword">assert</span> res_n % p0 == <span class="number">0</span></span><br><span class="line">q0 = res_n // p0</span><br><span class="line"></span><br><span class="line">d0 = <span class="built_in">int</span>(<span class="built_in">pow</span>(<span class="number">65537</span>,-<span class="number">1</span>,(p0-<span class="number">1</span>)*(q0-<span class="number">1</span>)))</span><br><span class="line"><span class="built_in">print</span>(long_to_bytes(<span class="built_in">int</span>(<span class="built_in">pow</span>(enc_flag,d0,res_n))))</span><br></pre></td></tr></table></figure>
+<h1 id="绮云">绮云</h1>
+<blockquote>
+<p>花灯百盏遥遥一线牵</p>
+</blockquote>
+<h2 id="解析-2">解析</h2>
+<p>某种意义上的水题，RSA双Orcale(N-Orcale + fault injection orcale)
+和简单的ECDSA守个门。</p>
+<blockquote>
+<p>笔者设想过此类Encryption
+Orcale有一些偏现实的应用场景，比如存在一个小型的加密器，其提供由一个既定私钥
+<span class="math inline">\(d\)</span> 生成大量公钥对 <span
+class="math inline">\((N,e)\)</span>
+对输入的任意消息进行加密的功能，同时其并不会主动暴露自身公钥对（相当于攻击者/加密者只能得到密文，<del>唯密文攻击Plus</del>）。攻击者可以对其进行
+<em>Fault
+injection</em>，而现实中对于小型加密设备，通过侧信道攻击等方式同样也可以获取
+<span class="math inline">\(e\)</span>。</p>
+</blockquote>
+<h3 id="rsa-n-orcale">RSA N-Orcale</h3>
+<p>首先我们希望在没有公钥的情况下获得 <span
+class="math inline">\(N\)</span>。<br />
+传递 <span class="math inline">\(m \in \{2,2^2,2^3,2^4,\cdots\}\)</span>
+，收集加密的密文。<br />
+设 <span class="math inline">\(m_i = 2^{i} (i \in Z_+)\)</span>，显然
+<span class="math inline">\(m_i = m_1^{i}\)</span>。<br />
+又， <span class="math inline">\(c_i \equiv m_i^e (\bmod
+N)\)</span>，推定 <span class="math inline">\(c_1 \equiv m_1^e (\bmod
+N)\)</span>，结合上式可得 <span class="math inline">\(c_1^i - c_i \equiv
+0 (\bmod N)\)</span>，即 <span class="math inline">\(c_1^i - c_i = kN (k
+\in Z)\)</span>。<br />
+在加密了足够多的 <span class="math inline">\(m_i\)</span> 后，对 <span
+class="math inline">\({c_1^i - c_i}\)</span>
+求其最大公约数，即可有很大把握得到 <span
+class="math inline">\(N\)</span>。</p>
+<blockquote>
+<p>RSA N-Orcale步中，由于 <span class="math inline">\(e &lt;
+2^{2048}\)</span>，所以建议选择传输interfere位为2048。尽管单从
+<em>N-Orcale</em> 这一步来看没有区别，但如此可以在解出 <span
+class="math inline">\(N\)</span> 后立即获得 <span
+class="math inline">\(m^{e} \bmod N\)</span>
+的确值<del>进而避开了一些奇奇怪怪的<code>if-elif</code>的纠缠</del></p>
+</blockquote>
+<h3 id="rsa-fault-injection">RSA Fault injection</h3>
+<p>单个RSA Encryption Orcale的剩下部分就是比较经典的RSA Fault
+injection攻击，虽然攻击目标不一样（从传统fault的针对私钥 <span
+class="math inline">\(d\)</span> 变为现在针对公钥 <span
+class="math inline">\(e\)</span>），但数学逻辑完全相同。具体原理不再赘述（<del>既有wp太多了</del>）。</p>
+<h3 id="格攻击">格攻击</h3>
+<p>但至此我们得到的依然只是大量的公钥对 <span
+class="math inline">\((N,e)\)</span>，题目中的 <span
+class="math inline">\(d\)</span> 并不能通过 <em>Wiener's
+Attack</em>获得（应用的私钥 <span class="math inline">\(d =
+x^{4}\)</span> 仍有928位）。<br />
+注意到每次RSA生成公钥对对应的私钥是相同的，由RSA的基本关系式可以列出：<span
+class="math inline">\(e_{i}d \equiv 1 \bmod
+\varphi(N_{i})\)</span><br />
+进而，<span class="math inline">\(e_{i}d + k_{i}\varphi(N_{i}) - 1 =
+0\)</span>，得到 <span class="math inline">\(e_{i}d + k_{i}N_{i} - C_{i}
+= 0\)</span>，其中 <span class="math inline">\(C_{i}\)</span> 的数量级与
+<span class="math inline">\(k_{i}p_{i}\)</span> 相当。</p>
+<p>又，RSA中存在 <span class="math inline">\(e_{i}d \approx
+|k_i|(N_{i})\)</span>（<em>Wiener's attack</em> 连分数逼近的基础），因此
+<span class="math inline">\(k_{i} \approx
+\frac{e_{i}d}{N_{i}}\)</span>，结合 <span class="math inline">\(e_{i}d
+\equiv 1 \bmod \varphi(N)\)</span>，可以认为 <span
+class="math inline">\(k_{i}\)</span> 数量级与 <span
+class="math inline">\(d\)</span> 相当。</p>
+<p>结合本题的实例，<span class="math inline">\(p_{i}\)</span>
+约为1024位，<span class="math inline">\(d_{i}\)</span> 为928位，因而
+<span class="math inline">\(C_{i}\)</span> 应在1950位左右，满足明显小于
+<span class="math inline">\(e_{i}\)</span>、<span
+class="math inline">\(N_{i}\)</span> 的条件。
+考虑下述行向量的线性组合：</p>
+<p><span class="math inline">\(\begin{bmatrix} k_{1} &amp; k_{2} &amp;
+\cdots &amp; k_{n} &amp; d\end{bmatrix} \cdot \begin{bmatrix} N_{1}
+\\&amp;N_{2} \\ &amp;&amp; \ddots \\ &amp;&amp;&amp; N_{n} \\ e_{1}
+&amp; e_{2} &amp; \cdots &amp; e_{n} &amp; K \end{bmatrix} =
+\begin{bmatrix} C_{1} &amp; C_{2} &amp; \cdots &amp; C_{n} &amp; Kd
+\end{bmatrix}\)</span></p>
+<p>可以认为，等号右侧的向量是该矩阵构成的格中的短向量。因此由该矩阵构造格
+<span class="math inline">\(L\)</span>，对之进行规约即可从中提取出私钥
+<span class="math inline">\(d\)</span>。</p>
+<blockquote>
+<p>关于配平和格维度的选择，笔者建议 <span class="math inline">\(K =
+2^{1024}\)</span>，<span class="math inline">\(n \geq
+10\)</span>。<del>同时本题也因为格维度的问题非常耗时，众所周知Fault
+injection交互的时间开销非常大，而本题中需要将这个步骤重复数遍，因而出现了大半个小时出flag的奇观，笔者最后懒得改题了，在这给各位师傅磕一个</del></p>
+</blockquote>
+<h3 id="ecdsa">ECDSA</h3>
+<p>这部分就没什么了<del>为了让各位拿flag更舒服点，ECDSA类的<code>sign</code>方法都留给各位了，不是坑</del>。唯一的小插曲是需要进行非常轻度的爆破，不过每次交互
+<span class="math inline">\(\frac{1}{256}\)</span>
+的概率出flag也不算太低（？）</p>
+<h2 id="完整exp-2">完整exp</h2>
+<blockquote>
+<p>远程交互时本exp耗时预计为45-90分钟。时间开销主要在每次 <em>fault
+injection</em> 获取 <span class="math inline">\(e\)</span>
+时都需要进行2048次交互才能得到结果，本应微不足道的ping、计算耗时等累加数万次后耗时依然极为可观<del>在这里给因为交互压力没做出来的师傅磕一个</del><br />
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line"><span class="built_in">__import__</span>(<span class="string">&#x27;os&#x27;</span>).environ[<span class="string">&#x27;TERM&#x27;</span>] = <span class="string">&#x27;xterm&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> sage.<span class="built_in">all</span> <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> time <span class="keyword">import</span> time</span><br><span class="line"><span class="keyword">from</span> hashlib <span class="keyword">import</span> sha256</span><br><span class="line"></span><br><span class="line">io = remote(<span class="string">&#x27;39.106.16.204&#x27;</span>,<span class="number">10645</span>)</span><br><span class="line"><span class="comment"># io = process([&#x27;python3&#x27;,&#x27;task.py&#x27;])</span></span><br><span class="line"></span><br><span class="line">nls = []</span><br><span class="line">els = []</span><br><span class="line"></span><br><span class="line">recv_hexint = <span class="keyword">lambda</span>: <span class="built_in">int</span>(io.recvline().strip().decode(),<span class="number">16</span>)</span><br><span class="line"></span><br><span class="line">t0 = time()</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">10</span>):</span><br><span class="line">    io.sendlineafter(<span class="string">b&#x27;option:&#x27;</span>,<span class="string">b&#x27;1&#x27;</span>)</span><br><span class="line">    <span class="comment">#decipher N via GCD</span></span><br><span class="line"></span><br><span class="line">    numls = []</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">9</span>):</span><br><span class="line">        msg = <span class="built_in">int</span>(<span class="number">1</span> &lt;&lt; (i + <span class="number">1</span>)).to_bytes(<span class="number">2</span>,<span class="string">&#x27;big&#x27;</span>)</span><br><span class="line">        io.sendlineafter(<span class="string">b&#x27;exit:&#x27;</span>,<span class="string">b&#x27;e&#x27;</span>)</span><br><span class="line">        io.sendlineafter(<span class="string">b&#x27;message:&#x27;</span>,msg.<span class="built_in">hex</span>().encode())</span><br><span class="line">        io.sendlineafter(<span class="string">b&#x27;interfere?&#x27;</span>,<span class="string">b&#x27;0&#x27;</span>)</span><br><span class="line">        io.recvuntil(<span class="string">b&#x27;Result:&#x27;</span>)</span><br><span class="line">        numls.append(<span class="built_in">int</span>(io.recvline().strip().decode(),<span class="number">16</span>))</span><br><span class="line"></span><br><span class="line">    gcdls = []</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>,<span class="number">9</span>):</span><br><span class="line">        gcdls.append(numls[<span class="number">0</span>] ^ (i+<span class="number">1</span>) - numls[i])</span><br><span class="line"></span><br><span class="line">    n = gcd(gcdls)</span><br><span class="line">    nls.append(n)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&#x27;n #<span class="subst">&#123;_&#125;</span> = <span class="subst">&#123;n&#125;</span>&#x27;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment">#decipher e via fault injection of e</span></span><br><span class="line"></span><br><span class="line">    orcale_msg = <span class="number">3</span></span><br><span class="line"></span><br><span class="line">    io.sendlineafter(<span class="string">b&#x27;exit:&#x27;</span>,<span class="string">b&#x27;e&#x27;</span>)</span><br><span class="line">    io.sendlineafter(<span class="string">b&#x27;message:&#x27;</span>,<span class="built_in">int</span>(orcale_msg).to_bytes(<span class="number">1</span>,<span class="string">&#x27;big&#x27;</span>).<span class="built_in">hex</span>().encode())</span><br><span class="line">    io.sendlineafter(<span class="string">b&#x27;interfere?&#x27;</span>,<span class="string">b&#x27;2048&#x27;</span>)</span><br><span class="line">    io.recvuntil(<span class="string">b&#x27;Result:&#x27;</span>)</span><br><span class="line">    basis = recv_hexint() * <span class="built_in">pow</span>(orcale_msg, -<span class="number">2</span>^<span class="number">2048</span>, n) % n <span class="comment">#basis, = pow(m,e,n)    </span></span><br><span class="line"></span><br><span class="line">    e_rng = [<span class="number">0</span>] * <span class="number">2048</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">2048</span>):</span><br><span class="line">        io.sendlineafter(<span class="string">b&#x27;exit:&#x27;</span>,<span class="string">b&#x27;e&#x27;</span>)</span><br><span class="line">        io.sendlineafter(<span class="string">b&#x27;message:&#x27;</span>,<span class="built_in">int</span>(orcale_msg).to_bytes(<span class="number">1</span>,<span class="string">&#x27;big&#x27;</span>).<span class="built_in">hex</span>().encode())</span><br><span class="line">        io.sendlineafter(<span class="string">b&#x27;interfere?&#x27;</span>,<span class="built_in">str</span>(i).encode())</span><br><span class="line">        io.recvuntil(<span class="string">b&#x27;Result:&#x27;</span>)</span><br><span class="line">        </span><br><span class="line">        temp = recv_hexint()</span><br><span class="line">        multiplier = <span class="built_in">pow</span>(orcale_msg,<span class="number">2</span>^i,n)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> temp == basis * multiplier % n: <span class="comment">#0 -&gt; 1, original = 0</span></span><br><span class="line">            e_rng[i] = <span class="number">0</span></span><br><span class="line">        <span class="keyword">else</span>: <span class="comment">#1 -&gt; 0, original = 1</span></span><br><span class="line">            <span class="keyword">assert</span> temp == basis * <span class="built_in">pow</span>(multiplier,-<span class="number">1</span>,n) % n <span class="comment">#ensure</span></span><br><span class="line">            e_rng[i] = <span class="number">1</span></span><br><span class="line"></span><br><span class="line">    e_res = <span class="built_in">int</span>(<span class="string">&#x27;&#x27;</span>.join(<span class="built_in">str</span>(i) <span class="keyword">for</span> i <span class="keyword">in</span> e_rng)[::-<span class="number">1</span>],<span class="number">2</span>)</span><br><span class="line">    <span class="keyword">assert</span> <span class="built_in">pow</span>(orcale_msg,e_res,n) == basis</span><br><span class="line">    els.append(e_res)</span><br><span class="line"></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&#x27;e #<span class="subst">&#123;_&#125;</span> = <span class="subst">&#123;e_res&#125;</span>&#x27;</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&#x27;Time elasped: <span class="subst">&#123;time()-t0:<span class="number">.2</span>f&#125;</span>s&#x27;</span>)</span><br><span class="line">    io.sendlineafter(<span class="string">b&#x27;exit:&#x27;</span>,<span class="string">b&#x27;&#x27;</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">const = <span class="number">2</span>^<span class="number">1024</span></span><br><span class="line">mt = matrix.diagonal(ZZ,nls + [<span class="number">0</span>]).dense_matrix()</span><br><span class="line">mt[-<span class="number">1</span>] = els + [const]</span><br><span class="line">mt = mt.LLL()</span><br><span class="line"></span><br><span class="line">temp = <span class="built_in">abs</span>(mt[<span class="number">0</span>,-<span class="number">1</span>])</span><br><span class="line"><span class="keyword">assert</span> temp % const == <span class="number">0</span></span><br><span class="line">d = ZZ(temp / const)</span><br><span class="line"></span><br><span class="line">x = d.nth_root(<span class="number">4</span>)</span><br><span class="line">E = EllipticCurve(Zmod(<span class="number">0xFFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000FFFFFFFFFFFFFFFF</span>),[<span class="number">0xFFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000FFFFFFFFFFFFFFFC</span>,<span class="number">0x28E9FA9E9D9F5E344D5A9E4BCF6509A7F39789F515AB8F92DDBCBD414D940E93</span>])</span><br><span class="line">n = <span class="number">0xFFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFF7203DF6B21C6052B53BBF40939D54123</span></span><br><span class="line"><span class="keyword">assert</span> E.order() == n</span><br><span class="line"></span><br><span class="line">G = E((<span class="number">0x32C4AE2C1F1981195F9904466A39C9948FE30BBFF2660BE1715A4589334C74C7</span>,<span class="number">0xBC3736A2F4F6779C59BDCEE36B692153D0A9877CC62A474002DF32E52139F0A0</span>))</span><br><span class="line">m0 = <span class="built_in">int</span>.from_bytes(sha256(<span class="string">&#x27;nctf2024-00&#x27;</span>.encode()).digest(),<span class="string">&#x27;big&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">    k = <span class="built_in">int</span>(time() * <span class="number">1000</span>) <span class="comment">#should be smaller than n</span></span><br><span class="line">    P = k * G</span><br><span class="line">    r = <span class="built_in">int</span>(P.xy()[<span class="number">0</span>]) % n</span><br><span class="line">    s = (<span class="built_in">pow</span>(k,-<span class="number">1</span>,n) * (m0 + x*r)) % n</span><br><span class="line">    <span class="keyword">if</span> r != <span class="number">0</span> <span class="keyword">and</span> s != <span class="number">0</span>:</span><br><span class="line">        <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">send = <span class="string">f&#x27;<span class="subst">&#123;r&#125;</span> <span class="subst">&#123;s&#125;</span>&#x27;</span>.encode()</span><br><span class="line"><span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">    io.sendlineafter(<span class="string">b&#x27;option:&#x27;</span>,<span class="string">b&#x27;2&#x27;</span>)</span><br><span class="line">    io.sendlineafter(<span class="string">b&#x27;:&#x27;</span>,send)</span><br><span class="line">    msg = io.recvline()</span><br><span class="line">    <span class="keyword">if</span> <span class="string">b&#x27;flag&#x27;</span> <span class="keyword">in</span> msg:</span><br><span class="line">        <span class="built_in">print</span>(msg.decode())</span><br><span class="line">        <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">io.close()</span><br></pre></td></tr></table></figure></p>
+</blockquote>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">wp</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/CTF-Writeups//" class="article-tag-list-link color3">CTF Writeups</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/crypto/wp/nctf2024/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+  <div>
+</article>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-cpp/lambda" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -380,158 +763,9 @@ C++14起，lambda函数也允许使用<code>auto</code>来快速创建函数模�
 
 
   
-    <article id="post-crypto/block/pad" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/crypto/block/pad/">块加密之始——Padding</a>
-    </h1>
-  
-
-        
-        <a href="/crypto/block/pad/" class="archive-article-date">
-  	<time datetime="2025-01-22T13:03:27.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-01-22</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="简介">简介</h1>
-<p>“块加密”，如其名所言，每次加密需要以块为单位进行。显然实际应用中，明文不会理想若长度总为块大小(Block
-size)的整倍数，故要以某种方式对其进行填充。<br />
-单论“填充”之法似乎并无太多讲究，但任何Padding都应满足以下要求：</p>
-<ul>
-<li>Padding只是追加部分，所以应当在满足块大小要求的前提下尽可能短；<br />
-</li>
-<li>Padding应当易于被辨别和移除，故显然不能在明文后添加随机/固定的明文常用字节填充之；<br />
-</li>
-<li>Padding应具备一定的冗余校验功能，解填充(Unpad)时最好可以校验填充是否正确。</li>
-</ul>
-<p>由此，主流的Padding方案存在的一个共性也就不难解释了：<strong>Padding追加字节数应不小于1，且不大于块大小</strong>。</p>
-<h1 id="常用填充方案">常用填充方案</h1>
-<p>常用的Padding方案有：<em>pkcs7</em> , <em>iso7816</em> ,
-<em>x923</em> 。</p>
-<ul>
-<li><p><em>pkcs7</em> ：最为常用的一种padding方案。<br />
-设信息长度为 <span class="math inline">\(l_m\)</span>，块长度为 <span
-class="math inline">\(S\)</span>，其填充长度 <span
-class="math inline">\(l_p = S - (l_m \bmod S)\)</span>，填充字节亦是
-<span class="math inline">\(l_p\)</span>。<br />
-如块大小为16时，<code>crypto&#123;flag&#125;</code>将被填充为<code>crypto&#123;flag&#125;\x04\x04\x04\x04</code>。<br />
-相应地，解填充时取最后一个字节并记为 <span
-class="math inline">\(b\)</span>，判断 <span class="math inline">\(b
-\leq S\)</span> 且最后 <span class="math inline">\(b\)</span> 个字节均为
-<span class="math inline">\(b\)</span> 时，解填充校验成功，移除最后
-<span class="math inline">\(b\)</span> 个字节即视为解填充完成。<br />
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">pkcs7_pad</span>(<span class="params">msg:<span class="built_in">bytes</span>,blocksize:<span class="built_in">int</span> = <span class="number">16</span></span>):</span><br><span class="line">    p = blocksize - <span class="built_in">len</span>(msg) % blocksize</span><br><span class="line">    <span class="keyword">return</span> msg + <span class="built_in">bytes</span>([p] * p)</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">pkcs7_unpad</span>(<span class="params">msg:<span class="built_in">bytes</span>,blocksize:<span class="built_in">int</span> = <span class="number">16</span></span>):</span><br><span class="line">    up = msg[-<span class="number">1</span>]</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> msg[-up:]:</span><br><span class="line">        <span class="keyword">if</span> i != up:</span><br><span class="line">            <span class="keyword">raise</span> UnpadError(<span class="string">&quot;Invalid Padding&quot;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> msg[:-up]</span><br><span class="line"></span><br></pre></td></tr></table></figure></p></li>
-<li><p><em>iso7816</em>：填充规则较 <em>pkcs7</em>
-更简单，填充长度同样是 <span class="math inline">\(l_p = S - (l_m \bmod
-S)\)</span>。<br />
-区别是，其在原字节后填充一个'1'后全部填'0'（以bit位看），宏观上形如<code>\x80\x00\x00...\x00</code>。md5即近似采用这种方式对待散列数据进行填充（区别是其填充的标定长度是
-<span class="math inline">\(l \equiv 448 (\bmod 512)\)</span>）。<br />
-下述实现假定块大小为16：<br />
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">iso7816_pad</span>(<span class="params">msg:<span class="built_in">bytes</span></span>):</span><br><span class="line">    p = <span class="number">16</span> - <span class="built_in">len</span>(msg) % <span class="number">16</span></span><br><span class="line">    <span class="keyword">return</span> msg + <span class="built_in">bytes</span>([<span class="number">128</span>] + [<span class="number">0</span>] * (p - <span class="number">1</span>))</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">iso7816_unpad</span>(<span class="params">msg:<span class="built_in">bytes</span></span>):</span><br><span class="line">    i = <span class="number">1</span></span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        <span class="keyword">if</span> msg[-i] == <span class="number">0</span>:</span><br><span class="line">            i += <span class="number">1</span></span><br><span class="line">        <span class="keyword">elif</span> msg[-i] == <span class="number">128</span>:</span><br><span class="line">            <span class="keyword">return</span> msg[:-i]</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">raise</span> UnpadError(<span class="string">&quot;Invalid Padding&quot;</span>)</span><br></pre></td></tr></table></figure></p></li>
-<li><p><em>x923</em>：填充长度同上，最后一个字节为填充长度，其余填充字节为0。
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">x923_pad</span>(<span class="params">msg:<span class="built_in">bytes</span></span>):</span><br><span class="line">    p = <span class="number">16</span> - <span class="built_in">len</span>(msg) % <span class="number">16</span></span><br><span class="line">    <span class="keyword">return</span> msg + <span class="built_in">bytes</span>([<span class="number">0</span>] * (p-<span class="number">1</span>) + [p])</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">x923_unpad</span>(<span class="params">msg:<span class="built_in">bytes</span></span>):</span><br><span class="line">    up = msg[-<span class="number">1</span>]</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">2</span>,up):</span><br><span class="line">        <span class="keyword">if</span> msg[-i] != <span class="number">0</span>:</span><br><span class="line">            <span class="keyword">raise</span> UnpadError(<span class="string">&quot;Invalid Padding&quot;</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> msg[:-up]</span><br><span class="line"></span><br></pre></td></tr></table></figure></p></li>
-</ul>
-<blockquote>
-<p><code>pycryptodome</code>再度发挥神威：<code>Crypto.Util.Padding</code>提供了<code>pad</code>和<code>unpad</code>函数来协助执行常用的填充/解填充方案。</p>
-</blockquote>
-<h1 id="padding-orcale">Padding Orcale</h1>
-<h2 id="靶子简介">靶子简介</h2>
-<p>Padding Orcale
-Attack是一种针对C/S系统的攻击，利用了服务端解密后对密文进行unpad校验结果对应的相应差分。其本质上是一种<strong>适应性选择密文攻击</strong>。</p>
-<p>假设存在一个Orcale，其会对传入的密文（AES-CBC模式加密）进行解密，根据解密结果做出不同相应：</p>
-<ul>
-<li>若解密成功（填充校验正确）且明文内容正确，返回 <em>A</em><br />
-</li>
-<li>若解密失败（填充校验错误），返回 <em>B</em><br />
-</li>
-<li>若解密成功（填充校验正确），但明文内容不正确，返回 <em>C</em></li>
-</ul>
-<p>根本上来说，一个未被恰当设计的服务端很容易暴露其解密阶段、业务校验阶段失败间的相应差分，并被Padding
-Orcale的攻击者利用。参考如下的代码：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> Crypto.Cipher <span class="keyword">import</span> AES</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">unpad</span>(<span class="params">msg:<span class="built_in">bytes</span></span>):</span><br><span class="line">    up = msg[-<span class="number">1</span>]</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> msg[-up:]:</span><br><span class="line">        <span class="keyword">if</span> i != up:</span><br><span class="line">            <span class="keyword">raise</span> UnpadError(<span class="string">&quot;Invalid Padding&quot;</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> msg[:-up]</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">verify</span>(<span class="params">cipher:<span class="built_in">bytes</span></span>) -&gt; <span class="literal">None</span>:</span><br><span class="line">    iv = cipher[:<span class="number">16</span>]</span><br><span class="line">    txt = cipher[<span class="number">16</span>:]</span><br><span class="line"></span><br><span class="line">    aes = AES.new(key,AES.MODE_CBC,iv)</span><br><span class="line">    plain = unpad(aes.decrypt(txt))</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> plain != secret:</span><br><span class="line">        <span class="keyword">raise</span> RuntimeError(<span class="string">&quot;Text verification failed&quot;</span>)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h2 id="攻击">攻击</h2>
-<blockquote>
-<p>Padding Orcale
-针对的主要是CBC模式分组加密的密文。针对别的模式或有更适合的攻击方法<del>比如ECB压根不需要Padding
-Orcale</del></p>
-</blockquote>
-<p>回顾AES-CBC模式加密的特性：</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/闲笔//" class="article-tag-list-link color3">闲笔</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/crypto/block/pad/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-  <div>
-</article>
-
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
   
     <nav id="page-nav">
-      <a class="extend prev" rel="prev" href="/page/6/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/5/">5</a><a class="page-number" href="/page/6/">6</a><span class="page-number current">7</span><a class="page-number" href="/page/8/">8</a><a class="page-number" href="/page/9/">9</a><span class="space">&hellip;</span><a class="page-number" href="/page/12/">12</a><a class="extend next" rel="next" href="/page/8/">Next &raquo;</a>
+      <a class="extend prev" rel="prev" href="/page/6/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/5/">5</a><a class="page-number" href="/page/6/">6</a><span class="page-number current">7</span><a class="page-number" href="/page/8/">8</a><a class="page-number" href="/page/9/">9</a><span class="space">&hellip;</span><a class="page-number" href="/page/13/">13</a><a class="extend next" rel="next" href="/page/8/">Next &raquo;</a>
     </nav>
   
 
