@@ -152,279 +152,6 @@
           <div id="js-content" class="content-ll">
             
   
-    <article id="post-cpp/auto" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/cpp/auto/">C++——auto与类型推导</a>
-    </h1>
-  
-
-        
-        <a href="/cpp/auto/" class="archive-article-date">
-  	<time datetime="2025-06-30T10:03:13.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-06-30</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <blockquote>
-<p>天地虽大，其化均也。</p>
-</blockquote>
-<h1 id="类型的相爱相杀">类型的相爱相杀</h1>
-<p>作为一门编译期的强类型语言，C++对于变量类型的要求在众多编程语言中都属独一档的存在。</p>
-<p>在C语言与传统C++中，所有变量在声明/定义时都必须显式写明其类型。<br />
-其有力地保证了类型安全性，同时在变量类型较为有限的C语言中也较为可行——最复杂的名字也就是奇怪的内置<code>struct</code>，而其常可用<code>typedef</code>或各种宏等绕过：如<code>stdio.h</code>中广为使用的<code>FILE</code>实际上就是<code>struct _iobuf</code>（MSVC中）的<code>typedef</code>。<br />
-而在引入了变化极多的模板编程的现代C++中，<code>using</code>/<code>typedef</code>在一定程度上也能规避写完整变量名的问题，如<code>std::string</code>是<code>std::basic_string&lt;char,std::char_traits&lt;char&gt;,std::allocator&lt;char&gt;&gt;</code>的<code>typedef</code>。</p>
-<p>但无论何处都要显式、完整地声明类型也带来了两个问题：<br />
-其一，由于 <em>nested template
-class</em>（嵌套模板类）的存在，STL中大量组件应用中需要写出的变量类型将显得极为冗长，最常见的就是迭代器家族。如在C++11之前，迭代一个<code>std::map</code>的最简单的方式形如：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">std::map&lt;<span class="type">int</span>,std::string&gt; mp;</span><br><span class="line"><span class="keyword">for</span>(std::map&lt;<span class="type">int</span>,std::string&gt;::iterator it = mp.<span class="built_in">begin</span>();it != mp.<span class="built_in">end</span>();++it)</span><br><span class="line">&#123;</span><br><span class="line">    std::pair&lt;<span class="type">const</span> <span class="type">int</span>,std::string&gt; i = *it; <span class="comment">//For simpler usage, it-&gt;first...</span></span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p><del>幸好那时还没有<code>type_traits</code>，不然<code>std::conditional_type</code>横冲直撞的场面简直不敢想</del></p>
-</blockquote>
-<p>其二，尽管显式声明变量类型显式地保证了类型安全性，但在模板编程中，对于部分和上下文紧密相关的次要变量<del>乔姆斯基“1型变量”，<em>Context-sensitive
-variable</em></del>，如此做反而会极大地降低代码的可维护性、复用性和健壮性。</p>
-<p>假设存在这样一个函数：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Some arbitrary interface</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(<span class="type">const</span> Ty&amp; cont)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> t = cont.<span class="built_in">length</span>(); </span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>它的设计初衷就是任何具有<code>length</code>成员函数的容器都能适配，并假定返回值可以被转化成<code>int</code><del>且不会带来任何其它影响</del>。<br />
-但假如<code>cont.length()</code>的返回值类型发生了变化，如变为<code>size_t</code>，<code>unsigned long long</code>，乃至一些不应该甚至无法被转化为<code>int</code>的类型，则修改起来会非常麻烦。</p>
-<p>解决之道也很简单：由于我们并不关心<code>t</code>是否一定要是<code>int</code>，只要它是<code>cont.length()</code>且满足一些相应语义即可，则将之声明为<code>auto</code>是最佳选择。对于语义约束则可以通过<code>concept</code>的上层设计实现；在一些其它场景（如迭代器的获取等）中亦可灵活使用<code>const auto&amp;</code>等自动用法。</p>
-<h1 id="c11">C++11</h1>
-<h2 id="auto"><code>auto</code></h2>
-<p><code>auto</code>在早期的C语言中也是一个关键字，声明其为自动存储周期(automatic
-storage
-duration)，但其于C++98中即废弃<del>提前回收关键字供后用</del>。</p>
-<blockquote>
-<p>目前的C/C++标准中，多数情况下，不加任何存储周期声明的变量都具备自动存储周期，但全局变量等除外；常见的其它几个存储周期声明符有<code>static</code>、<code>thread_local</code>、<code>register</code>（亦于C++17中废弃并不再生效）。</p>
-</blockquote>
-<p>C++11中“回归”的<code>auto</code>本质上是一个类型占位符(
-<em>placeholder type</em>
-)，其表示该变量的类型声明可以“后置”至其初始化表达式后，即，根据初始化表达式推导变量类型（隐式地，亦约束了该变量必须被初始化）：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> a = <span class="number">3</span>; <span class="comment">//int</span></span><br><span class="line"><span class="keyword">auto</span> b = <span class="number">3.14</span>; <span class="comment">//double</span></span><br><span class="line"><span class="keyword">auto</span> c = <span class="number">2.718f</span>; <span class="comment">//float</span></span><br><span class="line"><span class="keyword">auto</span> d = <span class="string">&#x27;a&#x27;</span>; <span class="comment">//char</span></span><br><span class="line"><span class="keyword">auto</span> e = <span class="string">&quot;ni hao&quot;</span>; <span class="comment">//const char*</span></span><br><span class="line"><span class="comment">//auto f; //Error: variables declared with &#x27;auto&#x27; must be initialized</span></span><br></pre></td></tr></table></figure>
-<p>使用<code>auto</code>声明变量类型，最直接的好处是在初始化复杂类型的变量时，可不必记忆奇怪的嵌套/模板类类型名，只需关注上层的语义逻辑即可。<br />
-如C++11中，获取容器的迭代器并迭代之的语法就简洁了很多：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">std::map&lt;<span class="type">int</span>,std::string&gt; mp;</span><br><span class="line"><span class="comment">//Before C++11</span></span><br><span class="line"><span class="keyword">for</span>(std::map&lt;<span class="type">int</span>,std::string&gt;::iterator it = mp.<span class="built_in">cbegin</span>();it != mp.<span class="built_in">cend</span>();++it)</span><br><span class="line">&#123;</span><br><span class="line">    std::pair&lt;<span class="type">const</span> <span class="type">int</span>,std::string&gt; i = *it;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//Since C++11</span></span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">auto</span> it = mp.<span class="built_in">begin</span>();it != mp.<span class="built_in">end</span>();++it)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">auto</span> i = *it;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p><del>小趣事：不幸的是简化容器循环的“功绩”被同时引入的
-<em>range-for</em>抢了</del>：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span>(<span class="keyword">auto</span> i : mp)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-</blockquote>
-<h2 id="decltype"><code>decltype</code></h2>
-<p>和<code>auto</code>相配套的还有<code>decltype</code>关键字，主要用法有<code>decltype(expr)</code>和<code>decltype(auto)</code>。</p>
-<h3 id="decltypeexpr"><code>decltype(expr)</code></h3>
-<p><code>decltype(expr)</code>中，<br />
-- 若<code>expr</code>是一个未加括号的标识符( unparenthesized
-<em>id-expression</em> )，会给出其<strong>定义时</strong>的类型（所谓
-<em>named entity</em>）；<br />
-- 否则会根据<code>expr</code>的值类型来决定解析类型。</p>
-<p>前者会比较好理解：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> x = <span class="number">1</span>, &amp;y = x;</span><br><span class="line"></span><br><span class="line"><span class="keyword">decltype</span>(x) a = <span class="number">1</span>; <span class="comment">//a is int</span></span><br><span class="line"><span class="keyword">decltype</span>(y) b = a; <span class="comment">//b is int&amp;</span></span><br></pre></td></tr></table></figure>
-<p>注意若试图<code>decltype</code>一个函数时，不能存在重载决议<del>你又没传形参决议个棒槌</del>：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">()</span></span>;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">fun</span><span class="params">(<span class="type">int</span>)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">decltype</span>(fun) fptr; <span class="comment">//Not compile: ambiguious</span></span><br></pre></td></tr></table></figure>
-<p>后者包括了非标识符和用括号包裹的标识符。C++中加括号会使之具有“表达式”的属性，此时其引用/
-<em>cv</em> 属性由<code>expr</code>的值类型决定：</p>
-<ul>
-<li><code>expr</code>为左值(lvalue)时，推导结果为左值引用；<br />
-</li>
-<li><code>expr</code>为将亡值(xvalue)时，推导结果为右值引用；<br />
-</li>
-<li><code>expr</code>为纯右值(prvalue)时，推导结果为非引用。</li>
-</ul>
-<blockquote>
-<p>有关表达式属性左右值的胡搅蛮缠可戳：<a
-href="/cpp/rrefs/">C++——右值引用与移动语义</a></p>
-</blockquote>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> x;</span><br><span class="line"><span class="keyword">decltype</span>((<span class="number">1</span>)) a = <span class="number">1</span>; <span class="comment">//a is int</span></span><br><span class="line"><span class="keyword">decltype</span>((x)) b = a; <span class="comment">//b is int&amp;</span></span><br><span class="line"><span class="keyword">decltype</span>((std::<span class="built_in">move</span>(x))) c = <span class="number">1</span>; <span class="comment">//c is int&amp;&amp;</span></span><br></pre></td></tr></table></figure>
-<h3 id="decltypeauto"><code>decltype(auto)</code></h3>
-<p>还有一种特殊的类型占位符叫<code>decltype(auto)</code>：用于变量类型声明时，其就是简单地将类型置为<code>decltype(expr)</code>（<strong>进一步强调了<code>auto</code>并非将类型置<code>decltype(expr)</code></strong>）。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> x;</span><br><span class="line"></span><br><span class="line"><span class="keyword">decltype</span>(<span class="keyword">auto</span>) a = x; <span class="comment">//a is int</span></span><br><span class="line"><span class="keyword">decltype</span>(<span class="keyword">auto</span>) a = (x); <span class="comment">//a is int&amp;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">decltype</span>(<span class="keyword">auto</span>) a = std::<span class="built_in">move</span>(x); <span class="comment">//a is int</span></span><br><span class="line"><span class="keyword">decltype</span>(<span class="keyword">auto</span>) a = (std::<span class="built_in">move</span>(x)); <span class="comment">//a is int&amp;&amp;</span></span><br></pre></td></tr></table></figure>
-<h2 id="返回类型推导">返回类型推导</h2>
-<p><code>auto</code>作为类型占位符，其自然也可用于函数的返回类型推导上——其于模板编程中应用前景甚广。</p>
-<p>C++11起支持了函数的返回值类型声明为<code>auto</code>，但同时要求其<strong>必须</strong>声明
-<em>trailing return type</em>（即“后置返回类型”），形如：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">auto</span> <span class="title">fun</span><span class="params">()</span> -&gt; <span class="type">int</span></span>;  </span><br><span class="line"><span class="function"><span class="keyword">auto</span> <span class="title">foo</span><span class="params">()</span> -&gt; <span class="type">char</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="string">&#x27;a&#x27;</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">auto</span> lb = []() -&gt; <span class="type">double</span> &#123;<span class="keyword">return</span> <span class="number">3.80</span>;&#125;;  </span><br></pre></td></tr></table></figure>
-<p>而C++14起引入了函数返回类型推导(return type
-deduction)，由此才算实现了真正的“自动”返回类型。推导的返回类型由第一个<code>return</code>语句决定，且在自动推导下不同<code>return</code>语句所推导出的类型应一致（不允许隐式转换等）。同时单纯的<code>auto fun();</code>一类的声明也是合法的（但其定义应不晚于被调用时可见）：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">auto</span> <span class="title">fun</span><span class="params">()</span></span>; <span class="comment">//OK: The return type of fun() will be deduced upon its definition</span></span><br><span class="line"><span class="function"><span class="keyword">auto</span> <span class="title">foo</span><span class="params">(<span class="type">bool</span> a)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(a)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>; <span class="comment">//Deduces to return type `int`</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">3.14</span>; <span class="comment">//Error: deduces to return type `double`, conflicts with previously declared return type `int`</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">decltype</span>(fun) fptr; <span class="comment">//Error: Definition of fun() not yet visible</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>同时，由于lambda函数的返回类型默认也是<code>auto</code>，因此其关于后置返回类型的“版本”约束与<code>auto</code>返回类型的函数是一致的<del>C++14起的lambda才叫真lambda</del>：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> fun = []()&#123;<span class="keyword">return</span> <span class="number">3</span>;&#125; <span class="comment">//OK since C++14 (&quot;real advanced lambda&quot;)</span></span><br></pre></td></tr></table></figure>
-<h3
-id="auto变式和decltypeauto"><code>auto</code>变式和<code>decltype(auto)</code></h3>
-<p>但单以<code>auto</code>作为返回类型（或变量类型声明）的“占位符”依然具有一定的局限性——<code>auto</code>推导出的类型<strong>必定为</strong>非引用类型（可以有<code>const</code>/<code>volatile</code>属性），故诸如<code>auto fun = []()&#123;return std::cout;&#125;;</code>
-的代码就无法通过编译了（推导返回类型为不允许被复制构造的<code>std::ostream</code>）。</p>
-<p>此时就需要用到占位符的“变式”，以对推导出的返回类型给出更好的约束/控制，通过在前/后加以引用/<code>const</code>等修饰，“诱导”<code>auto</code>的类型和最终推导出的类型。<br />
-其本质和定义一个模板函数（形参类型为模板类型参数），再依靠实参推导模板类型参数的过程无异：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(Ty&amp;&amp; arg)</span></span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//Following two derivations are (mostly) fundamentally equivalent:</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">fun</span>(<span class="comment">/*expr*/</span>);</span><br><span class="line"><span class="keyword">auto</span>&amp;&amp; x = <span class="comment">/*expr*/</span>;</span><br></pre></td></tr></table></figure>
-<p>常见的几种变式如下：</p>
-<table>
-<colgroup>
-<col style="width: 33%" />
-<col style="width: 33%" />
-<col style="width: 33%" />
-</colgroup>
-<thead>
-<tr>
-<th style="text-align: center;">占位符</th>
-<th style="text-align: center;">推导结果</th>
-<th style="text-align: center;">说明</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>auto</code></td>
-<td style="text-align: center;">值</td>
-<td
-style="text-align: center;">会视为需要复制/移动构造一个新变量（不考虑
-拷贝省略(<em>copy elision</em>)
-），若对应的复制/移动构造函数不可用则编译失败</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>auto&amp;</code></td>
-<td style="text-align: center;">左值引用</td>
-<td
-style="text-align: center;">不能通过“推导”绑定至一个右值上，否则编译失败</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>auto&amp;&amp;</code></td>
-<td
-style="text-align: center;">引用（左右值属性依<code>expr</code>而定）</td>
-<td style="text-align: center;">参考 <em>万能引用 (universal
-references)</em></td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>const auto&amp;</code></td>
-<td style="text-align: center;">常左值引用</td>
-<td
-style="text-align: center;">由于<code>auto&amp;</code>也可以推导出常左值引用（令<code>auto</code>以形如<code>const (type)</code>的类型置换），因此此处仅为语义约束</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>decltype(auto)</code></td>
-<td style="text-align: center;">-</td>
-<td style="text-align: center;">-</td>
-</tr>
-</tbody>
-</table>
-<blockquote>
-<p><code>decltype(auto)</code>可以视情况推导出任意类型，推导规则等参考<a
-href="#decltype">上文</a>。</p>
-</blockquote>
-<p><code>auto&amp;</code>的说明“详解”可直接参考下述代码：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span>&amp; r1 = <span class="number">1</span>; <span class="comment">//Not compile: cannot bind lvalue references to prvalue(auto deduces to `int`)</span></span><br><span class="line"></span><br><span class="line"><span class="type">const</span> <span class="type">int</span> y = <span class="number">1</span>;</span><br><span class="line"><span class="keyword">auto</span>&amp; r2 = y; <span class="comment">//OK, r2&#x27;s type is `const int&amp;`</span></span><br></pre></td></tr></table></figure>
-<p>即，C++初始化变量时，类型参数的推导不会触发SFINAE机制（优先推导<code>int&amp;</code>，失败后不会再尝试<code>const int&amp;</code>等，因其本来就不属于重载决议的范畴）。</p>
-<hr />
-<p>注意若<code>decltype(auto)</code>用作返回值类型，还会涉及<code>return</code>中自动移动(automatic
-move)的分析：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">decltype</span>(<span class="keyword">auto</span>) <span class="title">fn</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">//Return type deduces to:</span></span><br><span class="line">    <span class="type">int</span> x;</span><br><span class="line">    <span class="type">int</span>&amp; y = x;</span><br><span class="line">    <span class="type">int</span>&amp;&amp; z = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>; <span class="comment">//int</span></span><br><span class="line">    <span class="keyword">return</span> x; <span class="comment">//int</span></span><br><span class="line">    <span class="keyword">return</span> y; <span class="comment">//int&amp; (Not compile since C++23)</span></span><br><span class="line">    <span class="keyword">return</span> z; <span class="comment">//int&amp;&amp; (Not compile before C++23)</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> (<span class="number">1</span>); <span class="comment">//int</span></span><br><span class="line">    <span class="keyword">return</span> (x); <span class="comment">//int&amp; (Not compile since C++23)</span></span><br><span class="line">    <span class="keyword">return</span> (y); <span class="comment">//int&amp; (Not compile since C++23)</span></span><br><span class="line">    <span class="keyword">return</span> (z); <span class="comment">//int&amp; (Not compile since C++23)</span></span><br><span class="line">    <span class="keyword">return</span> (std::<span class="built_in">move</span>(x)); <span class="comment">//int&amp;&amp;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>可以发现C++23是其中<code>return ???</code>能否通过编译的一个分水岭，具体地是因为C++23彻底移除了C++11以来“打补丁”般的二次重载决议机制，同时也彻底避免了“传统”<code>return</code>悬挂引用场景的出现：其皆于<a
-href="/cpp/return/">C++——return</a>中具述之。<del>当然架不住还是有<code>return (rref)</code>之类的代码又能通过编译了，因此还得靠C++26继续填这个天坑</del></p>
-</blockquote>
-<h1 id="c14">C++14+</h1>
-<p><code>auto</code>关键字在C++14及以后的应用变得更加广泛。</p>
-<h2 id="自动模板函数">“自动”模板函数</h2>
-<p>将<code>auto</code>（含其变式，如<code>const auto&amp;</code>、<code>decltype(auto)</code>等）作为形参的类型占位符，可以简单地自动生成一个模板函数。直接上代码：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(<span class="keyword">auto</span> x)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::cout &lt;&lt; x &lt;&lt; std::endl;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">auto</span> <span class="title">add</span><span class="params">(<span class="keyword">auto</span> a,<span class="keyword">auto</span> b)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> a*<span class="number">2</span> + b;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">fun</span>(<span class="number">1</span>); <span class="comment">//instanciates some template function fun&lt;int&gt;, to void fun(int x)</span></span><br><span class="line">        <span class="comment">//(template parameter `int` is invisiable by coder yet identifiable by compiler)</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">add</span>(<span class="number">3.14</span>,<span class="number">2</span>); <span class="comment">//instanciates some template function fun&lt;double,double,int&gt; to double fun(double a,int b)</span></span><br><span class="line">            <span class="comment">//with the return type deduced as well</span></span><br></pre></td></tr></table></figure></p>
-<p>上述<code>add</code>函数和下面的声明是一致的（每个类型占位符，<em>placeholder
-type</em>
-都会被一个模板类型参数代替），只是<code>Ty1</code>等并不显式可见<del>非要类型的话可以上<code>decltype</code>或者干脆回传统模板</del>：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty1,<span class="keyword">class</span> Ty2,<span class="keyword">class</span> Ty3&gt;</span></span><br><span class="line"><span class="function">Ty1 <span class="title">add</span><span class="params">(Ty2 a,Ty3 b)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> a*<span class="number">2</span> + b;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="concepts联动真正的天人合一">concepts联动：真正的“天人合一”</h2>
-<p>不难发现，上述“自动模板”缺点之一在于难以直观地约束模板类型参数是否符合条件。<br />
-C++20中，随着concepts的引入，<code>auto</code>亦与之相辅相成，形成了极为简洁利落的带约束模板声明：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> nihao = <span class="built_in">sizeof</span>(Ty) &lt; <span class="number">4</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">(nihao <span class="keyword">auto</span> arg)</span></span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//This statement is equivalent to:</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt; <span class="title">requires</span> <span class="params">(nihao&lt;Ty&gt;)</span></span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">(Ty arg)</span></span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//Or(another partially simplified template, yet not as simplified as the first one)</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;nihao Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">(Ty arg)</span></span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(std::formattable&lt;<span class="type">char</span>&gt; <span class="keyword">auto</span> val)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,val);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>注：此处的<code>auto</code>也可以是<code>auto</code>的变式（加以
-<em>cvref</em>
-修饰），其中前置concept只约束<code>auto</code>部分（只约束推导出的模板参数），其后引用的约束另计。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">ling</span><span class="params">(std::formattable&lt;<span class="type">char</span>&gt; <span class="keyword">auto</span>&amp; v)</span></span>&#123;&#125;</span><br><span class="line"><span class="comment">//Equivalent to:</span></span><br><span class="line"><span class="keyword">template</span>&lt;std::formattable&lt;<span class="type">char</span>&gt; Ty&gt;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">ling</span><span class="params">(Ty&amp; v)</span></span>&#123;&#125;</span><br></pre></td></tr></table></figure>
-<p>“另计”的内涵在于，下述对<code>ling</code>的第一个调用因为引用绑定问题，在模板实例化阶段依然会编译失败<del>躲得过初一躲不过十五</del>：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">ling</span>(<span class="number">1</span>); <span class="comment">//Not compile: template type argument deduces to `int`，yet cannot bind a lvalue reference to a prvalue `1`</span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> x&#123;&#125;;</span><br><span class="line"><span class="built_in">ling</span>(x); <span class="comment">//OK</span></span><br></pre></td></tr></table></figure>
-<h2 id="deducing-this珠联璧合">Deducing this：珠联璧合</h2>
-<p>C++23引入的 <em>Deducing this</em>
-的最明显用途之一在于，通过模板“增强”之，不必再为左右值编写极大量的匹配语法/语义的重载。</p>
-<p>如在C++23以前，针对一个成员函数保持左/右值、常量语义可能需要<code>&amp;</code>、<code>&amp;&amp;</code>、<code>const &amp;</code>、<code>const &amp;&amp;</code>四个重载：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">MyVector</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span>&amp; <span class="keyword">operator</span>[](<span class="type">size_t</span> idx) &amp;;</span><br><span class="line">    <span class="type">const</span> <span class="type">int</span>&amp; <span class="keyword">operator</span>[](<span class="type">size_t</span> idx) <span class="type">const</span> &amp;;</span><br><span class="line">    <span class="type">int</span>&amp;&amp; <span class="keyword">operator</span>[](<span class="type">size_t</span> idx) &amp;&amp;;</span><br><span class="line">    <span class="type">const</span> <span class="type">int</span>&amp;&amp; <span class="keyword">operator</span>[](<span class="type">size_t</span> idx) <span class="type">const</span> &amp;&amp;;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>而其中最有趣而无趣的是，这四个函数的定义完全相同。</p>
-</blockquote>
-<p>而如今结合<code>auto</code>和<code>deducing this</code>，一行代码即可解决：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">MyVector</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">auto</span>&amp;&amp; <span class="keyword">operator</span>[](<span class="keyword">this</span> <span class="keyword">auto</span>&amp;&amp; self,<span class="type">size_t</span> idx)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> self.arr[idx];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
-<h1 id="结语">结语</h1>
-<p><code>auto</code>作为类型“占位符”，在类型语义明确但语法复杂、模板编程中部分上下文关联紧密变量/返回值等场景中，其在让人如获神助的同时，亦或从另一角度保证了类型安全性；<br />
-同时其 <em>cvref</em> 和 <code>decltype(auto)</code>的变式，以及模板中的
-<em>concepts</em> “即时”约束使其应用场景更加灵活多样。</p>
-<p>作为C++11以来极深远地改变编程风格的“小”特性，<code>auto</code>亦可谓现代C++的通天塔，伴随各位对现代C++的精通之途：<br />
-从最初接触时感受如部分解释型语言<del>点名Python</del>般<code>auto x = 1;</code>自动初始化的特性，到高阶模板编程中对左右值语义的灵活约束。</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/cpp/auto/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-  <div>
-</article>
-
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
     <article id="post-crypto/aesatk/4-2" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -633,6 +360,329 @@ target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/589141550">知
       
         <p class="article-more-link">
           <a class="article-more-a" href="/crypto/aesatk/4-2/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+  <div>
+</article>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-cpp/thread" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/cpp/thread/">C++——多线程的晨曦</a>
+    </h1>
+  
+
+        
+        <a href="/cpp/thread/" class="archive-article-date">
+  	<time datetime="2025-05-22T00:35:18.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-05-22</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="线程">线程</h1>
+<p>线程(thread)和进程(process)都是并发计算中的重要工具。其和程序(program)的基本关系形如：</p>
+<ul>
+<li>一个程序可以有多个进程，一个进程可以有多个线程；<br />
+</li>
+<li>线程是进程的执行单元，每个进程至少有一个主线程，线程不能脱离进程而存在。</li>
+</ul>
+<p>从资源分配（CPU、文件描述符、内存等）上看：</p>
+<ul>
+<li>进程是操作系统分配资源的基本单位，不同进程间不会相互干扰；<br />
+</li>
+<li>线程则只拥有最基本资源（栈、寄存器等），同一进程内的不同线程共享堆内存和其它系统资源。</li>
+</ul>
+<p>进行并发计算时利用线程的优势在于：线程极易被创建、销毁、切换和被调度，可以最大化对CPU多核的利用率。</p>
+<p>C++中的线程可分为四种状态：等待、活动、休眠、结束。</p>
+<ul>
+<li>非空线程被创建后立即进入待执行队列<del>不像某语言非得<code>implements</code>不说还得<code>run()</code>一下(bushi)</del>，处于等待状态；<br />
+</li>
+<li>当CPU有空余资源时，待执行队列中的线程会依次开始执行，进入活动状态；<br />
+</li>
+<li>线程在执行过程中可以主动地进入休眠(<code>sleep_for(...)</code>/<code>sleep_until(...)</code>)或等待(<code>yield()</code>)状态。休眠状态下的进程一段时间后/达到某个条件后会被“唤醒”，重新进入等待状态，新进入等待状态的线程也会自动加入待执行队列；<br />
+</li>
+<li>线程代表的函数执行完成后则进入结束状态。</li>
+</ul>
+<h1 id="stdthread"><code>std::thread</code></h1>
+<blockquote>
+<p>C++标准的宗旨在于 <em>standardizing existing best
+practice</em>，其例之一即为<code>std::thread</code>。</p>
+</blockquote>
+<p>C++11前确实存在实现多线程的方法——现在几乎无人问津，亦不推荐使用的<code>pthread</code>库。<del>当然如果读者认为线程句柄乱窜+函数指针满天飞的C样式老爷车编程非常好玩的话，不妨一试(doge)，</del>此处不再赘述<code>pthread</code>库的有关资料。</p>
+<h2 id="简介">简介</h2>
+<p>C++11中，标准库<code>&lt;thread&gt;</code>引入的<code>std::thread</code>提供了跨平台、面向对象的、语义统一的多线程支持。</p>
+<h2 id="thread类"><code>thread</code>类</h2>
+<p>每个非空线程的本质都是一个函数，故<code>thread</code>的构造必以调用函数为基础。</p>
+<h3 id="重要成员函数">重要成员函数</h3>
+<ul>
+<li><code>thread() noexcept;</code>：默认构造函数，创建<strong>空</strong>线程<br />
+</li>
+<li><code>thread(Fn&amp;&amp; fn,Args&amp;&amp;... args);</code>：以<code>std::invoke(std::forward&lt;Fn&gt;(fn),std::forward&lt;Args&gt;(args)...)</code>开启一个<strong>非空</strong>线程<br />
+</li>
+<li><code>~thread() noexcept</code>：析构函数<br />
+</li>
+<li><code>thread(const thread&amp;) = delete;</code>
+复制构造函数（已显式删除<code>= delete;</code>）<br />
+</li>
+<li><code>thread(thread&amp;&amp;) noexcept</code>：移动构造函数，调用后原<code>thread</code>将被置空</li>
+</ul>
+<blockquote>
+<p>复制/移动赋值运算符与相应构造函数类似。</p>
+</blockquote>
+<blockquote>
+<p>关于<code>std::invoke</code>：其存在意义是统一C++中三种主流的函数调用方式：函数指针(function
+pointer)、函数成员指针(pointer to member function)、可调用对象(callable
+objects)，因为三者的调用语法并不相同。<del>又是一个新坑，哈哈</del></p>
+</blockquote>
+<ul>
+<li><code>static unsigned hardware_concurrency()</code>：<del>一个DETERMINSTIC的函数，</del>获得当前程序运行环境的并发资源数<br />
+</li>
+<li><code>static std::thread::id get_id()</code>：获得当前<code>thread</code>的编号(id)，其以一个嵌套类<code>std::thread::id</code>的形式给出</li>
+</ul>
+<blockquote>
+<p>“并发资源数”指操作系统允许的能够同时运行的计算单元总数，多数情况下其与CPU的逻辑处理器数一致。<br />
+类<code>id</code>没有任何（接口式的）成员函数，其唯一用法是<code>bool std::operator==(std::thread::id,std::thread::id)</code>校验两个既得的<code>thread</code>标识符是否相同。</p>
+</blockquote>
+<ul>
+<li><code>void join()</code>、<code>void detach()</code>、<code>bool joinable() const</code>见下。</li>
+</ul>
+<h3 id="joindetach">join/detach</h3>
+<p>C++中，<code>thread</code>的重要特性之一为其是否"joinable"（可以“加入”/“归并”）。<br />
+每个管理着一个线程句柄(thread
+handle)的<code>thread</code>对象都是joinable的。</p>
+<blockquote>
+<p>简明起见，本标题下接下来描述一个线程是否joinable时直接用<code>true</code>/<code>false</code>简写之。</p>
+</blockquote>
+<p>显然所有新创建的非空线程状态都是<code>true</code>，空线程则为<code>false</code>；对于状态<code>true</code>的线程对象，可以令其<code>join()</code>/<code>detach()</code>。其中，</p>
+<ul>
+<li><code>join()</code>后调用者将被阻塞(block
+execution)，等待该<code>thread</code>代表线程<strong>执行结束</strong>后，调用者恢复运行。<br />
+</li>
+<li><code>detach()</code>后该子线程将从对象中“解离”并令其自由执行（不再受同级线程约束），该<code>thread</code>置空。</li>
+</ul>
+<blockquote>
+<p>可以认为，若将线程开始运行比作放飞风筝，<code>join()</code>对应调用者等待风筝落地（此间操作者什么也不做），<code>detach()</code>则为剪断“风筝线”。<br />
+尽管C++的<code>&lt;thread&gt;</code>并未直接提供对线程进行更为底层操作的函数（比如强行让渡、休眠以至终止一个线程），但通过<code>get_id</code>获得底层句柄后，主线程在子线程未<code>detach()</code>时仍然具备控制之的“潜力”（如强行使其休眠、终止运行等）；但调用<code>detach()</code>后主线程就无法再“控制”该线程了（此时主线程和该线程的地位是“平等”的，想要终止其运行等只能由更上层的OS调度实现）。</p>
+</blockquote>
+<p>从线程句柄的角度来理解：</p>
+<p>C++中每个线程在<code>join()</code>/<code>detach()</code>后该<code>thread</code>对象就会被置空，状态自然变为<code>false</code>（故<code>thread</code>是否储存了一个线程句柄是其状态为<code>true</code>的充要条件）。<br />
+<code>join()</code>相当于“使用”了这个线程句柄，使用完后即弃置之；<code>detach()</code>等价于主动抛弃这个线程句柄。<br />
+由于线程句柄显然只能移动而不能复制，故<code>thread</code>对象被移动后，原<code>thread</code>自然也不再拥有任何句柄，状态置<code>false</code>。</p>
+<blockquote>
+<p>需要留意的是，是否拥有线程句柄和线程是否执行完成无关，线程即使未执行完成，其句柄也可以通过<code>detach()</code>主动丢弃；即使执行完成，其句柄依然有效。</p>
+</blockquote>
+<p>同时为了防止线程句柄泄露，C++中<code>thread</code>对象在析构时会校验其是否依然管理一个线程句柄。若其状态为<code>true</code>（相当于该<code>thread</code>从未<code>join()</code>/<code>detach()</code>过），则会在声明为<code>noexcept</code>的析构函数中抛出一个异常（翻译过来就是调用<code>std::terminate</code>，进而<code>abort()</code>终止程序）。</p>
+<h2 id="namespace-this_thread"><code>namespace this_thread</code></h2>
+<p>C++11同时引入了<code>std::this_thread</code>命名空间，其中定义了四个与多线程控制有关的函数。</p>
+<ol type="1">
+<li><code>void yield()</code>：当前线程“让渡”自身的CPU资源，主动进入等待状态。<br />
+</li>
+<li><code>void sleep_for(const std::chrono::duration&lt;R,P&gt;&amp;)</code>：当前线程休眠一段时间。<br />
+</li>
+<li><code>void sleep_until(const std::chrono::time_point&lt;R,P&gt;&amp;)</code>：当前线程休眠直至某时间点。<br />
+</li>
+<li><code>std::thread::id get_id()</code>：获得该线程的<code>id</code>供比较。</li>
+</ol>
+<h1 id="锁">锁</h1>
+<p>进程间的资源访问由操作系统调度，且两个进程的资源隔离性强（即运行时，一个进程几乎不会和另一个进程产生资源冲突）。<br />
+相对之下，不同线程间的资源共享程度极高（尤其在对内存的访问上），若对它们的数据读写不加以控制，则极易产生“数据竞争”(data
+race)这一现象。</p>
+<blockquote>
+<p>数据竞争：当多个线程试图在同一时间读写某一片数据时，对于某些原子操作其未规定双方进行的先后顺序，继而导致程序的运行流程、输出结果不确定，甚至可能因内存访问冲突而导致程序崩溃的情况。<br />
+比如下述的代码就极易引发数据竞争，导致未定义行为(UB)：<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">std::vector&lt;<span class="type">int</span>&gt; vc;</span><br><span class="line"><span class="keyword">auto</span> fn = [&amp;](<span class="type">int</span> x)&#123;vc.<span class="built_in">push_back</span>(x);&#125;;</span><br><span class="line"></span><br><span class="line">std::array&lt;std::thread,10&gt; th;</span><br><span class="line"><span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;<span class="number">10</span>;++i)</span><br><span class="line">&#123;</span><br><span class="line">    th = std::thread&#123;fn,i&#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+</blockquote>
+<blockquote>
+<p>常见容易引发访问冲突的“资源”包括：文件流(file stream)、堆内存(heap
+memory)等。</p>
+</blockquote>
+<hr />
+<h2 id="互斥锁">互斥锁</h2>
+<p>C++11中引入了<code>std::mutex</code>，作为“互斥锁”来保证进程间执行的安全。mutex之名为
+<em>mutal exclusion</em>，即“独占互斥量”的缩写。</p>
+<p><code>std::mutex</code>只有一个默认（无参）构造函数，<code>mutex</code>对象是<strong>不可复制/移动的</strong>（四个复制/移动相关函数/运算符全部<code>= delete;</code>）；析构函数是平凡(trivial)的。<br />
+其<code>public</code>成员函数只有三个：</p>
+<ul>
+<li><p><code>void lock()</code>：获得该互斥锁。<strong>若该锁已经被锁定，则本函数将阻塞线程执行直至成功获得该锁。</strong>“阻塞执行”这一行为是避免访问可能带访问冲突的资源、函数等时的关键：<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">std::stack&lt;<span class="type">int</span>&gt; stk;</span><br><span class="line">std::mutex mt;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">push</span><span class="params">(<span class="type">int</span> x)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    mt.<span class="built_in">lock</span>();</span><br><span class="line">    stk.<span class="built_in">push</span>(x);</span><br><span class="line">    mt.<span class="built_in">unlock</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>如此做方能保证<code>stk</code>同一时间只有一个线程对之进行操作，防止对同一个内存位置同时读写造成UB。</p>
+<blockquote>
+<p>可以发现<code>std::mutex</code>一般会被设为全局变量，或以引用方式传入函数参数。</p>
+</blockquote></li>
+<li><p><code>void unlock()</code>：解锁。其和<code>lock()</code>操作应当“成对”出现，某线程若锁定了一个<code>mutex</code>，亦必须在退出前解锁之，否则将会造成死锁(deadlock)。<br />
+</p></li>
+<li><p><code>bool try_lock()</code>：尝试锁定（不阻塞线程执行），若锁定成功则返回<code>true</code>，否则返回<code>false</code>。</p></li>
+</ul>
+<blockquote>
+<p>一些有关锁的概念：<br />
+死锁(deadlock)：因各种原因导致一个获得<code>lock</code>的操作无法完成的情况。常见有两种原因：一个线程尝试连续两次锁定一个锁（<code>lock()</code>后再<code>lock()</code>一次，本质上是UB，当然大多数C++标准库实现中，debug下都会选择抛出一个带提示信息的异常）；一个线程获得锁后没有解锁就退出（忘记<code>unlock()</code>、抛出异常、提早<code>return</code>）。<br />
+“呼应”操作(synchorized
+operations)：两个应当“成对”出现的操作，比如<code>new</code>对应<code>delete</code>、<code>lock()</code>对应<code>unlock()</code>、<code>fopen</code>对应<code>fclose</code>等。几乎所有动态“管理”资源的操作
+都应当是“呼应”的，即两个操作应当在某个操作周期内成对出现，否则会造成资源泄露（内存泄漏、死锁、文件标识符丢失等）。</p>
+</blockquote>
+<p>一些容易导致“死锁”的反面示例形如：<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">std::mutex mt;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">bad_fn</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    mt.<span class="built_in">lock</span>();</span><br><span class="line">    <span class="keyword">if</span>(???)</span><br><span class="line">    &#123;</span><br><span class="line">        mt.<span class="built_in">lock</span>(); <span class="comment">//Repeated locks: UB, the program may deadlock</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(???)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span>; <span class="comment">//Early return, the mutex is never released</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">switch</span>(???)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">case</span> ???:</span><br><span class="line">            <span class="keyword">throw</span> std::runtime_error&#123;<span class="string">&quot;&quot;</span>&#125;; <span class="comment">//Early return, the mutex is never released</span></span><br><span class="line">        <span class="comment">/*...*/</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    mt.<span class="built_in">unlock</span>(); <span class="comment">//Only when the program reaches this point, the mutex is released</span></span><br><span class="line">    <span class="comment">//If somehow this line is disregarded, the mutex is never released</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="御守stdlock_guard">御守：<code>std::lock_guard</code></h2>
+<p><code>std::mutex</code>在应用中极易出差错，故恰若对内存的管理有智能指针，对<code>mutex</code>的管理也有<code>lock_guard</code>这个包装类辅助之。</p>
+<blockquote>
+<p>这些类的实现都是RAII(Resource Acquisition Is
+Initialization)原则的生动实践。</p>
+</blockquote>
+<p><code>lock_guard</code>实际上是一个类模板，除构造和析构函数外没有其它公有成员函数。<br />
+其作用只是“代理”一个<code>mutex</code>，在析构函数中自动解锁，构造时自动锁定（可选）。其设计简单而精妙，利用析构函数的特性成功规避了大部分
+<em>early return</em> 导致的“死锁”情况：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">std::mutex mt;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">good_fn</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::lock_guard lg&#123;mt&#125;;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//The mutex is automatically unlocked at function exit, disregarding normal return, early return or returning via exception</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果不希望<code>lock_guard</code>构造时锁定一次，可以构造时传一个
+<em>tag-type</em>
+的第二参数<code>std::adopt_lock</code>进行重载决议：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">std::lock_guard lg&#123;mt,std::adopt_lock&#125;; <span class="comment">//Manages mutex `mt` yet does not lock it(assumes it has been locked)</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>同样地，<code>lock_guard</code>依然不可移动或复制。<br />
+<del>咕咕咕：什么时候讲讲<code>unique_lock</code>和<code>shared_lock</code></del></p>
+</blockquote>
+<hr />
+<h1 id="future"><code>&lt;future&gt;</code></h1>
+<h2 id="异步亦趋stdasync">“异步”亦趋：<code>std::async</code></h2>
+<p>C++中创建一个异步函数使用<code>std::async</code>函数实现。<br />
+<code>std::async</code>相比<code>std::thread</code>（非空构造）的特点之一在于，其通过一个（可选的）第一参数为<code>std::launch</code>的重载来实现可选的“手动调度”：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">auto</span> f1 = std::<span class="built_in">async</span>(std::launch::async,f); <span class="comment">//Launch the thread immediately(upon available thread resources), similar to normal `thread`</span></span><br><span class="line"><span class="keyword">auto</span> f2 = std::<span class="built_in">async</span>(std::launch::deferred,f); <span class="comment">//Creates a future instance, yet deferres the launch of the thread(the thread&#x27;s life cycle is postponed until the invocation of get(), wait(), wait_for() or wait_until() method)</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">auto</span> f3 = std::<span class="built_in">async</span>(f); <span class="comment">//Same as launching with either std::launch::async depending on the platform.</span></span><br></pre></td></tr></table></figure>
+<p>因此当我们需要延迟一个线程生命周期的开始（或显式地指出这个线程的生命周期将立即开始）时，就可以传入<code>std::launch::deferred</code>/<code>std::launch::async</code>作为第一参数（实际上<code>enum class std::launch</code>也只有这两个选项）。</p>
+<p><code>std::async</code>的返回值是类模板<code>std::future</code>的一个实例。但<code>std::future</code>又为何物？其又何以操控线程生命周期何时开始？<del>稍安勿躁，且听下回分解</del></p>
+<h2 id="逆料其事stdfuture">逆料其事：<code>std::future</code></h2>
+<p>在讲解<code>std::future</code>前，先引入我们并发/异步编程中的一个重要动机：获取子线程执行结果（返回值）。</p>
+<p>在<a
+href="">cppreference</a>中对<code>thread</code>对象的介绍中，有一句描述值得玩味：<br />
+<em>The return value of the top-level function is ignored and if it
+terminates by throwing an exception, std::terminate is called.</em></p>
+<p>即，用于构建<code>thread</code>的最顶层函数的返回值将被忽略，且其亦被隐式的禁用了栈回溯(stack
+rewinding)（异常逃逸后直接调用<code>std::terminate</code>）。</p>
+<p>相较普通的函数调用，其自然引出了两个问题：</p>
+<ul>
+<li>函数返回运行结果最重要的方式之一——返回值，如何在并发/异步编程中实现？<br />
+</li>
+<li>线程执行仍应有异常处理，不能<code>throw</code>的情况下何以让上层函数知晓？</li>
+</ul>
+<p><code>std::future</code>给出了前者的答案，其包装类<code>std::promise</code>则回答了后者。</p>
+<hr />
+<blockquote>
+<p>此情可待成追忆，只是当时已惘然。</p>
+</blockquote>
+<p><code>std::future</code>是一个颇为有趣的类模板，其主模板只接受单个类型参数<code>Ty</code>（两个模板特化分别是<code>void</code>和<code>Ty&amp;</code>）。</p>
+<p>线程放出多个子线程进行异步/并发工作时，其知道子线程会返回某个值（比如获取用户输入函数的<code>std::string</code>，某加密函数的<code>std::array&lt;byte,16&gt;</code>等<del>点名AES-128</del>），但在“放出”该子线程时还没有这个值——只知道子线程会在未来的某个时间点返回之。<br />
+由此出现了<code>std::future</code>的概念，<code>std::async</code>以返回<code>T</code>的函数创建线程时，返回值类型就是<code>std::future&lt;T&gt;</code>。</p>
+<h3 id="常用成员函数">常用成员函数</h3>
+<ul>
+<li><code>bool valid() const</code>，返回一个<code>std::future</code>对象是否<strong>有效</strong>。每个非空构造（代表了一个异步线程）的<code>std::future</code>对象构造时都是有效的，但调用<code>get()</code>后其就失效了（且不可恢复）。<br />
+</li>
+<li><code>Ty get()</code>，调用后其会阻塞程序执行，等待子线程完成并获取其返回结果。显然其返回值类型和底层返回值类型一致；只有<strong>有效的</strong>(<code>valid()</code>)的<code>std::future</code>才能调用<code>get()</code>方法——等价于<code>get()</code>也只能调用一次。<br />
+</li>
+<li><code>void wait() const</code>，调用后其会阻塞程序执行，等待子线程完成，但不会使线程失效，亦不提取其返回值。其同样只能对有效的对象上调用（否则抛异常）。<br />
+</li>
+<li><code>std::future_status wait_for(rep) const</code>，和<code>wait()</code>区别在于若子线程在<code>rep</code>后依然未结束，则直接返回。<br />
+</li>
+<li><code>std::future_status wait_until(rep) const</code>，类似地，等待直至<code>rep</code>后不论子线程是否结束，直接返回。</li>
+</ul>
+<p><code>std::future_status</code>是一个<code>enum class</code>，其可能取值有三：<br />
+<code>deferred</code>，代表该线程尚未开始执行；<code>ready</code>，代表该线程已执行结束；<code>timeout</code>，代表该线程截至<code>wait_for/wait_until</code>函数执行完成时尚未执行完毕。</p>
+<blockquote>
+<p>故<code>std::async</code>产生的异步线程就出现了一个诡异的函数美学：<code>t.wait_for(std::chrono::miliseconds(0))</code>（<del>为什么不先<code>using namespace std::chrono_literals</code>然后直接上<code>0ms</code></del>）就可以检验一个子线程的执行状态。<br />
+当然此类函数美学在C++史上也不是第一次了，<del>点名在C++23的部分wrapper_class加入前的<code>vc.find(1) != vc.last()</code>或者<code>str.find(1) != str.npos</code></del></p>
+</blockquote>
+<p>同时，<code>std::future</code>亦是可移动而不可复制的（复制构造函数和复制赋值运算符被声明为<code>= delete;</code>）。</p>
+<hr />
+<p>现在还可以揭晓之前关于<code>std::async</code>“延迟起步”子线程的答案了：<br />
+对于第一参数为<code>std::launch::deferred</code>的线程，其会在其<code>future</code>对象调用<code>get</code>/<code>wait[_for|_until]</code>成员函数后开始运行。<br />
+若只想使之起步而不想阻塞程序执行，则可以搬出<del>万能的</del><code>t.wait_for(std::chrono::miliseconds(0));</code>，随后再另行获取结果/其执行状态。</p>
+<h3 id="示例">示例</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;future&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;print&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;chrono&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std::chrono_literals;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">double</span> <span class="title">calc</span><span class="params">(<span class="type">int</span> x)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::this_thread::<span class="built_in">sleep_for</span>(std::chrono::<span class="built_in">seconds</span>(x)); <span class="comment">//Assume time consumption</span></span><br><span class="line">    <span class="keyword">return</span> (x &gt;= <span class="number">0</span>) ? (std::<span class="built_in">pow</span>(x,<span class="number">0.5</span>)) : std::<span class="built_in">sin</span>(x);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::vector&lt;std::future&lt;<span class="type">double</span>&gt;&gt; vc;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&lt;=<span class="number">10</span>;++i)</span><br><span class="line">    &#123;</span><br><span class="line">        vc.<span class="built_in">push_back</span>(std::<span class="built_in">async</span>(calc,i));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    std::this_thread::<span class="built_in">sleep_for</span>(<span class="number">5</span>s);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">auto</span>&amp; i : vc)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span>(i.<span class="built_in">valid</span>())</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">if</span>(i.<span class="built_in">wait_for</span>(<span class="number">0</span>s) != std::future_status::ready)</span><br><span class="line">            &#123;</span><br><span class="line">                std::<span class="built_in">println</span>(<span class="string">&quot;Thread isn&#x27;t ready yet!&quot;</span>);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">else</span></span><br><span class="line">            &#123;</span><br><span class="line">                std::<span class="built_in">println</span>(<span class="string">&quot;Thread execution result is &#123;&#125;&quot;</span>,i.<span class="built_in">get</span>());</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="山盟海誓stdpromise">山盟海誓：<code>std::promise</code></h2>
+<p><code>std::future</code>虽然在让线程“善始善终”方面迈出了一大步，但从线程执行过程中的“通信”来看，其依然稍显笨拙——状态的获取仅限于是否开始/结束，传递值亦只能在<code>std::async</code>构造的线程<code>return</code>时进行，且该值不能修改。<br />
+由此，出现了对异步机制更为适配的包装类<code>std::promise</code>。</p>
+<h3 id="特性">特性</h3>
+<p><code>std::promise</code>和<code>std::future</code>的模板参数赋法相同，通过<code>get_future</code>方法可以获得底层的<code>std::future</code>对象进行进一步操作。<br />
+作为包装类，其提供了相较<code>std::future</code>更强大的几个功能：</p>
+<ul>
+<li>可以多次赋值，线程可以对<code>std::promise</code>多次调用<code>set_value(_at_thread_exit)</code>成员函数来多次赋值/在线程退出时赋值。相较只能单次赋值且不可改变的<code>std::future</code>，显然其实现了线程间的动态通信更加灵活；<br />
+</li>
+<li>通过<code>set_exception(_at_thread_exit)</code>成员函数可以设置将抛出的异常（通过赋予一个exception_ptr实现）。</li>
+</ul>
+<h3 id="示例-1">示例</h3>
+<p>如，假设线程A正在等待线程B运行的结果，但它亦有自身的一些其它任务需要运行，此时可以在两个线程代表函数的形参中设置<code>std::promise</code>或<code>std::future</code>的引用用于线程间通信：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std::chrono_literals; <span class="comment">//0s</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">double</span> <span class="title">func_a</span><span class="params">(std::future&lt;<span class="type">int</span>&gt;&amp; ft)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">double</span> result&#123;<span class="number">0</span>&#125;;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span>(ft.<span class="built_in">wait_for</span>(<span class="number">0</span>s) != std::future_status_ready)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">/*Some arbitrary work*/</span></span><br><span class="line">        <span class="type">double</span> x = std::<span class="built_in">sin</span>(<span class="number">3</span>) * std::<span class="built_in">pow</span>(std::<span class="built_in">cosh</span>(<span class="number">0.5</span>),<span class="number">0.35</span>);</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i : std::views::<span class="built_in">iota</span>(<span class="number">10</span>))</span><br><span class="line">        &#123;</span><br><span class="line">            x = std::<span class="built_in">pow</span>(x,<span class="built_in">random</span>());</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        result += x;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="type">int</span> offset = ft.<span class="built_in">get</span>(); <span class="comment">//Guaranteed to complete smoothly without blocking execution</span></span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">static_cast</span>&lt;<span class="type">int</span>&gt;(result) + offset;</span><br><span class="line">    </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func_b</span><span class="params">(std::promise&lt;<span class="type">int</span>&gt;&amp; p)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">/*Simulating work*/</span></span><br><span class="line">    std::this_thread::<span class="built_in">sleep_for</span>(<span class="number">10</span>s);</span><br><span class="line"></span><br><span class="line">    p.<span class="built_in">set_value</span>(<span class="number">15</span>); <span class="comment">//Upon setting value, func_a can directly get() its value(regarded as ready)</span></span><br><span class="line">    <span class="comment">//So func_b&#x27;s following work can still proceed</span></span><br><span class="line">    <span class="comment">/*Simulating some other work*/</span></span><br><span class="line">    std::this_thread::<span class="built_in">sleep_for</span>(<span class="number">15</span>s);</span><br><span class="line"></span><br><span class="line">    p.<span class="built_in">set_value_at_thread_exit</span>(<span class="number">30</span>); <span class="comment">//Upon exiting thread, set it to another value</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::promise&lt;<span class="type">int</span>&gt; p;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">auto</span> ft1 = std::<span class="built_in">async</span>(func_a,p.<span class="built_in">get_future</span>());</span><br><span class="line">    <span class="keyword">auto</span> ft2 = std::<span class="built_in">async</span>(func_b,p);</span><br><span class="line"></span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,ft<span class="number">1.</span><span class="built_in">get</span>());</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="结语">结语</h1>
+<p>并发和异步编程是程序设计实践中的极重要课题之一；善用“”之术可以最大地让程序的执行更贴近现实中事物的运行逻辑，极大地提高程序运行效率，并符合程序在实际应用时的业务逻辑要求。<br />
+因此，C++11引入的“山珍海味”实际上只是开胃菜——其只是拉开了现代C++帷幕，后继的C++版本都在并发/异步编程上有许多大动作，包括C++20四大金刚之一的<code>coroutines</code>，皆在尽可能提高并发/异步编程的效率、可靠性、功能性与易用性。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">长文精选</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/cpp/thread/">展开全文 >></a>
         </p>
       
 

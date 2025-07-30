@@ -8,15 +8,15 @@
   <link rel="dns-prefetch" href="https://crystaljiang232.github.io">
   <title>C++——explicit | 玲珑</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="闲登小阁看新晴。  explicit修饰符是C++11引入的两个短小精悍，而又对编程风格产生较大影响的特性，可谓之“新晴”。 C之遗憾——类型的隐式转换 C语言中类型的转换只分显式和隐式两种。 其中显式转换的语法为(type)expr（expr亦应用括号包裹之）那时还没有C++的构造函数式转换之类的活。 (type)(expr)这种转换方式又被称为“强制类型转换”，因为即使到了C+">
+  <meta name="description" content="闲登小阁看新晴。  explicit修饰符是C++11引入的两个短小精悍，而又对编程风格产生较大影响的特性，可谓之“新晴”。 C之阙漏：隐式转换 C语言中类型的转换只分显式和隐式两种。其中隐式转换则在参数传递、赋值（含初始化）等操作时自动完成毕竟作为POP语言并没有对象、及其关联的构造&#x2F;析构等概念。 1int x &#x3D; 3.14; &#x2F;&#x2F;Implicit conversion from">
 <meta property="og:type" content="article">
 <meta property="og:title" content="C++——explicit">
 <meta property="og:url" content="https://crystaljiang232.github.io/cpp/explicit/index.html">
 <meta property="og:site_name" content="玲珑">
-<meta property="og:description" content="闲登小阁看新晴。  explicit修饰符是C++11引入的两个短小精悍，而又对编程风格产生较大影响的特性，可谓之“新晴”。 C之遗憾——类型的隐式转换 C语言中类型的转换只分显式和隐式两种。 其中显式转换的语法为(type)expr（expr亦应用括号包裹之）那时还没有C++的构造函数式转换之类的活。 (type)(expr)这种转换方式又被称为“强制类型转换”，因为即使到了C+">
+<meta property="og:description" content="闲登小阁看新晴。  explicit修饰符是C++11引入的两个短小精悍，而又对编程风格产生较大影响的特性，可谓之“新晴”。 C之阙漏：隐式转换 C语言中类型的转换只分显式和隐式两种。其中隐式转换则在参数传递、赋值（含初始化）等操作时自动完成毕竟作为POP语言并没有对象、及其关联的构造&#x2F;析构等概念。 1int x &#x3D; 3.14; &#x2F;&#x2F;Implicit conversion from">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2025-07-13T06:20:34.000Z">
-<meta property="article:modified_time" content="2025-07-28T03:27:08.462Z">
+<meta property="article:modified_time" content="2025-07-30T04:21:17.652Z">
 <meta property="article:author" content="Hibiscus">
 <meta property="article:tag" content="Modern C++">
 <meta name="twitter:card" content="summary">
@@ -179,16 +179,16 @@
 <p>闲登小阁看新晴。</p>
 </blockquote>
 <p><code>explicit</code>修饰符是C++11引入的两个短小精悍，而又对编程风格产生较大影响的特性，可谓之“新晴”。</p>
-<h1 id="c之遗憾类型的隐式转换">C之遗憾——类型的隐式转换</h1>
-<p>C语言中类型的转换只分显式和隐式两种。</p>
-<p>其中显式转换的语法为<code>(type)expr</code>（expr亦应用括号包裹之）<del>那时还没有C++的构造函数式转换之类的活</del>。<br />
-<code>(type)(expr)</code>这种转换方式又被称为“强制类型转换”，因为即使到了C++，为了保证对C的向后兼容性，这种转换方式可以视情况灵活地调用<code>const_cast</code>和<code>reinterpret_cast</code>/<code>static_cast</code>的组合，从而实现最为“通用”的转换，如将普通整型转化为指针类整型等。</p>
-<p>而隐式转换则在参数传递、赋值（含初始化）等操作时自动完成<del>毕竟作为POP语言并没有对象、及其关联的构造/析构等概念</del>。</p>
+<h1 id="c之阙漏隐式转换">C之阙漏：隐式转换</h1>
+<p>C语言中类型的转换只分显式和隐式两种。其中隐式转换则在参数传递、赋值（含初始化）等操作时自动完成<del>毕竟作为POP语言并没有对象、及其关联的构造/析构等概念</del>。</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> x = <span class="number">3.14</span>; <span class="comment">//Implicit conversion from `double` to `int`</span></span><br></pre></td></tr></table></figure>
-<p>隐式转换最为诟病的就是难以达成精确的类型转换控制/约束。C中如<code>strcpy</code>的库函数函数大量应用了无符号整型作为形参类型/返回值，但编程中经常需要将有符号整型传进传出<del>点名<code>int</code>抛给<code>size_t</code>或者反之</del>，许多时候因图方便就没有进行严格的转换检查，同<code>fopen</code>不看<code>errno</code>等共为许多C语言代码埋下了祸根：</p>
+<p>隐式转换虽在程序设计中带来了不少便利，但其亦引来了最为诟病的一点——难以达成精确的类型转换控制/约束。<br />
+C中如<code>strcpy</code>的库函数函数大量应用了无符号整型作为形参类型/返回值，但编程中经常需要将有符号整型传进传出<del>点名<code>int</code>抛给<code>size_t</code>或者反之</del>，许多时候因图方便就没有进行严格的转换检查，同<code>fopen</code>不看<code>errno</code>等“陋习”共为许多C语言代码埋下了祸根：</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> x = <span class="built_in">strlen</span>(str);</span><br><span class="line"><span class="built_in">strcpy</span>(str,str + <span class="number">5</span>,x - <span class="number">3</span>);</span><br></pre></td></tr></table></figure>
-<p>先不论第一行<code>size_t</code>向<code>int</code>的截断<del>毕竟相比之下已经算小问题了</del>；第二行，若<code>x &lt; 3</code>，则传入<code>strcpy</code>的长度转为<code>size_t</code>后产生无符号下溢出(unsigned
+<p>先不论第一行<code>size_t</code>向<code>int</code>的截断<del>毕竟相比之下已经算小问题了</del>；<br />
+第二行中若<code>x &lt; 3</code>，则传入<code>strcpy</code>的长度转为<code>size_t</code>后产生无符号下溢出(unsigned
 underflow)，进而导致内存“无限”访问而导致段错误/UB。</p>
+<p>显然，在类型转换的便捷性和类型安全性之间，现代C++亟需找到一个新的平衡。</p>
 <h1 id="c11的答案explicit">C++11的答案——<code>explicit</code></h1>
 <h2 id="语法">语法</h2>
 <p><code>explicit</code>关键字可用于修饰构造函数和转换构造函数(conversion
@@ -289,7 +289,7 @@ conversion)</em>，最后再进行0/1次 <em>标准转换顺序</em>
 <p>其中“标准转换顺序”指“内置”的类型转换，如熟知的普通整型/浮点型互转（含截断）、整型/浮点型转<code>bool</code>（或反之）、指针转<code>bool</code>。</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">X</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">explicit</span> <span class="keyword">operator</span> <span class="title">bool</span><span class="params">()</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">Y</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">operator</span> <span class="title">int</span><span class="params">()</span> <span class="type">const</span> </span>&#123;<span class="keyword">return</span> <span class="number">1</span>;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">Z</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">explicit</span> <span class="keyword">operator</span> <span class="title">int</span><span class="params">()</span> <span class="type">const</span> </span>&#123;<span class="keyword">return</span> <span class="number">1</span>;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(X&#123;&#125;) <span class="comment">//OK: explicit `operator bool` still works</span></span><br><span class="line">    <span class="keyword">if</span>(Y&#123;&#125;) <span class="comment">//OK: conversion from Y to int, then to bool</span></span><br><span class="line">    <span class="keyword">if</span>(Z&#123;&#125;) <span class="comment">//Error: conversion from Y to int is marked explicit</span></span><br><span class="line">    <span class="keyword">if</span>(<span class="built_in">int</span>(Z&#123;&#125;)) <span class="comment">//OK</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 <p>这对于许多希望只“有条件”地用于测试<code>true</code>/<code>false</code>的类型来说极为有用<del>比如<code>std::cin</code>就有过这么一段黑历史</del>：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(std::cin) <span class="comment">//Normal usage on testing std::istream object&#x27;s EOF</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">delete</span> std::cin; <span class="comment">//This line compiles prior to C++11</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(std::cin) <span class="comment">//Normal usage on testing std::istream object&#x27;s EOF, yet the type cast path is std::istream&amp; -&gt; void* -&gt; bool</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">delete</span> std::cin; <span class="comment">//This line compiles prior to C++11</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>是不是觉得后面一行莫名其妙？实际上是因为C++11前，没有<code>explicit</code>关键字导致<code>std::istream</code>使用了一个非常奇怪的workaround：</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">std::istream::<span class="keyword">operator</span> <span class="type">void</span>*() <span class="type">const</span>;</span><br></pre></td></tr></table></figure>
 <p>其选择提供一个<code>operator void*</code>来规避<code>bool</code>赋值的问题，副作用就是让它变得“可删除了”<del>乱删“野”指针，UB警告</del>。C++11后（及其后新的相关类）均改用<code>explicit operator bool</code>。<br />
@@ -446,15 +446,6 @@ href="/cpp/cast/">C++——万类霜天竞自由</a></p>
   
 <nav id="article-nav">
   
-    <a href="/cast/" id="article-nav-newer" class="article-nav-link-wrap">
-      <i class="icon-circle-left"></i>
-      <div class="article-nav-title">
-        
-          C++——万类霜天竞自由
-        
-      </div>
-    </a>
-  
   
     <a href="/cpp/auto/" id="article-nav-older" class="article-nav-link-wrap">
       <div class="article-nav-title">C++——auto与类型推导</div>
@@ -484,7 +475,7 @@ href="/cpp/cast/">C++——万类霜天竞自由</a></p>
                 </span>
                 <span class="tooltip-content">
                     <div class="toc-article">
-                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#c%E4%B9%8B%E9%81%97%E6%86%BE%E7%B1%BB%E5%9E%8B%E7%9A%84%E9%9A%90%E5%BC%8F%E8%BD%AC%E6%8D%A2"><span class="toc-number">1.</span> <span class="toc-text">C之遗憾——类型的隐式转换</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#c11%E7%9A%84%E7%AD%94%E6%A1%88explicit"><span class="toc-number">2.</span> <span class="toc-text">C++11的答案——explicit</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AF%AD%E6%B3%95"><span class="toc-number">2.1.</span> <span class="toc-text">语法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%9C%E7%94%A8"><span class="toc-number">2.2.</span> <span class="toc-text">作用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%89%B9%E4%BE%8B"><span class="toc-number">2.3.</span> <span class="toc-text">特例</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BA%94%E7%94%A8%E6%8C%87%E5%8C%97"><span class="toc-number">2.4.</span> <span class="toc-text">应用指北</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9E%E4%BE%8B"><span class="toc-number">2.5.</span> <span class="toc-text">实例</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#c20%E5%B8%A6%E6%9D%A1%E4%BB%B6%E7%9A%84explicit"><span class="toc-number">3.</span> <span class="toc-text">C++20：带条件的explicit</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%BB%93%E8%AF%AD"><span class="toc-number">4.</span> <span class="toc-text">结语</span></a></li></ol>
+                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#c%E4%B9%8B%E9%98%99%E6%BC%8F%E9%9A%90%E5%BC%8F%E8%BD%AC%E6%8D%A2"><span class="toc-number">1.</span> <span class="toc-text">C之阙漏：隐式转换</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#c11%E7%9A%84%E7%AD%94%E6%A1%88explicit"><span class="toc-number">2.</span> <span class="toc-text">C++11的答案——explicit</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AF%AD%E6%B3%95"><span class="toc-number">2.1.</span> <span class="toc-text">语法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%9C%E7%94%A8"><span class="toc-number">2.2.</span> <span class="toc-text">作用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%89%B9%E4%BE%8B"><span class="toc-number">2.3.</span> <span class="toc-text">特例</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BA%94%E7%94%A8%E6%8C%87%E5%8C%97"><span class="toc-number">2.4.</span> <span class="toc-text">应用指北</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9E%E4%BE%8B"><span class="toc-number">2.5.</span> <span class="toc-text">实例</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#c20%E5%B8%A6%E6%9D%A1%E4%BB%B6%E7%9A%84explicit"><span class="toc-number">3.</span> <span class="toc-text">C++20：带条件的explicit</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%BB%93%E8%AF%AD"><span class="toc-number">4.</span> <span class="toc-text">结语</span></a></li></ol>
                     </div>
                 </span>
             </div>

@@ -152,316 +152,6 @@
           <div id="js-content" class="content-ll">
             
   
-    <article id="post-cpp/concepts" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/cpp/concepts/">C++20——concepts</a>
-    </h1>
-  
-
-        
-        <a href="/cpp/concepts/" class="archive-article-date">
-  	<time datetime="2025-04-06T02:37:44.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-04-06</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <blockquote>
-<p><del>concepts是C++20最“简单”的大特性之一了</del></p>
-</blockquote>
-<p>C++20的更新量级极大：其开创了大量新的编程模式，引入了大量语法点、标准库等等，对C++体系的影响可以与C++11相提并论。<br />
-其中更有“四大金刚”——<code>concepts</code>、<code>modules</code>、<code>ranges</code>和<code>coroutines</code>。本篇将深入浅出地探讨<code>concepts</code>这一大特性。</p>
-<h1 id="pastsfinae">Past——SFINAE</h1>
-<p>"Substitution Failure Is Not An Error"<br />
-其在元编程(metaprogramming)和模板重载决议时发挥重要作用：<br />
-当将推导的模板参数，或将指定的模板参数代入模板列表“失败”时，被代入的模板将从重载备选集中被移除。</p>
-<h2 id="sfinae详解">SFINAE详解</h2>
-<p>当实例化一个模板时，显然需要对该模板内所有带模板参数的元素，以给定的模板参数进行代入。<br />
-SFINAE阶段，代入的目标对象只包括<strong>函数类型</strong>和<strong>其它模板参数</strong>中的所有<strong>类型(types)及表达式(expressions)</strong>；只有在此阶段遇到的错误会被视为
-<em>SFINAE Errors</em>
-，触发重载决议前的筛选机制（将之移除而非卡出一个编译错误）。</p>
-<blockquote>
-<p>C++会先将显式给定的模板参数进行代入，随后再执行模板参数推导(template
-parameter deduction)，再代入推导的参数及默认参数。</p>
-</blockquote>
-<p>代入目标对象“失败”示例：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//Example of substituting template parameters in types and expressions used to determine function type</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function">Ty&amp; <span class="title">fun</span><span class="params">(Ty* arg = <span class="literal">nullptr</span>)</span> <span class="title">noexcept</span><span class="params">(<span class="keyword">sizeof</span>(Ty) &lt; <span class="number">4</span>)</span></span>&#123;&#125; <span class="comment">//#1</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//Ty is used in determining return type and function parameter list(substituting type), and noexcept specifier(substituting expression)</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">()</span></span>&#123;&#125; <span class="comment">//#2</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">()</span></span>&#123;Ty arg;&#125; <span class="comment">//#3</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">()</span></span>&#123;std::<span class="built_in">println</span>(<span class="string">&quot;ni hao&quot;</span>);&#125; <span class="comment">//#4</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">fun</span>&lt;<span class="type">void</span>&gt;(); <span class="comment">//Triggers a SFINAE Error for function template #1: attempting to create reference to void / obtaining sizeof(void)</span></span><br><span class="line">    <span class="comment">//Thus #1 is discarded from overload resolution set, and #2 is chosen and instanated</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">foo</span>&lt;<span class="type">void</span>&gt;(); <span class="comment">//This DOES NOT trigger a SFINAE Error, since the &quot;substitution failure&quot; occurs in the function body</span></span><br><span class="line">    <span class="comment">//Thus this line will not compile for ambiguity</span></span><br><span class="line">    <span class="comment">//If removing #4, then the error would be trying to create an object of type void</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>可以发现，运用SFINAE的重点在于将潜在的错误点置于模板参数列表、函数类型涉及的表达式中，而非函数体内（函数体内的代码解析优先级非常低）。<br />
-常见的 <em>SFINAE Errors</em> 有：</p>
-<ul>
-<li>数组类：尝试创建一个非正整数长度的数组、函数数组、引用数组、<code>void</code>类型的数组；<br />
-</li>
-<li>域解析符<code>::</code>类：当尝试使用域解析符时，
-<ul>
-<li>左操作数不是一个类名/命名空间名；<br />
-</li>
-<li>右操作数试图访问的成员不存在；<br />
-</li>
-<li>右操作数试图访问的成员属性不符（预期成员属性是一个类型/非类型/模板，但访问到的成员属性不匹配）；<br />
-</li>
-</ul></li>
-<li>引用类：尝试创建指向引用的指针、<code>void</code>的引用；<br />
-</li>
-<li>其它：对非类型的模板参数，赋予了一个不合法的类型（包括不能实现转换）</li>
-</ul>
-<blockquote>
-<p>注意代入模板参数后，出现的“引用的引用”会触发<strong>引用折叠(reference
-collasping)</strong>而非错误，详见<a
-href="/cpp/rrefs/">C++——右值引用和移动语义</a></p>
-</blockquote>
-<h2 id="type_traits有关"><code>&lt;type_traits&gt;</code>有关</h2>
-<p>C++11引入的<code>&lt;type_traits&gt;</code>带来了极大量基于SFINAE和模板匹配、可用于识别给定类型参数的traits。几个示例如下：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>,std::<span class="type">enable_if_t</span>&lt;!std::is_array_v&lt;Ty&gt;,<span class="type">int</span>&gt; = <span class="number">0</span>&gt;</span><br><span class="line"><span class="type">void</span> <span class="built_in">func</span>(Ty arg);</span><br></pre></td></tr></table></figure>
-<p>对于初次接触SFINAE的读者而言，上述模板声明会显得非常拗口难解。实际上其作用就是约束了<code>func</code>的参数，要求其不能是数组类型。<br />
-<code>std::is_array_v</code>是一个<code>bool</code>类型的变量模板，接受一个类型参数实例化，返回该类型参数是否为数组类型；<br />
-而<code>std::enable_if_t</code>（及其C++14前的原型<code>std::enable_if</code>）则是一个由类型偏特化(partial
-specialization)铸就的非常精巧的traits之一。其实现如下：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="type">bool</span> Cond, <span class="keyword">class</span> <span class="title class_">Ty</span> = <span class="type">void</span>&gt;</span><br><span class="line"><span class="keyword">struct</span> enable_if</span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">enable_if</span>&lt;<span class="literal">true</span>,Ty&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">using</span> type = Ty;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="type">bool</span> Cond,<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">using</span> <span class="type">enable_if_t</span> = <span class="keyword">typename</span> enable_if::type; <span class="comment">//No need for &quot;typename&quot; since C++20</span></span><br></pre></td></tr></table></figure></p>
-<p>可见<code>enable_if</code>存在一个偏特化的模板，当第一个模板参数<code>Cond</code>为<code>true</code>时，匹配的偏特化模板中存在一个别名声明<code>type = Ty</code>；否则匹配的一般模板为空。<br />
-而<code>enable_if_t</code>则利用了SFINAE，若<code>Cond</code>为<code>true</code>，则<code>enable_if_t</code>这个语句是合法的，否则不合法（域解析符试图访问的成员不存在）。<br />
-在应用时，可以将待判定条件<code>Cond</code>置为其第一参数，<code>int</code>置为其第二参数，并赋予默认值<code>= 0</code>：如此即可实现<code>Cond</code>为<code>true</code>时，剩余模板参数自动推导并匹配成功（宏观上，该模板可以被实例化）；<code>Cond</code>为<code>false</code>时，该模板不能被实例化。</p>
-<blockquote>
-<p>这个<code>0</code>的<code>int</code>型模板参数没有任何意义，只是为了满足语法要求。理论上完全可以采用其它模板参数来满足语法限制，比如将类型替换为<code>char</code>：<code>template&lt;class Ty,std::enable_if_t&lt;Ty,char&gt; = 0&gt;</code>。注意不能替换为<code>void</code>（因为不允许创建<code>void</code>类型的对象）。</p>
-</blockquote>
-<p>梳理至此，读者应也不难<del>一眼</del>看出该模板对<code>Ty</code>的约束了。<br />
-但很显然利用SFINAE进行模板约束时，写出的代码可读性非常堪忧，毕竟上述还是非常简单的单一约束的状况。<br />
-来看一个（相对）很简单的标准库中双约束示例（<code>std::make_unique</code>实现）：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">_EXPORT_STD <span class="keyword">template</span> &lt;<span class="keyword">class</span> <span class="title class_">_Ty</span>, <span class="type">enable_if_t</span>&lt;is_array_v&lt;_Ty&gt; &amp;&amp; extent_v&lt;_Ty&gt; == <span class="number">0</span>, <span class="type">int</span>&gt; = <span class="number">0</span>&gt;</span><br><span class="line">_NODISCARD_SMART_PTR_ALLOC _CONSTEXPR23 unique_ptr&lt;_Ty&gt; <span class="built_in">make_unique</span>(<span class="type">const</span> <span class="type">size_t</span> _Size) &#123; <span class="comment">// make a unique_ptr</span></span><br><span class="line">    <span class="keyword">using</span> _Elem = <span class="type">remove_extent_t</span>&lt;_Ty&gt;;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">unique_ptr</span>&lt;_Ty&gt;(<span class="keyword">new</span> _Elem[_Size]());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><del>宏看不懂没关系，</del>模板的约束条件是：<code>Ty</code>是一个数组类型，并且其大小(Extent)为零（形如<code>int[]</code>）。</p>
-<h2 id="出路在何">出路在何？</h2>
-<p>SFINAE应用中依然存在着诸多缺点，因而C++也在不断探索，并为程序设计者提供了诸多出路：<em>tag
-dispatch</em>，C++17的<code>if constexpr</code>，以及下方将述的重头戏——C++20的<code>concepts</code>。</p>
-<blockquote>
-<p>上述几种方式都是辅助“决议”型的方法。若只是希望在一定条件下产生一个编译错误，可以改用<code>static_assert</code>。<br />
-但这亦为其不能用于模板实例化选择的原因：<code>static_assert</code>的生效域是在函数体/类体的内部（对于模板而言），任何含有<code>static_assert(false)</code>的语句被实例化（将被编译）会立即产生编译错误，且显然根据定义其不属于
-<em>SFINAE Errors</em>。<br />
-唯一的例外是结合<code>if constexpr</code>使用（本质上依然是令该行不被实例化）。详见<a
-href="/cpp/constexpr/">C++——编译期运算</a></p>
-</blockquote>
-<h1 id="presentconcepts">Present——concepts</h1>
-<p>C++20与"concepts"有关的关键字有两个：<code>concept</code>和<code>requires</code>。</p>
-<h2 id="concept"><code>concept</code></h2>
-<ul>
-<li><p><code>concept</code>声明一个“概念”，其本质是一个编译期的模板<code>bool</code>变量。其必须以一个编译期布尔常量(compile-time
-boolean constant)初始化之。如： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> example = <span class="literal">true</span>; <span class="comment">//A concept that always evaluate to be true</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//Its equivalent compile-time boolean constant is like:</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">bool</span> equivlant_cpvar = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> small = <span class="built_in">sizeof</span>(Ty) &lt; <span class="number">4</span>; <span class="comment">//For sizeof(Ty) &lt; 4, evaluates to a compile-time boolean constant of true</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">static_assert</span>(small&lt;<span class="type">int</span>&gt;);</span><br><span class="line"><span class="built_in">static_assert</span>(!small&lt;<span class="type">double</span>&gt;);</span><br></pre></td></tr></table></figure></p></li>
-<li><p><code>requires</code>则既可以作为specifier修饰一个模板（进行约束），亦是定义concepts元素的一部分。</p></li>
-</ul>
-<h2 id="requires作为约束提示字"><code>requires</code>作为约束提示字</h2>
-<p>通过requires显式约束模板变量时，操作数可以是任意于编译期能解析为<code>bool</code>的变量。</p>
-<blockquote>
-<p>C++11引入的<code>&lt;type_traits&gt;</code>中定义了极大量用于解析类型特征，并生成<code>constexpr bool</code>的变量模板。</p>
-</blockquote>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt; <span class="title">requires</span> <span class="params">(small&lt;Ty&gt;)</span></span></span><br><span class="line"><span class="function"><span class="keyword">class</span> smallvector</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;  <span class="title">requires</span><span class="params">(!small&lt;Ty&gt; &amp;&amp; std::is_nothrow_destructible&lt;Ty&gt;)</span> </span>&#123;&#125; <span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(Ty)</span></span>;</span><br></pre></td></tr></table></figure>
-<h2
-id="requires作为concepts一部分"><code>requires</code>作为concepts一部分</h2>
-<p>requires可以发起一个子句，语法是<code>requires (init_params)&#123;...&#125;</code>。<br />
-其中，init_params为可选项，如果加上了括号，则其中可以放置一些参数（如同写出函数的实参一样），可在下面的内嵌约束中使用。
-大括号内可以添加任意数量的内嵌约束语句(nested
-constraints)，以分号分隔且存在逻辑与的关系（当且仅当内嵌约束全部满足时，该requires解析为<code>true</code>）。
-Nested constraints的分类如下：</p>
-<ul>
-<li>简单约束：一个任意的表达式，该表达式合法（可以通过编译）时通过；<br />
-</li>
-<li>变量约束:
-<code>requires</code>加上一个编译期的<code>bool</code>变量，该变量为<code>true</code>时通过；<br />
-</li>
-<li>复合约束：语法为<code>&#123;expr&#125; (noexcept) (-&gt; [concept])</code>，通过条件如下：
-<ol type="1">
-<li>expr必须能通过编译（和“简单约束”相同）；<br />
-</li>
-<li>若声明了noexcept，则expr必须被声明为<code>noexcept(true)</code>；<br />
-</li>
-<li>若指定了后继的<code>-&gt; [concept]</code>（所谓"trailing
-type"-后继类型），则按以下的步骤校验：
-<ul>
-<li>将<code>decltype(expr)</code>代入至后继的concept中（作为第一个变量，规则可以参考模板隐式约束），</li>
-<li>该concept也必须最终解析为<code>true</code>。</li>
-</ul></li>
-</ol>
-上述任何一个步骤失败，则该约束的解析结果为<code>false</code>。</li>
-</ul>
-<p>如现在希望约束一个迭代器类，要求：</p>
-<ol type="1">
-<li>其必须可以与同类对象比较并返回bool，且不能抛出异常；</li>
-<li>其必须支持（前置）自增和自减运算；</li>
-<li>其必须可以解引用并返回一个int&amp;；</li>
-<li>其大小必须不大于8。</li>
-</ol>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> biint_iterators = <span class="built_in">requires</span>(Ty it) <span class="comment">//这里“幻化”出了一个变量it，可以在下文约束中使用。</span></span><br><span class="line">&#123;</span><br><span class="line">&#123;it != it&#125; <span class="keyword">noexcept</span> -&gt; std::same_as&lt;<span class="type">bool</span>&gt;;</span><br><span class="line">++it; --it;</span><br><span class="line">&#123;*it&#125; -&gt; std::same_as&lt;<span class="type">int</span>&amp;&gt;;</span><br><span class="line"><span class="function"><span class="keyword">requires</span> <span class="title">sizeof</span><span class="params">(it)</span> &lt; 8</span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>显然concepts的约束比起SFINAE等方法可读性、维护性提升了数个数量级。</p>
-<h2 id="concepts的无数花式用法">concepts的无数花式用法</h2>
-<p>前文提到C++标准委员会的<del>绥靖政策</del>导致了大量奇奇怪怪的concepts用法被选入标准。以对函数模板的约束为例，如下将具述之：<br />
-假设存在一个一元模板<code>cpt</code>，</p>
-<ol type="1">
-<li><p>常规写法：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt; <span class="comment">/*p1*/</span> <span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(Ty arg)</span> <span class="comment">/*p2*/</span> </span>&#123;&#125;</span><br></pre></td></tr></table></figure>
-在p1或p2插入<code>requires cpt&lt;Ty&gt;</code>皆可（总结：在模板参数/函数形参声明后）。</p></li>
-<li><p>融合写法：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;cpt Ty&gt; <span class="type">void</span> <span class="title">func</span><span class="params">(Ty arg)</span> </span>&#123;&#125;</span><br></pre></td></tr></table></figure></p></li>
-</ol>
-<blockquote>
-<p>本质上这种写法是将<code>Ty</code>代入<code>cpt</code>的第一个参数，因此若<code>cpt</code>是一个多元模板，可以手动指定后续参数，如<code>template&lt;cpt&lt;int&gt; Ty&gt;</code>
-等价于施加了<code>requires cpt&lt;Ty,int&gt;</code>的约束。<br />
-注意为避免编译链接冲突等，C++规定在这种“融合”写法中默认模板参数无效（因而若存在默认模板参数，你仍需手动指定之）。最“实用”的例子形如：<code>template&lt;std::formattable&lt;char&gt; Ty&gt;</code>。</p>
-</blockquote>
-<ol start="3" type="1">
-<li>和<code>auto</code>结合的写法，直接约束<code>auto</code>推导的模板形参、非类型模板参数、模板变量：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(cpt <span class="keyword">auto</span> arg)</span></span>; <span class="comment">//constraining function template&#x27;s argument list</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;cpt <span class="keyword">auto</span> arg&gt; <span class="type">void</span> <span class="title">func</span><span class="params">()</span></span>; <span class="comment">//constraining non-type template parameter</span></span><br><span class="line">cpt <span class="keyword">auto</span> bar = ...; <span class="comment">//constraining variable template</span></span><br></pre></td></tr></table></figure></li>
-</ol>
-<h2 id="注意事项">注意事项</h2>
-<ul>
-<li><p><code>concept</code><strong>自身不能被约束</strong>，如果需要复用既有<code>concept</code>，请在初始化表达式中指明：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> one = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;one Ty&gt;</span><br><span class="line"><span class="keyword">concept</span> two = <span class="literal">true</span>; <span class="comment">//Not compile: concepts cannot be constrained, disregarding implicitly(as this) or explicitly using `requires`</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> three = one&lt;Ty&gt; &amp;&amp; <span class="literal">true</span>; <span class="comment">//OK, Correct approach of using existing concepts</span></span><br></pre></td></tr></table></figure></p></li>
-<li><p><code>concept</code><strong>不能重载或特化</strong>；<br />
-</p></li>
-<li><p><code>concept</code>一定是模板，不能<del>空手套白狼</del>定义一个模板参数个数少于1的<code>concept</code>。<br />
-</p></li>
-<li><p>若一个模板<code>requires</code>的<code>(expr)</code>被解析为<code>false</code>，则其行为类似于
-<em>SFINAE
-Error</em>，即会将之从重载候选表中移除；但如果表达式<code>expr</code>的解析本身是非法的，则其不属于SFINAE的范畴，会无视条件直接报编译错误（即使甚至没有对该<code>concept</code>涉及的模板进行重载决议，如下述情况中存在非模板的重载<code>void f(int)</code>）。解析非法除了表达式出现了类似"
-<em>SFINAE Error</em>
-"的情况外，其类型只要不是<code>bool</code>亦会触发这一机制（不会进行隐式转换）：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">S</span> </span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">constexpr</span> <span class="keyword">operator</span> <span class="title">bool</span><span class="params">()</span> <span class="type">const</span> </span>&#123; <span class="keyword">return</span> <span class="built_in">sizeof</span>(Ty) &lt;= <span class="number">4</span>; &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt; <span class="title">requires</span> <span class="params">(S&lt;Ty&gt;&#123;&#125;)</span></span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">(Ty)</span></span>; <span class="comment">// #1</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">(<span class="type">int</span>)</span></span>; <span class="comment">// #2</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">g</span><span class="params">()</span> </span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">f</span>(<span class="number">0</span>); <span class="comment">// error: S&lt;int&gt;&#123;&#125; does not have type bool when checking #1,</span></span><br><span class="line">        <span class="comment">// even though #2 is a better match</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>修改方式为将<code>requires</code>子句改为
-<code>requires (static_cast&lt;bool&gt;(S&lt;Ty&gt;&#123;&#125;))</code>。<br />
-再考虑下面这种情况，复用上述的<code>struct S</code>：
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt; <span class="title">requires</span> <span class="params">(<span class="type">bool</span>(S&lt;Ty&gt;&#123;&#125;))</span></span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;&gt;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">()</span></span>;</span><br><span class="line"></span><br></pre></td></tr></table></figure></p></li>
-</ul>
-<h1
-id="future浅谈底层原理和进阶应用">Future——浅谈底层原理和进阶应用</h1>
-<p><code>concept</code>和<code>requires</code>是SFINAE、<code>constexpr bool</code>的进阶，但后者在元编程(metaprogramming)中的作用依然不可动摇。</p>
-<h2 id="模板特化和重载">模板特化和重载</h2>
-<p>传统模板接受一个模板参数后，</p>
-<ul>
-<li>若存在既有重载，则会优先选择之（即不会进行模板实例化）；<br />
-</li>
-<li>否则，若存在模板特化，则会优先选择匹配的模板特化，并且特化程度越高，优先级越高；<br />
-</li>
-<li>最后再选择最为通用的模板。</li>
-</ul>
-<blockquote>
-<p>函数模板重载(overload)和特化(specialization)的区别：<br />
-若函数模板被重载（重载的函数不是模板函数），则该重载函数必定会生成可执行代码，且在程序运行时会具有地址入口（除非其因未被调用等原因被编译器优化掉）。<br />
-但若函数模板被特化，其依然不一定会生成可执行代码，取决于是否有对该特化模板函数的调用（导致其发生了实例化）。</p>
-<p>同时，被特化的函数模板必须能够由原模板所“生成”（相当于，若以参数<code>Ty</code>特化原模板，则该函数的签名必须形如将<code>Ty</code>代入原模板后，生成的函数签名）；<br />
-而重载则不存在此限制，可以自由指定返回值、形参列表等等。</p>
-<p>无论是何种模板，其必须实例化(instanlize)后才会生成可执行代码，存在函数地址入口。<br />
-对于一个未被实例化的模板，其中允许存在<strong>部分</strong>不能通过编译的语句。</p>
-</blockquote>
-<p>如：（为展示重载相关，以函数为例）</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(Ty)</span></span>&#123;&#125; <span class="comment">//#1: Primative template</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;&gt;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(<span class="type">int</span>)</span></span>&#123;&#125; <span class="comment">//#2: Explicit specialization</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//template&lt;&gt;</span></span><br><span class="line"><span class="comment">//char func(double)&#123;&#125; //Not Compile: no instance of function template &quot;func&quot; matches the specified type </span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">()</span></span>&#123;&#125; <span class="comment">//OK: A overload function, doesn&#x27;t need to obey the requirements of template specialization</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(<span class="type">int</span>)</span></span>&#123;&#125; <span class="comment">//#3</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">func</span>(<span class="number">1</span>); <span class="comment">//Invocation priority: #3 &gt; #2 &gt; #1</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>编译后生成的代码中，只会有后两个<code>void func()</code>和<code>void func(int)</code>的地址入口（不考虑优化）。</p>
-<h2
-id="concepts和constexpr-bool">concepts和<code>constexpr bool</code></h2>
-<p>目前<code>&lt;concepts&gt;</code>提供的许多标准“概念”的实现，或多或少都转发了<code>&lt;type_traits&gt;</code>的既有<code>constexpr bool</code>变量模板。<br />
-由于后者的本质还是模板变量和模板变量的特化，因此模板的偏特化通过给出特化程度的差分，实现匹配优先级的区别。<br />
-下面给出两个（模仿）<code>&lt;type_traits&gt;</code>的实例，其分别使用了变量模板特化和类模板特化：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">bool</span> is_array_v = <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">bool</span> is_array_v&lt;Ty[]&gt; = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>,<span class="type">size_t</span> N&gt;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">bool</span> is_array_v&lt;Ty[N]&gt; = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">remove_reference</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">using</span> type = Ty;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">remove_reference</span>&lt;Ty&amp;&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">using</span> type = Ty;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">remove_reference</span>&lt;Ty&amp;&amp;&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">using</span> type = Ty;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">//since C++14, official &quot;forwarding&quot;</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">using</span> <span class="type">remove_reference_t</span> = <span class="keyword">typename</span> remove_reference&lt;Ty&gt;::type;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>相对地，<code>concept</code><strong>不支持重载/特化</strong>，试图重定义一个<code>concept</code>（或“特化”之）会导致编译错误。</p>
-<h2 id="从sfinae到requires">从SFINAE到<code>requires</code></h2>
-<p>SFINAE的一大缺点是，对于应用了同样的约束条件的同名类模板，任意两个模板的SFINAE约束条件的交集必须是空集（或，“互斥”）。<br />
-否则当代入的模板参数处在二者交集时，由于SFINAE只会将匹配失败的模板列表从备选项中移除（而不会进行优先级判断等），故会因歧义而产生编译错误。<br />
-带来的最大问题出现在一个约束是另一个约束子集的情况：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>,std::<span class="type">enable_if_t</span>&lt;!std::is_array_v&lt;Ty&gt;,<span class="type">int</span>&gt; = <span class="number">0</span>&gt;</span><br><span class="line"><span class="type">void</span> <span class="built_in">fun</span>(Ty); <span class="comment">//#1</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>,std::<span class="type">enable_if_t</span>&lt;!std::is_array_v&lt;Ty&gt; &amp;&amp; !std::is_reference_v&lt;Ty&gt;,<span class="type">int</span>&gt; = <span class="number">0</span>&gt;</span><br><span class="line"><span class="type">void</span> <span class="built_in">fun</span>(Ty); <span class="comment">//#2</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> a&#123;&#125;;</span><br><span class="line">    <span class="type">int</span>&amp; b&#123;a&#125;;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">fun</span>(b); <span class="comment">//#1</span></span><br><span class="line">    <span class="built_in">fun</span>(a); <span class="comment">//Not Compile - Ambiguious: #1 and #2 both matches, SFINAE does not offer mechanism to distinguish the conjunction logics or something</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>因此，标准库中不少既有实现都为了避此嫌而在<code>enable_if</code>中“大排长龙”，如书接上回的<code>make_unique</code>，三个重载的签名如下：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">std::unique_ptr&lt;_Ty, std::default_delete&lt;_Ty&gt;&gt; &lt;<span class="keyword">typename</span> _Ty, std::<span class="type">enable_if_t</span>&lt;std::is_array_v&lt;_Ty&gt; &amp;&amp; std::extent_v&lt;_Ty, <span class="number">0U</span>&gt; == <span class="number">0</span>, <span class="type">int</span>&gt; &lt;unnamed&gt; = <span class="number">0</span>&gt; <span class="built_in">make_unique</span>(<span class="type">size_t</span> _Size);</span><br><span class="line"></span><br><span class="line">std::unique_ptr&lt;_Ty, std::default_delete&lt;_Ty&gt;&gt; &lt;<span class="keyword">typename</span> _Ty, <span class="keyword">typename</span> ..._Types, std::<span class="type">enable_if_t</span>&lt;!std::is_array_v&lt;_Ty&gt;, <span class="type">int</span>&gt; &lt;unnamed&gt; = <span class="number">0</span>&gt; <span class="built_in">make_unique</span>(_Types &amp;&amp;..._Args);</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> &lt;<span class="keyword">typename</span> _Ty, <span class="keyword">typename</span> ..._Types, std::<span class="type">enable_if_t</span>&lt;std::extent_v&lt;_Ty, <span class="number">0U</span>&gt; != <span class="number">0</span>, <span class="type">int</span>&gt; &lt;unnamed&gt; = <span class="number">0</span>&gt; <span class="built_in">make_unique</span>(_Types &amp;&amp;...);</span><br></pre></td></tr></table></figure>
-<p>而对于<code>requires</code>，其用法相对就讲究了不少：若进行模板匹配时，给定的模板参数可以满足两个模板的<code>concept</code>约束要求，则满足<strong>一个模板的约束蕴含了另一个模板的约束</strong>时，能够选择该约束更高的模板；否则将因歧义而编译失败。<br />
-定义约束A蕴含约束B：将二者都拆解成原子约束(atomic
-constraint)后，逻辑上B是A的真子集。<br />
-如此做的优点非常明显，即若欲定义一个具有更严格约束的模板，只需在<code>requires</code>或定义<code>concept</code>时，在既有约束后以逻辑与<code>&amp;&amp;</code>追加一些东西即可，不需要回头考虑既有模板的问题。</p>
-<blockquote>
-<p><del>经典转发<code>&lt;type_traits&gt;</code>警告</del></p>
-</blockquote>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> array = std::is_array_v&lt;Ty&gt;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> unextented_array = array&lt;Ty&gt; &amp;&amp; std::extent_v&lt;Ty&gt; == <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;array Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">()</span></span>&#123;&#125; <span class="comment">//#1</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;unextented_array Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">()</span></span>&#123;&#125; <span class="comment">//#2</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">f</span>&lt;<span class="type">int</span>[<span class="number">3</span>]&gt;(); <span class="comment">//Conceivibly #1</span></span><br><span class="line">    <span class="built_in">f</span>&lt;<span class="type">int</span>[]&gt;(); <span class="comment">//#2, Not ambiguious as SFINAE would otherwise do</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>C++认为每个<code>concept</code>都仅由三个部件组成：逻辑与、逻辑或、原子约束。<br />
-注意原子约束具有<strong>唯一性</strong>，只有同名的约束才是相同的。换言之，即使两个原子约束解析的结果一定一致，其也属于不同的原子约束，如定义一个<code>concept B = A;</code>，<code>A</code>和<code>B</code>依然属于不同的原子约束。<br />
-同时原子约束虽有其名，但其不一定是<code>concept</code>，应理解作最小的<code>constexpr bool</code>单元。如：<code>requires(true &amp;&amp; std::convertible_to&lt;int,char&gt; || std::is_trivial_v&lt;const char*&gt;)</code>，其中出现了字面量-<code>true</code>、<code>concept</code>-<code>std::convertible_to</code>、<code>constexpr bool</code>模板变量-<code>std::is_trivial_v</code>，三者都是原子约束。<br />
-<del>什么？你问为什么<code>requires</code>后面可以接不是<code>concept</code>的表达式？那自然是因为<code>requires</code>的一定是<code>concept</code>，若表达式自身不然，则会自动转化成匿名<code>concept</code></del></p>
-</blockquote>
-<p>这里就出现了一些非常奇怪的坑，引用<a
-target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/language/constraints">cppreference</a>的例子：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">T</span>&gt;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">bool</span> is_meowable = <span class="literal">true</span>;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">T</span>&gt;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">bool</span> is_cat = <span class="literal">true</span>;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">T</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> Meowable = is_meowable&lt;T&gt;;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">T</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> BadMeowableCat = is_meowable&lt;T&gt; &amp;&amp; is_cat&lt;T&gt;;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">T</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> GoodMeowableCat = Meowable&lt;T&gt; &amp;&amp; is_cat&lt;T&gt;;</span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;Meowable T&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f1</span><span class="params">(T)</span></span>; <span class="comment">// #1</span></span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;BadMeowableCat T&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f1</span><span class="params">(T)</span></span>; <span class="comment">// #2</span></span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;Meowable T&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f2</span><span class="params">(T)</span></span>; <span class="comment">// #3</span></span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;GoodMeowableCat T&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f2</span><span class="params">(T)</span></span>; <span class="comment">// #4</span></span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">g</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">f1</span>(<span class="number">0</span>); <span class="comment">// error, ambiguous:</span></span><br><span class="line">           <span class="comment">// the is_meowable&lt;T&gt; in Meowable and BadMeowableCat forms distinct atomic</span></span><br><span class="line">           <span class="comment">// constraints that are not identical (and so do not subsume each other)</span></span><br><span class="line"> </span><br><span class="line">    <span class="built_in">f2</span>(<span class="number">0</span>); <span class="comment">// OK, calls #4, more constrained than #3</span></span><br><span class="line">           <span class="comment">// GoodMeowableCat got its is_meowable&lt;T&gt; from Meowable</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>虽然<code>Meowable</code>和<code>is_meowable</code>的解析结果必定相同（事实上前者直接转发了后者），但其依然属于不同的原子约束，因而在对<code>f1</code>实例化阶段进行模板匹配时，会因存在歧义而报错。</p>
-<h1 id="总结">总结</h1>
-<p><code>concept</code>对于元编程(metaprogramming)是一次巨大更新，其极大提高了模板约束的复用性、可读性与可维护性，让本晦涩难懂的模板约束语句变得极为清晰。<br />
-学习<code>concept</code>前仍因掌握与模板、SFINAE等有关的基础知识，<code>concept</code>并非完全取代既有的几种模板约束机制，而是对其的有益补充。</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">C++20</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/cpp/concepts/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-  <div>
-</article>
-
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
     <article id="post-cpp/ranges" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -736,6 +426,271 @@ range</em>（连续范围）就是一类对底层要求较高的Range，可以�
       
         <p class="article-more-link">
           <a class="article-more-a" href="/cpp/ranges/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+  <div>
+</article>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-cpp/hierachy" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/cpp/hierachy/">C++——类继承的一隅</a>
+    </h1>
+  
+
+        
+        <a href="/cpp/hierachy/" class="archive-article-date">
+  	<time datetime="2025-04-02T13:59:38.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-04-02</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="类基本特性概述">类基本特性概述</h1>
+<p>作为一门OOP(Object-Oriented
+Programming)语言，类和继承的相关概念和语法无疑是C++的立身之本。</p>
+<p>C++中类(<code>class</code>)的概念由C语言的结构体(<code>struct</code>)衍生而来，在C++中二者除成员的默认访问权限、默认继承方式(private/public)外，其余是完全等价的。<br />
+类可以拥有数据成员(data member)和函数成员(function
+member)，其可以是静态(static)或非静态的。<br />
+类的静态成员可以通过类或者类的成员来访问，非静态成员则只允许通过类的成员来访问；对于非静态的数据成员，每个类的实例都保有该数据成员的一个实例。因此，类中只有<strong>非静态的数据成员</strong>才占有空间（依<code>operator sizeof</code>获取，若一个类里没有任何的非静态数据成员，则其大小为最小值1。）</p>
+<blockquote>
+<p><code>sizeof</code>的两个特例：内存对齐(memory
+alignment)问题和虚类(virtual classes)的隐式虚指针(vptr)。</p>
+</blockquote>
+<p>“一笔带过”初始化问题：对于类的<code>static</code>数据成员，编写者可以在类外指定一次类内成员的初始化值（没有<code>static</code>关键字），若不指定，其则会默认采用
+<em>zero-initialization</em>（零初始化）的方式初始化。<br />
+特别地，<code>static const</code>的数据成员必须被初始化，但其初始化可以在类体内进行，如<code>static constexpr size_t T = 65537;</code></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">T</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="type">int</span> x;</span><br><span class="line">    <span class="type">static</span> <span class="type">int</span> y;</span><br><span class="line">    <span class="function">std::string <span class="title">get</span><span class="params">()</span></span>&#123;<span class="keyword">return</span> <span class="string">&quot;1&quot;</span>;&#125;</span><br><span class="line">    <span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">nihao</span><span class="params">()</span></span>&#123;std::cout &lt;&lt; <span class="string">&quot;1&quot;</span> &lt;&lt; std::endl;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> T::y = <span class="number">5</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    T t&#123;&#125;;</span><br><span class="line">    t.x += t.y;</span><br><span class="line">    t.<span class="built_in">nihao</span>();</span><br><span class="line">    T::<span class="built_in">nihao</span>();</span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,t.<span class="built_in">get</span>());</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>所有类都拥有6个特殊成员函数：构造(constructor)、复制构造(copy
+constructor)、移动构造(move constructor)、复制赋值(copy assignment
+operator)、移动赋值(move assignment operator)、析构(destructor)。<br />
+用户若不定义这些函数，则编译器将自动生成之。默认生成的三个构造函数和析构函数的函数体为空，其中移动构造函数和析构函数自动声明为<code>noexcept</code>；三个构造函数在初始化列表中会分别用(变量声明中的初始化列表/原对象的对应变量/原对象的对应变量转化为右值后)初始化自身的成员变量。若依此法得到的任一变量的初始化不能通过编译，则该默认生成的构造函数不可用。</p>
+<blockquote>
+<p>更多有关移动构造/移动赋值/移动语义/右值引用可参阅：<a
+href="/cpp/rrefs/">C++——右值引用和移动语义</a></p>
+</blockquote>
+<p>上述初始化方法的特例是"POD(Plain Old
+Data)-types"（C++17后弃置了这种说法，改为 <em>aggreate-type</em> -
+聚合类型）。<br />
+简单理解，POD/aggreate-types就是长得像C中的<code>struct</code>的类型，其所有数据成员都是<code>public</code>的，且没有定义任何的前五类特殊函数（也不能显式声明为<code>= default;</code>）。<br />
+对它们可以通过依次指定每个成员的方式来初始化（若参数个数小于变量数，则只默认初始化后续的变量），名为“聚合初始化”，此时传参只允许使用大括号<code>&#123;&#125;</code>。</p>
+<blockquote>
+<p><del>这里感觉又可以开一个关于C++初始化的新坑</del>，不过C++的初始化确实可讲的也非常非常多</p>
+</blockquote>
+<blockquote>
+<p>聚合类型可以拥有<code>private</code>/<code>public</code>的函数成员，但不能是虚类，其所有的数据成员也应是
+<em>fundamental type</em>（基本类型）或聚合类型。</p>
+</blockquote>
+<h1 id="类的继承">类的继承</h1>
+<h2 id="继承和虚继承">继承和虚继承</h2>
+<p>类的继承有普通继承和虚继承两种。继承时需要声明继承方式（若不声明，<code>class</code>默认以<code>private</code>，<code>struct</code>默认以<code>public</code>）。<br />
+可以在继承方式前/后声明<code>virtual</code>声明为虚继承，虚继承下对于最末端的派生类，被虚继承的类（该类的所有直接派生类都需要声明为虚继承）的成员只会保有一个副本，其构造函数的调用发生于其它非虚基类的构造函数之前。</p>
+<p>构造函数的调用优先级如下：</p>
+<ol type="1">
+<li>所有虚基类的构造函数；</li>
+<li>所有直接基类的构造函数；<br />
+</li>
+<li>所有数据成员的构造函数；<br />
+</li>
+<li>自身的构造函数。</li>
+</ol>
+<p>对于同为直接基类的构造函数，调用顺序由函数<strong>继承声明</strong>顺序决定；对于同为数据成员的构造函数，调用顺序由<strong>变量声明</strong>顺序决定（总之和初始化列表的顺序无关）。<br />
+若初始化列表所“展现”的构造函数调用顺序与实际顺序不一致，部分编译器会给出<code>warning</code>。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;print&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">B</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">B</span>(<span class="type">int</span> _x):x&#123;_x&#125;&#123;std::<span class="built_in">println</span>(<span class="string">&quot;B::B()&quot;</span>);&#125;</span><br><span class="line">    <span class="function"><span class="type">int</span> <span class="title">visit</span><span class="params">()</span></span>&#123;<span class="keyword">return</span> x;&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> x;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">D1</span>:<span class="keyword">virtual</span> <span class="keyword">public</span> B</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">D1</span>(<span class="type">int</span> _x):B&#123;_x&#125;&#123;std::<span class="built_in">println</span>(<span class="string">&quot;D1::D1()&quot;</span>);&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">D2</span>:<span class="keyword">virtual</span> <span class="keyword">public</span> B</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">D2</span>(<span class="type">int</span> _x):B&#123;_x&#125;&#123;std::<span class="built_in">println</span>(<span class="string">&quot;D2::D2()&quot;</span>);&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">D3</span>:<span class="keyword">public</span> D1,<span class="keyword">public</span> D2</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">D3</span>(<span class="type">int</span> _x):B&#123;<span class="number">3</span>&#125;,D2&#123;_x&#125;,D1&#123;_x&#125;&#123;std::<span class="built_in">println</span>(<span class="string">&quot;D3::D3()&quot;</span>);&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    D3 d&#123;<span class="number">2</span>&#125;;</span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,d.<span class="built_in">visit</span>()); </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>输出：（<del>不考虑<code>[-Wreorder]</code>的<code>warning</code></del>）
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">B::B()</span><br><span class="line">D1::D1()</span><br><span class="line">D2::D2()</span><br><span class="line">D3::D3()</span><br><span class="line">3</span><br></pre></td></tr></table></figure></p>
+<h2 id="继承成员访问权限和赋值兼容">继承成员、访问权限和赋值兼容</h2>
+<p>类继承时，会继承被继承类<strong>所有的函数成员和数据成员</strong>，但只有基类<code>protected</code>和<code>public</code>的成员才能被派生类直接访问（<code>private</code>成员依然存在于派生类中，只是不能被直接访问）。<br />
+这点是“赋值兼容原则”的基础，即一个派生类对象（或其地址）可以被用于初始化基类引用或指针，因为基类的成员是派生类成员的真子集。<br />
+作为一门编译期语言，C++中一个对象能够访问的成员（包括函数成员、数据成员的寻址、调用及访问权限控制等）是由<strong>该变量的当前类型决定的</strong>，而非由对象本身决定（对象本身不存储任何类型信息，RTII(Runtime
+Type Identity Information，运行时类信息)除外）。</p>
+<p>因此，如果一个对象被绑定至其基类的指针或引用，通过基类引用<code>Base&amp;</code>只能访问基类有的函数/成员变量，而不能访问派生类新定义/重写的函数/成员变量，同时访问权限均以基类的定义为准（就如同派生类从未存在过）。</p>
+<blockquote>
+<p>即使是下面将述的虚函数，其访问权限依然由引用类型类内的定义为基准。</p>
+</blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Base</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">()</span></span>&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Derived</span>: <span class="keyword">public</span> Base</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">()</span></span>&#123;&#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">()</span></span>&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Derived d&#123;&#125;;</span><br><span class="line">    Base&amp; b = d;</span><br><span class="line">    <span class="comment">//d.fun(); //Error: fun() is private in this context</span></span><br><span class="line">    b.<span class="built_in">fun</span>(); <span class="comment">//OK, invokes Base::fun() instead of Derived::fun()</span></span><br><span class="line">    <span class="comment">//b.foo(); //Error: foo() is not a member of class Base</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="虚类和虚函数">虚类和虚函数</h2>
+<p>虚函数通过<code>virtual</code>关键字声明。若派生类中某函数和基类虚函数的签名相同，则该函数也会自动成为虚函数。<strong>为了保证语义一致，依然建议在编程实践中派生类的对应函数上依然加上<code>virtual</code>。</strong></p>
+<blockquote>
+<p>类成员函数的函数签名由函数名（含该类的命名空间约束）、形参列表和
+<em>cvref</em> (<code>const</code>、<code>volatile</code>、引用)
+属性决定。（<em>cvref</em> 中的 <em>cv</em>
+属性本质上是形参列表的一部分，由于成员函数的调用协定采用<code>thiscall</code>，即函数传参时本质是将调用实例的地址传入了（隐式的）第一个参数，为一个变量名为<code>this</code>，变量类型为
+<em>cv</em> +指针修饰的形参； <em>ref</em>
+只是约束了允许绑定至的对象类型，<code>&amp;</code>约束左值，<code>&amp;&amp;</code>约束右值，空则不约束之）。</p>
+</blockquote>
+<p>虚函数的实现原理是 <em>vptr</em> （虚指针） 和 <em>vtbl</em>
+（虚表）。带有虚函数的类被称为虚类(virtual
+classes)，继承了虚类的类也自动成为虚类。<br />
+所有虚类都会隐式地具有一个数据成员
+vptr，因而虚类所占的内存空间会偏大一个指针的<code>sizeof</code>。</p>
+<p>动态多态性的实现原理：<br />
+编译器会将获取虚函数的地址，并依虚表的次序将之填入一段静态的内存空间内（这段内存可以认为是一个指针的数组），派生类会继承基类的虚表。若一个派生类重写(override)了某个虚函数，则该派生类会将基类该虚函数对应位置的地址，重写为派生类重写函数的地址。<br />
+所有该类实例的构造函数中，其vptr都会被赋值为这个指针数组的起始地址（本质是一个二级指针）。<br />
+基类（或任何虚类的引用/指针等）调用虚函数时，会获取当前实例的vptr，随后到该类的vtbl中查找地址偏移量，以确定最终调用虚函数的地址。因而这一调用机制被称为“动态多态性”——函数寻址和传参是在运行时而非编译时进行。</p>
+<p>上述纯文字讲述可能稍有抽象，留一张参考图：<img
+src="/img/post_pics/vptr.png" title="vptr and vtbl demostration"
+alt="vptr" /> 依此图对vptr和vtbl的实现原理做进一步讲解。<br />
+从右侧的C++函数代码来看，这是非常典型的继承结构。A类定义了两个虚函数<code>vfunc1</code>和<code>vfunc2</code>，如图。在程序<strong>开始运行时</strong>会获取这两个虚函数的地址，并且填入A类所对应的vtbl中，形如<code>0x401ed0</code>和<code>0x401f10</code>。最后的空地址则起到类似于C样式字符串中“结束符”的作用，标志着vtbl（虚表）的结束。<br />
+对于B类，其公有继承了类A，这里需要注意的有两点：</p>
+<ul>
+<li>如此前所述，虽然A类的两个<code>int</code>数据成员<code>m_data1</code>，<code>m_data2</code>被声明为<code>private</code>，但它们依然会被继承（占据了内存空间），只是在B类内不可访问而已。<br />
+</li>
+<li>B类会先将A类的vtbl复制一份（目标虚函数的地址），但由于B类<strong>重写</strong>了<code>vfunc1</code>，则在B类的vtbl中，对应<code>vfunc1</code>的地址会被重写为<code>B::vfunc1</code>的地址<code>0x401f80</code>。<strong>同时因为B类没有重写<code>vfunc2</code>，因此<code>vfunc2</code>的地址依然是<code>A::vfunc2</code>的不变。</strong></li>
+</ul>
+<blockquote>
+<p>假设B类新定义了一个虚函数<code>vfunc3</code>，则其地址在vtbl中会被追加在<code>vfunc2</code>之后；B的派生类的与虚函数有关的规则同上。</p>
+</blockquote>
+<blockquote>
+<p>vptr和vtbl只处理和虚函数有关的问题；对于非虚函数，其地址和访问以另一种类似<code>static</code>的表形式实现，相信读者在理解vptr和vtbl的访问逻辑后能无师自通之。</p>
+</blockquote>
+<p>对于C类，逻辑基本和上述相同。需要留意的是C类定义了一个<code>m_data1</code>，<del>但由于C++并没有虚数据成员的概念(bushi)，</del>，结果就是类C中保有两份<code>m_data1</code>的副本，一份是继承自A类的<code>A::m_data1</code>（显然类C内不可直接访问之），另一份是自身定义的<code>m_data1</code>。</p>
+<p>现在观察一下虚函数的调用底层原理：<br />
+左侧<code>a</code>、<code>b</code>和<code>c</code>分别是A、B、C三个类的对象。每个虚类对象的实例都会保有一个vptr（一个二级指针），对于同一类的实例，其存储的地址是相同的（都是本类vtbl的起始地址）。<br />
+现在假设我们用一个A类的引用指向对象b：<code>A&amp; ra = b;</code>。观察左侧图中b对象加粗黑框的内容，这就是赋值兼容原则下，通过A类引用能访问到B类的全部成员（即A类既有的成员）。</p>
+<blockquote>
+<p>可见赋值兼容原则的基础就是基类的成员会被全部继承，并在派生类的内存中优先排列。</p>
+</blockquote>
+<p>此时：</p>
+<ul>
+<li>若调用<code>ra.vfunc1();</code>，由于<code>vfunc1</code>是虚函数，因此程序会根据该对象的vptr，获取到B类的vtbl；随后根据既定的偏移量（A类中，<code>vfunc1</code>处于vtbl中下标为<code>0</code>的位置），找到了对应函数<code>B::vfunc1</code>并开始调用。<br />
+</li>
+<li>若调用<code>ra.vfunc2();</code>，同理，但因为B类没有重写<code>vfunc2</code>，因此B类的vtbl中下标<code>1</code>依然指向<code>A::vfunc2</code>，因此最终未被重写的函数<code>A::vfunc2</code>被调用。<br />
+</li>
+<li>若调用<code>ra.func1();</code> 或
+<code>ra.func2();</code>，这两个函数并不是虚函数，因此程序只能寻址到<code>A::func1</code>和<code>A::func2</code>（程序没有提供任何能寻址到<code>B::func2()</code>的机制，毕竟当使用类型为<code>A&amp;</code>的引用变量<code>ra</code>时，其就决定了只能按A类的方式解读该对象的内存）。<br />
+</li>
+<li>即使<code>b</code>类新定义了一个虚函数<code>vfunc3()</code>，即通过<code>b</code>的vptr可以寻址到<code>B::vfunc3()</code>，但由于现在的引用类型是<code>A&amp;</code>，寻址是通过A类的vtbl偏移量进行，而A类并不知道该如何寻址到<code>vfunc3</code>（因为其在类A中没有定义），因此<code>ra.vfunc3()</code>这一语句不能通过编译。</li>
+</ul>
+<blockquote>
+<p>实践中由于其在运行时才能确定函数寻址和传参，因而一方面动态多态性的效率远不如静态多态性，另一方面其亦留下了很多漏洞攻击的空间(<del>pwn警告</del>)。实践中若需要实现类似动态多态性的功能，还有另一选项CRTP(Curiously
+Recursive Template
+Parameter，奇异递归模板参数)，其是一种较高阶的<code>template</code>运用技巧，可以在编译期实现基类引用调用派生类函数的效果，缺点是应用难度比较大且容易带来代码膨胀的问题<del><code>template</code>通病</del>。</p>
+</blockquote>
+<h2 id="纯虚函数和访问权限的差分">纯虚函数和访问权限的差分</h2>
+<p>长篇大论了这么多有关vptr和vtbl的机制，若能通晓之，也就不难理解纯虚函数和抽象类的底层逻辑了。<br />
+纯虚函数的声明就是将虚函数的主体以<code>= 0;</code>替代。放在vptr和vtbl的机制来看，显然其意义在于让该类的vtbl对应下标存储的地址置空(<code>0</code>,<code>NULL</code>,<code>nullptr</code>)。<br />
+显然程序运行中不能寻址一个地址为<code>NULL</code>的函数。因而：</p>
+<ul>
+<li>底层来看，该类派生类的vtbl中，该位置的地址被重写之前；<br />
+</li>
+<li>顶层来看，该类派生类中，该纯虚函数被定义（给出实现）之前；</li>
+</ul>
+<p>这个派生类都是抽象类，即不能创建对象的实例。</p>
+<hr />
+<p>结合此前关于类继承中访问权限区分的相关机制，结合访问权限差分，可以衍生出一些虚函数的有趣用法：</p>
+<ul>
+<li>基类将虚函数声明为<code>private</code>，则派生类能重写之，但不能访问基类未被重写的该函数；纯虚函数其理类似。<br />
+</li>
+<li>派生类将虚函数声明为<code>private</code>（基类依然声明为<code>public</code>），则只有派生类实例被基类引用绑定时，在类外可以访问该函数。</li>
+</ul>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Base</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">encrypt</span><span class="params">()</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="comment">/*...*/</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Derived</span>:<span class="keyword">public</span> Base</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">visit</span><span class="params">()</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="comment">//this-&gt;encrypt(); //Error: encrypt() is private in this context</span></span><br><span class="line">        <span class="comment">//Equivalent to that Base::encrypt() is unable to be visited directly outside class Base, disregarding the approach </span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2
+id="c11的干将override和final修饰符">C++11的“干将”：<code>override</code>和<code>final</code>修饰符</h2>
+<blockquote>
+<p>为了避免既有代码命名冲突问题，这两个关键字(keyword)并未作为保留字(reserved)，意即其可以作为变量名、类名等，其修饰作用只在特定位置生效（<del>又不是Java，<code>final</code>随便用</del>）</p>
+</blockquote>
+<p>C++11引入了<code>override</code>和<code>final</code>两个修饰符，这两个修饰符并不会生成可执行代码，只是在编译阶段为程序语义提供了更为明确的指引。</p>
+<blockquote>
+<p>对于C++一类的编译型语言，注释之外也有很多声明、定义等，或于一定条件下，或必定——不会生成可执行代码。<br />
+作为一门常用于大型程序开发的语言，这些不生成可执行代码的修饰符，代表着无数的语义约束，亦代表着程序设计者与自我、与上下游的合作者、与标准库和三方库、与编译器的永无止境的合作与博弈。</p>
+</blockquote>
+<p><code>override</code>关键字用于修饰一个虚函数，等价于显式声明了这个虚函数会重写了基类虚函数（纯虚函数亦然，亦即覆写了既有vtbl的函数地址）。<strong>若其没有做到“覆写虚函数”这一点，或其本身不是虚函数，编译阶段将报错。</strong></p>
+<p>其起到的检查作用颇为实用，因派生类欲覆写虚函数时，若不慎导致函数签名不一致，则将无法重写既有虚函数，而是创建了一个新的虚函数。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Base</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">show</span><span class="params">()</span></span>&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Derived</span>: <span class="keyword">public</span> Base</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">show</span><span class="params">(<span class="type">int</span> x)</span></span>&#123;&#125; <span class="comment">//Paremeter list differs</span></span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">sh0w</span><span class="params">()</span></span>&#123;&#125; <span class="comment">//Function name differs</span></span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">show</span><span class="params">()</span> <span class="type">const</span> </span>&#123;&#125; <span class="comment">//const-specifier differs</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>尽管返回值类型不是函数签名的一部分，但重写虚函数时，重写函数的返回值类型必须和既有虚函数相同，否则将产生编译错误。<br />
+相对地，如果只是普通成员函数（或其它可以明确优先级的命名空间场景下）的同名覆盖则没有对函数签名做出任何约束。</p>
+</blockquote>
+<p>此时，派生类相当于定义了三个新的虚函数，基类的虚函数则未被重写。<br />
+而加上<code>override</code>关键字则<del>可以手动产生一个编译错误</del>，可以让编程者意识到自身函数签名的相关问题：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Base</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">show</span><span class="params">()</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Derived</span>: <span class="keyword">public</span> Base</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">//Not Compile: &#x27;virtual void Derived::show() const&#x27; marked &#x27;override&#x27;, but does not override</span></span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">show</span><span class="params">()</span> <span class="type">const</span> <span class="keyword">override</span> </span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;  </span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<hr />
+<p><code>final</code>关键字则可以用于修饰一个虚函数或一个类。<code>final</code>修饰的虚函数不能被重写（可以和<code>override</code>叠加）；其修饰的类不能被继承（修饰类时，将之置于类名后）。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Base</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">show</span><span class="params">()</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Derived</span>: <span class="keyword">public</span> Base</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">show</span><span class="params">()</span> <span class="keyword">override</span> <span class="keyword">final</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Derived2</span>: <span class="keyword">public</span> Derived</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">//Not compile: virtual function &#x27;virtual void Derived2::show()&#x27; overriding final function</span></span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">show</span><span class="params">()</span> <span class="keyword">override</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Derived3</span> <span class="keyword">final</span>: <span class="keyword">public</span> Derived</span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">//Not compile: cannot derive from &#x27;final&#x27; base &#x27;Derived3&#x27; in derived type &#x27;Derived4&#x27;</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Derived4</span>: <span class="keyword">public</span> Derived3</span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h1 id="浅谈友元">浅谈友元</h1>
+<p>友元通过<code>friend</code>关键字声明。一旦使用<code>friend</code>关键字，则被声明(declare)的函数/类所处的命名空间就是在<strong>当前类外的命名空间</strong>，不是当前类的成员函数（因而也就没有隐式<code>this</code>指针，可以被视为一种特殊的<code>static</code>函数）。</p>
+<blockquote>
+<p>事实上从访问方式来看，<code>static</code>函数和友元函数的唯二区别之一是是否加域解析符<code>::</code>。<br />
+另一个区别是，<code>static</code>函数依然具有访问权限的属性，但<code>friend</code>由于本来就被“放置”在了类外，因而不存在访问权限的问题。<br />
+在类外给出其定义(definition)时，不应再加<code>friend</code>/<code>static</code>关键字。</p>
+</blockquote>
+<p>其作用也很简单：被友元声明的函数/类可以访问自身类的<code>protected</code>和<code>private</code>成员。注意友元声明必须是<strong>前向性</strong>的，意即此“特权”必须在友元声明出现后才会生效。<br />
+友元声明不具有对称性和传递性。一个类的派生类/基类也不是本类的友元。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">A</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">private</span>:   </span><br><span class="line">    <span class="type">int</span> x;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">friend</span> <span class="keyword">class</span> <span class="title class_">B</span>; <span class="comment">//B is a friend class declared in the global namespace</span></span><br><span class="line">    <span class="function"><span class="keyword">friend</span> <span class="type">void</span> <span class="title">fun</span><span class="params">(<span class="type">const</span> A&amp;)</span></span>; <span class="comment">//fun(const A&amp;) is a friend function declared in the global namespace</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">//Currently B and fun() still has no definition</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(<span class="type">const</span> A&amp; a)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,a.x);</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>前向性声明的一段应用示例：
+C++20后，为令<code>class C</code>能被格式化，希望将<code>std::formatter&lt;C,char&gt;</code>置为其友元。显然，我们应当先完成对<code>class C</code>的定义（各类数据/函数成员设置）后再定义<code>std::formatter&lt;C,char&gt;</code>，此时就会用到前向声明：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;print&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">C</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> x;</span><br><span class="line">    <span class="keyword">friend</span> std::formatter&lt;C,<span class="type">char</span>&gt;; <span class="comment">//前向声明</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;C,<span class="type">char</span>&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="title">parse</span><span class="params">(std::format_parse_context&amp; fpc)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> fpc.<span class="built_in">begin</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">auto</span> <span class="title">format</span><span class="params">(<span class="type">const</span> C&amp; c,std::format_context&amp; fc)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> std::format_to(fc,<span class="string">&quot;C:&#123;:^5d&#125;&quot;</span>,c.x);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h1 id="结语">结语</h1>
+<p>类和对象提供的封装性、继承性、多态性对于任何OOP语言来说都极为重要，而不同的语言对于OOP中概念的支持、实现及底层逻辑可能大相径庭。<br />
+作为一门追求高效、简洁和语义清晰的编译期语言，学习运用C++语言进行面向对象的程序设计时，除了对应用规则更加通晓之外，还应对其底层实现有所涉猎。<br />
+如此方能更好地理解各种语法规则，并对现代C++的特性缘由、设计哲学有所知晓；并在和编译器、标准库、其它程序设计者和自身既有的代码更好地合作共进。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/cpp/hierachy/">展开全文 >></a>
         </p>
       
 

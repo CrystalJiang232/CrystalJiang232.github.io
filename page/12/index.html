@@ -152,220 +152,6 @@
           <div id="js-content" class="content-ll">
             
   
-    <article id="post-cpp/return" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/cpp/return/">C++——&#34;return&#34;的沧海桑田</a>
-    </h1>
-  
-
-        
-        <a href="/cpp/return/" class="archive-article-date">
-  	<time datetime="2024-12-13T02:36:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-13</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <blockquote>
-<p>一个最为简单的<code>return x;</code>语句是C++中出现频率最高的语句之一。为了将这一语句的效率发挥到极致，历代C++都在其上下了极大功夫。</p>
-</blockquote>
-<h1 id="不就是一个return嘛">不就是一个return嘛？</h1>
-<p>是的，确实就是一个<code>return</code>。</p>
-<p>C语言的所有变量都符合现代C++的<em>trivial
-types</em>的定义，即当一个变量被赋值时，只需要将该值对应内存空间的数据简单地copy到当前变量对应的内存空间。<br />
-对于 <em>trivial</em>
-的类来说，return确实只是将变量的值丢回到函数栈存储返回值之处（随后再销毁其它局部变量等等）。</p>
-<p>但C++作为一门面向对象的编译期语言，其揭示了一点——这一表面风平浪静的过程实则暗藏汹涌。<br />
-因为某一片具备数据、可使用的内存距离C++中的“对象”概念完全不能相提并论。</p>
-<blockquote>
-<p>这也是C/C++对于堆内存分配的“看法”迥异之处：C的<code>malloc</code>/<code>free</code>实际上不会对内存做任何事情（只是“申请”并获得使用权），顶多算上<code>calloc</code>的零初始化；</p>
-<p>而C++中的<code>new</code>实际上涉及分配内存-&gt;调用构造函数两步，具体地，你可以认为<code>operator new</code>就是一个<code>calloc</code>加上一个<code>thiscall</code>函数的调用：
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function">Ty* <span class="keyword">operator</span> <span class="title">new</span><span class="params">(<span class="type">size_t</span> size)</span> <span class="comment">//C++中operator new的最常用函数重载，在隐式调用时size_t会自动传递</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Ty* ptr = <span class="built_in">static_cast</span>&lt;Ty*&gt;(<span class="built_in">malloc</span>(size));</span><br><span class="line"></span><br><span class="line">    <span class="comment">//随后，我们假设一个函数的ctor在调用时实际上具备Ty::Ty(Ty* where,...)的形式。</span></span><br><span class="line">    <span class="comment">//其就是将本来隐式传递的this写成了显式的形式，参考python中的self和C++23的deducing this。</span></span><br><span class="line">    Ty::<span class="built_in">Ty</span>(ptr);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> ptr;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-</blockquote>
-<h1
-id="return背后的风云及传统c的应付之策">return背后的风云及传统C++的“应付”之策</h1>
-<p>现在我们假设希望去返回一个值，在C语言中由于并没有明确的“对象”概念——即使是<code>struct</code>也无异于具有特殊内存layout的fundamental
-types而已；<br />
-因此在返回时，可以直接从源内存块复制数据到目标内存块，随后释放源内存块的内存占用（栈/堆皆然）。以一个对应用途的、比较知名的C函数来说就是可以单纯地<code>memcpy</code>。</p>
-<blockquote>
-<p>C语言中确实有<code>memmove</code>这一函数，但其与C++的移动语义云云无关——其只是提供了在源内存和目标内存重叠时，保证数据可以正确覆写的保证。</p>
-</blockquote>
-<p>而在C++中却不是这样：对象可以认为是内存之上的上层建筑，获得对象时要先分配内存再调用构造函数，销毁对象时需要先调用析构函数再释放内存。<br />
-由此，直观的<code>return</code>解决方案就应运而生：以<code>return</code>的值作为参数，分配新内存并构造新对象，随后析构原对象、释放原内存即可。<br />
-但对于存在大型类的C++，如此做的弊端也非常明显：</p>
-<ul>
-<li>（复制）构造函数、析构函数可能会涉及到大量的其它操作，时间、资源开销较大；<br />
-</li>
-<li>C++的OOP思想决定了资源是由对象所“拥有”的，涉及到保有资源对象的相关操作时，或存在大量不必要的复制-析构操作（如堆内存），或很难/无法依此法安全地完成资源所有权的转移（如文件句柄）。</li>
-</ul>
-<p>举个有趣的实例：不知各位在初学C++，观察复制构造函数的作用时，是否有思索——即使是一念间，下面这段函数有些蹊跷？<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">S</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">S</span>(<span class="type">int</span> _x):<span class="built_in">x</span>(_x)&#123;&#125;</span><br><span class="line">    <span class="built_in">S</span>(<span class="type">const</span> S&amp; from):<span class="built_in">x</span>(from.x * <span class="number">2</span>)&#123;&#125;</span><br><span class="line">    <span class="built_in">S</span>(S&amp;&amp; from):<span class="built_in">x</span>(from.x*<span class="number">3</span>)&#123;&#125;</span><br><span class="line">    ~<span class="built_in">S</span>()&#123;std::cout &lt;&lt; x &lt;&lt; <span class="string">&#x27; &#x27;</span>;&#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> x;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">S <span class="title">single</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> S&#123;<span class="number">1</span>&#125;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">S <span class="title">transfer</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    S w&#123;<span class="built_in">single</span>()&#125;;</span><br><span class="line">    <span class="keyword">return</span> w;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    S a&#123;<span class="built_in">transfer</span>()&#125;;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>事实上，即使到了C++23，依然无法绝对把握地预测上述代码的输出——（在遵循标准下）不同的编译器给出的不同优化结果都会导致输出不同。<br />
-这也是纷争来源之始端：只要拥有non-trivial的复制/移动构造函数（甚至不涉及赋值，涉及赋值更麻烦），就有很多的<del>胡来</del>优化空间。<br />
-比如，<code>single()</code>返回的S到底是要copy一次返回（传统C++）还是move一次返回（C++11）？（剧透：C++17起，<code>single()</code>必须遵循
-<em>prvalue sematics</em>
-,意即其既不会copy也不会move<del>(surprise!)</del><br />
-再比如，<code>transfer()</code>明明初始化w后啥都没干，返回的时候是copy，还是move，还是都不调用？</p>
-<p>从C++98的观点来看（忽略移动构造函数），<code>single()</code>返回时需要复制构造一次，<code>transfer()</code>返回时亦然，故<code>std::cout</code>应当输出<code>1 2 4</code>。</p>
-<blockquote>
-<p>但其实即使是C++98的编译器编译运行之，依然不一定会输出上述结果。</p>
-</blockquote>
-<h1 id="c11move-sematics-comes-to-the-rescue吗">C++11："move sematics
-comes to the rescue"吗？</h1>
-<p>其中，第二条也是C++的一大痛点，因而C++11提出了右值引用和移动语义的概念，语言层面上支持了我们通过函数等来完成转移资源的操作。<br />
-作为配套，C++11提出了 <em>move-eligible</em>
-这一概念，通过它来规范一种"Automatic Move"。</p>
-<blockquote>
-<p>以下标志着一个具有<strong>自动存储周期(automatic storage
-duration)变量</strong>的表达式都是 <em>move-eligible</em>
-（可移动）的：<br />
--
-其为一个非易失(non-<code>volatile</code>)对象类型，<strong>或一个非易失对象的右值引用（此项C++20中加入）</strong>；<br />
-- 且其在函数体内被声明/作为函数体内的参数出现。</p>
-</blockquote>
-<p>从C++11开始，对于<code>return x;</code>这条语句用于初始化一个临时对象时，其规定调用构造函数的重载决议会执行两次：<br />
--
-第一次决议将x视为一个右值(rvalue?)；但若第一轮重载决议<strong>失败</strong>，或其成功但未选择移动构造函数（所谓选择函数的形参不是纯粹的“右值引用”），则继续执行第二轮<br />
-- 第二次决议时，x就会被视为一个左值(lvalue)。</p>
-<p>这里可见的最大的疑点就在第一轮重载决议的“失败”定义。比如，选到<code>= delete;</code>的函数算不算失败？若有多个函数的形参复合要求且优先级相同（即制造了歧义(ambiguity)），是遵循此条规则进行第二轮重载决议还是直接报错？<br />
-不同版本中，不同编译器都给出了诸多不同的实现、决策方式。</p>
-<blockquote>
-<p>关于C++11——C++20的规则细讲，可以参考<a
-target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/language/return">cppreference</a>。<br />
-两轮重载决议带来的最大问题就是很多奇特的现象，主要出在所谓“未选择移动构造函数”上。</p>
-</blockquote>
-<p>下述代码中，<code>f1()</code>在C++23前不能通过编译，<code>f2()</code>则通过隐式转换“逃过一劫”：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">T</span>&#123;&#125;;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">U</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">U</span>(T&amp;&amp;)&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function">T&amp;&amp; <span class="title">f1</span><span class="params">()</span></span>&#123;<span class="keyword">return</span> T&#123;&#125;;&#125;</span><br><span class="line"><span class="function">U <span class="title">f2</span><span class="params">()</span></span>&#123;<span class="keyword">return</span> T&#123;&#125;;&#125; </span><br></pre></td></tr></table></figure>
-<p>C++11起，由于第一轮重载决议会先将up看作右值，因此可以调用移动构造函数初始化返回值。<br />
-C++11以前，若通过一些其它方式禁用了up的复制构造，则其将不能被返回：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">std::unique_ptr&lt;<span class="type">int</span>&gt; <span class="title">f3</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::unique_ptr&lt;<span class="type">int</span>&gt; up&#123;&#125;;</span><br><span class="line">    <span class="keyword">return</span> up;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>C++20前若第一轮重载决议没有选择移动构造函数（必须是“move
-constructor”），则会回退到传统C++的重载决策(rr视为左值)进而无法使该段程序ill-formed：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">std::unique_ptr&lt;<span class="type">int</span>&gt; <span class="title">f4</span><span class="params">(std::unique_ptr&lt;<span class="type">int</span>&gt;&amp;&amp; rr)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> rr;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h1 id="c23终究利落地斩断万缕过往">C++23：终究利落地斩断万缕过往</h1>
-<p>对于二次重载决议的纷争不休，C++23最终选择给出了一个干净利落的解决方案：移除此前搭建的诸多为了保证兼容性而留下的设施，最大化"Automatic
-move"的适用范围。<br />
-C++23起，只要<code>return exp;</code>中的exp是 <em>move-eligible</em>
-的， 那么该表达式就会被视为 <strong><em>xvalue</em></strong> 。
-当然，如此做也有一定的副作用：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span>&amp; <span class="title">fun</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> x = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">return</span> x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 这段代码一直以来都是C++中演示悬挂引用(<em>dangling
-reference</em>)的完美示范，而C++23起这段代码将不能通过编译（因为x将被视作xvalue）。<br />
-<del>（当然，如果你执意要创造一个悬挂引用，可以把返回值类型改成<code>int&amp;&amp;</code>）</del></p>
-<blockquote>
-<p>预告：C++26中对于上述悬挂引用的规定作出了更新，现在若一个函数返回的引用值绑定至临时对象上，则该程序非良构(ill-formed)。<del>相当于悬挂引用return渐渐成为历史</del></p>
-</blockquote>
-<h1 id="nrvourvoc优化之谜">NRVO/URVO：C++优化之谜</h1>
-<p>回到最开始的那个函数套娃传递的实例（不要笑——这种套娃传递初始化构造是非常常见的），在许多场景下其编译结果依然有优化空间：<br />
-与其让编译器调用几次移动构造函数，不如甚至直接略去这个过程，让最上层的栈函数直接控制最底层函数构造的对象栈空间。<br />
-事实上，早在移动语义提出之前的C++98，就已经允许了编译器执行这样的优化（“优化”掉部分<code>return</code>函数中对<strong>可能带副作用</strong>的复制构造函数的调用）。</p>
-<p>这样的优化场景有两种：<br />
-- 返回值的表达式是一个纯右值(<em>prvalue</em>)表达式，称为"URVO"(Unnamed
-Return Value Optimization)；<br />
--
-返回值的表达式是一个本地变量的表达式，但编译器可以预知该变量在一定代码块内不会变化（相当于可以“预判”其返回值/状态），称为"NRVO"(Named
-Return Value Optimization)。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">std::string <span class="title">getstr</span><span class="params">(<span class="type">int</span> var)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> std::format(<span class="string">&quot;&#123;0&#125; &#123;0&#125; &#123;0&#125;&quot;</span>,var);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">std::string <span class="title">process</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::string base = <span class="built_in">getstr</span>(<span class="number">3</span>);</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">    <span class="keyword">return</span> base;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,<span class="built_in">process</span>());</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>如上，C++23中在没有任何优化的情况下，至少需要调用<code>std::string</code>的移动构造函数两次。<br />
-但实际上<code>getstr(int)</code>函数中初始化一个对象后直接<code>return</code>了，显然它的栈空间是可以复用的；同时<code>process()</code>中并没有对<code>base</code>进行任何其它操作就直接返回，因而其移动也可以省略。</p>
-<p>C++17提出了 <em>prvalue sematics</em>
-的概念，要求编译器对纯右值表达式（包括潜在需要隐式调用转换构造函数的返回值）进行复制省略优化（<strong>一定不会</strong>调用移动/复制构造函数）。
-对于以下代码： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Test</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Test</span>()&#123;&#125;</span><br><span class="line">    <span class="built_in">Test</span>(<span class="type">const</span> Test&amp;)&#123;std::<span class="built_in">println</span>(<span class="string">&quot;copy ctor&quot;</span>);&#125;</span><br><span class="line">    <span class="built_in">Test</span>(Test&amp;&amp;) <span class="keyword">noexcept</span> &#123;std::<span class="built_in">println</span>(<span class="string">&quot;move ctor&quot;</span>);&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">auto</span> v = []&#123;<span class="keyword">return</span> Test&#123;&#125;;&#125;();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> C++17的 <em>prvalue sematics</em> (a.k.a.
-guaranteed copy elision) 保证了上述代码不会有任何输出。</p>
-<p>但对于NRVO来说，有两个指导于实践中的要点：<br />
-1.
-C++只是允许了这种optimization的存在，对其优化程度则未做任何规定/明确，最终优化/编译结果亦因编译器及编译设置而异：<br />
-比如将上述代码中<code>main</code>函数的第一行改为 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> v = []&#123;Test t&#123;&#125;; <span class="keyword">return</span> t;&#125;();</span><br></pre></td></tr></table></figure>
-此时程序运行输出可能为空也可能不为空。</p>
-<blockquote>
-<p>严格来说，C++23前这段代码的输出很大程度上取决于v的初始化声明方式（参见“两轮重载决议”）。<br />
-C++23保证了这段代码若有输出，则一定是"move ctor"。</p>
-</blockquote>
-<ol start="2" type="1">
-<li>NRVO的返回值不能有任何修饰（必须只是一个变量名）。因此<code>return std::move(local)</code>是不被建议的写法（如此做会disable
-NRVO）。<br />
-C++23前，在部分返回引用/move-only类型时可能需要用<code>std::move</code>来保证一定的兼容性，但随着C++23统一将
-<em>move-eligible</em>
-的本地变量视为xvalue，现在依然建议绝大部分场景直接<code>return local;</code>即可。</li>
-</ol>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">std::string <span class="title">ret</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::string val&#123;&#125;;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">    <span class="keyword">return</span> val; <span class="comment">//Left room for NRVO Optimization: invocation of move ctor not necessary</span></span><br><span class="line">    <span class="comment">//return std::move(val); //Try not to code this: surpresses NRVO</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h1 id="结语">结语</h1>
-<p>C++23起，<code>return x;</code>的诸多用法和语义得以被归一化；<br />
-从程序设计的角度来说，除少数需要移动一些<code>volatile</code>、<code>static</code>等变量的场景，其它情况下均使用最简单的<code>return x;</code>即可获得最大效率。</p>
-<p>无论是学习编程语言，还是学习、工作与生活中处理各种问题，都尽量应当摒弃"take
-it for granted"的思维。<br />
-对一些司空见惯之现象深入探究，方能助自身视野格局突破惰性之樊笼，逐渐得以游走自如于空阔之境。</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/cpp/return/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-  <div>
-</article>
-
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
     <article id="post-cpp/rrefs" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -1016,6 +802,260 @@ reference)</em>，C++23起其非良构(<em>ill-formed</em>)而不能通过编译
       
         <p class="article-more-link">
           <a class="article-more-a" href="/cpp/rrefs/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+  <div>
+</article>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-crypto/dlog" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/crypto/dlog/">离散对数</a>
+    </h1>
+  
+
+        
+        <a href="/crypto/dlog/" class="archive-article-date">
+  	<time datetime="2024-12-10T12:18:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-10</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>离散对数问题，Discrete Logorithm
+Problem，简称DLP，是非对称密码学所依赖的极为重要的数学难题之一。<br />
+经典DLP问题描述：<br />
+给定 <span class="math inline">\(g^x \equiv c (mod p) （g,x &lt;
+p）\)</span>，由 <span class="math inline">\((g,x)\)</span> 计算 <span
+class="math inline">\(c\)</span> 很容易（快速幂取模），但由 <span
+class="math inline">\((g,c)\)</span> 计算 <span
+class="math inline">\(x\)</span> 是困难的。</p>
+<blockquote>
+<p>即使是BSGS等攻击方法，依然必须涉及“爆破”一步，即在x的可能范围内逐个数值尝试是否能让等式成立。</p>
+</blockquote>
+<p>离散数学（广义上）DLP问题描述： 设循环群 <span
+class="math inline">\(G_p\)</span> 的阶为 <span
+class="math inline">\(n\)</span>。<br />
+给定群内的任意元素 <span class="math inline">\(A \in G_p\)</span> 及
+<span class="math inline">\(x &lt; n\)</span>，计算 <span
+class="math inline">\(C = x \cdot A\)</span> 很容易，但给定 <span
+class="math inline">\(C\)</span>、<span
+class="math inline">\(A\)</span>，求解 <span
+class="math inline">\(x\)</span> 是困难的。<br />
+这里x代表A执行二元运算的次数，对于经典DLP，其为模p环下的乘法运算；对于ECDLP，其为椭圆曲线上的加法运算。</p>
+<blockquote>
+<p>给定<span class="math inline">\(C,x\)</span>，可以计算 <span
+class="math inline">\(A = x^{-1} \cdot C\)</span>，此时 <span
+class="math inline">\(x^{-1}\)</span> 应理解为 <span
+class="math inline">\(x\)</span> 在 <span
+class="math inline">\(Zmod(n)\)</span> 下的逆元。</p>
+</blockquote>
+<p>由DLP问题衍生出的 <strong><em>Diffle-Hellman</em></strong>
+密钥交换：<br />
+假设Alice和Bob希望在一个不安全的环境下进行密钥交换。他们协商密钥交换在
+<span class="math inline">\(G_p\)</span> 上进行，选定生成元 <span
+class="math inline">\(G\)</span> 并公开。<br />
+Alice和Bob分别产生一个私钥 <span class="math inline">\(d_A\)</span> 和
+<span class="math inline">\(d_B\)</span>，分别计算 <span
+class="math inline">\(A = d_A \cdot G\)</span> 与 <span
+class="math inline">\(B = d_B \cdot G\)</span>，将 <span
+class="math inline">\(A\)</span>、<span class="math inline">\(B\)</span>
+发送给对方并公开。<br />
+随后，他们再分别使用私钥和对方发送的密钥计算 <span
+class="math inline">\(AB = d_A \cdot B = d_B \cdot A\)</span>。
+在阿贝尔群上其正确性显然。<br />
+此时双方就已经完成了密钥交换，共享密钥就是AB。外人即使知道了 <span
+class="math inline">\((G_p,G,A,B)\)</span>，亦很难从中获得<span
+class="math inline">\(d_A\)</span>或<span
+class="math inline">\(d_B\)</span>，进而保证了共享密钥 <span
+class="math inline">\(AB\)</span> 的安全性。</p>
+<h1 id="攻击方法概览">攻击方法概览</h1>
+<ul>
+<li>暴力攻击，在n较小时，攻击者可以枚举所有的 <span
+class="math inline">\(x \in (0,n)\)</span> 逐个校验。<br />
+</li>
+<li>BSGS(Baby-step
+Giant-step，大步小步法，<del>又名“亦步亦趋”</del>)，通过制造碰撞来“用空间换时间”。</li>
+</ul>
+<blockquote>
+<p>大步小步法的空间复杂度与时间复杂度均为 <span
+class="math inline">\(O(\sqrt n)\)</span>。暴力攻击的二者显然分别为
+<span class="math inline">\(O(1)\)</span> 及 <span
+class="math inline">\(O(n)\)</span>。</p>
+</blockquote>
+<ul>
+<li>Pohlig-Hellman攻击<br />
+</li>
+<li>Pollard's kangaroo algorithm<br />
+</li>
+<li>Pollard's rho algorithm</li>
+</ul>
+<blockquote>
+<p>上述是较为通用的解法，对于部分 <span
+class="math inline">\(G_p\)</span>
+存在特有的攻击方法，比如ECDLP下的Smart's Attack、MOV Attack等。</p>
+<p>另外，有一些循环群可能求解 <span class="math inline">\(G_p\)</span>
+上的离散对数问题并不困难，比如 <span
+class="math inline">\(Zmod(p)\)</span> 上的加法运算可以快速求解。</p>
+</blockquote>
+<h1 id="细讲">细讲</h1>
+<blockquote>
+<p>以下内容干货（纸面资料）过多，<del>小心噎着</del></p>
+</blockquote>
+<h2 id="bsgs-亦步亦趋">BSGS —— 亦步亦趋</h2>
+<p>BSGS本质是在试着制造碰撞，利用散列表查找复杂度为常量的优势，以空间换时间。<br />
+具体操作方法如下：设待求解 <span class="math inline">\(C = x \cdot
+G\)</span> 中的x，<br />
+记 <span class="math inline">\(T = \sqrt n\)</span>，<span
+class="math inline">\(R = G \cdot T^{-1}\)</span>；制备一个散列表集合
+<span class="math inline">\(S = {i \cdot G}，i \in [0,C)\)</span><br />
+随后遍历 <span class="math inline">\(j \in [0,C)\)</span>，若 <span
+class="math inline">\(C + j \cdot R \in S\)</span>
+，则说明碰撞成功，得到 <span class="math inline">\(x = jT +
+i\)</span>。<br />
+显然遍历中一定会存在一次碰撞。</p>
+<blockquote>
+<p>“大步小步”的命名之源：</p>
+<p>如上式，<span class="math inline">\(i\)</span> 每增加1，<span
+class="math inline">\(x\)</span> 增加1，所谓一“小步”；<span
+class="math inline">\(j\)</span> 每增加1， <span
+class="math inline">\(x\)</span> 增加 <span class="math inline">\(\sqrt
+n\)</span> ，所谓一“大步”。</p>
+<p>这种攻击思想在轮加密/类轮加密的攻击（含哈希碰撞）中也有较多应用，思路即为将密钥拆为两部分，将中间值进行碰撞。</p>
+</blockquote>
+<p><del>为了便于理解，</del>给出一段示意BSGS求解 <span
+class="math inline">\(GF_p\)</span> 下DLP问题的代码</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">dlog</span>(<span class="params">p:<span class="built_in">int</span>,c:<span class="built_in">int</span></span>) -&gt; <span class="built_in">int</span>:</span><br><span class="line">    g = <span class="number">2</span> <span class="comment">#假设目标是求解pow(2,x,p)==c中的p</span></span><br><span class="line">    t = <span class="built_in">int</span>(<span class="built_in">pow</span>(p,<span class="number">1</span>/<span class="number">2</span>))</span><br><span class="line">    r = <span class="built_in">pow</span>(<span class="number">2</span>,-t,p)</span><br><span class="line"></span><br><span class="line">    dc = &#123;&#125;</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(t):</span><br><span class="line">        dc[g] = i</span><br><span class="line">        g = (g * <span class="number">2</span>) % p</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(t):</span><br><span class="line">        <span class="keyword">if</span> c <span class="keyword">in</span> dc: <span class="comment">#找到碰撞</span></span><br><span class="line">            <span class="keyword">return</span> dc[c] + j * t</span><br><span class="line">        c = (c * r) % p</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">None</span></span><br></pre></td></tr></table></figure>
+<h2 id="pohlig-hellman-韩信点兵">Pohlig-Hellman —— 韩信点“兵”</h2>
+<p>Pohlig-Hellman
+利用了<em>群论中的</em>拉格朗日定理和中国剩余定理。<br />
+其攻击对象是<strong>阶的小因子之积</strong>过小的循环群，在这些群上，可以求解(部分)阶比较小的子群的离散对数问题；<br />
+对这些结果应用中国剩余定理，即可获得原群上离散对数问题的结果。</p>
+<blockquote>
+<p>群中的拉格朗日定理：如果 <span class="math inline">\(G_P\)</span> 是
+<span class="math inline">\(G\)</span> 的一个子群，则 <span
+class="math inline">\(ord(G_P)\)</span> 一定整除 <span
+class="math inline">\(ord(G)\)</span>。</p>
+</blockquote>
+<p>攻击成立的两个场景：<br />
+- 目标群的阶的全部因子都很小，a.k.a.“光滑数”(smooth-number)；<br />
+- 目标运算数计数 <span class="math inline">\(x\)</span>
+小于目标群的阶的小因子之积（实际上第一种情况可以看作是第二种情况的特例）。</p>
+<p>实现上，我们令 $n = $ <span
+class="math inline">\(\prod_{i=1}^m{p_i^{e_i}}\)</span>。对于每个因子
+<span class="math inline">\(f = p_i^{e_i}\)</span>，考虑 <span
+class="math inline">\(C^{&#39;} = f \cdot C\)</span>，<span
+class="math inline">\(G^{&#39;} = f \cdot G\)</span>。<br />
+此时 <span class="math inline">\(C^{&#39;}\)</span> 在群中的阶为 <span
+class="math inline">\(\frac{n}{f}x\)</span>，<span
+class="math inline">\(G^{&#39;}\)</span> 的阶则为 <span
+class="math inline">\(\frac{n}{f}\)</span>。<br />
+根据拉格朗日定理，此时以 <span class="math inline">\(G^{&#39;}\)</span>
+为生成元的子群的阶只有 <span class="math inline">\(f\)</span>，且 <span
+class="math inline">\(C^{&#39;}\)</span>
+亦在这个群上，故可以在这个低阶子群上求解DLP。<br />
+依此法求解的 <span class="math inline">\(\{x_i\}\)</span> 满足 <span
+class="math inline">\(x_i \equiv x (mod p_i^{e_i})\)</span>。</p>
+<ul>
+<li>对于第一种情况，显然 <span
+class="math inline">\({p_i^{e_i}}\)</span>
+互素，故将所有等式联立至CRT中，求出通解 <span
+class="math inline">\(x^{&#39;} = x_0 + kn&#39;\)</span>，令 <span
+class="math inline">\(k=0\)</span> 即可获得 <span
+class="math inline">\(x\)</span>。<br />
+</li>
+<li>对于第二种情况，假设存在 <span class="math inline">\(x &lt;
+r\)</span>，则可以升序求解模 <span
+class="math inline">\(p_i^{e_i}\)</span> 下的DLP，只需要求解出的 <span
+class="math inline">\(\prod_{i=1}^m{p_i^{e_i}} &gt; r\)</span>
+，即可令CRT求解出的 <span class="math inline">\(x^{&#39;}\)</span>
+模数大于 <span class="math inline">\(r\)</span>，进而获得 <span
+class="math inline">\(x\)</span>。</li>
+</ul>
+<p>还是直接上代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">ph_attack</span>(<span class="params">p:<span class="built_in">int</span>,c:<span class="built_in">int</span>,intact: <span class="built_in">bool</span> = <span class="literal">True</span></span>) -&gt; <span class="built_in">int</span>: <span class="comment">#仍旧是pow(2,x,p) == c</span></span><br><span class="line">    g = <span class="number">2</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">#约定，factor(x)返回一个list，每个元素是形如(prime,factor)的tuple</span></span><br><span class="line">    <span class="comment">#约定，预置了discrete_log(a,g)返回int，作用为给定(g,a)，求解群中满足a = x * g的x，其可以采用暴力攻击、BSGS等方法进行</span></span><br><span class="line">    <span class="comment">#约定，函数crt(r,m)可以对给定两个等长的列表，且m各元素互质时，求CRT问题的基础解(k=0)</span></span><br><span class="line">    rls = []</span><br><span class="line">    mls = []</span><br><span class="line"></span><br><span class="line">    n = p - <span class="number">1</span> <span class="comment">#Zmod(p)的阶</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">#对于第一种情况的攻击，即不知道x的额外信息，完全攻击每个子群</span></span><br><span class="line">    <span class="keyword">if</span> intact:</span><br><span class="line">        <span class="keyword">for</span> pm,exp <span class="keyword">in</span> factor(n):</span><br><span class="line">            cur = <span class="built_in">pow</span>(pm,exp)</span><br><span class="line">            fc = n // cur</span><br><span class="line">            temp_g = <span class="built_in">pow</span>(g,fc,p)</span><br><span class="line">            temp_c = <span class="built_in">pow</span>(c,fc,p)</span><br><span class="line">            mls.append(cur)</span><br><span class="line">            rls.append(discrete_log(temp_c,temp_g))</span><br><span class="line"></span><br><span class="line">    <span class="comment">#对于第二种情况的攻击，攻击部分子群，其实只需要记录已经求解的模数之积，伺机break</span></span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        Sentinel = <span class="built_in">pow</span>(<span class="number">2</span>,<span class="number">32</span>) <span class="comment">#x的上界</span></span><br><span class="line">        mul = <span class="number">1</span></span><br><span class="line">        <span class="keyword">for</span> pm,exp <span class="keyword">in</span> factor(n):</span><br><span class="line">            cur = <span class="built_in">pow</span>(pm,exp)</span><br><span class="line">            fc = n // cur</span><br><span class="line">            temp_g = <span class="built_in">pow</span>(g,fc,p)</span><br><span class="line">            temp_c = <span class="built_in">pow</span>(c,fc,p)</span><br><span class="line">            mls.append(cur)</span><br><span class="line">            rls.append(discrete_log(temp_c,temp_g))</span><br><span class="line">            mul *= cur</span><br><span class="line">            <span class="keyword">if</span> mul &gt; Sentinel:</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> crt(rls,mls)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>因此，为使任意场景实例化的DLP问题抵抗Pohlig-Hellman攻击，该群的阶或应没有小因子（最好阶自身就是大质数），或其小因子极少且乘积极小。</p>
+<p>对于 <span class="math inline">\(Zmod(p)\)</span>
+上的离散对数问题，一般会要求p是质数的同时，<span
+class="math inline">\(\frac{p-1}{2}\)</span>
+为质数（或没有小因子）。</p>
+<blockquote>
+<p><span class="math inline">\(p\)</span> 是质数时，其阶 <span
+class="math inline">\(\phi(p) = p-1\)</span>，显然此时 <span
+class="math inline">\(2\)</span>
+是其阶的一个因子，令其阶的另一个因子是质数，同时约束 <span
+class="math inline">\(x&gt;2\)</span>，即可确保其最大限度地抵抗Pohlig-Hellman攻击。</p>
+</blockquote>
+<p><strong>只要一个群的阶不是质数，那么Pohlig-Hellman总能通过转而攻击子群，降低求解该群上DLP问题的复杂度。</strong></p>
+</blockquote>
+<p>sagemath中内置了求解离散对数相关的工具： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line">p = <span class="number">7</span></span><br><span class="line">E = EllipticCurve(Zmod(p),[<span class="number">0</span>,<span class="number">2</span>])</span><br><span class="line">A = E.random_point()</span><br><span class="line">G = E.gens()[<span class="number">0</span>]</span><br><span class="line"></span><br><span class="line"><span class="comment">#经典调用方法，discrete_log是一个通用化的函数，第一参数为结果，第二参数为底，内置方法就是Pohlig-Hellman和BSGS</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#指定operation相当于约定了特定的运算（对于EllipticCurve默认为&#x27;+&#x27;，对于Zmod(p)默认为&#x27;*&#x27;）</span></span><br><span class="line"><span class="built_in">print</span>(discrete_log(A,G,operation=<span class="string">&#x27;+&#x27;</span>)) </span><br><span class="line"></span><br><span class="line"><span class="comment">#还可以指定bounds=(a,b)来引导sage来利用上述Pohlig-Hellman攻击中的第二种情况</span></span><br><span class="line"><span class="built_in">print</span>(discrete_log(A,G,operation=<span class="string">&#x27;+&#x27;</span>,bounds=(<span class="number">0</span>,<span class="number">5</span>))) <span class="comment">#假设x的上界为5</span></span><br></pre></td></tr></table></figure></p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/闲笔//" class="article-tag-list-link color3">闲笔</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/crypto/dlog/">展开全文 >></a>
         </p>
       
 
