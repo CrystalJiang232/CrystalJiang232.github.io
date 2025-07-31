@@ -152,6 +152,300 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-crypto/ntru" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/crypto/ntru/">NTRU</a>
+    </h1>
+  
+
+        
+        <a href="/crypto/ntru/" class="archive-article-date">
+  	<time datetime="2025-04-15T10:38:03.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-04-15</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <blockquote>
+<p><del>格密码入坑到入土一条龙</del></p>
+</blockquote>
+<p>NTRU(Nth-degree TRunctuated polynomial
+Unit)，即“N次截断多项式单元”，是格密码中极为知名、应用较广的一种加密原理。</p>
+<h1 id="截断多项式">截断多项式？</h1>
+<h2 id="卷积多项式环">卷积多项式环</h2>
+<p>给定 <span class="math inline">\(N,q \in Z_{+}\)</span>，则模 <span
+class="math inline">\(q\)</span> 下的 <span class="math inline">\(N -
+1\)</span> 次卷积多项式环是一个商环(quotient ring)，记作 <span
+class="math inline">\(R_{q} = \frac{Z_{q}[x]}{x^{N} - 1}\)</span>。</p>
+<blockquote>
+<p>商环的定义为对环(Ring)上，<span class="math inline">\(\forall a \neq
+0 \in R, \exists a^{-1} \in R\)</span>，即除了加法单位元 <span
+class="math inline">\(0\)</span> 外所有元素均存在逆元。</p>
+</blockquote>
+<p><span class="math inline">\(R_{q}\)</span>
+下的卷积多项式乘法规则如下：假设 <span class="math inline">\(f \cdot g =
+h\)</span>，同样记 <span class="math inline">\(h =
+\sum_{i=0}^{n-1}h_{i}x^{i}\)</span>，存在<br />
+$h_{i} <em>{a+b i (N)} f</em>{a}g_{b} (q) $。</p>
+<blockquote>
+<p>不难发现上述规则和普通的多项式乘法并无显著差异，只是对幂数和项数的计算分别放在了
+<span class="math inline">\(Z_{N}\)</span> 和 <span
+class="math inline">\(Z_{q}\)</span> 下进行。</p>
+</blockquote>
+<p>写作 <span class="math inline">\(Z_{q}\)</span> 下 <span
+class="math inline">\(n \times n\)</span> 矩阵乘法的形式，形如：</p>
+<p><span class="math inline">\(\begin{bmatrix} h_0 &amp; h_1 &amp;
+\cdots &amp; h_{n-2} &amp; h_{n-1} \end{bmatrix} ^ {T} = \begin{bmatrix}
+f_0 &amp; f_1 &amp; \cdots &amp; f_{n-2} &amp; f_{n-1} \\ f_1 &amp; f_2
+&amp; \cdots &amp; f_{n-1} &amp; f_0 \\ \vdots &amp; \vdots &amp;&amp;
+\vdots &amp; \vdots \\ f_{n-1} &amp; f_0 &amp; \cdots &amp; f_{n-3}
+&amp; f_{n-2} \end{bmatrix} \cdot \begin{bmatrix} g_0 &amp; g_1 &amp;
+\cdots &amp; g_{n-2} &amp; g_{n-1} \end{bmatrix} ^ {T}\)</span></p>
+<blockquote>
+<p>若 <span class="math inline">\(q\)</span>
+比较大，考虑到可读性，一般展示时会将 <span
+class="math inline">\(f_{i}\)</span> 转化到 <span
+class="math inline">\((-\frac{q}{2},\frac{q}{2}]\)</span> 的区间内（当然
+<span class="math inline">\(Z_{q}\)</span> 下其是等价的）。</p>
+</blockquote>
+<p>如，<span class="math inline">\((N,q) = (3,5)\)</span> 下 <span
+class="math inline">\(f = 3x^{2} - x + 1\)</span>，<span
+class="math inline">\(g = x + 4\)</span>，计算 <span
+class="math inline">\(f \cdot g\)</span>：<br />
+先按普通的多项式计算，对 <span class="math inline">\(N\)</span>
+次以上的项进行“截断”，得到 <span class="math inline">\(12x^{2} - x^{2} -
+4x + x + 4\)</span>；<br />
+随后将系数映射至 <span class="math inline">\(Z_{5}\)</span>
+下，整理得到结果为 <span class="math inline">\(x^{2} - 3x + 4 = x^{2} +
+2x - 1\)</span>。</p>
+<p>而对于 <span class="math inline">\(R_{q}\)</span> 下的 <span
+class="math inline">\(N-1\)</span> 次多项式 <span
+class="math inline">\(f\)</span>，当且仅当 <span
+class="math inline">\(q\)</span> 为质数且 <span
+class="math inline">\(gcd(f,x^{N} - 1) = 1\)</span>（即，<span
+class="math inline">\(f\)</span> 是其本原多项式）时， <span
+class="math inline">\(f\)</span> 的乘法逆元 <span
+class="math inline">\(f^{-1} \in R_{q}\)</span>。</p>
+<blockquote>
+<p><span class="math inline">\(f^{-1}\)</span>
+的计算同样可以通过拓展欧几里得算法(exgcd)进行，详细原理请自行检索<del>绝对不是因为小姜讲不明白</del>。</p>
+</blockquote>
+<p>多项式的逆元计算实际上较为繁琐，定义等操作亦然，故建议处理多项式时充分利用数学软件的内置支持，如
+<em>“sage magic”</em> 演示：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">q = <span class="number">17</span></span><br><span class="line">N = <span class="number">7</span></span><br><span class="line">Rq_ = PolynomialRing(Zmod(q),<span class="string">&#x27;xq&#x27;</span>) <span class="comment"># Defines a polynomial ring under Zmod(q) and names a variable &#x27;xq&#x27;</span></span><br><span class="line">Rq = Rq_.quotient(Rq_.gen() ^ N - <span class="number">1</span>,<span class="string">&#x27;yq&#x27;</span>) <span class="comment">#Defines a quotient ring under divisor of xq^N - 1, with variable namely &#x27;yq&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Now one&#x27;s possible to carry out such manuevers on Rq</span></span><br><span class="line">ls = [<span class="number">5</span>,<span class="number">0</span>,<span class="number">3</span>,<span class="number">2</span>,<span class="number">1</span>] <span class="comment">#x^4 + 2x^3 + 3x^2 + 5</span></span><br><span class="line">f = Rq(ls) <span class="comment">#lifts a list of integer to a polynomial on quotient ring Rq</span></span><br><span class="line"><span class="built_in">print</span>(f^-<span class="number">1</span>) <span class="comment">#calculates inverse of f under Rq</span></span><br><span class="line"></span><br><span class="line">p = <span class="number">3</span></span><br><span class="line">Rp_ = PolynomialRing(Zmod(p),<span class="string">&#x27;xp&#x27;</span>)</span><br><span class="line">Rp = Rp_.quotient(Rp_.gen() ^ N - <span class="number">1</span>,<span class="string">&#x27;yp&#x27;</span>)</span><br><span class="line">ff = Rp(<span class="built_in">list</span>(f)) <span class="comment">#equivalently changes the modulus of f; must be done by conversion shown in this line</span></span><br><span class="line"><span class="built_in">print</span>(ff)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h1 id="参数与密钥生成">参数与密钥生成</h1>
+<p>NTRU的关键参数为 <span
+class="math inline">\((N,p,q,d)\)</span>。其中，</p>
+<ul>
+<li><span class="math inline">\(N,q\)</span>
+越大则格攻击构造格的维度越高，密码系统越安全，但运算效率会大幅下降；一般选择
+<span class="math inline">\(N \in [250,2500]\)</span>。<br />
+</li>
+<li><span class="math inline">\(p,d\)</span> 均为整数，要求 <span
+class="math inline">\(gcd(p,q) = 1\)</span> 且 <span
+class="math inline">\(gcd(q,N) = 1\)</span>，<span
+class="math inline">\(q &gt; (6d + 1)p\)</span>。</li>
+</ul>
+<p>NIST对NTRU的强度-推荐参数组合如下：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">强度</th>
+<th style="text-align: center;">N</th>
+<th style="text-align: center;">p</th>
+<th style="text-align: center;">q</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">标准</td>
+<td style="text-align: center;">251</td>
+<td style="text-align: center;">3</td>
+<td style="text-align: center;">128</td>
+</tr>
+<tr>
+<td style="text-align: center;">高</td>
+<td style="text-align: center;">347</td>
+<td style="text-align: center;">3</td>
+<td style="text-align: center;">128</td>
+</tr>
+<tr>
+<td style="text-align: center;">最高</td>
+<td style="text-align: center;">503</td>
+<td style="text-align: center;">3</td>
+<td style="text-align: center;">256</td>
+</tr>
+</tbody>
+</table>
+<p>参数 <span class="math inline">\(d\)</span> 可在满足 <span
+class="math inline">\(q &gt; (6d + 1)p\)</span> 下自行决定，一般选择
+<span class="math inline">\(d \approx \frac{N}{3}\)</span>
+来达到较好的安全性。</p>
+<hr />
+<blockquote>
+<p>定义函数 <span class="math inline">\(T(d_{1},d_{2}) (d_{1} + d_{2}
+&lt; q)\)</span> 表示系数 <span class="math inline">\(\{1,-1\}\)</span>
+<strong>计数</strong>分别为 <span
+class="math inline">\(\{d_{1},d_{2}\}\)</span> 的多项式 <span
+class="math inline">\(f\)</span> 的集合。<br />
+如，<span class="math inline">\(f = x^{6} + x^{3} - x^{2} + x - 1 \in
+T(3,2)\)</span>。</p>
+</blockquote>
+<p>选择两个多项式 <span class="math inline">\(f = \sum_{i=0}^{N-1}
+f_{i}x^{i} \in T(d+1,d)\)</span>，<span class="math inline">\(g =
+\sum_{i=0}^{N-1} g_{i}x^{i} \in T(d,d)\)</span>。</p>
+<p>再计算 <span class="math inline">\(h \equiv f^{-1}g (\bmod
+q)\)</span>，随后将 <span class="math inline">\(g\)</span>
+的记录销毁。<br />
+公钥为 <span class="math inline">\(h\)</span>，私钥为 <span
+class="math inline">\(R_{p}\)</span> 和 <span
+class="math inline">\(R_{q}\)</span> 下的 <span
+class="math inline">\(f^{-1}\)</span>（由于 <span
+class="math inline">\(p,q\)</span> 是既定参数，可以认为私钥就是 <span
+class="math inline">\(f\)</span>）。</p>
+<blockquote>
+<p><span class="math inline">\(g\)</span> 不是公钥或私钥，但知道 <span
+class="math inline">\(g\)</span> 就可以完全攻破NTRU，其地位类似于RSA中
+<span class="math inline">\(N\)</span> 的因数分解，故不应保留之。</p>
+</blockquote>
+<h1 id="加密">加密</h1>
+<p>先将明文编码为一个 <span class="math inline">\(n\)</span> 次多项式
+<span class="math inline">\(m \in \{-1,0,1\}^{N}\)</span>。<br />
+加密时另随机生成一个多项式 <span class="math inline">\(r \in
+\{-1,0,1\}^{N}\)</span>，计算 <span class="math inline">\(c \equiv ph
+\cdot r + m (\bmod q)\)</span>，输出密文 <span
+class="math inline">\(c\)</span>。</p>
+<h1 id="解密">解密</h1>
+<p>计算 <span class="math inline">\(m \equiv f^{-1} \cdot (f \cdot c
+(\bmod q)) (\bmod p)\)</span>，输出明文 <span
+class="math inline">\(m\)</span>。</p>
+<blockquote>
+<p>注意其中涉及到了“换环”，即现在 <span
+class="math inline">\(R_{q}\)</span> 下计算 <span
+class="math inline">\(f \cdot c\)</span>，将结果转到 <span
+class="math inline">\(R_{p}\)</span> 下后再与该环下的 <span
+class="math inline">\(f^{-1}\)</span> 相乘。</p>
+</blockquote>
+<hr />
+<h2 id="正确性证明">正确性证明</h2>
+<p>先在 <span class="math inline">\(R_{q}\)</span> 下计算， <span
+class="math inline">\(f \cdot c = pr \cdot hf + mf \Rightarrow f \cdot c
+= prg + mf\)</span><br />
+随后换环到 <span class="math inline">\(R_{p}\)</span> 上，显然 <span
+class="math inline">\(prg \equiv 0 (\bmod p)\)</span>，因此 <span
+class="math inline">\(R_{p}\)</span> 下 <span class="math inline">\((fc
+\bmod q) \equiv fm\)</span><br />
+进而 <span class="math inline">\(fmf^{-1} = m\)</span><br />
+解密正确性得证。</p>
+<h1 id="公钥攻击与数学难题">公钥攻击与数学难题</h1>
+<p>NTRU作为一种公钥密码体制，其依然依赖于数学难题来实现公钥与私钥间的“陷门”特征——即从公钥推导出私钥在理论上是可行的。<br />
+已知公钥时推导私钥的方法如下：<br />
+假设公钥为 <span class="math inline">\(f =
+\sum_{i=0}^{n}f_{i}x^{i}\)</span>，即 <span
+class="math inline">\(\{f_{i}\}\)</span> 是多项式 <span
+class="math inline">\(f\)</span> 各项的系数。</p>
+<blockquote>
+<p>有关格、格基规约(LLL)等相关的基础知识可以移步<a
+href="/crypto/lattice/">格</a>。</p>
+</blockquote>
+<h1 id="加解密攻击应用示例">加解密、攻击应用示例</h1>
+<p>假设Alice和Bob<del>怎么又是你们俩</del>需要利用NTRU进行通信，Alice为接收方，参数
+<span class="math inline">\((N,p,q,d) = (77,3,59,3)\)</span>。<br />
+<del>充分利用一番sage对多项式环的支持</del>，代码如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># sage</span></span><br><span class="line"><span class="keyword">from</span> random <span class="keyword">import</span> shuffle</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">NTRU</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="variable language_">self</span>.N = <span class="number">77</span></span><br><span class="line">        <span class="variable language_">self</span>.p = <span class="number">3</span></span><br><span class="line">        <span class="variable language_">self</span>.q = <span class="number">59</span></span><br><span class="line">        <span class="variable language_">self</span>.d = <span class="number">3</span></span><br><span class="line"></span><br><span class="line">        <span class="variable language_">self</span>.R_ = PolynomialRing(ZZ,<span class="string">&#x27;x&#x27;</span>)</span><br><span class="line">        <span class="variable language_">self</span>.Rp_ = PolynomialRing(Zmod(p),<span class="string">&#x27;xp&#x27;</span>)</span><br><span class="line">        <span class="variable language_">self</span>.Rq_ = PolynomialRing(Zmod(q),<span class="string">&#x27;xq&#x27;</span>)</span><br><span class="line"></span><br><span class="line">        <span class="variable language_">self</span>.R = <span class="variable language_">self</span>.R_.quotient(<span class="variable language_">self</span>.R_.gen() ^ N - <span class="number">1</span>,<span class="string">&#x27;y&#x27;</span>)</span><br><span class="line">        <span class="variable language_">self</span>.Rp = <span class="variable language_">self</span>.Rp_.quotient(<span class="variable language_">self</span>.Rp_.gen() ^ N - <span class="number">1</span>,<span class="string">&#x27;yp&#x27;</span>)</span><br><span class="line">        <span class="variable language_">self</span>.Rq = <span class="variable language_">self</span>.Rq_.quotient(<span class="variable language_">self</span>.Rq_.gen() ^ N - <span class="number">1</span>,<span class="string">&#x27;yq&#x27;</span>)</span><br><span class="line"></span><br><span class="line">        <span class="variable language_">self</span>.h,<span class="variable language_">self</span>.f = <span class="variable language_">self</span>.keygen()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">T</span>(<span class="params">self,d1,d2</span>):</span><br><span class="line">        <span class="keyword">assert</span> d1 + d2 &lt;= N</span><br><span class="line">        ls = [<span class="number">1</span>] * d1 + [-<span class="number">1</span>] * d2 + [<span class="number">0</span>] * (N-(d1+d2))</span><br><span class="line">        shuffle(ls)</span><br><span class="line">        <span class="keyword">return</span> <span class="variable language_">self</span>.R(ls)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">keygen</span>(<span class="params">self</span>):</span><br><span class="line">        f = <span class="variable language_">self</span>.T(d+<span class="number">1</span>,d)</span><br><span class="line">        g = <span class="variable language_">self</span>.T(d,d)</span><br><span class="line">        h = <span class="variable language_">self</span>.Rp(g) * <span class="variable language_">self</span>.Rp(f) ^ -<span class="number">1</span> </span><br><span class="line">        <span class="keyword">return</span> h,f</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">get_pubkey</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">list</span>(<span class="variable language_">self</span>.h)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__==<span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    ntru = NTRU()</span><br><span class="line">    <span class="built_in">print</span>(ntru.get_pubkey())</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>现在生成了一组公钥：<br />
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[0, 0, 2, 1, 1, 0, 2, 2, 1, 1, 1, 2, 2, 0, 1, 1, 1, 0, 2, 1, 2, 0, 1, 0, 2, 1, 0, 0, 2, 1, 2, 0, 0, 0, 2, 2, 0, 1, 1, 2, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 2, 0, 2, 2, 2, 0, 0, 2, 2, 1, 0, 1, 0, 0, 2, 0, 1]</span><br></pre></td></tr></table></figure> 其中该列表下标为<code>i</code>的数就是 <span
+class="math inline">\(h_{i}\)</span>，即 <span
+class="math inline">\(h\)</span> 中 <span
+class="math inline">\(i\)</span> 次项的系数。<br />
+Bob使用该公钥，对接下来通信使用的密钥进行加密，为<code>NTRU</code>类添加一个<code>encrypt</code>方法并运行之：<br />
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">encrypt</span>(<span class="params">self,m:<span class="built_in">list</span></span>):</span><br><span class="line">    <span class="keyword">assert</span> <span class="built_in">len</span>(m) == <span class="variable language_">self</span>.N</span><br><span class="line">    <span class="keyword">assert</span> <span class="built_in">all</span>(i <span class="keyword">in</span> (-<span class="number">1</span>,<span class="number">0</span>,<span class="number">1</span>) <span class="keyword">for</span> i <span class="keyword">in</span> m)</span><br><span class="line"></span><br><span class="line">    r = <span class="variable language_">self</span>.T(<span class="number">7</span>,<span class="number">7</span>)</span><br><span class="line">    c = <span class="variable language_">self</span>.p * <span class="variable language_">self</span>.h * <span class="variable language_">self</span>.Rp(<span class="built_in">list</span>(r)) + <span class="variable language_">self</span>.Rp(m)</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">list</span>(c)</span><br></pre></td></tr></table></figure></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># Key generated</span><br><span class="line">[-1, -1, -1, -1, 0, -1, -1, -1, 0, 0, 1, 0, 0, -1, -1, 0, 1, -1, -1, -1, 0, -1, 0, 1, -1, 1, 1, 1, -1, 1, 0, -1, -1, 0, 0, 1, -1, -1, 1, 0, 0, 0, 1, -1, 1, 1, -1, 1, 0, 1, 1, -1, -1, 1, -1, 1, 0, 1, 0, -1, 0, 1, 0, 1, -1, -1, 0, -1, -1, 0, 1, 0, -1, 1, 1, -1, 0]</span><br><span class="line"># Encryption result</span><br><span class="line">[2, 2, 2, 2, 0, 2, 2, 2, 0, 0, 1, 0, 0, 2, 2, 0, 1, 2, 2, 2, 0, 2, 0, 1, 2, 1, 1, 1, 2, 1, 0, 2, 2, 0, 0, 1, 2, 2, 1, 0, 0, 0, 1, 2, 1, 1, 2, 1, 0, 1, 1, 2, 2, 1, 2, 1, 0, 1, 0, 2, 0, 1, 0, 1, 2, 2, 0, 2, 2, 0, 1, 0, 2, 1, 1, 2, 0]</span><br></pre></td></tr></table></figure>
+<p>Alice接收之，并利用私钥进行解密，获得密钥：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">decrypt</span>(<span class="params">self,c:<span class="built_in">list</span></span>):</span><br><span class="line">    t = <span class="variable language_">self</span>.Rp(<span class="built_in">list</span>(<span class="variable language_">self</span>.Rq(<span class="variable language_">self</span>.f) * <span class="variable language_">self</span>.Rq(c)))</span><br><span class="line">    m = t * <span class="variable language_">self</span>.Rp(<span class="built_in">list</span>(<span class="variable language_">self</span>.f)) ^ -<span class="number">1</span></span><br><span class="line">    <span class="keyword">assert</span> <span class="built_in">all</span>(i <span class="keyword">in</span> (-<span class="number">1</span>,<span class="number">0</span>,<span class="number">1</span>) <span class="keyword">for</span> i <span class="keyword">in</span> m)</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">list</span>(m)</span><br><span class="line"> </span><br></pre></td></tr></table></figure>
+<p>结果正确。 但由于参数选择得比较小，若某人获得了他们的公钥 <span
+class="math inline">\(h\)</span>，即可实施格攻击来还原私钥，需要的参数仅为
+<span class="math inline">\((N,q)\)</span>。攻击过程：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> itertools <span class="keyword">import</span> product</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">attack</span>(<span class="params">h:<span class="built_in">list</span></span>):</span><br><span class="line">    N = <span class="number">77</span></span><br><span class="line">    q = <span class="number">59</span></span><br><span class="line">    coef = matrix(ZZ,[[h[-i:] + h[:-i]] <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(N)])</span><br><span class="line">    mt = matrix.Block([[matrix.diagonal(N),coef],[matrix.zero(N),q * matrix.diagonal(N)]])</span><br><span class="line">    mt = mt.LLL()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">assert</span> <span class="built_in">all</span>(i <span class="keyword">in</span> (-<span class="number">1</span>,<span class="number">0</span>,<span class="number">1</span>) <span class="keyword">for</span> i <span class="keyword">in</span> mt[<span class="number">0</span>])</span><br><span class="line">    </span><br><span class="line">    </span><br><span class="line">    f_ = Rq(<span class="built_in">list</span>(mt[<span class="number">0</span>][:N]))</span><br><span class="line">    g_ = Rq(<span class="built_in">list</span>(mt[<span class="number">0</span>][N:]))</span><br><span class="line">    h_ = Rq(h)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> xf,xg <span class="keyword">in</span> product([i <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(N)],repeat=<span class="number">2</span>):</span><br><span class="line">        ls_f = [<span class="number">0</span>] * N</span><br><span class="line">        ls_f[xf] = <span class="number">1</span></span><br><span class="line">        ls_g = [<span class="number">0</span>] * N</span><br><span class="line">        ls_g[xg] = <span class="number">1</span></span><br><span class="line"></span><br><span class="line">        f = Rq(ls_f) * f_</span><br><span class="line">        g = Rq(ls_g) * g_</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> g * f ^ -<span class="number">1</span> == h:</span><br><span class="line">            <span class="keyword">return</span> <span class="built_in">list</span>(f)</span><br><span class="line">        </span><br></pre></td></tr></table></figure>
+<h1 id="总结">总结</h1>
+<p>格密码是后量子密码学中极为重要的一环，而其中NTRU亦以其实现开销低等特性称为其中耀眼的新星。<br />
+学习NTRU算法的加密、解密原理时更应发挥离散数学的优雅之处——只定义“模板”，无论最终的实现是在
+<span class="math inline">\(Z_{q}\)</span>、<span
+class="math inline">\(P_{q}\)</span> 还是 <span
+class="math inline">\(R_{q}\)</span> 等等都能一通百通。<br />
+而对NTRU的格攻击则开启了基于分块矩阵的多变量、较复杂格构造的新大门。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/闲笔//" class="article-tag-list-link color3">闲笔</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/crypto/ntru/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+  <div>
+</article>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-misc/bomblab_wp" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -611,215 +905,6 @@ Part3)的作用是实现了链表“重组”：先建立一个链表，然后�
       
         <p class="article-more-link">
           <a class="article-more-a" href="/misc/bomblab_wp/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-  <div>
-</article>
-
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-cpp/foldexpr" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/cpp/foldexpr/">C++——折叠表达式</a>
-    </h1>
-  
-
-        
-        <a href="/cpp/foldexpr/" class="archive-article-date">
-  	<time datetime="2025-04-09T08:14:03.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-04-09</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <blockquote>
-<p>Collapse.</p>
-</blockquote>
-<h1 id="a.k.a.-reduce">a.k.a. Reduce?</h1>
-<p><a
-target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/language/fold">cppreference</a>中对于
-<em>fold expression</em> 的介绍非常简洁明了：</p>
-<blockquote>
-<p>Reduces(folds) a pack over a binary operator.</p>
-</blockquote>
-<p>即，将一个参数包在一个二元运算符上<del>“约减”（笔者自创的翻译.cpp，以后还是先用"reduce"原名比较好）</del>。</p>
-<blockquote>
-<p>参考“Lattice
-Reduction”的翻译“格基规约”，"reduce"译为“规约”庶几尚可。</p>
-</blockquote>
-<p><em>reduce</em>
-是一种处理序列元素的方法，其主要参数是元素序列<code>ls</code>和一个二元函数<code>f</code>，和一个（可选的）初始值<code>I</code>。<br />
-其伪代码可表示如下： <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">//reduce(ls,f)</span><br><span class="line">I = ls[0];</span><br><span class="line">for(i : ls[1:])</span><br><span class="line">&#123;</span><br><span class="line">    I = f(I,i);</span><br><span class="line">&#125;</span><br><span class="line">return I;</span><br><span class="line"></span><br><span class="line">//reduce(ls,f,I)</span><br><span class="line">for(i : ls)</span><br><span class="line">&#123;</span><br><span class="line">    I = f(I,i);</span><br><span class="line">&#125;</span><br><span class="line">return I;</span><br></pre></td></tr></table></figure></p>
-<p>可见没有初始值<code>I</code>时，其本质就是将<code>ls</code>的第一个元素取作初始值，并在剩余的元素上执行<code>reduce</code>操作。</p>
-<blockquote>
-<p><em>fold</em> 在操作上和 <em>reduce</em> 类似，但一般区分
-<em>fold</em> 和 <em>reduce</em>
-的标志就是初始值（前者默认必须有初值，后者默认可选）。</p>
-</blockquote>
-<blockquote>
-<p>语义上，可以认为 <em>reduce</em>
-涉及的二元操作符（函数）应满足交换律和结合律，而 <em>fold</em>
-没有这一要求。<br />
-C++23<del>给ranges
-algorithm添油加醋时</del>考虑到由于C++的<code>concept</code>只能约束语法而非语义，故为避免歧义，新加入的fold家族算法都采用了
-<em>fold</em>
-之名；又考虑到初始值的需求，故其中存在<code>fold_left_first</code>等变种，将在后续详述之。</p>
-</blockquote>
-<h1 id="语法">语法</h1>
-<p>C++中 <em>fold expression</em> 主要针对的是可变模板参数包(variadic
-template parameter pack)。</p>
-<blockquote>
-<p>下述内容默认读者具有可变模板参数的基本知识，若不然，可移步<a
-href="/cpp/variadic/">C++——可变模板参数</a>作参考。</p>
-</blockquote>
-<p>其调用语法有四种：假设存在二元操作符 <em>op</em> ，参数包
-<em>pack</em> （和初始值 <em>init</em>）：</p>
-<ol type="1">
-<li>一元右折叠(unary right fold): <em>(pack op ...)</em><br />
-</li>
-<li>一元左折叠(unary left fold): <em>(... op pack)</em><br />
-</li>
-<li>二元右折叠(binary right fold): <em>(pack op ... op init)</em><br />
-</li>
-<li>二元左折叠(binary left fold): <em>(init op ... op pack)</em></li>
-</ol>
-<p>其中，<em>op</em>
-是C++的32个二元运算符之一；二元折叠中两个操作符必须一致。<br />
-<em>pack</em> 必须是一个未展开的参数包，<em>init</em>
-则不允许是一个未展开的参数包，同时二者都不能含有优先级高于 <em>op</em>
-的操作符（若有，则必须以括号<code>()</code>保护之）。</p>
-<p>假设 <em>pack</em> 中的参数分别为
-<em>(E1,E2,...,En)</em>，则上述展开的结果如下：</p>
-<ul>
-<li><em>(pack op ...) = (((E1 op E2) op E3) ... op En)</em>；<br />
-</li>
-<li><em>(... op pack) = (())</em></li>
-</ul>
-<blockquote>
-<p>对于一元左/右折叠，若参数包为空，则当且仅当操作符为[逻辑与<code>&amp;&amp;</code>，逻辑或<code>||</code>，逗号<code>,</code>之一]时程序才能通过编译，此时其值分别为<code>false</code>、<code>true</code>和<code>void</code>。否则将报编译错误。</p>
-</blockquote>
-<p>简单的应用实例：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="type">size_t</span>... Ns&gt;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">size_t</span> mul_result = (Ns * ...);</span><br><span class="line"></span><br><span class="line"><span class="built_in">static_assert</span>(mul_result&lt;<span class="number">3</span>,<span class="number">3</span>,<span class="number">5</span>&gt; == <span class="number">45</span>); <span class="comment">//passes</span></span><br><span class="line"><span class="built_in">static_assert</span>(mul_result&lt;<span class="number">256</span>,<span class="number">512</span>,<span class="number">0</span>&gt; == <span class="number">0</span>); <span class="comment">//passes</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="type">bool</span>... vals&gt;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">bool</span> disjunction_v = (vals &amp;&amp; ...);</span><br><span class="line"></span><br><span class="line"><span class="built_in">static_assert</span>(disjunction_v&lt;<span class="literal">true</span>,<span class="literal">true</span>,<span class="literal">false</span>&gt; == <span class="literal">false</span>); <span class="comment">//passes</span></span><br><span class="line"><span class="built_in">static_assert</span>(disjunction_v&lt;&gt; == <span class="literal">false</span>); <span class="comment">//passes</span></span><br><span class="line"><span class="comment">//static_assert(mul_result&lt;&gt; == 0); //Not compile: pack is empty for binary operator *</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="type">size_t</span>... Ns&gt;</span><br><span class="line"><span class="comment">//constexpr size_t add_init = (Ns + ... + 1*2); //Not Compile: precedence of * is higher than operator + in fold expression</span></span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">size_t</span> add_init = (Ns + ... + (<span class="number">1</span>*<span class="number">2</span>)); <span class="comment">//OK</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h1 id="应用场景">应用场景</h1>
-<p><em>fold expression</em>
-最大的应用场景在于让很多必须递归展开参数包的函数、结构体、变量等能够一次完成展开定义，保证可读性的同时最大限度减弱了模板膨胀带来的代码体积增大、效率下降等负面影响。</p>
-<p>如现在定义一个类似python的<code>print</code>函数<del>先当C++23的<code>std::print</code>不存在，反正人家也不支持括号一套直接输出.cpp</del>：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(Types&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    (std::cout &lt;&lt; ... &lt;&lt; args);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>); <span class="comment">//Output: 123</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;Hello C++&quot;</span>,<span class="number">23</span>,<span class="string">&#x27;!&#x27;</span>); <span class="comment">//Output: Hello C++23!</span></span><br></pre></td></tr></table></figure>
-<p>在没有 <em>fold expression</em>
-语言层面的支持时，其只能按照如下方式实现：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Type,<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(Type&amp;&amp; type,Types&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::cout &lt;&lt; type;</span><br><span class="line">    <span class="built_in">print</span>(std::forward&lt;Types&gt;(args)...);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Type&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(Type&amp;&amp; type)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::cout &lt;&lt; type;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>代码编写更加繁琐的同时，由于上述编译时每次调用都会产生<code>sizeof...(Types) + 1</code>个新的实例<del>忽略少得可怜的参数包组合恰好全等的概率</del>。<br />
-递归代码运行效率偏低的同时，产生可执行文件的体积会大幅增加。<br />
-相对地，对于 <em>fold expression</em>
-编写的参数包每次调用只会产生一个新的实例。</p>
-<p>进阶的应用除了<del>玩转各种<code>operator</code></del>，还有对参数包中的每个元素“处理”的玩法。如若希望上述的<code>print</code>函数能够像python一样自定义sep和end（当然都是编译期指定），可以如此：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="type">char</span> sep,<span class="type">char</span> end,<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(Types&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ((std::cout &lt;&lt; args &lt;&lt; sep),...);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(Types&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">print</span>&lt;<span class="string">&#x27; &#x27;</span>,<span class="string">&#x27;\n&#x27;</span>&gt;(std::forward&lt;Types&gt;(args)...);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>由于折叠表达式的循环操作只能施加于元素上，因此此处只能退而求其次——利用<del>万能的</del><code>operator,</code>来完成输出。</p>
-</blockquote>
-<p>假设需对模板/函数参数包<code>args</code>中的每个元素，通过函数<code>f</code>处理<del>transform</del>后再用于折叠表达式，则应将<code>args</code>用<code>f</code>包裹（此时不要加<code>...</code>展开）后再根据需求应用折叠表达式的语法（相当于把<strong>可变模板的语法搬过来</strong>）。如：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(Types&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    (std::cout &lt;&lt; ... &lt;&lt; std::<span class="built_in">addressof</span>&lt;Types&gt;(args));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>tips：保留左右值属性的目的是为了触发<code>std::addressof</code>对右值的“截胡”，避免输出无意义的变量临时地址（因为右值引用在函数体内是左值；参考<a
-href="/cpp/rrefs/">C++——右值引用与移动语义</a>。</p>
-</blockquote>
-<h1 id="注意事项">注意事项</h1>
-<h2 id="固若金汤的concept">固若金汤的<code>concept</code></h2>
-<p>由于表达式的折叠展开不太直观<del>且又在模板的刀尖上乱舞</del>，
-<em>fold expression</em>
-出错时报错信息的可读性预期会很差。因此应用时，建议使用C++20的具名<code>concept</code>来前置约束之，结合折叠表达式在模板变量中的应用，不需大费周章即可防患于未然。如：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> correctly_outputable = <span class="built_in">requires</span>(Ty&amp;&amp; arg)</span><br><span class="line">&#123;</span><br><span class="line">    &#123;std::cout &lt;&lt; arg&#125; -&gt; std::same_as&lt;std::ostream&amp;&gt;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(Types&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    (std::cout &lt;&lt; ... &lt;&lt; args);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>假设现在有一个<del>手搓失败的</del>类，<del>不小心</del>忘记重载了<code>operator&lt;&lt;</code>，然后被打包进了<code>func</code>输出，约束和不约束的报错信息可读性大相径庭：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">ErrorOutput</span></span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ErrorOutput e&#123;&#125;;</span><br><span class="line">    <span class="built_in">func</span>(<span class="string">&quot;Object representation:\n&quot;</span>,e,<span class="number">7</span>,<span class="number">10.29</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>由于重载的“贪心”机制，若不加以约束，编译器会尝试将所有可能的左操作数为<code>std::ostream&amp;</code>的<code>operator&lt;&lt;</code>重载都尝试一遍：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">main.cpp: In instantiation of &#x27;void func(Types&amp;&amp; ...) [with Types = &#123;const char (&amp;)[24], ErrorOutput&amp;, int, double&#125;]&#x27;:</span><br><span class="line">main.cpp:24:9:   required from here</span><br><span class="line">   24 |     func(&quot;Object representation:\n&quot;,e,7,10.29);</span><br><span class="line">      |     ~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span><br><span class="line">main.cpp:13:16: error: no match for &#x27;operator&lt;&lt;&#x27; (operand types are &#x27;std::basic_ostream&lt;char&gt;&#x27; and &#x27;ErrorOutput&#x27;)</span><br><span class="line">   13 |     (std::cout &lt;&lt; ... &lt;&lt; args);</span><br><span class="line">      |     ~~~~~~~~~~~^~~~~~~~~~~~~~~</span><br><span class="line">(more than 400 lines omitted)</span><br><span class="line">/usr/local/include/c++/14.2.0/ostream:774:39: note: the expression &#x27;is_class_v&lt;_Tp&gt; [with _Tp = std::basic_ostream&lt;char, std::char_traits&lt;char&gt; &gt;&amp;]&#x27; evaluated to &#x27;false&#x27;</span><br><span class="line">  774 |     concept __derived_from_ios_base = is_class_v&lt;_Tp&gt;</span><br><span class="line">      |                                       ^~~~~~~~~~~~~~~</span><br></pre></td></tr></table></figure>
-<p>若以如下方法约束<code>func</code>，报错信息的可读性就会大幅提升：
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(Types&amp;&amp;... args)</span> <span class="title">requires</span> <span class="params">(correctly_outputable&lt;Types&gt; &amp;&amp; ...)</span> <span class="comment">/**/</span></span></span><br></pre></td></tr></table></figure></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">main.cpp: In function &#x27;int main()&#x27;:</span><br><span class="line">main.cpp:24:9: error: no matching function for call to &#x27;func(const char [24], ErrorOutput&amp;, int, double)&#x27;</span><br><span class="line">   24 |     func(&quot;Object representation:\n&quot;,e,7,10.29);</span><br><span class="line">      |     ~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span><br><span class="line">main.cpp:11:6: note: candidate: &#x27;template&lt;class ... Types&gt; void func(Types&amp;&amp; ...) requires (correctly_outputable&lt;Types&gt; &amp;&amp; ...)&#x27;</span><br><span class="line">   11 | void func(Types&amp;&amp;... args) requires( correctly_outputable&lt;Types&gt; &amp;&amp; ...)</span><br><span class="line">      |      ^~~~</span><br><span class="line">main.cpp:11:6: note:   template argument deduction/substitution failed:</span><br><span class="line">main.cpp:11:6: note: constraints not satisfied</span><br><span class="line">main.cpp: In substitution of &#x27;template&lt;class ... Types&gt; void func(Types&amp;&amp; ...) requires (correctly_outputable&lt;Types&gt; &amp;&amp; ...) [with Types = &#123;const char (&amp;)[24], ErrorOutput&amp;, int, double&#125;]&#x27;:</span><br><span class="line">main.cpp:24:9:   required from here</span><br><span class="line">   24 |     func(&quot;Object representation:\n&quot;,e,7,10.29);</span><br><span class="line">      |     ~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span><br><span class="line">main.cpp:11:6:   required by the constraints of &#x27;template&lt;class ... Types&gt; void func(Types&amp;&amp; ...) requires (correctly_outputable&lt;Types&gt; &amp;&amp; ...)&#x27;</span><br><span class="line">main.cpp:11:66: note: the expression &#x27;(correctly_outputable&lt;Types&gt; &amp;&amp; ...) [with Types = &#123;const char (&amp;)[24], ErrorOutput&amp;, int, double&#125;]&#x27; evaluated to &#x27;false&#x27;</span><br><span class="line">   11 | void func(Types&amp;&amp;... args) requires( correctly_outputable&lt;Types&gt; &amp;&amp; ...)</span><br><span class="line">      |           </span><br></pre></td></tr></table></figure>
-<p><del>虽然这已经扯到<code>concept</code>的优点上了，</del>归根结底还是<code>concept</code>在模板编程中应用的重要性，尤其是在
-<em>fold expression</em> 一类的复杂场景中；详见<a
-href="/cpp/concepts/">C++——Concepts</a>。</p>
-<h2 id="非模板的替代方案">非模板的替代方案</h2>
-<p>同时，尽管 <em>fold expression</em>
-是一个效率非常高的解决方案，但并不推荐滥用之。<br />
-由于其作用在参数包上，因此本质上依然是在进行模板编程——而模板编程受制于实例化的编译、运行开销及其必须在编译期执行的属性，部分问题仍然提倡用非模板的方式解决。如在参数类型可预测且相同的前提下，可以使用<code>std::initializer_list&lt;Ty&gt;</code>来进行参数打包，对编译期“打表”的要求可以通过<code>constexpr</code>或<code>consteval</code>约束之。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">constexpr</span> <span class="type">int</span> <span class="title">sum</span><span class="params">(std::initializer_list&lt;<span class="type">int</span>&gt; ls)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> std::<span class="built_in">accumulate</span>(ls.<span class="built_in">begin</span>(),ls.<span class="built_in">end</span>(),<span class="number">0</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">constexpr</span> <span class="type">int</span> <span class="title">prod</span><span class="params">(std::initializer_list&lt;<span class="type">int</span>&gt; ls)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> std::<span class="built_in">accumulate</span>(ls.<span class="built_in">begin</span>(),ls.<span class="built_in">end</span>(),<span class="number">1</span>,[](<span class="type">int</span> x,<span class="type">int</span> y)&#123;<span class="keyword">return</span> x*y;&#125;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="type">size_t</span> N,std::<span class="type">enable_if_t</span>&lt;N &gt;= <span class="number">2</span>,<span class="type">int</span>&gt; = <span class="number">0</span>&gt;</span><br><span class="line"><span class="keyword">constexpr</span> std::array&lt;<span class="type">int</span>,N&gt; <span class="built_in">fib_N</span>()</span><br><span class="line">&#123;</span><br><span class="line">    std::array&lt;<span class="type">int</span>,N&gt; res&#123;<span class="number">1</span>,<span class="number">1</span>&#125;;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;N<span class="number">-2</span>;++i)</span><br><span class="line">    &#123;</span><br><span class="line">        res[i<span class="number">+2</span>] = res[i] + res[i<span class="number">+1</span>];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> res;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="应用难度与注释">应用难度与注释</h2>
-<p>从应用经验看 <em>fold expression</em>
-的应用难度比较高，很多情况下其展开式并不那么直观，若编写/注释不当易对可读性产生较大影响（主要原因之一是<code>...</code>后置）。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Tys&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(Tys&amp;&amp;... args)</span> <span class="title">requires</span> <span class="params">(((<span class="keyword">sizeof</span>(Tys) &lt; <span class="number">7</span> &amp;&amp; std::is_trivially_copy_constructible_v&lt;Tys&gt;) &amp;&amp; ...) &amp;&amp; <span class="keyword">sizeof</span>...(Tys) &lt; <span class="number">7</span>)</span> </span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">/*...*/</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>当然从表达编译期约束之意上，上述形式已接近最优解。<br />
-缓解此问题的方法还是回归到前两点：使用具名<code>concept</code>分解约束（避免使用SFINAE等可读性较差的方法），并尽可能采用<code>ranges</code>等非模板的函数方案。</p>
-</blockquote>
-<h1 id="结语">结语</h1>
-<p><em>fold expression</em>
-在可变模板参数包的应用中，堪称一柄难以驾驭的利剑；初看其语法和约束或许有些绕人（且需要大量的预备知识以理解之），但只需在实践中多加运用体会，加以在注释、运用范围、<code>concept</code>辅助等要点处多加注意，定能在自身对现代C++的理解更为通透的同时，充分感受到游走于模板之间的惬意。</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/cpp/foldexpr/">展开全文 >></a>
         </p>
       
 

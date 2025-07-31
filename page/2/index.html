@@ -152,6 +152,243 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-cpp/smart-ptr" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/cpp/smart-ptr/">C++——智能指针</a>
+    </h1>
+  
+
+        
+        <a href="/cpp/smart-ptr/" class="archive-article-date">
+  	<time datetime="2025-07-30T04:38:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-07-30</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="智能指针">“智能”指针？</h1>
+<p>指针本似乎只应是一个特殊的整型变量，其何以有“智能”一说？其源于C/C++中堆内存(Heap
+memory)管理的有关问题。</p>
+<p>C语言在<code>&lt;stdlib.h&gt;</code>中提供了类似于<code>malloc</code>、<code>free</code>等函数来进行堆内存的简单分配及回收；C++中则引入了<code>operator new</code>、<code>operator delete[]</code>等来配合面向对象的语义；但仅依赖它们进行内存管理的缺点亦非常明显，包括但不限于：</p>
+<ul>
+<li>容易“忘记”或“绕过”内存回收的部分，进而导致内存泄漏问题<del>想必各位刚接触C语言时就被填鸭式地记忆过<code>malloc</code>完一定要<code>free</code></del>；<br />
+</li>
+<li>内存“所有权”(ownership)不清晰。比如往某个函数中传入指针时无法明确其内存的“所有权”（指是否能重新分配、释放等）是否转移，函数嵌套调用时容易导致内存管理混乱（如
+<em>double-free</em> ，即双重释放问题，亦是UB）；<br />
+</li>
+<li>作为整型变量的指针非常“脆弱”，极易在函数调用链中被不经意地修改。</li>
+</ul>
+<p>比如下述C代码片段：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">foo</span><span class="params">(<span class="type">int</span>*)</span>;</span><br><span class="line"><span class="type">void</span> <span class="title function_">bar</span><span class="params">(<span class="type">const</span> <span class="type">int</span>* p)</span></span><br><span class="line">&#123;</span><br><span class="line">    p += <span class="number">2</span>; <span class="comment">//?</span></span><br><span class="line">    <span class="built_in">free</span>(p); <span class="comment">//?</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="type">void</span> <span class="title function_">fun</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span>* ptr = (<span class="type">int</span>*)<span class="built_in">calloc</span>(<span class="number">10</span>,<span class="keyword">sizeof</span>(<span class="type">int</span>));</span><br><span class="line">    <span class="type">bool</span> status;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>;i&lt;<span class="number">5</span>;++i)</span><br><span class="line">    &#123;</span><br><span class="line">        ptr++; <span class="comment">//?</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    foo(ptr); <span class="comment">//?</span></span><br><span class="line">    bar(ptr); <span class="comment">//?</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(!status)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span>; <span class="comment">//?</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">free</span>(ptr);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>稍多加学习与内存管理等有关的知识就会发现，上述代码的槽点不断。<br />
+如<code>void bar()</code>的形参声明为<code>const int*</code>，只使用顶层<code>const</code>约束了不能通过<code>p</code>来修改指向的值，但架不住<code>p</code>本身容易被乱改，对于稍长一些的函数来说非常致命（极易忘记前述代码中<code>p</code>已经被改动过）。同时即使加上底层<code>const</code>，此般“固若金汤”也无法防止本函数间有人试图提前将其指向的内存<code>free</code>掉——内存管理权（所有权）混乱，可谓“引
+<em>SegmentFault</em> 入室”。<br />
+<code>void fun()</code>中难得地记得了在函数结束时<code>free</code>申请的内存，但往上看数行就可发觉隐患之一：若<code>status</code>为<code>false</code>，则会触发
+<em>early
+return</em>，进而<code>ptr</code>指向的内存将（在程序允许结束<del>或者大概率崩溃</del>之前）无法被释放。C++中此类问题更甚——除了显式的<code>return</code><del><code>exit</code>或<code>abort</code>一类的<code>[[norerturn]]</code>不算</del>，<em>exceptions</em>
+乱飞也极易在不经意间直接“跳出”函数，且异常相比此类显式的<code>return</code>更难以被发现和追踪。</p>
+<hr />
+<p>但不可否认的是，C/C++的“手动”内存管理也是其极大的特色和优势之一——对底层内存拥有极高自由度的读写权，同时没有后台
+<em>garbage collection</em>
+的束缚，使之能广泛地应用于底层软硬件的程序开发，同时拥有相比其它解释型/混合型语言“一骑绝尘”的效率。</p>
+<p>如何在保留“手动内存管理”特色的同时，应用<strong>语言自身机制</strong>帮助程序设计者管理内存，自然成为了C++发展的一大课题。</p>
+<h1 id="c98前世的auto_ptr">C++98：前世的<code>auto_ptr</code></h1>
+<p>C++98提出了一个<del>因为太憨在C++11被废弃(deprecated)并在C++17被移除(removed)的</del>智能指针的雏形：<code>auto_ptr</code>。</p>
+<h2 id="基本设计与成效">基本设计与成效</h2>
+<p>回顾到我们的基本需求，即希望在申请的堆内存<strong>离开其作用域时自动释放</strong>，显然将之封装在构造/析构函数中是其不二之选。<br />
+同时还应当提供一些易于访问原始指针的接口，其可通过类成员函数和操作符重载实现。<br />
+由此，可以写出一个简单的类模板如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">auto_ptr</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">auto_ptr</span>();</span><br><span class="line">    ~<span class="built_in">auto_ptr</span>();</span><br><span class="line"></span><br><span class="line">    Ty* <span class="keyword">operator</span>-&gt;();</span><br><span class="line">    <span class="type">const</span> Ty* <span class="keyword">operator</span>-&gt;() <span class="type">const</span>;</span><br><span class="line"></span><br><span class="line">    Ty&amp; <span class="keyword">operator</span>*();</span><br><span class="line">    <span class="type">const</span> Ty&amp; <span class="keyword">operator</span>*() <span class="type">const</span>;</span><br><span class="line"></span><br><span class="line">    <span class="function">Ty* <span class="title">get</span><span class="params">()</span></span>;</span><br><span class="line">    <span class="function"><span class="type">const</span> Ty* <span class="title">get</span><span class="params">()</span> <span class="type">const</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="function">Ty* <span class="title">release</span><span class="params">()</span></span>;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">reset</span><span class="params">(Ty*)</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    Ty* ptr;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>其中只需要</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line">auto_ptr&lt;Ty&gt;::~<span class="built_in">auto_ptr</span>()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">delete</span> ptr;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>就可以实现自动“释放内存”的功能了。<code>operator-&gt;</code>等重载亦能实现“无感”的底层指针访问，如：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">auto_ptr&lt;std::string&gt; sp;</span><br><span class="line">std::cout &lt;&lt; sp-&gt;<span class="built_in">length</span>() &lt;&lt; std::endl;</span><br></pre></td></tr></table></figure>
+<p>利用<code>operator-&gt;</code>重载的“二次解析”特性，访问类成员的方式无异于<code>sp</code>是原始指针的情况。</p>
+<p><code>get()</code>和<code>release()</code>成员函数都会返回原始指针，区别在于<code>get()</code>用于向后兼容一些C样式的API以及少数需要利用原始指针的情况（并未“交出”指针的所有权，只是临时供使用），<code>release()</code>则会“交出”指针的所有权（调用后该对象管理的指针置空，<strong>进而该指针指向的堆内存不会被自动释放，需要手动清理</strong>）。</p>
+<p><code>reset()</code>函数则用于重置其管理的指针（<strong>新指针亦必须指向有效的、已申请的堆内存</strong>），看实现即知其用途：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="type">void</span> auto_ptr&lt;Ty&gt;::<span class="built_in">reset</span>(Ty* p)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">delete</span> ptr;</span><br><span class="line">    ptr = p;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>此处应用了C++的<code>operator delete</code>“逃课”机制：<code>free</code>/<code>delete</code>一个空指针不会发生任何事情（即该操作是“安全”的）。</p>
+</blockquote>
+<blockquote>
+<p>Hint：为什么花如此多的篇幅讲述一个已经 <em>deprecated</em>
+类的成员函数？因为现代的智能指针“三剑客”成员函数的语义与之相同，只是更改了部分其它函数的实现（或增减了一些其它函数）来完善其功能。</p>
+</blockquote>
+<h2 id="缺点">缺点</h2>
+<p>看似上述<code>auto_ptr</code>在功能全面的同时实现看似“天衣无缝”，但其依然未能规避开原始指针的诸多缺点。</p>
+<p>首先，指针的“所有权”在函数传参等场景时依然不够明确<del>或许是C++98/03没有移动语义的锅</del>：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(auto_ptr&lt;<span class="type">int</span>&gt;)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    auto_ptr&lt;<span class="type">int</span>&gt; p;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">    <span class="built_in">fun</span>(p); <span class="comment">//?</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在对<code>fun(p)</code>调用后，<code>fun</code>函数中<code>auto_ptr</code>这一形参会将<code>p</code>管理的指针释放掉，导致现在<code>foo</code>中的<code>p</code>管理了一个无效的内存，进而SegmentFault只是时间问题。</p>
+<h1 id="c11智能指针三剑客">C++11：智能指针“三剑客”</h1>
+<p><code>auto_ptr</code>迎合时代发展的浪潮，在C++11中蜕变为了<code>unique_ptr</code>、<code>shared_ptr</code>和<code>weak_ptr</code>三剑客，通过和C++11引入的大量其它语法特性的巧妙配合，使其在内存管理辅助中如鱼得水。</p>
+<blockquote>
+<p>同时<code>auto_ptr</code>其也是现代C++中最先被 <em>deprecated</em> 和
+<em>removed</em> 的一批<strong>库特性</strong>之一。</p>
+</blockquote>
+<h2 id="unique_ptr"><code>unique_ptr</code></h2>
+<p>字如其名，<code>unique_ptr</code>表示一个“独占”的指针。<br />
+其通过和C++11中的<code>= delete;</code>声明结合，禁止了其复制构造和复制赋值（形如
+<code>unique_ptr&lt;Ty&gt;::unique_ptr(const unique_ptr&amp;) = delete;</code>），保留了移动构造和移动赋值的接口，由此解决了“所有权”问题之争——当传递<code>unique_ptr</code>时，必须选择是否显式地放弃所有权：<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">f1</span><span class="params">(unique_ptr&lt;<span class="type">int</span>&gt;)</span></span>;</span><br><span class="line"></span><br><span class="line">unique_ptr&lt;<span class="type">int</span>&gt; ip;</span><br><span class="line"><span class="built_in">f1</span>(ip); <span class="comment">//Error: invokes function `unique_ptr&lt;int&gt;::unique_ptr(const unique_ptr&amp;)` that is declared as deleted</span></span><br><span class="line"><span class="built_in">f1</span>(std::<span class="built_in">move</span>(ip)); <span class="comment">//OK, transferrs ownership to f1</span></span><br></pre></td></tr></table></figure></p>
+<p>移动构造的语义实现参考：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line">unique_ptr&lt;Ty&gt;::<span class="built_in">unique_ptr</span>(unique_ptr&amp;&amp; rhs) <span class="keyword">noexcept</span> : <span class="built_in">ptr</span>(<span class="literal">nullptr</span>)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">this</span>-&gt;<span class="built_in">reset</span>(rhs.<span class="built_in">release</span>());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p><code>unique_ptr</code>的其它成员函数实现和<code>auto_ptr</code>大同小异，不再赘述。</p>
+</blockquote>
+<h2 id="shared_ptr"><code>shared_ptr</code></h2>
+<p>但<code>unique_ptr</code>只涵盖了“只需要”独占指针的情况；在并发编程等任务中，很多时候需要不同函数“共享”一块内存空间，同时又希望实现“自动”的内存管理。<br />
+由此引出了“共享指针”<code>shared_ptr</code>和“弱指针”<code>weak_ptr</code>。</p>
+<p><code>shared_ptr</code>的部分接口实现仍与<code>auto_ptr</code>类似。主要区别之一在其还会内置一个“计数器”且<strong>允许复制构造</strong>，每次复制构造会令<strong>该指针</strong>的计数器+1，析构（或因被其它指针赋值而放弃对当前指针管理）则令其计数器-1；<br />
+当一个指针对应的的计数器归零时，<code>shared_ptr</code>将该指针指向的堆内存释放。</p>
+<blockquote>
+<p>在较复杂的并发编程中，为了避免数据竞争(data
+race)，应使用<code>std::atomic&lt;std::shared_ptr&gt;</code>。</p>
+</blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(std::shared_ptr&lt;<span class="type">int</span>&gt;)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::thread[<span class="number">10</span>] ta;</span><br><span class="line">    std::shared_ptr&lt;<span class="type">int</span>&gt; sp;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">auto</span>&amp; th : ta)</span><br><span class="line">    &#123;</span><br><span class="line">        th = std::<span class="built_in">thread</span>(fun,sp);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>shared_ptr</code>的部分重要成员函数如下：</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th style="text-align: center;">成员函数</th>
+<th style="text-align: center;">作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td
+style="text-align: center;"><code>size_t use_count() const</code></td>
+<td
+style="text-align: center;">返回管理指针的计数，未绑定则为<code>0</code></td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>operator bool() consst</code></td>
+<td
+style="text-align: center;">等价于<code>return static_cast&lt;bool&gt;(use_count());</code></td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>bool unique() const</code></td>
+<td style="text-align: center;">等价于</td>
+</tr>
+</tbody>
+</table>
+<h2 id="weak_ptr"><code>weak_ptr</code></h2>
+<p>“弱指针”<code>weak_ptr</code>在并发/异步编程中亦能大显身手。其本质上是<code>shared_ptr</code>的一个配套产物。<br />
+<code>weak_ptr</code>可以被默认构造（空构造），亦可传入一个<code>shared_ptr</code>来“观测”之：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line">weak_ptr&lt;Ty&gt;::<span class="built_in">weak_ptr</span>(shared_ptr&amp; s)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>此时这个<code>weak_ptr</code>将成为一个 <em>Observer</em>
+（观测者），其“观测”着这个<code>shared_ptr</code>的<strong>底层指针</strong>，但不增加其Counter的计数。<br />
+同时<code>weak_ptr</code><strong>不能直接访问<code>shared_ptr</code>管理的底层指针</strong>，但其可以通过<code>lock()</code>方法来“试着”获取一个<code>shared_ptr</code>，若其有效则获得一个非空的<code>shared_ptr</code>，反之亦然。</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th style="text-align: center;">成员函数</th>
+<th style="text-align: center;">作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>bool expired() const</code></td>
+<td
+style="text-align: center;">若该<code>weak_ptr</code>“观测”的<code>shared_ptr</code>依然有效（即其管理的指针计数不为0），返回<code>true</code>，否则为<code>false</code>；<code>weak_ptr</code>未初始化，即未绑定至<code>shared_ptr</code>时同样返回<code>false</code>。可以等价于<code>return static_cast&lt;bool&gt;(use_count());</code></td>
+</tr>
+<tr>
+<td
+style="text-align: center;"><code>shared_ptr&lt;Ty&gt; lock()</code></td>
+<td style="text-align: center;">等价于返回
+<code>expired() ? shared_ptr&lt;Ty&gt;(ptr) : shared_ptr&lt;Ty&gt;()</code>，<code>ptr</code>为观测的<code>shared_ptr</code></td>
+</tr>
+<tr>
+<td
+style="text-align: center;"><code>size_t use_count() const</code></td>
+<td
+style="text-align: center;">返回观测的<code>shared_ptr</code>对应指针的计数，未绑定则为<code>0</code></td>
+</tr>
+</tbody>
+</table>
+<h1 id="外传raii">外传：RAII</h1>
+<p>RAII，全称 Resource Acquisition Is
+Initialization，是一种的程序设计“哲学”，适用于多种编程语言（越“低级”适用性越强）。<br />
+智能指针就是RAII的生动实践实例之一，同样地还有<code>fstream</code>、<code>lock_guard</code>、<code>vector</code>等。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/cpp/smart-ptr/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+  <div>
+</article>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-cpp/explicit" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -382,279 +619,6 @@ href="/cpp/cast/">C++——万类霜天竞自由</a></p>
       
         <p class="article-more-link">
           <a class="article-more-a" href="/cpp/explicit/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-  <div>
-</article>
-
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-cpp/auto" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/cpp/auto/">C++——auto与类型推导</a>
-    </h1>
-  
-
-        
-        <a href="/cpp/auto/" class="archive-article-date">
-  	<time datetime="2025-06-30T10:03:13.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-06-30</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <blockquote>
-<p>天地虽大，其化均也。</p>
-</blockquote>
-<h1 id="类型的相爱相杀">类型的相爱相杀</h1>
-<p>作为一门编译期的强类型语言，C++对于变量类型的要求在众多编程语言中都属独一档的存在。</p>
-<p>在C语言与传统C++中，所有变量在声明/定义时都必须显式写明其类型。<br />
-其有力地保证了类型安全性，同时在变量类型较为有限的C语言中也较为可行——最复杂的名字也就是奇怪的内置<code>struct</code>，而其常可用<code>typedef</code>或各种宏等绕过：如<code>stdio.h</code>中广为使用的<code>FILE</code>实际上就是<code>struct _iobuf</code>（MSVC中）的<code>typedef</code>。<br />
-而在引入了变化极多的模板编程的现代C++中，<code>using</code>/<code>typedef</code>在一定程度上也能规避写完整变量名的问题，如<code>std::string</code>是<code>std::basic_string&lt;char,std::char_traits&lt;char&gt;,std::allocator&lt;char&gt;&gt;</code>的<code>typedef</code>。</p>
-<p>但无论何处都要显式、完整地声明类型也带来了两个问题：<br />
-其一，由于 <em>nested template
-class</em>（嵌套模板类）的存在，STL中大量组件应用中需要写出的变量类型将显得极为冗长，最常见的就是迭代器家族。如在C++11之前，迭代一个<code>std::map</code>的最简单的方式形如：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">std::map&lt;<span class="type">int</span>,std::string&gt; mp;</span><br><span class="line"><span class="keyword">for</span>(std::map&lt;<span class="type">int</span>,std::string&gt;::iterator it = mp.<span class="built_in">begin</span>();it != mp.<span class="built_in">end</span>();++it)</span><br><span class="line">&#123;</span><br><span class="line">    std::pair&lt;<span class="type">const</span> <span class="type">int</span>,std::string&gt; i = *it; <span class="comment">//For simpler usage, it-&gt;first...</span></span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p><del>幸好那时还没有<code>type_traits</code>，不然<code>std::conditional_type</code>横冲直撞的场面简直不敢想</del></p>
-</blockquote>
-<p>其二，尽管显式声明变量类型显式地保证了类型安全性，但在模板编程中，对于部分和上下文紧密相关的次要变量<del>乔姆斯基“1型变量”，<em>Context-sensitive
-variable</em></del>，如此做反而会极大地降低代码的可维护性、复用性和健壮性。</p>
-<p>假设存在这样一个函数：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Some arbitrary interface</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(<span class="type">const</span> Ty&amp; cont)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> t = cont.<span class="built_in">length</span>(); </span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>它的设计初衷就是任何具有<code>length</code>成员函数的容器都能适配，并假定返回值可以被转化成<code>int</code><del>且不会带来任何其它影响</del>。<br />
-但假如<code>cont.length()</code>的返回值类型发生了变化，如变为<code>size_t</code>，<code>unsigned long long</code>，乃至一些不应该甚至无法被转化为<code>int</code>的类型，则修改起来会非常麻烦。</p>
-<p>解决之道也很简单：由于我们并不关心<code>t</code>是否一定要是<code>int</code>，只要它是<code>cont.length()</code>且满足一些相应语义即可，则将之声明为<code>auto</code>是最佳选择。对于语义约束则可以通过<code>concept</code>的上层设计实现；在一些其它场景（如迭代器的获取等）中亦可灵活使用<code>const auto&amp;</code>等自动用法。</p>
-<h1 id="c11">C++11</h1>
-<h2 id="auto"><code>auto</code></h2>
-<p><code>auto</code>在早期的C语言中也是一个关键字，声明其为自动存储周期(automatic
-storage
-duration)，但其于C++98中即废弃<del>提前回收关键字供后用</del>。</p>
-<blockquote>
-<p>目前的C/C++标准中，多数情况下，不加任何存储周期声明的变量都具备自动存储周期，但全局变量等除外；常见的其它几个存储周期声明符有<code>static</code>、<code>thread_local</code>、<code>register</code>（亦于C++17中废弃并不再生效）。</p>
-</blockquote>
-<p>C++11中“回归”的<code>auto</code>本质上是一个类型占位符(
-<em>placeholder type</em>
-)，其表示该变量的类型声明可以“后置”至其初始化表达式后，即，根据初始化表达式推导变量类型（隐式地，亦约束了该变量必须被初始化）：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> a = <span class="number">3</span>; <span class="comment">//int</span></span><br><span class="line"><span class="keyword">auto</span> b = <span class="number">3.14</span>; <span class="comment">//double</span></span><br><span class="line"><span class="keyword">auto</span> c = <span class="number">2.718f</span>; <span class="comment">//float</span></span><br><span class="line"><span class="keyword">auto</span> d = <span class="string">&#x27;a&#x27;</span>; <span class="comment">//char</span></span><br><span class="line"><span class="keyword">auto</span> e = <span class="string">&quot;ni hao&quot;</span>; <span class="comment">//const char*</span></span><br><span class="line"><span class="comment">//auto f; //Error: variables declared with &#x27;auto&#x27; must be initialized</span></span><br></pre></td></tr></table></figure>
-<p>使用<code>auto</code>声明变量类型，最直接的好处是在初始化复杂类型的变量时，可不必记忆奇怪的嵌套/模板类类型名，只需关注上层的语义逻辑即可。<br />
-如C++11中，获取容器的迭代器并迭代之的语法就简洁了很多：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">std::map&lt;<span class="type">int</span>,std::string&gt; mp;</span><br><span class="line"><span class="comment">//Before C++11</span></span><br><span class="line"><span class="keyword">for</span>(std::map&lt;<span class="type">int</span>,std::string&gt;::iterator it = mp.<span class="built_in">cbegin</span>();it != mp.<span class="built_in">cend</span>();++it)</span><br><span class="line">&#123;</span><br><span class="line">    std::pair&lt;<span class="type">const</span> <span class="type">int</span>,std::string&gt; i = *it;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//Since C++11</span></span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">auto</span> it = mp.<span class="built_in">begin</span>();it != mp.<span class="built_in">end</span>();++it)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">auto</span> i = *it;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p><del>小趣事：不幸的是简化容器循环的“功绩”被同时引入的
-<em>range-for</em>抢了</del>：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span>(<span class="keyword">auto</span> i : mp)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-</blockquote>
-<h2 id="decltype"><code>decltype</code></h2>
-<p>和<code>auto</code>相配套的还有<code>decltype</code>关键字，主要用法有<code>decltype(expr)</code>和<code>decltype(auto)</code>。</p>
-<h3 id="decltypeexpr"><code>decltype(expr)</code></h3>
-<p><code>decltype(expr)</code>中，<br />
-- 若<code>expr</code>是一个未加括号的标识符( unparenthesized
-<em>id-expression</em> )，会给出其<strong>定义时</strong>的类型（所谓
-<em>named entity</em>）；<br />
-- 否则会根据<code>expr</code>的值类型来决定解析类型。</p>
-<p>前者会比较好理解：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> x = <span class="number">1</span>, &amp;y = x;</span><br><span class="line"></span><br><span class="line"><span class="keyword">decltype</span>(x) a = <span class="number">1</span>; <span class="comment">//a is int</span></span><br><span class="line"><span class="keyword">decltype</span>(y) b = a; <span class="comment">//b is int&amp;</span></span><br></pre></td></tr></table></figure>
-<p>注意若试图<code>decltype</code>一个函数时，不能存在重载决议<del>你又没传形参决议个棒槌</del>：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">()</span></span>;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">fun</span><span class="params">(<span class="type">int</span>)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">decltype</span>(fun) fptr; <span class="comment">//Not compile: ambiguious</span></span><br></pre></td></tr></table></figure>
-<p>后者包括了非标识符和用括号包裹的标识符。C++中加括号会使之具有“表达式”的属性，此时其引用/
-<em>cv</em> 属性由<code>expr</code>的值类型决定：</p>
-<ul>
-<li><code>expr</code>为左值(lvalue)时，推导结果为左值引用；<br />
-</li>
-<li><code>expr</code>为将亡值(xvalue)时，推导结果为右值引用；<br />
-</li>
-<li><code>expr</code>为纯右值(prvalue)时，推导结果为非引用。</li>
-</ul>
-<blockquote>
-<p>有关表达式属性左右值的胡搅蛮缠可戳：<a
-href="/cpp/rrefs/">C++——右值引用与移动语义</a></p>
-</blockquote>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> x;</span><br><span class="line"><span class="keyword">decltype</span>((<span class="number">1</span>)) a = <span class="number">1</span>; <span class="comment">//a is int</span></span><br><span class="line"><span class="keyword">decltype</span>((x)) b = a; <span class="comment">//b is int&amp;</span></span><br><span class="line"><span class="keyword">decltype</span>((std::<span class="built_in">move</span>(x))) c = <span class="number">1</span>; <span class="comment">//c is int&amp;&amp;</span></span><br></pre></td></tr></table></figure>
-<h3 id="decltypeauto"><code>decltype(auto)</code></h3>
-<p>还有一种特殊的类型占位符叫<code>decltype(auto)</code>：用于变量类型声明时，其就是简单地将类型置为<code>decltype(expr)</code>（<strong>进一步强调了<code>auto</code>并非将类型置<code>decltype(expr)</code></strong>）。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> x;</span><br><span class="line"></span><br><span class="line"><span class="keyword">decltype</span>(<span class="keyword">auto</span>) a = x; <span class="comment">//a is int</span></span><br><span class="line"><span class="keyword">decltype</span>(<span class="keyword">auto</span>) a = (x); <span class="comment">//a is int&amp;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">decltype</span>(<span class="keyword">auto</span>) a = std::<span class="built_in">move</span>(x); <span class="comment">//a is int</span></span><br><span class="line"><span class="keyword">decltype</span>(<span class="keyword">auto</span>) a = (std::<span class="built_in">move</span>(x)); <span class="comment">//a is int&amp;&amp;</span></span><br></pre></td></tr></table></figure>
-<h2 id="返回类型推导">返回类型推导</h2>
-<p><code>auto</code>作为类型占位符，其自然也可用于函数的返回类型推导上——其于模板编程中应用前景甚广。</p>
-<p>C++11起支持了函数的返回值类型声明为<code>auto</code>，但同时要求其<strong>必须</strong>声明
-<em>trailing return type</em>（即“后置返回类型”），形如：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">auto</span> <span class="title">fun</span><span class="params">()</span> -&gt; <span class="type">int</span></span>;  </span><br><span class="line"><span class="function"><span class="keyword">auto</span> <span class="title">foo</span><span class="params">()</span> -&gt; <span class="type">char</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="string">&#x27;a&#x27;</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">auto</span> lb = []() -&gt; <span class="type">double</span> &#123;<span class="keyword">return</span> <span class="number">3.80</span>;&#125;;  </span><br></pre></td></tr></table></figure>
-<p>而C++14起引入了函数返回类型推导(return type
-deduction)，由此才算实现了真正的“自动”返回类型。推导的返回类型由第一个<code>return</code>语句决定，且在自动推导下不同<code>return</code>语句所推导出的类型应一致（不允许隐式转换等）。同时单纯的<code>auto fun();</code>一类的声明也是合法的（但其定义应不晚于被调用时可见）：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">auto</span> <span class="title">fun</span><span class="params">()</span></span>; <span class="comment">//OK: The return type of fun() will be deduced upon its definition</span></span><br><span class="line"><span class="function"><span class="keyword">auto</span> <span class="title">foo</span><span class="params">(<span class="type">bool</span> a)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(a)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>; <span class="comment">//Deduces to return type `int`</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">3.14</span>; <span class="comment">//Error: deduces to return type `double`, conflicts with previously declared return type `int`</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">decltype</span>(fun) fptr; <span class="comment">//Error: Definition of fun() not yet visible</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>同时，由于lambda函数的返回类型默认也是<code>auto</code>，因此其关于后置返回类型的“版本”约束与<code>auto</code>返回类型的函数是一致的<del>C++14起的lambda才叫真lambda</del>：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> fun = []()&#123;<span class="keyword">return</span> <span class="number">3</span>;&#125; <span class="comment">//OK since C++14 (&quot;real advanced lambda&quot;)</span></span><br></pre></td></tr></table></figure>
-<h3
-id="auto变式和decltypeauto"><code>auto</code>变式和<code>decltype(auto)</code></h3>
-<p>但单以<code>auto</code>作为返回类型（或变量类型声明）的“占位符”依然具有一定的局限性——<code>auto</code>推导出的类型<strong>必定为</strong>非引用类型（可以有<code>const</code>/<code>volatile</code>属性），故诸如<code>auto fun = []()&#123;return std::cout;&#125;;</code>
-的代码就无法通过编译了（推导返回类型为不允许被复制构造的<code>std::ostream</code>）。</p>
-<p>此时就需要用到占位符的“变式”，以对推导出的返回类型给出更好的约束/控制，通过在前/后加以引用/<code>const</code>等修饰，“诱导”<code>auto</code>的类型和最终推导出的类型。<br />
-其本质和定义一个模板函数（形参类型为模板类型参数），再依靠实参推导模板类型参数的过程无异：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(Ty&amp;&amp; arg)</span></span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//Following two derivations are (mostly) fundamentally equivalent:</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">fun</span>(<span class="comment">/*expr*/</span>);</span><br><span class="line"><span class="keyword">auto</span>&amp;&amp; x = <span class="comment">/*expr*/</span>;</span><br></pre></td></tr></table></figure>
-<p>常见的几种变式如下：</p>
-<table>
-<colgroup>
-<col style="width: 33%" />
-<col style="width: 33%" />
-<col style="width: 33%" />
-</colgroup>
-<thead>
-<tr>
-<th style="text-align: center;">占位符</th>
-<th style="text-align: center;">推导结果</th>
-<th style="text-align: center;">说明</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;"><code>auto</code></td>
-<td style="text-align: center;">值</td>
-<td
-style="text-align: center;">会视为需要复制/移动构造一个新变量（不考虑
-拷贝省略(<em>copy elision</em>)
-），若对应的复制/移动构造函数不可用则编译失败</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>auto&amp;</code></td>
-<td style="text-align: center;">左值引用</td>
-<td
-style="text-align: center;">不能通过“推导”绑定至一个右值上，否则编译失败</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>auto&amp;&amp;</code></td>
-<td
-style="text-align: center;">引用（左右值属性依<code>expr</code>而定）</td>
-<td style="text-align: center;">参考 <em>万能引用 (universal
-references)</em></td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>const auto&amp;</code></td>
-<td style="text-align: center;">常左值引用</td>
-<td
-style="text-align: center;">由于<code>auto&amp;</code>也可以推导出常左值引用（令<code>auto</code>以形如<code>const (type)</code>的类型置换），因此此处仅为语义约束</td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>decltype(auto)</code></td>
-<td style="text-align: center;">-</td>
-<td style="text-align: center;">-</td>
-</tr>
-</tbody>
-</table>
-<blockquote>
-<p><code>decltype(auto)</code>可以视情况推导出任意类型，推导规则等参考<a
-href="#decltype">上文</a>。</p>
-</blockquote>
-<p><code>auto&amp;</code>的说明“详解”可直接参考下述代码：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span>&amp; r1 = <span class="number">1</span>; <span class="comment">//Not compile: cannot bind lvalue references to prvalue(auto deduces to `int`)</span></span><br><span class="line"></span><br><span class="line"><span class="type">const</span> <span class="type">int</span> y = <span class="number">1</span>;</span><br><span class="line"><span class="keyword">auto</span>&amp; r2 = y; <span class="comment">//OK, r2&#x27;s type is `const int&amp;`</span></span><br></pre></td></tr></table></figure>
-<p>即，C++初始化变量时，类型参数的推导不会触发SFINAE机制（优先推导<code>int&amp;</code>，失败后不会再尝试<code>const int&amp;</code>等，因其本来就不属于重载决议的范畴）。</p>
-<hr />
-<p>注意若<code>decltype(auto)</code>用作返回值类型，还会涉及<code>return</code>中自动移动(automatic
-move)的分析：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">decltype</span>(<span class="keyword">auto</span>) <span class="title">fn</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">//Return type deduces to:</span></span><br><span class="line">    <span class="type">int</span> x;</span><br><span class="line">    <span class="type">int</span>&amp; y = x;</span><br><span class="line">    <span class="type">int</span>&amp;&amp; z = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>; <span class="comment">//int</span></span><br><span class="line">    <span class="keyword">return</span> x; <span class="comment">//int</span></span><br><span class="line">    <span class="keyword">return</span> y; <span class="comment">//int&amp; (Not compile since C++23)</span></span><br><span class="line">    <span class="keyword">return</span> z; <span class="comment">//int&amp;&amp; (Not compile before C++23)</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> (<span class="number">1</span>); <span class="comment">//int</span></span><br><span class="line">    <span class="keyword">return</span> (x); <span class="comment">//int&amp; (Not compile since C++23)</span></span><br><span class="line">    <span class="keyword">return</span> (y); <span class="comment">//int&amp; (Not compile since C++23)</span></span><br><span class="line">    <span class="keyword">return</span> (z); <span class="comment">//int&amp; (Not compile since C++23)</span></span><br><span class="line">    <span class="keyword">return</span> (std::<span class="built_in">move</span>(x)); <span class="comment">//int&amp;&amp;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>可以发现C++23是其中<code>return ???</code>能否通过编译的一个分水岭，具体地是因为C++23彻底移除了C++11以来“打补丁”般的二次重载决议机制，同时也彻底避免了“传统”<code>return</code>悬挂引用场景的出现：其皆于<a
-href="/cpp/return/">C++——return</a>中具述之。<del>当然架不住还是有<code>return (rref)</code>之类的代码又能通过编译了，因此还得靠C++26继续填这个天坑</del></p>
-</blockquote>
-<h1 id="c14">C++14+</h1>
-<p><code>auto</code>关键字在C++14及以后的应用变得更加广泛。</p>
-<h2 id="自动模板函数">“自动”模板函数</h2>
-<p>将<code>auto</code>（含其变式，如<code>const auto&amp;</code>、<code>decltype(auto)</code>等）作为形参的类型占位符，可以简单地自动生成一个模板函数。直接上代码：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(<span class="keyword">auto</span> x)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::cout &lt;&lt; x &lt;&lt; std::endl;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">auto</span> <span class="title">add</span><span class="params">(<span class="keyword">auto</span> a,<span class="keyword">auto</span> b)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> a*<span class="number">2</span> + b;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">fun</span>(<span class="number">1</span>); <span class="comment">//instanciates some template function fun&lt;int&gt;, to void fun(int x)</span></span><br><span class="line">        <span class="comment">//(template parameter `int` is invisiable by coder yet identifiable by compiler)</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">add</span>(<span class="number">3.14</span>,<span class="number">2</span>); <span class="comment">//instanciates some template function fun&lt;double,double,int&gt; to double fun(double a,int b)</span></span><br><span class="line">            <span class="comment">//with the return type deduced as well</span></span><br></pre></td></tr></table></figure></p>
-<p>上述<code>add</code>函数和下面的声明是一致的（每个类型占位符，<em>placeholder
-type</em>
-都会被一个模板类型参数代替），只是<code>Ty1</code>等并不显式可见<del>非要类型的话可以上<code>decltype</code>或者干脆回传统模板</del>：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty1,<span class="keyword">class</span> Ty2,<span class="keyword">class</span> Ty3&gt;</span></span><br><span class="line"><span class="function">Ty1 <span class="title">add</span><span class="params">(Ty2 a,Ty3 b)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> a*<span class="number">2</span> + b;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="concepts联动真正的天人合一">concepts联动：真正的“天人合一”</h2>
-<p>不难发现，上述“自动模板”缺点之一在于难以直观地约束模板类型参数是否符合条件。<br />
-C++20中，随着concepts的引入，<code>auto</code>亦与之相辅相成，形成了极为简洁利落的带约束模板声明：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> nihao = <span class="built_in">sizeof</span>(Ty) &lt; <span class="number">4</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">(nihao <span class="keyword">auto</span> arg)</span></span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//This statement is equivalent to:</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt; <span class="title">requires</span> <span class="params">(nihao&lt;Ty&gt;)</span></span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">(Ty arg)</span></span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//Or(another partially simplified template, yet not as simplified as the first one)</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;nihao Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">(Ty arg)</span></span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(std::formattable&lt;<span class="type">char</span>&gt; <span class="keyword">auto</span> val)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,val);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>注：此处的<code>auto</code>也可以是<code>auto</code>的变式（加以
-<em>cvref</em>
-修饰），其中前置concept只约束<code>auto</code>部分（只约束推导出的模板参数），其后引用的约束另计。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">ling</span><span class="params">(std::formattable&lt;<span class="type">char</span>&gt; <span class="keyword">auto</span>&amp; v)</span></span>&#123;&#125;</span><br><span class="line"><span class="comment">//Equivalent to:</span></span><br><span class="line"><span class="keyword">template</span>&lt;std::formattable&lt;<span class="type">char</span>&gt; Ty&gt;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">ling</span><span class="params">(Ty&amp; v)</span></span>&#123;&#125;</span><br></pre></td></tr></table></figure>
-<p>“另计”的内涵在于，下述对<code>ling</code>的第一个调用因为引用绑定问题，在模板实例化阶段依然会编译失败<del>躲得过初一躲不过十五</del>：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">ling</span>(<span class="number">1</span>); <span class="comment">//Not compile: template type argument deduces to `int`，yet cannot bind a lvalue reference to a prvalue `1`</span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> x&#123;&#125;;</span><br><span class="line"><span class="built_in">ling</span>(x); <span class="comment">//OK</span></span><br></pre></td></tr></table></figure>
-<h2 id="deducing-this珠联璧合">Deducing this：珠联璧合</h2>
-<p>C++23引入的 <em>Deducing this</em>
-的最明显用途之一在于，通过模板“增强”之，不必再为左右值编写极大量的匹配语法/语义的重载。</p>
-<p>如在C++23以前，针对一个成员函数保持左/右值、常量语义可能需要<code>&amp;</code>、<code>&amp;&amp;</code>、<code>const &amp;</code>、<code>const &amp;&amp;</code>四个重载：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">MyVector</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span>&amp; <span class="keyword">operator</span>[](<span class="type">size_t</span> idx) &amp;;</span><br><span class="line">    <span class="type">const</span> <span class="type">int</span>&amp; <span class="keyword">operator</span>[](<span class="type">size_t</span> idx) <span class="type">const</span> &amp;;</span><br><span class="line">    <span class="type">int</span>&amp;&amp; <span class="keyword">operator</span>[](<span class="type">size_t</span> idx) &amp;&amp;;</span><br><span class="line">    <span class="type">const</span> <span class="type">int</span>&amp;&amp; <span class="keyword">operator</span>[](<span class="type">size_t</span> idx) <span class="type">const</span> &amp;&amp;;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>而其中最有趣而无趣的是，这四个函数的定义完全相同。</p>
-</blockquote>
-<p>而如今结合<code>auto</code>和<code>deducing this</code>，一行代码即可解决：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">MyVector</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">auto</span>&amp;&amp; <span class="keyword">operator</span>[](<span class="keyword">this</span> <span class="keyword">auto</span>&amp;&amp; self,<span class="type">size_t</span> idx)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> self.arr[idx];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
-<h1 id="结语">结语</h1>
-<p><code>auto</code>作为类型“占位符”，在类型语义明确但语法复杂、模板编程中部分上下文关联紧密变量/返回值等场景中，其在让人如获神助的同时，亦或从另一角度保证了类型安全性；<br />
-同时其 <em>cvref</em> 和 <code>decltype(auto)</code>的变式，以及模板中的
-<em>concepts</em> “即时”约束使其应用场景更加灵活多样。</p>
-<p>作为C++11以来极深远地改变编程风格的“小”特性，<code>auto</code>亦可谓现代C++的通天塔，伴随各位对现代C++的精通之途：<br />
-从最初接触时感受如部分解释型语言<del>点名Python</del>般<code>auto x = 1;</code>自动初始化的特性，到高阶模板编程中对左右值语义的灵活约束。</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/cpp/auto/">展开全文 >></a>
         </p>
       
 

@@ -6,14 +6,19 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="https://crystaljiang232.github.io">
-  <title>玲珑</title>
+  <title>C++——智能指针 | 玲珑</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="玲珑">
-<meta property="og:url" content="https://crystaljiang232.github.io/page/13/index.html">
+  <meta name="description" content="“智能”指针？ 指针本似乎只应是一个特殊的整型变量，其何以有“智能”一说？其源于C&#x2F;C++中堆内存(Heap memory)管理的有关问题。 C语言在&lt;stdlib.h&gt;中提供了类似于malloc、free等函数来进行堆内存的简单分配及回收；C++中则引入了operator new、operator delete[]等来配合面向对象的语义；但仅依赖它们进行内存管理的缺点亦非常明显">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C++——智能指针">
+<meta property="og:url" content="https://crystaljiang232.github.io/cpp/smart-ptr/index.html">
 <meta property="og:site_name" content="玲珑">
+<meta property="og:description" content="“智能”指针？ 指针本似乎只应是一个特殊的整型变量，其何以有“智能”一说？其源于C&#x2F;C++中堆内存(Heap memory)管理的有关问题。 C语言在&lt;stdlib.h&gt;中提供了类似于malloc、free等函数来进行堆内存的简单分配及回收；C++中则引入了operator new、operator delete[]等来配合面向对象的语义；但仅依赖它们进行内存管理的缺点亦非常明显">
 <meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2025-07-30T04:38:00.000Z">
+<meta property="article:modified_time" content="2025-07-31T01:28:51.902Z">
 <meta property="article:author" content="Hibiscus">
+<meta property="article:tag" content="Modern C++">
 <meta name="twitter:card" content="summary">
   
     <link rel="alternative" href="/atom.xml" title="玲珑" type="application/atom+xml">
@@ -150,378 +155,177 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
-  
-    <article id="post-crypto/dlog" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+            <article id="post-cpp/smart-ptr" class="article article-type-post " itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/crypto/dlog/">离散对数</a>
+    <h1 class="article-title" itemprop="name">
+      C++——智能指针
     </h1>
   
 
         
-        <a href="/crypto/dlog/" class="archive-article-date">
-  	<time datetime="2024-12-10T12:18:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-10</time>
+        <a href="/cpp/smart-ptr/" class="archive-article-date">
+  	<time datetime="2025-07-30T04:38:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-07-30</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>离散对数问题，Discrete Logorithm
-Problem，简称DLP，是非对称密码学所依赖的极为重要的数学难题之一。<br />
-经典DLP问题描述：<br />
-给定 <span class="math inline">\(g^x \equiv c (mod p) （g,x &lt;
-p）\)</span>，由 <span class="math inline">\((g,x)\)</span> 计算 <span
-class="math inline">\(c\)</span> 很容易（快速幂取模），但由 <span
-class="math inline">\((g,c)\)</span> 计算 <span
-class="math inline">\(x\)</span> 是困难的。</p>
-<blockquote>
-<p>即使是BSGS等攻击方法，依然必须涉及“爆破”一步，即在x的可能范围内逐个数值尝试是否能让等式成立。</p>
-</blockquote>
-<p>离散数学（广义上）DLP问题描述： 设循环群 <span
-class="math inline">\(G_p\)</span> 的阶为 <span
-class="math inline">\(n\)</span>。<br />
-给定群内的任意元素 <span class="math inline">\(A \in G_p\)</span> 及
-<span class="math inline">\(x &lt; n\)</span>，计算 <span
-class="math inline">\(C = x \cdot A\)</span> 很容易，但给定 <span
-class="math inline">\(C\)</span>、<span
-class="math inline">\(A\)</span>，求解 <span
-class="math inline">\(x\)</span> 是困难的。<br />
-这里x代表A执行二元运算的次数，对于经典DLP，其为模p环下的乘法运算；对于ECDLP，其为椭圆曲线上的加法运算。</p>
-<blockquote>
-<p>给定<span class="math inline">\(C,x\)</span>，可以计算 <span
-class="math inline">\(A = x^{-1} \cdot C\)</span>，此时 <span
-class="math inline">\(x^{-1}\)</span> 应理解为 <span
-class="math inline">\(x\)</span> 在 <span
-class="math inline">\(Zmod(n)\)</span> 下的逆元。</p>
-</blockquote>
-<p>由DLP问题衍生出的 <strong><em>Diffle-Hellman</em></strong>
-密钥交换：<br />
-假设Alice和Bob希望在一个不安全的环境下进行密钥交换。他们协商密钥交换在
-<span class="math inline">\(G_p\)</span> 上进行，选定生成元 <span
-class="math inline">\(G\)</span> 并公开。<br />
-Alice和Bob分别产生一个私钥 <span class="math inline">\(d_A\)</span> 和
-<span class="math inline">\(d_B\)</span>，分别计算 <span
-class="math inline">\(A = d_A \cdot G\)</span> 与 <span
-class="math inline">\(B = d_B \cdot G\)</span>，将 <span
-class="math inline">\(A\)</span>、<span class="math inline">\(B\)</span>
-发送给对方并公开。<br />
-随后，他们再分别使用私钥和对方发送的密钥计算 <span
-class="math inline">\(AB = d_A \cdot B = d_B \cdot A\)</span>。
-在阿贝尔群上其正确性显然。<br />
-此时双方就已经完成了密钥交换，共享密钥就是AB。外人即使知道了 <span
-class="math inline">\((G_p,G,A,B)\)</span>，亦很难从中获得<span
-class="math inline">\(d_A\)</span>或<span
-class="math inline">\(d_B\)</span>，进而保证了共享密钥 <span
-class="math inline">\(AB\)</span> 的安全性。</p>
-<h1 id="攻击方法概览">攻击方法概览</h1>
+        <h1 id="智能指针">“智能”指针？</h1>
+<p>指针本似乎只应是一个特殊的整型变量，其何以有“智能”一说？其源于C/C++中堆内存(Heap
+memory)管理的有关问题。</p>
+<p>C语言在<code>&lt;stdlib.h&gt;</code>中提供了类似于<code>malloc</code>、<code>free</code>等函数来进行堆内存的简单分配及回收；C++中则引入了<code>operator new</code>、<code>operator delete[]</code>等来配合面向对象的语义；但仅依赖它们进行内存管理的缺点亦非常明显，包括但不限于：</p>
 <ul>
-<li>暴力攻击，在n较小时，攻击者可以枚举所有的 <span
-class="math inline">\(x \in (0,n)\)</span> 逐个校验。<br />
+<li>容易“忘记”或“绕过”内存回收的部分，进而导致内存泄漏问题<del>想必各位刚接触C语言时就被填鸭式地记忆过<code>malloc</code>完一定要<code>free</code></del>；<br />
 </li>
-<li>BSGS(Baby-step
-Giant-step，大步小步法，<del>又名“亦步亦趋”</del>)，通过制造碰撞来“用空间换时间”。</li>
-</ul>
-<blockquote>
-<p>大步小步法的空间复杂度与时间复杂度均为 <span
-class="math inline">\(O(\sqrt n)\)</span>。暴力攻击的二者显然分别为
-<span class="math inline">\(O(1)\)</span> 及 <span
-class="math inline">\(O(n)\)</span>。</p>
-</blockquote>
-<ul>
-<li>Pohlig-Hellman攻击<br />
+<li>内存“所有权”(ownership)不清晰。比如往某个函数中传入指针时无法明确其内存的“所有权”（指是否能重新分配、释放等）是否转移，函数嵌套调用时容易导致内存管理混乱（如
+<em>double-free</em> ，即双重释放问题，亦是UB）；<br />
 </li>
-<li>Pollard's kangaroo algorithm<br />
-</li>
-<li>Pollard's rho algorithm</li>
+<li>作为整型变量的指针非常“脆弱”，极易在函数调用链中被不经意地修改。</li>
 </ul>
+<p>比如下述C代码片段：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">foo</span><span class="params">(<span class="type">int</span>*)</span>;</span><br><span class="line"><span class="type">void</span> <span class="title function_">bar</span><span class="params">(<span class="type">const</span> <span class="type">int</span>* p)</span></span><br><span class="line">&#123;</span><br><span class="line">    p += <span class="number">2</span>; <span class="comment">//?</span></span><br><span class="line">    <span class="built_in">free</span>(p); <span class="comment">//?</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="type">void</span> <span class="title function_">fun</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span>* ptr = (<span class="type">int</span>*)<span class="built_in">calloc</span>(<span class="number">10</span>,<span class="keyword">sizeof</span>(<span class="type">int</span>));</span><br><span class="line">    <span class="type">bool</span> status;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>;i&lt;<span class="number">5</span>;++i)</span><br><span class="line">    &#123;</span><br><span class="line">        ptr++; <span class="comment">//?</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    foo(ptr); <span class="comment">//?</span></span><br><span class="line">    bar(ptr); <span class="comment">//?</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(!status)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span>; <span class="comment">//?</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">free</span>(ptr);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>稍多加学习与内存管理等有关的知识就会发现，上述代码的槽点不断。<br />
+如<code>void bar()</code>的形参声明为<code>const int*</code>，只使用顶层<code>const</code>约束了不能通过<code>p</code>来修改指向的值，但架不住<code>p</code>本身容易被乱改，对于稍长一些的函数来说非常致命（极易忘记前述代码中<code>p</code>已经被改动过）。同时即使加上底层<code>const</code>，此般“固若金汤”也无法防止本函数间有人试图提前将其指向的内存<code>free</code>掉——内存管理权（所有权）混乱，可谓“引
+<em>SegmentFault</em> 入室”。<br />
+<code>void fun()</code>中难得地记得了在函数结束时<code>free</code>申请的内存，但往上看数行就可发觉隐患之一：若<code>status</code>为<code>false</code>，则会触发
+<em>early
+return</em>，进而<code>ptr</code>指向的内存将（在程序允许结束<del>或者大概率崩溃</del>之前）无法被释放。C++中此类问题更甚——除了显式的<code>return</code><del><code>exit</code>或<code>abort</code>一类的<code>[[norerturn]]</code>不算</del>，<em>exceptions</em>
+乱飞也极易在不经意间直接“跳出”函数，且异常相比此类显式的<code>return</code>更难以被发现和追踪。</p>
+<hr />
+<p>但不可否认的是，C/C++的“手动”内存管理也是其极大的特色和优势之一——对底层内存拥有极高自由度的读写权，同时没有后台
+<em>garbage collection</em>
+的束缚，使之能广泛地应用于底层软硬件的程序开发，同时拥有相比其它解释型/混合型语言“一骑绝尘”的效率。</p>
+<p>如何在保留“手动内存管理”特色的同时，应用<strong>语言自身机制</strong>帮助程序设计者管理内存，自然成为了C++发展的一大课题。</p>
+<h1 id="c98前世的auto_ptr">C++98：前世的<code>auto_ptr</code></h1>
+<p>C++98提出了一个<del>因为太憨在C++11被废弃(deprecated)并在C++17被移除(removed)的</del>智能指针的雏形：<code>auto_ptr</code>。</p>
+<h2 id="基本设计与成效">基本设计与成效</h2>
+<p>回顾到我们的基本需求，即希望在申请的堆内存<strong>离开其作用域时自动释放</strong>，显然将之封装在构造/析构函数中是其不二之选。<br />
+同时还应当提供一些易于访问原始指针的接口，其可通过类成员函数和操作符重载实现。<br />
+由此，可以写出一个简单的类模板如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">auto_ptr</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">auto_ptr</span>();</span><br><span class="line">    ~<span class="built_in">auto_ptr</span>();</span><br><span class="line"></span><br><span class="line">    Ty* <span class="keyword">operator</span>-&gt;();</span><br><span class="line">    <span class="type">const</span> Ty* <span class="keyword">operator</span>-&gt;() <span class="type">const</span>;</span><br><span class="line"></span><br><span class="line">    Ty&amp; <span class="keyword">operator</span>*();</span><br><span class="line">    <span class="type">const</span> Ty&amp; <span class="keyword">operator</span>*() <span class="type">const</span>;</span><br><span class="line"></span><br><span class="line">    <span class="function">Ty* <span class="title">get</span><span class="params">()</span></span>;</span><br><span class="line">    <span class="function"><span class="type">const</span> Ty* <span class="title">get</span><span class="params">()</span> <span class="type">const</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="function">Ty* <span class="title">release</span><span class="params">()</span></span>;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">reset</span><span class="params">(Ty*)</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    Ty* ptr;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>其中只需要</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line">auto_ptr&lt;Ty&gt;::~<span class="built_in">auto_ptr</span>()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">delete</span> ptr;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>就可以实现自动“释放内存”的功能了。<code>operator-&gt;</code>等重载亦能实现“无感”的底层指针访问，如：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">auto_ptr&lt;std::string&gt; sp;</span><br><span class="line">std::cout &lt;&lt; sp-&gt;<span class="built_in">length</span>() &lt;&lt; std::endl;</span><br></pre></td></tr></table></figure>
+<p>利用<code>operator-&gt;</code>重载的“二次解析”特性，访问类成员的方式无异于<code>sp</code>是原始指针的情况。</p>
+<p><code>get()</code>和<code>release()</code>成员函数都会返回原始指针，区别在于<code>get()</code>用于向后兼容一些C样式的API以及少数需要利用原始指针的情况（并未“交出”指针的所有权，只是临时供使用），<code>release()</code>则会“交出”指针的所有权（调用后该对象管理的指针置空，<strong>进而该指针指向的堆内存不会被自动释放，需要手动清理</strong>）。</p>
+<p><code>reset()</code>函数则用于重置其管理的指针（<strong>新指针亦必须指向有效的、已申请的堆内存</strong>），看实现即知其用途：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="type">void</span> auto_ptr&lt;Ty&gt;::<span class="built_in">reset</span>(Ty* p)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">delete</span> ptr;</span><br><span class="line">    ptr = p;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <blockquote>
-<p>上述是较为通用的解法，对于部分 <span
-class="math inline">\(G_p\)</span>
-存在特有的攻击方法，比如ECDLP下的Smart's Attack、MOV Attack等。</p>
-<p>另外，有一些循环群可能求解 <span class="math inline">\(G_p\)</span>
-上的离散对数问题并不困难，比如 <span
-class="math inline">\(Zmod(p)\)</span> 上的加法运算可以快速求解。</p>
+<p>此处应用了C++的<code>operator delete</code>“逃课”机制：<code>free</code>/<code>delete</code>一个空指针不会发生任何事情（即该操作是“安全”的）。</p>
 </blockquote>
-<h1 id="细讲">细讲</h1>
 <blockquote>
-<p>以下内容干货（纸面资料）过多，<del>小心噎着</del></p>
+<p>Hint：为什么花如此多的篇幅讲述一个已经 <em>deprecated</em>
+类的成员函数？因为现代的智能指针“三剑客”成员函数的语义与之相同，只是更改了部分其它函数的实现（或增减了一些其它函数）来完善其功能。</p>
 </blockquote>
-<h2 id="bsgs-亦步亦趋">BSGS —— 亦步亦趋</h2>
-<p>BSGS本质是在试着制造碰撞，利用散列表查找复杂度为常量的优势，以空间换时间。<br />
-具体操作方法如下：设待求解 <span class="math inline">\(C = x \cdot
-G\)</span> 中的x，<br />
-记 <span class="math inline">\(T = \sqrt n\)</span>，<span
-class="math inline">\(R = G \cdot T^{-1}\)</span>；制备一个散列表集合
-<span class="math inline">\(S = {i \cdot G}，i \in [0,C)\)</span><br />
-随后遍历 <span class="math inline">\(j \in [0,C)\)</span>，若 <span
-class="math inline">\(C + j \cdot R \in S\)</span>
-，则说明碰撞成功，得到 <span class="math inline">\(x = jT +
-i\)</span>。<br />
-显然遍历中一定会存在一次碰撞。</p>
+<h2 id="缺点">缺点</h2>
+<p>看似上述<code>auto_ptr</code>在功能全面的同时实现看似“天衣无缝”，但其依然未能规避开原始指针的诸多缺点。</p>
+<p>首先，指针的“所有权”在函数传参等场景时依然不够明确<del>或许是C++98/03没有移动语义的锅</del>：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(auto_ptr&lt;<span class="type">int</span>&gt;)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    auto_ptr&lt;<span class="type">int</span>&gt; p;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">    <span class="built_in">fun</span>(p); <span class="comment">//?</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在对<code>fun(p)</code>调用后，<code>fun</code>函数中<code>auto_ptr</code>这一形参会将<code>p</code>管理的指针释放掉，导致现在<code>foo</code>中的<code>p</code>管理了一个无效的内存，进而SegmentFault只是时间问题。</p>
+<h1 id="c11智能指针三剑客">C++11：智能指针“三剑客”</h1>
+<p><code>auto_ptr</code>迎合时代发展的浪潮，在C++11中蜕变为了<code>unique_ptr</code>、<code>shared_ptr</code>和<code>weak_ptr</code>三剑客，通过和C++11引入的大量其它语法特性的巧妙配合，使其在内存管理辅助中如鱼得水。</p>
 <blockquote>
-<p>“大步小步”的命名之源：</p>
-<p>如上式，<span class="math inline">\(i\)</span> 每增加1，<span
-class="math inline">\(x\)</span> 增加1，所谓一“小步”；<span
-class="math inline">\(j\)</span> 每增加1， <span
-class="math inline">\(x\)</span> 增加 <span class="math inline">\(\sqrt
-n\)</span> ，所谓一“大步”。</p>
-<p>这种攻击思想在轮加密/类轮加密的攻击（含哈希碰撞）中也有较多应用，思路即为将密钥拆为两部分，将中间值进行碰撞。</p>
+<p>同时<code>auto_ptr</code>其也是现代C++中最先被 <em>deprecated</em> 和
+<em>removed</em> 的一批<strong>库特性</strong>之一。</p>
 </blockquote>
-<p><del>为了便于理解，</del>给出一段示意BSGS求解 <span
-class="math inline">\(GF_p\)</span> 下DLP问题的代码</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">dlog</span>(<span class="params">p:<span class="built_in">int</span>,c:<span class="built_in">int</span></span>) -&gt; <span class="built_in">int</span>:</span><br><span class="line">    g = <span class="number">2</span> <span class="comment">#假设目标是求解pow(2,x,p)==c中的p</span></span><br><span class="line">    t = <span class="built_in">int</span>(<span class="built_in">pow</span>(p,<span class="number">1</span>/<span class="number">2</span>))</span><br><span class="line">    r = <span class="built_in">pow</span>(<span class="number">2</span>,-t,p)</span><br><span class="line"></span><br><span class="line">    dc = &#123;&#125;</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(t):</span><br><span class="line">        dc[g] = i</span><br><span class="line">        g = (g * <span class="number">2</span>) % p</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(t):</span><br><span class="line">        <span class="keyword">if</span> c <span class="keyword">in</span> dc: <span class="comment">#找到碰撞</span></span><br><span class="line">            <span class="keyword">return</span> dc[c] + j * t</span><br><span class="line">        c = (c * r) % p</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">None</span></span><br></pre></td></tr></table></figure>
-<h2 id="pohlig-hellman-韩信点兵">Pohlig-Hellman —— 韩信点“兵”</h2>
-<p>Pohlig-Hellman
-利用了<em>群论中的</em>拉格朗日定理和中国剩余定理。<br />
-其攻击对象是<strong>阶的小因子之积</strong>过小的循环群，在这些群上，可以求解(部分)阶比较小的子群的离散对数问题；<br />
-对这些结果应用中国剩余定理，即可获得原群上离散对数问题的结果。</p>
+<h2 id="unique_ptr"><code>unique_ptr</code></h2>
+<p>字如其名，<code>unique_ptr</code>表示一个“独占”的指针。<br />
+其通过和C++11中的<code>= delete;</code>声明结合，禁止了其复制构造和复制赋值（形如
+<code>unique_ptr&lt;Ty&gt;::unique_ptr(const unique_ptr&amp;) = delete;</code>），保留了移动构造和移动赋值的接口，由此解决了“所有权”问题之争——当传递<code>unique_ptr</code>时，必须选择是否显式地放弃所有权：<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">f1</span><span class="params">(unique_ptr&lt;<span class="type">int</span>&gt;)</span></span>;</span><br><span class="line"></span><br><span class="line">unique_ptr&lt;<span class="type">int</span>&gt; ip;</span><br><span class="line"><span class="built_in">f1</span>(ip); <span class="comment">//Error: invokes function `unique_ptr&lt;int&gt;::unique_ptr(const unique_ptr&amp;)` that is declared as deleted</span></span><br><span class="line"><span class="built_in">f1</span>(std::<span class="built_in">move</span>(ip)); <span class="comment">//OK, transferrs ownership to f1</span></span><br></pre></td></tr></table></figure></p>
+<p>移动构造的语义实现参考：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line">unique_ptr&lt;Ty&gt;::<span class="built_in">unique_ptr</span>(unique_ptr&amp;&amp; rhs) <span class="keyword">noexcept</span> : <span class="built_in">ptr</span>(<span class="literal">nullptr</span>)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">this</span>-&gt;<span class="built_in">reset</span>(rhs.<span class="built_in">release</span>());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <blockquote>
-<p>群中的拉格朗日定理：如果 <span class="math inline">\(G_P\)</span> 是
-<span class="math inline">\(G\)</span> 的一个子群，则 <span
-class="math inline">\(ord(G_P)\)</span> 一定整除 <span
-class="math inline">\(ord(G)\)</span>。</p>
+<p><code>unique_ptr</code>的其它成员函数实现和<code>auto_ptr</code>大同小异，不再赘述。</p>
 </blockquote>
-<p>攻击成立的两个场景：<br />
-- 目标群的阶的全部因子都很小，a.k.a.“光滑数”(smooth-number)；<br />
-- 目标运算数计数 <span class="math inline">\(x\)</span>
-小于目标群的阶的小因子之积（实际上第一种情况可以看作是第二种情况的特例）。</p>
-<p>实现上，我们令 $n = $ <span
-class="math inline">\(\prod_{i=1}^m{p_i^{e_i}}\)</span>。对于每个因子
-<span class="math inline">\(f = p_i^{e_i}\)</span>，考虑 <span
-class="math inline">\(C^{&#39;} = f \cdot C\)</span>，<span
-class="math inline">\(G^{&#39;} = f \cdot G\)</span>。<br />
-此时 <span class="math inline">\(C^{&#39;}\)</span> 在群中的阶为 <span
-class="math inline">\(\frac{n}{f}x\)</span>，<span
-class="math inline">\(G^{&#39;}\)</span> 的阶则为 <span
-class="math inline">\(\frac{n}{f}\)</span>。<br />
-根据拉格朗日定理，此时以 <span class="math inline">\(G^{&#39;}\)</span>
-为生成元的子群的阶只有 <span class="math inline">\(f\)</span>，且 <span
-class="math inline">\(C^{&#39;}\)</span>
-亦在这个群上，故可以在这个低阶子群上求解DLP。<br />
-依此法求解的 <span class="math inline">\(\{x_i\}\)</span> 满足 <span
-class="math inline">\(x_i \equiv x (mod p_i^{e_i})\)</span>。</p>
-<ul>
-<li>对于第一种情况，显然 <span
-class="math inline">\({p_i^{e_i}}\)</span>
-互素，故将所有等式联立至CRT中，求出通解 <span
-class="math inline">\(x^{&#39;} = x_0 + kn&#39;\)</span>，令 <span
-class="math inline">\(k=0\)</span> 即可获得 <span
-class="math inline">\(x\)</span>。<br />
-</li>
-<li>对于第二种情况，假设存在 <span class="math inline">\(x &lt;
-r\)</span>，则可以升序求解模 <span
-class="math inline">\(p_i^{e_i}\)</span> 下的DLP，只需要求解出的 <span
-class="math inline">\(\prod_{i=1}^m{p_i^{e_i}} &gt; r\)</span>
-，即可令CRT求解出的 <span class="math inline">\(x^{&#39;}\)</span>
-模数大于 <span class="math inline">\(r\)</span>，进而获得 <span
-class="math inline">\(x\)</span>。</li>
-</ul>
-<p>还是直接上代码：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">ph_attack</span>(<span class="params">p:<span class="built_in">int</span>,c:<span class="built_in">int</span>,intact: <span class="built_in">bool</span> = <span class="literal">True</span></span>) -&gt; <span class="built_in">int</span>: <span class="comment">#仍旧是pow(2,x,p) == c</span></span><br><span class="line">    g = <span class="number">2</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">#约定，factor(x)返回一个list，每个元素是形如(prime,factor)的tuple</span></span><br><span class="line">    <span class="comment">#约定，预置了discrete_log(a,g)返回int，作用为给定(g,a)，求解群中满足a = x * g的x，其可以采用暴力攻击、BSGS等方法进行</span></span><br><span class="line">    <span class="comment">#约定，函数crt(r,m)可以对给定两个等长的列表，且m各元素互质时，求CRT问题的基础解(k=0)</span></span><br><span class="line">    rls = []</span><br><span class="line">    mls = []</span><br><span class="line"></span><br><span class="line">    n = p - <span class="number">1</span> <span class="comment">#Zmod(p)的阶</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">#对于第一种情况的攻击，即不知道x的额外信息，完全攻击每个子群</span></span><br><span class="line">    <span class="keyword">if</span> intact:</span><br><span class="line">        <span class="keyword">for</span> pm,exp <span class="keyword">in</span> factor(n):</span><br><span class="line">            cur = <span class="built_in">pow</span>(pm,exp)</span><br><span class="line">            fc = n // cur</span><br><span class="line">            temp_g = <span class="built_in">pow</span>(g,fc,p)</span><br><span class="line">            temp_c = <span class="built_in">pow</span>(c,fc,p)</span><br><span class="line">            mls.append(cur)</span><br><span class="line">            rls.append(discrete_log(temp_c,temp_g))</span><br><span class="line"></span><br><span class="line">    <span class="comment">#对于第二种情况的攻击，攻击部分子群，其实只需要记录已经求解的模数之积，伺机break</span></span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        Sentinel = <span class="built_in">pow</span>(<span class="number">2</span>,<span class="number">32</span>) <span class="comment">#x的上界</span></span><br><span class="line">        mul = <span class="number">1</span></span><br><span class="line">        <span class="keyword">for</span> pm,exp <span class="keyword">in</span> factor(n):</span><br><span class="line">            cur = <span class="built_in">pow</span>(pm,exp)</span><br><span class="line">            fc = n // cur</span><br><span class="line">            temp_g = <span class="built_in">pow</span>(g,fc,p)</span><br><span class="line">            temp_c = <span class="built_in">pow</span>(c,fc,p)</span><br><span class="line">            mls.append(cur)</span><br><span class="line">            rls.append(discrete_log(temp_c,temp_g))</span><br><span class="line">            mul *= cur</span><br><span class="line">            <span class="keyword">if</span> mul &gt; Sentinel:</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> crt(rls,mls)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="shared_ptr"><code>shared_ptr</code></h2>
+<p>但<code>unique_ptr</code>只涵盖了“只需要”独占指针的情况；在并发编程等任务中，很多时候需要不同函数“共享”一块内存空间，同时又希望实现“自动”的内存管理。<br />
+由此引出了“共享指针”<code>shared_ptr</code>和“弱指针”<code>weak_ptr</code>。</p>
+<p><code>shared_ptr</code>的部分接口实现仍与<code>auto_ptr</code>类似。主要区别之一在其还会内置一个“计数器”且<strong>允许复制构造</strong>，每次复制构造会令<strong>该指针</strong>的计数器+1，析构（或因被其它指针赋值而放弃对当前指针管理）则令其计数器-1；<br />
+当一个指针对应的的计数器归零时，<code>shared_ptr</code>将该指针指向的堆内存释放。</p>
 <blockquote>
-<p>因此，为使任意场景实例化的DLP问题抵抗Pohlig-Hellman攻击，该群的阶或应没有小因子（最好阶自身就是大质数），或其小因子极少且乘积极小。</p>
-<p>对于 <span class="math inline">\(Zmod(p)\)</span>
-上的离散对数问题，一般会要求p是质数的同时，<span
-class="math inline">\(\frac{p-1}{2}\)</span>
-为质数（或没有小因子）。</p>
-<blockquote>
-<p><span class="math inline">\(p\)</span> 是质数时，其阶 <span
-class="math inline">\(\phi(p) = p-1\)</span>，显然此时 <span
-class="math inline">\(2\)</span>
-是其阶的一个因子，令其阶的另一个因子是质数，同时约束 <span
-class="math inline">\(x&gt;2\)</span>，即可确保其最大限度地抵抗Pohlig-Hellman攻击。</p>
+<p>在较复杂的并发编程中，为了避免数据竞争(data
+race)，应使用<code>std::atomic&lt;std::shared_ptr&gt;</code>。</p>
 </blockquote>
-<p><strong>只要一个群的阶不是质数，那么Pohlig-Hellman总能通过转而攻击子群，降低求解该群上DLP问题的复杂度。</strong></p>
-</blockquote>
-<p>sagemath中内置了求解离散对数相关的工具： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line">p = <span class="number">7</span></span><br><span class="line">E = EllipticCurve(Zmod(p),[<span class="number">0</span>,<span class="number">2</span>])</span><br><span class="line">A = E.random_point()</span><br><span class="line">G = E.gens()[<span class="number">0</span>]</span><br><span class="line"></span><br><span class="line"><span class="comment">#经典调用方法，discrete_log是一个通用化的函数，第一参数为结果，第二参数为底，内置方法就是Pohlig-Hellman和BSGS</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#指定operation相当于约定了特定的运算（对于EllipticCurve默认为&#x27;+&#x27;，对于Zmod(p)默认为&#x27;*&#x27;）</span></span><br><span class="line"><span class="built_in">print</span>(discrete_log(A,G,operation=<span class="string">&#x27;+&#x27;</span>)) </span><br><span class="line"></span><br><span class="line"><span class="comment">#还可以指定bounds=(a,b)来引导sage来利用上述Pohlig-Hellman攻击中的第二种情况</span></span><br><span class="line"><span class="built_in">print</span>(discrete_log(A,G,operation=<span class="string">&#x27;+&#x27;</span>,bounds=(<span class="number">0</span>,<span class="number">5</span>))) <span class="comment">#假设x的上界为5</span></span><br></pre></td></tr></table></figure></p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/闲笔//" class="article-tag-list-link color3">闲笔</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/crypto/dlog/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-  <div>
-</article>
-
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-cpp/print" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/cpp/print/">C++——print</a>
-    </h1>
-  
-
-        
-        <a href="/cpp/print/" class="archive-article-date">
-  	<time datetime="2024-12-10T06:01:08.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-10</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <blockquote>
-<p>C++23中，<code>print</code>终为C++的I/O标准库拂上一层曙光。</p>
-</blockquote>
-<h1 id="函数签名">函数签名</h1>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//namepsace std</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Args&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(std::format_string fmt,Args&amp;&amp;... args)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Args&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(FILE* <span class="type">const</span> stream,std::format_string fmt,Args&amp;&amp;... args)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Args&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(std::ostream&amp; stream,std::format_string fmt,Args&amp;&amp;... args)</span></span>;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>其中前两个在<code>&lt;print&gt;</code>中被定义，第三个在<code>&lt;ostream&gt;</code>中被定义。</p>
-</blockquote>
-<p>std::print相当于补全了现代C++在输出内容上的一大缺憾。<br />
-C/C++传统的输入/输出至今已经历了三代：以<code>&lt;stdio.h&gt;</code>为代表的传统C样式I/O、以<code>&lt;iostream&gt;</code>为代表的C++98时代的I/O及如今<code>&lt;print&gt;</code>打头的Modern
-C++ I/O。</p>
-<ol type="1">
-<li><code>&lt;stdio.h&gt;</code>作为经典的输入/输出手段永不过时，其两大特性——高效、便捷堪称遥遥领先。<code>printf</code>提供了高可读性的format方案——<code>%-2d</code>就是输出整型左对齐2格，<code>%.3f</code>就是输出浮点加三位小数，即写即用。其一大缺点是作为C时代的产物，不能支持自定义类型的输出（相当于无法实现一个统一的interface，必须另起炉灶）；另一个缺点是C遗留的va_args是一个不成熟的变参数解决方案（比如没有对format-specifier和参数数量统一的校验，给极大量的segament
-fault和奇奇怪怪的bug留下了空间），且其并不能完美地传递C++的类/object。</li>
-<li><code>&lt;iostream&gt;</code>则代表着一代经典C++。其将C++区别于C的特性发挥到了极致——通过继承树提供了I/O的统一接口，同时令用户可以通过重载<code>operator&lt;&lt;</code>来便捷地自定义类型（这点甚至远胜于<code>print</code>的<code>formatter</code>特化），在OOP上则让I/O流成为对象且支持调用各种方法来对之进行操作。但其冗余过多的副作用就是输出效率远不如<code>&lt;stdio.h&gt;</code>——频繁的函数调用（每一个<code>&lt;&lt;</code>都算调用一次函数，需要不断地将<code>std::ostream&amp;</code>操作和返回，<code>inline</code>亦很难对之有很大改观）；同时格式化输出的便捷性和可读性之差一直是其痛点之一。比较一下三代C/C++格式化输出一个简单的信息：
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">output</span><span class="params">(<span class="type">double</span> temp,<span class="type">int</span> speed)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">//&lt;stdio.h&gt;</span></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Temperature: %.1f ℃. Speed: %d km/h.\n&quot;</span>,temp,speed); </span><br><span class="line"></span><br><span class="line">    <span class="comment">//&lt;iostream&gt;</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Temperature: &quot;</span> &lt;&lt; std::<span class="built_in">setpercision</span>(<span class="number">1</span>) &lt;&lt; temp &lt;&lt; <span class="string">&quot; ℃. Speed: &quot;</span> &lt;&lt; speed &lt;&lt; <span class="string">&quot;km/h.&quot;</span> &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//&lt;print&gt;</span></span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;Temperature: &#123;:.1f&#125; ℃. Speed: &#123;&#125; km/h.&quot;</span>,temp,speed);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
-<li><code>&lt;print&gt;</code>则是C++23加入的新成员，其基本继承了既有的较成功库<code>&lt;fmtlib&gt;</code>的实践。<br />
-trivial-type的格式化语法上和python的format几乎无二，相当于保留了<code>printf</code>的高可读性和高效率的同时，融合了Modern
-C++的template元素，并由此支持自定义类型格式化和类型推导。</li>
-</ol>
-<p>函数签名显然非常的straightforward，第一个重载为基础，后两个只是指定了输出流（可以传<code>FILE*</code>或<code>std::ostream&amp;</code>）。</p>
-<h1 id="stdformatter的特化">std::formatter的特化</h1>
-<p>客观来说，<code>&lt;format&gt;</code>和<code>&lt;print&gt;</code>的自定义实际上门槛相较于<code>&lt;iostream&gt;</code>的重载<code>operator&lt;&lt;</code>还是有些高。<br />
-自定义类型需要通过特化<code>std::formatter</code>来实现自定义输出。<br />
-但其优点在于开发复用上限极高，可以将任意的自定义类的format自由度提至与trivial-types相并论。</p>
-<blockquote>
-<p>关于std::formatter的一切，可以移步天书般的<a
-target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/utility/format/formatter">cppreference</a>。</p>
-</blockquote>
-<p>std::formatter特化用法精选：先从下面的代码出发，自行体会。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">CR</span></span><br><span class="line">&#123; </span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">CR</span>(<span class="type">int</span> v):<span class="built_in">speed</span>(v)&#123;&#125;</span><br><span class="line">    <span class="keyword">friend</span> <span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;CR&gt;;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> speed;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;CR&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="title">parse</span><span class="params">(std::format_parse_context&amp; fpc)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> fpc.<span class="built_in">begin</span>();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">auto</span> <span class="title">format</span><span class="params">(<span class="type">const</span> CR&amp; c,std::format_context&amp; fc)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> std::format_to(fc.<span class="built_in">out</span>(),<span class="string">&quot;Train operating at &#123;&#125; km/h&quot;</span>,c.speed);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>回顾一下：今我们希望将一个对象转化为字符串输出，该任务可以分为两步：</p>
-<p>解析格式串，将format的“需求”存储起来；</p>
-<p>根据这些“需求”，读取对象信息并将之格式化。</p>
-<p>而std::formatter的<code>parse</code>和<code>format</code>函数就分别负责执行这两个任务。</p>
-</blockquote>
-<ul>
-<li>第一个函数必须具有签名<code>constexpr auto parse(std::format_parse_context&amp;);</code>（auto类型由<code>decltype(std::format_parse_context::begin())</code>确定）。<br />
-该函数必须声明为constexpr，否则编译不能通过（对于直接的调用std::format/print，C++23要求必须在编译期处理之，同时引出的就是目前格式串必须是string-constant；动态格式串另有他法）。<br />
-该函数接收的<code>std::format_parse_context&amp;</code>实际上是表征format-specifier区间的一个view，调用<code>fpc.begin()</code>会返回一个指向当前处理域':'的下一个字符的迭代器。</li>
-</ul>
-<blockquote>
-<p>插播一下“处理域”的定义：每个框或可为全空<code>&#123;&#125;</code>，或应形如<code>&#123;A:B&#125;</code>，<strong><em>其中A为一部分，':B'为一部分，可以理解为两侧分别都是可选的，用法见下：</em></strong></p>
-<p>A是index，<strong>若不指定A，则该格式字符串采用的是“自动索引”(auto-indexing)</strong>，即每遇到一个框就把下一个参数丢进去；</p>
-<p>否则为手动索引（manual-indexing），指定每个框所用参数的index（可以复用），如<code>std::println("&#123;0&#125; &#123;1&#125; &#123;0&#125;",1,2);</code>输出<code>1 2 1</code>。</p>
-<blockquote>
-<p><strong>不允许使用混合索引（即要么全自动，要么全手动）。</strong></p>
-<p><strong>索引不允许越界，比如<code>std::println("&#123;&#125; &#123;&#125;",1)</code>不能通过编译。</strong></p>
-</blockquote>
-<p>:B是format-specifier，形式和python/C的类似，每个框都可以自定义，不再赘述。</p>
-<p>应用实例：将一个浮点数输出两次，精度分别为4位、2位：<code>std::println("&#123;0:.4f&#125; -&gt; &#123;0:.2f&#125;",some_float);</code>。</p>
-</blockquote>
-<p><strong>简而言之，该函数的任务是通过移动该迭代器来收集format的需求，并将之存储于这个struct的成员变量中，以供后续处理。</strong><br />
-该函数的返回值必须同样是一个迭代器，且该迭代器<strong>必须指向'}'（也就是format-specifier的末尾的下一个字符），否则会抛出std::format_error！</strong></p>
-<ul>
-<li>第二个函数必须具有签名<code>auto format(const Ty&amp;,std::format_context&amp;) const;</code>（auto类型由<code>decltype(std::format_context::out())</code>确定）。<br />
-该函数必须被声明为常成员函数（后缀<code>const</code>不要漏）；对于trivial-types，const
-Ty&amp;可以被改为Ty（更改原则和其它函数的const
-int&amp;/int一类相同）。<br />
-该函数接收的<code>std::format_context&amp;</code>是一个缓存输出格式串的字符串，调用<code>fc.out()</code>会返回一个<em>back
-insert iterator</em>。</li>
-</ul>
-<blockquote>
-<p><em>back insert
-iterator</em>是一类简单的迭代器，其仅定义了以下的<code>public</code>成员函数：</p>
-<ul>
-<li><code>operator*()</code>，返回<code>*this</code>；</li>
-<li><code>operator++()</code>（含<code>operator++(int)</code>），返回<code>*this</code>且什么也不做；</li>
-<li><code>operator=(const Ty&amp;)</code>（含<code>operator=(Ty&amp;&amp;)</code>），将给定元素copy(或move)追加到容器末尾（相当于调用了<code>push_back(const Ty&amp;)</code>/<code>push_back(Ty&amp;&amp;)</code>）。</li>
-</ul>
-<blockquote>
-<p>事实上这些<em>iterator</em>的<code>operator=</code>有四个重载，还有两个是类的基本成员函数（即copy/move
-assignment operator）</p>
-</blockquote>
-<p>在C++ Standard
-library中，调用std::back_inserter(some_container)可以获得一个<em>back
-insert
-iterator</em>，some_container应具有<code>push_back</code>成员函数。</p>
-</blockquote>
-<p>该函数应当通过这个<code>fc.out()</code>来向缓冲字符串中写入字符，并返回<code>fc.out()</code>。<br />
-写入方法相对就比较五花八门了：
-最“老土”的方式无疑是直接对这个iterator逐个字符地赋值（注意右操作数只能是<code>char</code>）；<br />
-现代C++中同样有很多函数可以高效地进行此项任务，对于潜在自由度较高的object，可以先建立一个string缓存并操作之，最后再copy过去。<br />
-两个比较常用的、更为简洁的方法为复用<code>std::ranges::copy</code>和<code>std::format_to</code></p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//方法1：利用ranges库，集复制返回于一体</span></span><br><span class="line">std::string buf&#123;&#125;;</span><br><span class="line"><span class="comment">//...对buf进行操作</span></span><br><span class="line"><span class="comment">//优势在于可以按需较为灵活地截取/操作buf（ranges上分ing）</span></span><br><span class="line"><span class="keyword">return</span> std::ranges::<span class="built_in">copy</span>(buf,fc.<span class="built_in">out</span>()).out; <span class="comment">//注意返回值是一个含有in/out迭代器的struct，需要取其out</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//方法2：std::format_to直接格式化至迭代器（相应地，std::format相当于格式化至字符串，对标sprintf）</span></span><br><span class="line"><span class="keyword">return</span> std::format_to(fc.<span class="built_in">out</span>(),<span class="string">&quot;&#123;&#125;&quot;</span>,...); <span class="comment">//函数返回值就是迭代器本身</span></span><br></pre></td></tr></table></figure>
-<h2
-id="奇技淫巧之既有formatter的复用">“奇技淫巧”之既有Formatter的复用</h2>
-<p>对于很多较简单的class/object，一视同仁start-from-scratch显然不是明智之举，此时对formatter的复用可令你在format间游走自如。<br />
-复用方式有二：继承复用/成员复用<br />
-还是直接看代码： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//还是以上文的CR类为例</span></span><br><span class="line"><span class="keyword">namespace</span> inheritance</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">template</span>&lt;&gt;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;CR&gt; : std::formatter&lt;<span class="type">int</span>&gt;</span><br><span class="line">    &#123;   </span><br><span class="line">        <span class="function"><span class="keyword">auto</span> <span class="title">format</span><span class="params">(<span class="type">const</span> CR&amp; c,std::format_context&amp; fc)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">        </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> std::formatter&lt;<span class="type">int</span>&gt;::format(c.speed,fc);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;; <span class="comment">//相当于用std::formatter&lt;int&gt;部分覆写了自身，parse遵循int的format-specifier</span></span><br><span class="line">    <span class="comment">//而format时需要调用父类的format方法</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">namespace</span> member</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">template</span>&lt;&gt;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;CR&gt;</span><br><span class="line">    &#123;</span><br><span class="line">        std::formatter&lt;<span class="type">int</span>&gt; fmt&#123;&#125;;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="title">parse</span><span class="params">(std::format_parse_context&amp; fpc)</span></span></span><br><span class="line"><span class="function">        </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> fmt.<span class="built_in">parse</span>(fpc);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">auto</span> <span class="title">format</span><span class="params">(<span class="type">const</span> CR&amp; c,std::format_context&amp; fc)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">        </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> fmt.format(c.speed,fc);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>显然inheritance对于较小的类（最好是只有一个需要格式化的量）来说比较友好，格式化进行更高效；<br />
-且若<code>std::convertible_to&lt;const A&amp;, B&gt;</code>（A为待格式化的类，B为继承类的<code>format</code>函数第一参数）为<code>true</code>，则可以完全继承之，<strong>比如自定义许多容器的format。</strong><br />
-member法的灵活度会更高些，甚至可以在<code>parse</code>中让迭代器在<code>format_parse_context</code>里游走来实现更高的自由度，适合于每个参数的输出格式都希望独立控制的类，如时间。<br />
-下面再附上一例应用了concepts、<code>std::span</code>等来实现<code>std::vector</code>的通用格式化方法：
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;algorithm&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;print&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;span&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;std::default_formattable&lt;<span class="type">char</span>&gt; Ty&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;std::span&lt;Ty&gt;&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="title">parse</span><span class="params">(std::format_parse_context&amp; fpc)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> fpc.<span class="built_in">begin</span>();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">auto</span> <span class="title">format</span><span class="params">(std::span&lt;Ty&gt; sp,std::format_context&amp; fc)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="comment">//我们希望实现一个类似python的list的效果，即[1,2,3]这样，此处尚未加入自定义分隔符等功能</span></span><br><span class="line">        std::string buf&#123;<span class="string">&quot;[&quot;</span>&#125;;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">const</span> <span class="keyword">auto</span>&amp; i : sp)</span><br><span class="line">        &#123;</span><br><span class="line">            buf += std::format(<span class="string">&quot;&#123;&#125;,&quot;</span>,i);</span><br><span class="line">        &#125;</span><br><span class="line">        buf.<span class="built_in">back</span>() = <span class="string">&#x27;]&#x27;</span>;</span><br><span class="line">        <span class="keyword">return</span> std::ranges::<span class="built_in">copy</span>(buf,fc.<span class="built_in">out</span>()).out;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;std::default_formattable&lt;<span class="type">char</span>&gt; Ty&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;std::vector&lt;Ty&gt;&gt; : std::formatter&lt;std::span&lt;Ty&gt;&gt;</span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">//现在可以直接格式化所有（元素类型可以被默认格式化的）vector</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::vector&lt;<span class="type">int</span>&gt; vc&#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>&#125;;</span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,vc); <span class="comment">//[1,2,3]</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(std::shared_ptr&lt;<span class="type">int</span>&gt;)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::thread[<span class="number">10</span>] ta;</span><br><span class="line">    std::shared_ptr&lt;<span class="type">int</span>&gt; sp;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">auto</span>&amp; th : ta)</span><br><span class="line">    &#123;</span><br><span class="line">        th = std::<span class="built_in">thread</span>(fun,sp);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>shared_ptr</code>的部分重要成员函数如下：</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th style="text-align: center;">成员函数</th>
+<th style="text-align: center;">作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td
+style="text-align: center;"><code>size_t use_count() const</code></td>
+<td
+style="text-align: center;">返回管理指针的计数，未绑定则为<code>0</code></td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>operator bool() consst</code></td>
+<td
+style="text-align: center;">等价于<code>return static_cast&lt;bool&gt;(use_count());</code></td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>bool unique() const</code></td>
+<td style="text-align: center;">等价于</td>
+</tr>
+</tbody>
+</table>
+<h2 id="weak_ptr"><code>weak_ptr</code></h2>
+<p>“弱指针”<code>weak_ptr</code>在并发/异步编程中亦能大显身手。其本质上是<code>shared_ptr</code>的一个配套产物。<br />
+<code>weak_ptr</code>可以被默认构造（空构造），亦可传入一个<code>shared_ptr</code>来“观测”之：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line">weak_ptr&lt;Ty&gt;::<span class="built_in">weak_ptr</span>(shared_ptr&amp; s)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>此时这个<code>weak_ptr</code>将成为一个 <em>Observer</em>
+（观测者），其“观测”着这个<code>shared_ptr</code>的<strong>底层指针</strong>，但不增加其Counter的计数。<br />
+同时<code>weak_ptr</code><strong>不能直接访问<code>shared_ptr</code>管理的底层指针</strong>，但其可以通过<code>lock()</code>方法来“试着”获取一个<code>shared_ptr</code>，若其有效则获得一个非空的<code>shared_ptr</code>，反之亦然。</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th style="text-align: center;">成员函数</th>
+<th style="text-align: center;">作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>bool expired() const</code></td>
+<td
+style="text-align: center;">若该<code>weak_ptr</code>“观测”的<code>shared_ptr</code>依然有效（即其管理的指针计数不为0），返回<code>true</code>，否则为<code>false</code>；<code>weak_ptr</code>未初始化，即未绑定至<code>shared_ptr</code>时同样返回<code>false</code>。可以等价于<code>return static_cast&lt;bool&gt;(use_count());</code></td>
+</tr>
+<tr>
+<td
+style="text-align: center;"><code>shared_ptr&lt;Ty&gt; lock()</code></td>
+<td style="text-align: center;">等价于返回
+<code>expired() ? shared_ptr&lt;Ty&gt;(ptr) : shared_ptr&lt;Ty&gt;()</code>，<code>ptr</code>为观测的<code>shared_ptr</code></td>
+</tr>
+<tr>
+<td
+style="text-align: center;"><code>size_t use_count() const</code></td>
+<td
+style="text-align: center;">返回观测的<code>shared_ptr</code>对应指针的计数，未绑定则为<code>0</code></td>
+</tr>
+</tbody>
+</table>
+<h1 id="外传raii">外传：RAII</h1>
+<p>RAII，全称 Resource Acquisition Is
+Initialization，是一种的程序设计“哲学”，适用于多种编程语言（越“低级”适用性越强）。<br />
+智能指针就是RAII的生动实践实例之一，同样地还有<code>fstream</code>、<code>lock_guard</code>、<code>vector</code>等。</p>
 
       
 
@@ -536,14 +340,6 @@ member法的灵活度会更高些，甚至可以在<code>parse</code>中让迭�
 			 
         		<li class="article-tag-list-item">
         			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">C++23</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">C++ Libraries</a>
         		</li>
       		
 		</ul>
@@ -563,17 +359,76 @@ member法的灵活度会更高些，甚至可以在<code>parse</code>中让迭�
 
 
       
-        <p class="article-more-link">
-          <a class="article-more-a" href="/cpp/print/">展开全文 >></a>
-        </p>
-      
 
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
+        </div>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=https://crystaljiang232.github.io/cpp/smart-ptr/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
       
       <div class="clearfix"></div>
     </div>
   </div>
   <div>
 </article>
+
+
+  
+<nav id="article-nav">
+  
+  
+    <a href="/cpp/explicit/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">C++——explicit</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
 
 
 <aside class="wrap-side-operation">
@@ -589,17 +444,34 @@ member法的灵活度会更高些，甚至可以在<code>parse</code>中让迭�
         </div>
         
         
+        <div class="toc-container tooltip-left">
+            <i class="icon-font icon-category"></i>
+            <div class="tooltip tooltip-east">
+                <span class="tooltip-item">
+                </span>
+                <span class="tooltip-content">
+                    <div class="toc-article">
+                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88"><span class="toc-number">1.</span> <span class="toc-text">“智能”指针？</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#c98%E5%89%8D%E4%B8%96%E7%9A%84auto_ptr"><span class="toc-number">2.</span> <span class="toc-text">C++98：前世的auto_ptr</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E8%AE%BE%E8%AE%A1%E4%B8%8E%E6%88%90%E6%95%88"><span class="toc-number">2.1.</span> <span class="toc-text">基本设计与成效</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BC%BA%E7%82%B9"><span class="toc-number">2.2.</span> <span class="toc-text">缺点</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#c11%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88%E4%B8%89%E5%89%91%E5%AE%A2"><span class="toc-number">3.</span> <span class="toc-text">C++11：智能指针“三剑客”</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#unique_ptr"><span class="toc-number">3.1.</span> <span class="toc-text">unique_ptr</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#shared_ptr"><span class="toc-number">3.2.</span> <span class="toc-text">shared_ptr</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#weak_ptr"><span class="toc-number">3.3.</span> <span class="toc-text">weak_ptr</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%A4%96%E4%BC%A0raii"><span class="toc-number">4.</span> <span class="toc-text">外传：RAII</span></a></li></ol>
+                    </div>
+                </span>
+            </div>
+        </div>
+        
     </div>
 </aside>
 
 
 
+  
+  
+  
+
+    
 
   
+
   
-    <nav id="page-nav">
-      <a class="extend prev" rel="prev" href="/page/12/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/11/">11</a><a class="page-number" href="/page/12/">12</a><span class="page-number current">13</span><a class="page-number" href="/page/14/">14</a><a class="extend next" rel="next" href="/page/14/">Next &raquo;</a>
-    </nav>
+
   
 
 
@@ -660,8 +532,8 @@ member法的灵活度会更高些，甚至可以在<code>parse</code>中让迭�
     <script>
 	var yiliaConfig = {
 		mathjax: true,
-		isHome: true,
-		isPost: false,
+		isHome: false,
+		isPost: true,
 		isArchive: false,
 		isTag: false,
 		isCategory: false,
