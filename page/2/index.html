@@ -152,193 +152,182 @@
           <div id="js-content" class="content-ll">
             
   
-    <article id="post-cpp/smart-ptr" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-cpp/st-bind" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/cpp/smart-ptr/">C++——智能指针</a>
+      <a class="article-title" href="/cpp/st-bind/">C++—Structured Binding</a>
     </h1>
   
 
         
-        <a href="/cpp/smart-ptr/" class="archive-article-date">
-  	<time datetime="2025-07-30T04:38:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-07-30</time>
+        <a href="/cpp/st-bind/" class="archive-article-date">
+  	<time datetime="2025-08-12T23:07:49.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-08-13</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h1 id="智能指针">“智能”指针？</h1>
-<p>指针本似乎只应是一个特殊的整型变量，其何以有“智能”一说？其源于C/C++中堆内存(Heap
-memory)管理的有关问题。</p>
-<p>C语言在<code>&lt;stdlib.h&gt;</code>中提供了类似于<code>malloc</code>、<code>free</code>等函数来进行堆内存的简单分配及回收；C++中则引入了<code>operator new</code>、<code>operator delete[]</code>等来配合面向对象的语义；但仅依赖它们进行内存管理的缺点亦非常明显，包括但不限于：</p>
+        <blockquote>
+<p>翩若惊鸿，矫若游龙。</p>
+</blockquote>
+<p>Structured
+Binding，即“结构化绑定”，是C++17中引入的颇为强大的语法糖之一。</p>
+<h1 id="前言">前言</h1>
+<blockquote>
+<p>阅读本章需要道友具备对右值引用、移动语义、基本模板编程的相关知识与较好理解基础。</p>
+</blockquote>
+<p>由于C/C++只允许单个返回值，因而C/C++中需要从函数中“获取”多个值时，除了传递可变指针/引用<del>所谓<code>OUT</code>变量(bushi)</del>，利用最多的方法无疑就是返回一个<code>struct</code>或<code>std::pair</code>/<code>std::tuple</code>了：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">ret_info</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span> x;</span><br><span class="line">    std::string dt;</span><br><span class="line">    <span class="type">const</span> <span class="type">char</span>* c;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function">ret_info <span class="title">func</span><span class="params">()</span></span>;</span><br></pre></td></tr></table></figure>
+<p>如此做的最大缺点之一就是访问每个成员不够便利——一个成员还能通过<del>生命周期冲突百出的</del>临时子成员访问，但访问多个成员时就必须另起一个变量接收之：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> st = <span class="built_in">func</span>();</span><br><span class="line"><span class="type">int</span> y = st.x;</span><br><span class="line">std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,st.dt);</span><br></pre></td></tr></table></figure>
+<p>同时还可能涉及到 <em>cv</em> 修饰符差分、引用绑定等问题。<br />
+由此，C++17给出了 <em>Structured Binding</em>
+这个极为强大的语法糖用于处理此类情景。</p>
+<h1 id="正题">正题</h1>
+<p>首先明确 <em>Structured Binding</em> 的基本属性，一言具述之：</p>
+<p><em>Like a reference, a structured binding is an alias to an existing
+object; unlike a reference,a structured binding does not have to be of a
+reference type.</em></p>
+<p>即结构化绑定和引用相比，皆为<strong>既有对象</strong>的别名；但前者<strong>不一定是引用类型</strong>。</p>
+<h2 id="基本语法">基本语法</h2>
+<p>Structured Binding的语法如下：</p>
+<p><em>attr</em> <em>decl-specifier</em> <em>ref-qualifier</em>
+<em>[identifier-list]</em> <em>initializer</em> ;</p>
+<p>各部分解析：</p>
 <ul>
-<li>容易“忘记”或“绕过”内存回收的部分，进而导致内存泄漏问题<del>想必各位刚接触C语言时就被填鸭式地记忆过<code>malloc</code>完一定要<code>free</code></del>；<br />
+<li><em>attr</em>：任意数目的属性(attributes)<br />
 </li>
-<li>内存“所有权”(ownership)不清晰。比如往某个函数中传入指针时无法明确其内存的“所有权”（指是否能重新分配、释放等）是否转移，函数嵌套调用时容易导致内存管理混乱（如
-<em>double-free</em> ，即双重释放问题，亦是UB）；<br />
+<li><em>decl-specifier</em>：依下列顺序出现的修饰符（与变量声明规则一致）：<code>static</code>、<code>thread_local</code>、<code>const</code>、<code>volatile</code>、<code>auto</code>；其中<code>auto</code><strong>必须出现</strong><br />
 </li>
-<li>作为整型变量的指针非常“脆弱”，极易在函数调用链中被不经意地修改。</li>
+<li><em>ref-qualifier</em>：可选<code>&amp;</code>/<code>&amp;&amp;</code>或置空<br />
+</li>
+<li><em>[identifier-list]</em>：变量名列表<br />
+</li>
+<li><em>initializer</em>：初始化表达式</li>
 </ul>
-<p>比如下述C代码片段：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">foo</span><span class="params">(<span class="type">int</span>*)</span>;</span><br><span class="line"><span class="type">void</span> <span class="title function_">bar</span><span class="params">(<span class="type">const</span> <span class="type">int</span>* p)</span></span><br><span class="line">&#123;</span><br><span class="line">    p += <span class="number">2</span>; <span class="comment">//?</span></span><br><span class="line">    <span class="built_in">free</span>(p); <span class="comment">//?</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="type">void</span> <span class="title function_">fun</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span>* ptr = (<span class="type">int</span>*)<span class="built_in">calloc</span>(<span class="number">10</span>,<span class="keyword">sizeof</span>(<span class="type">int</span>));</span><br><span class="line">    <span class="type">bool</span> status;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>;i&lt;<span class="number">5</span>;++i)</span><br><span class="line">    &#123;</span><br><span class="line">        ptr++; <span class="comment">//?</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    foo(ptr); <span class="comment">//?</span></span><br><span class="line">    bar(ptr); <span class="comment">//?</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(!status)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span>; <span class="comment">//?</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">free</span>(ptr);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>稍多加学习与内存管理等有关的知识就会发现，上述代码的槽点不断。<br />
-如<code>void bar()</code>的形参声明为<code>const int*</code>，只使用顶层<code>const</code>约束了不能通过<code>p</code>来修改指向的值，但架不住<code>p</code>本身容易被乱改，对于稍长一些的函数来说非常致命（极易忘记前述代码中<code>p</code>已经被改动过）。同时即使加上底层<code>const</code>，此般“固若金汤”也无法防止本函数间有人试图提前将其指向的内存<code>free</code>掉——内存管理权（所有权）混乱，可谓“引
-<em>SegmentFault</em> 入室”。<br />
-<code>void fun()</code>中难得地记得了在函数结束时<code>free</code>申请的内存，但往上看数行就可发觉隐患之一：若<code>status</code>为<code>false</code>，则会触发
-<em>early
-return</em>，进而<code>ptr</code>指向的内存将（在程序允许结束<del>或者大概率崩溃</del>之前）无法被释放。C++中此类问题更甚——除了显式的<code>return</code><del><code>exit</code>或<code>abort</code>一类的<code>[[norerturn]]</code>不算</del>，<em>exceptions</em>
-乱飞也极易在不经意间直接“跳出”函数，且异常相比此类显式的<code>return</code>更难以被发现和追踪。</p>
-<hr />
-<p>但不可否认的是，C/C++的“手动”内存管理也是其极大的特色和优势之一——对底层内存拥有极高自由度的读写权，同时没有后台
-<em>garbage collection</em>
-的束缚，使之能广泛地应用于底层软硬件的程序开发，同时拥有相比其它解释型/混合型语言“一骑绝尘”的效率。</p>
-<p>如何在保留“手动内存管理”特色的同时，应用<strong>语言自身机制</strong>帮助程序设计者管理内存，自然成为了C++发展的一大课题。</p>
-<h1 id="c98前世的auto_ptr">C++98：前世的<code>auto_ptr</code></h1>
-<p>C++98提出了一个<del>因为太憨在C++11被废弃(deprecated)并在C++17被移除(removed)的</del>智能指针的雏形：<code>auto_ptr</code>。</p>
-<h2 id="基本设计与成效">基本设计与成效</h2>
-<p>回顾到我们的基本需求，即希望在申请的堆内存<strong>离开其作用域时自动释放</strong>，显然将之封装在构造/析构函数中是其不二之选。<br />
-同时还应当提供一些易于访问原始指针的接口，其可通过类成员函数和操作符重载实现。<br />
-由此，可以写出一个简单的类模板如下：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">auto_ptr</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">auto_ptr</span>();</span><br><span class="line">    ~<span class="built_in">auto_ptr</span>();</span><br><span class="line"></span><br><span class="line">    Ty* <span class="keyword">operator</span>-&gt;();</span><br><span class="line">    <span class="type">const</span> Ty* <span class="keyword">operator</span>-&gt;() <span class="type">const</span>;</span><br><span class="line"></span><br><span class="line">    Ty&amp; <span class="keyword">operator</span>*();</span><br><span class="line">    <span class="type">const</span> Ty&amp; <span class="keyword">operator</span>*() <span class="type">const</span>;</span><br><span class="line"></span><br><span class="line">    <span class="function">Ty* <span class="title">get</span><span class="params">()</span></span>;</span><br><span class="line">    <span class="function"><span class="type">const</span> Ty* <span class="title">get</span><span class="params">()</span> <span class="type">const</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="function">Ty* <span class="title">release</span><span class="params">()</span></span>;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">reset</span><span class="params">(Ty*)</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    Ty* ptr;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>其中只需要</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line">auto_ptr&lt;Ty&gt;::~<span class="built_in">auto_ptr</span>()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">delete</span> ptr;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>就可以实现自动“释放内存”的功能了。<code>operator-&gt;</code>等重载亦能实现“无感”的底层指针访问，如：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">auto_ptr&lt;std::string&gt; sp;</span><br><span class="line">std::cout &lt;&lt; sp-&gt;<span class="built_in">length</span>() &lt;&lt; std::endl;</span><br></pre></td></tr></table></figure>
-<p>利用<code>operator-&gt;</code>重载的“二次解析”特性，访问类成员的方式无异于<code>sp</code>是原始指针的情况。</p>
-<p><code>get()</code>和<code>release()</code>成员函数都会返回原始指针，区别在于<code>get()</code>用于向后兼容一些C样式的API以及少数需要利用原始指针的情况（并未“交出”指针的所有权，只是临时供使用），<code>release()</code>则会“交出”指针的所有权（调用后该对象管理的指针置空，<strong>进而该指针指向的堆内存不会被自动释放，需要手动清理</strong>）。</p>
-<p><code>reset()</code>函数则用于重置其管理的指针（<strong>新指针亦必须指向有效的、已申请的堆内存</strong>），看实现即知其用途：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="type">void</span> auto_ptr&lt;Ty&gt;::<span class="built_in">reset</span>(Ty* p)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">delete</span> ptr;</span><br><span class="line">    ptr = p;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <blockquote>
-<p>此处应用了C++的<code>operator delete</code>“逃课”机制：<code>free</code>/<code>delete</code>一个空指针不会发生任何事情（即该操作是“安全”的）。</p>
+<p>显然其中重中之重的关键字无疑是<code>auto</code>——<em>Structured
+Binding</em>的类型<strong>不能手动指定</strong>，只允许使用<code>auto</code>并以一定的修饰符约束之。</p>
+</blockquote>
+<h3 id="中间变量初始化">中间变量初始化</h3>
+<p><em>initializer</em>
+中的<code>expr</code>可为<strong>任意表达式</strong>，与普通变量的初始化类似（除未加括号的逗号表达式，即
+<em>unphrenthesized comma expressions</em> ）：</p>
+<ul>
+<li><code>= expr;</code><br />
+</li>
+<li><code>(expr);</code><br />
+</li>
+<li><code>&#123;expr&#125;;</code></li>
+</ul>
+<p>回顾结构化绑定的本质：其为一个既有对象的别名，初始化方式只有两种。首先引入一个隐式、不具名而唯一的变量<code>e</code>（参考
+<em>lambda</em>）：</p>
+<ul>
+<li><p>若 <em>initializer</em> 是一个数组类型且 <em>ref-qualifier</em>
+置空，记 <em>initializer</em> 的类型为
+<code>cv1 A</code>，则定义<code>e</code>为形如 <em>attr</em>
+<em>decl-specifier</em>（去除<code>auto</code>） <code>A e;</code>
+的新数组（即<em>decl-specifier</em>
+<code>std::remove_cvref_t&lt;decltype(initializer)&gt; e;</code>，此处不计属性）；随后将
+<em>[identifier-list]</em> 的各元素依 <em>initializer</em>
+中的各元素复制/直接初始化（若为<code>= expr</code>则为复制初始化，否则为直接初始化）；</p></li>
+<li><p>否则，定义<code>e</code>形如 <em>attr</em>
+<em>decl-specifier</em> <em>ref-qualifier</em> <code>e</code>
+<em>initializer</em>。</p></li>
+</ul>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="keyword">auto</span> [a,b,c] = &#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>&#125;;  <span class="comment">//the implicit `e` is `const std::initializer_list&lt;int&gt;`  </span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span>[] arr = &#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>&#125;;</span><br><span class="line"><span class="type">const</span> <span class="keyword">auto</span> [d,e,f] = arr; <span class="comment">//the implicit `e` is `const int[3]`, with each element in `e` copy-initialized from arr&#x27;s corresponding elements</span></span><br><span class="line"><span class="type">const</span> <span class="keyword">auto</span>&amp; [m,n,p] = arr; <span class="comment">//the implicit `e` is `const int(&amp;)[3]`(derived from `const auto&amp;`,i.e. a reference to an array)  </span></span><br><span class="line"></span><br><span class="line"><span class="type">char</span> ch&#123;&#125;;</span><br><span class="line">std::tuple&lt;<span class="type">int</span>&amp;,<span class="type">char</span>&amp;&amp;,std::string&gt; tp&#123;arr[<span class="number">0</span>],ch,<span class="string">&quot;&quot;</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">const</span> <span class="keyword">auto</span> [r,s,t] = tp; <span class="comment">//the implicit `e` is `const std::tuple&lt;int&amp;,char&amp;&amp;,std::string&gt;`(derived from `const auto`)</span></span><br><span class="line"><span class="comment">//Thus `r` is `int&amp;`,`s` is `char&amp;&amp;`,`t` is `const std::string`</span></span><br><span class="line"></span><br><span class="line"><span class="type">const</span> <span class="keyword">auto</span>&amp; [r2,s2,t2] = tp; <span class="comment">//the implicit `e` is `const std::tuple&lt;int&amp;,char&amp;&amp;,std::string&gt;&amp;`(derived from `const auto&amp;`)</span></span><br><span class="line"><span class="comment">//Thus `r2` is `int&amp;`,`s2` is `char&amp;&amp;`,`t2` is `const std::string&amp;`</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//const auto [y] = (2); //Error: the implicit `e` is `int`, which cannot be &#x27;binded&#x27;</span></span><br><span class="line"><span class="comment">//const auto [x,y] = (1,2); //Same as above</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>理解消化上述类型推导的代码实例对于理解、通晓 <em>Structured
+Binding</em> 的类型逻辑至关重要——建议各位道友自行举例并多加推导之。</p>
+</blockquote>
+<h2 id="应用">应用</h2>
+<p><em>Structured Binding</em>
+中的变量有三种初始化方式，取决于右操作数的类型<code>E</code>（严格地，<code>std::remove_reference_t&lt;decltype((e))&gt;</code>）：</p>
+<ol type="1">
+<li><code>E</code>是数组类型；<br />
+</li>
+<li><code>E</code>是一个非<code>union</code>的<code>class</code>/<code>struct</code>，且<code>std::tuple_size&lt;E&gt;</code>是具备数据成员<code>value</code>的完整类型（<em>complete
+type</em>），无论<code>std::tuple_size&lt;E&gt;::value</code>的变量类型、可访问性(accessibility)如何；<br />
+</li>
+<li><code>E</code>是一个非<code>union</code>的<code>class</code>/<code>struct</code>，除情况2外的其它类型。</li>
+</ol>
+<p>称情况(2)采用的是类元组绑定法(<em>tuple-like
+binding</em>)；情况(3)则绑定至其<strong>可访问</strong>的数据成员上。</p>
+<h3 id="数组绑定法binding-to-an-array">数组绑定法(binding to an
+array)</h3>
+<p>此种情况比较简单，即 <em>Structured Binding</em>
+声明的每个变量名就是数组对应元素的别名(alias)。<br />
+<strong>由于这个数组是“虚拟”的中间数组，因此这些变量就是原始类型而非引用，但其底层存储的逻辑依然不变（连续存储，下同）：</strong></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span>[] arr = &#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>&#125;;</span><br><span class="line"><span class="type">const</span> <span class="keyword">auto</span> [d,e,f] = arr;</span><br><span class="line"><span class="comment">//since the implicit `e` is `const int[3]`,thus `d`,`e`,`f` refers to the three elements of `e` respectively,</span></span><br><span class="line"><span class="comment">//with their type being `const int`,and address incrementing by 4</span></span><br><span class="line"><span class="type">const</span> <span class="keyword">auto</span>&amp; [m,n,p] = arr;</span><br><span class="line"><span class="comment">//since the implicit `e` is `const int(&amp;)[3]`, thus `d`,`e`,`f` refers to three elements of `arr` respectively</span></span><br><span class="line"><span class="comment">//with their type being `const int&amp;`</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//In both cases, the three variables&#x27; values are 1,2,3</span></span><br></pre></td></tr></table></figure>
+<h3 id="类元组绑定法tuple-like-binding">类元组绑定法(tuple-like
+binding)</h3>
+<p>类元组绑定法的基础是存在成员<code>std::tuple_size&lt;E&gt;::value</code>，所谓“实现了元组操作”(<em>implemented
+tuple operations</em>)。</p>
+<p>首先，<code>std::tuple_size&lt;E&gt;::value</code>必须是良构(well-formed)的<strong>整型常量表达式</strong>，此时
+<em>Structured Binding</em> 的大小与之一致。</p>
+<blockquote>
+<p>即使<code>std::tuple_size&lt;E&gt;::value</code>不符合上述条件，但只要存在此成员（无论类型、可访问性），则编译器均会采用此方式进行绑定——纵使如此会令程序非良构(ill-formed)而不能通过编译。</p>
+</blockquote>
+<p>对于 <em>Structured Binding</em>
+中的第<code>I</code>个数据成员，其类型为<code>std::tuple_element&lt;I,E&gt;::type &amp;&amp;</code>，即底层类型为左值则为左值引用，否则为右值引用（参考
+<em>引用折叠/reference collaspe</em>）。</p>
+<p>其初始化表达式如下：</p>
+<ul>
+<li>若类<code>E</code>存在名为<code>get</code>的成员模板函数，且首个参数是<strong>常量模板参数</strong>(<em>constant
+template parameter</em>)，则为<code>e.get&lt;I&gt;()</code>；<br />
+</li>
+<li>否则为<code>std::get&lt;I&gt;(e)</code>，其中<code>get</code>仅考虑ADL(Argument-Dependent
+Lookups)。</li>
+</ul>
+<blockquote>
+<p>变量的生命周期与<code>e</code>一致，配合 <em>lifetime extension</em>
+等保证了一般情况不会出现悬挂引用(dangaling reference)的情况。</p>
 </blockquote>
 <blockquote>
-<p>Hint：为什么花如此多的篇幅讲述一个已经 <em>deprecated</em>
-类的成员函数？因为现代的智能指针“三剑客”成员函数的语义与之相同，只是更改了部分其它函数的实现（或增减了一些其它函数）来完善其功能。</p>
+<p>同样地，此处的重载决议不会考虑<code>get</code>如此是否会令程序非良构，即使<code>template&lt;char*&gt; void get();</code>亦会使编译器选择使用第一种“解读”方式<del>进而编译错误</del>。</p>
 </blockquote>
-<h2 id="缺点">缺点</h2>
-<p>看似上述<code>auto_ptr</code>在功能全面的同时实现看似“天衣无缝”，但其依然未能规避开原始指针的诸多缺点。</p>
-<p>首先，指针的“所有权”在函数传参等场景时依然不够明确<del>或许是C++98/03没有移动语义的锅</del>：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(auto_ptr&lt;<span class="type">int</span>&gt;)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    auto_ptr&lt;<span class="type">int</span>&gt; p;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">    <span class="built_in">fun</span>(p); <span class="comment">//?</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>在对<code>fun(p)</code>调用后，<code>fun</code>函数中<code>auto_ptr</code>这一形参会将<code>p</code>管理的指针释放掉，导致现在<code>foo</code>中的<code>p</code>管理了一个无效的内存，进而SegmentFault只是时间问题。</p>
-<h1 id="c11智能指针三剑客">C++11：智能指针“三剑客”</h1>
-<p><code>auto_ptr</code>迎合时代发展的浪潮，在C++11中蜕变为了<code>unique_ptr</code>、<code>shared_ptr</code>和<code>weak_ptr</code>三剑客，通过和C++11引入的大量其它语法特性的巧妙配合，使其在内存管理辅助中如鱼得水。</p>
+<p>仔细观察下列实例，必以求甚解为通晓之策：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">char</span> ch&#123;&#125;;</span><br><span class="line">std::tuple&lt;<span class="type">int</span>&amp;,<span class="type">char</span>&amp;&amp;,std::string&gt; tp&#123;arr[<span class="number">0</span>],ch,<span class="string">&quot;&quot;</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">const</span> <span class="keyword">auto</span> [r,s,t] = tp;</span><br><span class="line"><span class="comment">//`E` is `const std::tuple&lt;int&amp;,char&amp;&amp;,std::string&gt;` (derived from `const auto`), initialized from tp</span></span><br><span class="line"><span class="comment">//Thus this derives to that, `r` is `int&amp;` ,`s` is `char&amp;&amp;`,`t` is `const std::string`</span></span><br><span class="line"><span class="comment">//With r referencing same variable as std::get&lt;0&gt;(tp),s to std::get&lt;1&gt;(tp), t being a separate constant std::string object</span></span><br><span class="line"></span><br><span class="line"><span class="type">const</span> <span class="keyword">auto</span>&amp; [r2,s2,t2] = tp; </span><br><span class="line"><span class="comment">//`E` is `const std::tuple&lt;int&amp;,char&amp;&amp;,std::string&gt;&amp;`(derived from `const auto&amp;`), initialized from tp</span></span><br><span class="line"><span class="comment">//Thus `r2` is `int&amp;`,`s2` is `char&amp;&amp;`,`t2` is `const std::string&amp;`</span></span><br><span class="line"><span class="comment">//With r still referencing to std::get&lt;0&gt;(tp), s to std::get&lt;1&gt;(tp), t is a const l-ref to std::get&lt;2&gt;(tp)</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">auto</span>&amp;&amp; [r3,s3,t3] = tp;</span><br><span class="line"><span class="comment">//`auto&amp;&amp;` introduces a universal reference, in this case `e` derives to `std::tuple&lt;int&amp;,char&amp;&amp;,std::string&gt;&amp;` </span></span><br><span class="line"><span class="comment">//Thus `r3` is `int&amp;`, `s3` is `char&amp;&amp;`, `t3` is `std::string&amp;`</span></span><br><span class="line"><span class="comment">//Referencing logic is identical to the case as above</span></span><br></pre></td></tr></table></figure>
+<p>可见<strong>隐式“中间变量”<code>e</code></strong>的存在是关键：前缀无论存在各种
+<em>attributes</em> 、<em>cvref</em>
+修饰符，作用对象都是这个中间变量<code>e</code>而非 <em>Structured
+Binding</em> 自身引入的标识符。<br />
+因而可以发现即使是<code>const auto</code>的结构化绑定，引入的变量亦可以是普通的引用类型。</p>
+<h3
+id="数据成员绑定法accessible-data-member-binding">数据成员绑定法(accessible
+data member binding)</h3>
+<p>此时 <em>Structured Binding</em>
+的对象是<code>e</code>的<strong>所有非静态数据成员</strong>，待绑定的变量数与其非静态数据成员的个数一致。</p>
 <blockquote>
-<p>同时<code>auto_ptr</code>其也是现代C++中最先被 <em>deprecated</em> 和
-<em>removed</em> 的一批<strong>库特性</strong>之一。</p>
+<p>在声明结构化绑定的上下文(context)中，<code>e.name</code>语句必须是良构的（即必须满足可访问性限制等，如不可为非友元的<code>private</code>）。</p>
 </blockquote>
-<h2 id="unique_ptr"><code>unique_ptr</code></h2>
-<p>字如其名，<code>unique_ptr</code>表示一个“独占”的指针。<br />
-其通过和C++11中的<code>= delete;</code>声明结合，禁止了其复制构造和复制赋值（形如
-<code>unique_ptr&lt;Ty&gt;::unique_ptr(const unique_ptr&amp;) = delete;</code>），保留了移动构造和移动赋值的接口，由此解决了“所有权”问题之争——当传递<code>unique_ptr</code>时，必须选择是否显式地放弃所有权：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">f1</span><span class="params">(unique_ptr&lt;<span class="type">int</span>&gt;)</span></span>;</span><br><span class="line"></span><br><span class="line">unique_ptr&lt;<span class="type">int</span>&gt; ip;</span><br><span class="line"><span class="built_in">f1</span>(ip); <span class="comment">//Error: invokes function `unique_ptr&lt;int&gt;::unique_ptr(const unique_ptr&amp;)` that is declared as deleted</span></span><br><span class="line"><span class="built_in">f1</span>(std::<span class="built_in">move</span>(ip)); <span class="comment">//OK, transferrs ownership to f1</span></span><br></pre></td></tr></table></figure></p>
-<p>移动构造的语义实现参考：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line">unique_ptr&lt;Ty&gt;::<span class="built_in">unique_ptr</span>(unique_ptr&amp;&amp; rhs) <span class="keyword">noexcept</span> : <span class="built_in">ptr</span>(<span class="literal">nullptr</span>)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">this</span>-&gt;<span class="built_in">reset</span>(rhs.<span class="built_in">release</span>());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>绑定后，各结构化绑定成员（即新引入的变量）都是该中间变量<code>e</code>中各数据成员的别名（关于<code>e</code>的各成员初始化见上文），初始化顺序为<code>e</code>-&gt;各绑定成员（按声明顺序）。</p>
+<p>划重点：本质上，每个绑定成员都是<code>e</code>的各成员的<strong>左值别名</strong>，但这个别名<strong>不会呈现引用属性</strong>（虽然指代的是同一个对象）。考虑以下实例：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">F</span></span><br><span class="line">&#123;</span><br><span class="line">    std::ostream&amp; o;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    F f&#123;std::cout&#125;;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">auto</span> [a] = f; <span class="comment">//Type of `a` is `std::ostream`, NOT `std::ostream&amp;`</span></span><br><span class="line">    <span class="built_in">assert</span>(std::<span class="built_in">addressof</span>(a) == std::<span class="built_in">addressof</span>(std::cout)); <span class="comment">//passes</span></span><br><span class="line">    <span class="comment">//a is an alias of data member `e.o`(with `e` being an implicit variable), `e.o` initialized by `f.o`</span></span><br><span class="line">    <span class="comment">//Then `e.o` refers to `std::cout`, thus `a` itself IS `std::cout`</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//In other words, references are alias to existing object, yet so are structured bindings.</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="注释">注释</h1>
+<p><em>Structured Binding</em> 的类型必须被“自动”推导，不允许被
+<em>concepts</em> 约束(constrained)：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> C = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line">C <span class="keyword">auto</span> [x,y] = std::pair&#123;<span class="number">1</span>,<span class="number">2</span>&#125;; <span class="comment">//Error: Constrained  </span></span><br></pre></td></tr></table></figure>
 <blockquote>
-<p><code>unique_ptr</code>的其它成员函数实现和<code>auto_ptr</code>大同小异，不再赘述。</p>
+<p>有趣的是这里面涉及到的类模板实例化写法，亦是C++17引入的——C++17起类模板满足条件时允许<strong>依构造函数实参推导模板参数</strong>，如上例就会推导为<code>std::pair&lt;int,int&gt;</code>。<br />
+C++17前，由于只有函数模板才可以自动推导参数，因此<del>历史遗留</del>下来的<code>std::make_pair</code>、<code>std::make_tuple</code>等就是适配彼时语言机制的产物：</p>
 </blockquote>
-<h2 id="shared_ptr"><code>shared_ptr</code></h2>
-<p>但<code>unique_ptr</code>只涵盖了“只需要”独占指针的情况；在并发编程等任务中，很多时候需要不同函数“共享”一块内存空间，同时又希望实现“自动”的内存管理。<br />
-由此引出了“共享指针”<code>shared_ptr</code>和“弱指针”<code>weak_ptr</code>。</p>
-<p><code>shared_ptr</code>的部分接口实现仍与<code>auto_ptr</code>类似。主要区别之一在其还会内置一个“计数器”且<strong>允许复制构造</strong>，每次复制构造会令<strong>该指针</strong>的计数器+1，析构（或因被其它指针赋值而放弃对当前指针管理）则令其计数器-1；<br />
-当一个指针对应的的计数器归零时，<code>shared_ptr</code>将该指针指向的堆内存释放。</p>
-<blockquote>
-<p>在较复杂的并发编程中，因同一<code>shared_ptr</code>的各成员函数<del>没有被<code>synchroized</code>修饰</del>可以被不同线程同时调用，为了避免数据竞争(data
-race)，应使用<code>std::atomic&lt;std::shared_ptr&gt;</code>。</p>
-</blockquote>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(std::shared_ptr&lt;<span class="type">int</span>&gt;)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::thread[<span class="number">10</span>] ta;</span><br><span class="line">    std::shared_ptr&lt;<span class="type">int</span>&gt; sp;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">auto</span>&amp; th : ta)</span><br><span class="line">    &#123;</span><br><span class="line">        th = std::<span class="built_in">thread</span>(fun,sp);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><code>shared_ptr</code>的部分重要成员函数如下：</p>
-<table>
-<colgroup>
-<col style="width: 50%" />
-<col style="width: 50%" />
-</colgroup>
-<thead>
-<tr>
-<th style="text-align: center;">成员函数</th>
-<th style="text-align: center;">作用</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td
-style="text-align: center;"><code>size_t use_count() const</code></td>
-<td
-style="text-align: center;">返回管理指针的计数，未绑定则为<code>0</code></td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>operator bool() const</code></td>
-<td
-style="text-align: center;">等价于<code>return static_cast&lt;bool&gt;(use_count());</code></td>
-</tr>
-<tr>
-<td
-style="text-align: center;">(C++20)<code>bool unique() const</code></td>
-<td style="text-align: center;">等价于
-<code>return use_count() == 1;</code></td>
-</tr>
-</tbody>
-</table>
-<h2 id="weak_ptr"><code>weak_ptr</code></h2>
-<p>“弱指针”<code>weak_ptr</code>在并发/异步编程中亦能大显身手，其本质上一种<strong>不具备底层内存所有权(ownership)</strong>的<code>shared_ptr</code>。<br />
-<code>weak_ptr</code>可以被默认构造（空构造），亦可初始化时即设定“观测”一个<code>shared_ptr</code>（后续亦可以<code>reset()</code>方法重置观测对象）：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">shared_ptr&lt;<span class="type">int</span>&gt; sp;</span><br><span class="line">weak_ptr&lt;<span class="type">int</span>&gt; wp&#123;&#125;;</span><br><span class="line">weak_ptr&lt;<span class="type">int</span>&gt; wp2&#123;sp&#125;;</span><br></pre></td></tr></table></figure>
-<p>这个<code>weak_ptr</code>将成为一个 <em>Observer</em>
-（观测者），其“观测”着这个<code>shared_ptr</code>的<strong>底层指针</strong>，但不增加其Counter的计数。<br />
-同时由于<code>weak_ptr</code>不具备内存所有权，因而其<strong>不能直接访问<code>shared_ptr</code>管理的底层指针</strong>；访问内存的方法参考以下“独有”的成员函数：</p>
-<table>
-<colgroup>
-<col style="width: 50%" />
-<col style="width: 50%" />
-</colgroup>
-<thead>
-<tr>
-<th style="text-align: center;">成员函数</th>
-<th style="text-align: center;">作用</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td
-style="text-align: center;"><code>size_t use_count() const</code></td>
-<td
-style="text-align: center;">返回观测的<code>shared_ptr</code>对应指针的计数，未绑定则为<code>0</code></td>
-</tr>
-<tr>
-<td style="text-align: center;"><code>bool expired() const</code></td>
-<td
-style="text-align: center;">若该<code>weak_ptr</code>“观测”的<code>shared_ptr</code>依然有效（即其管理的指针计数不为0），返回<code>true</code>，否则为<code>false</code>；<code>weak_ptr</code>未初始化，即未绑定至<code>shared_ptr</code>时同样返回<code>false</code>。等价于<code>return static_cast&lt;bool&gt;(use_count());</code></td>
-</tr>
-<tr>
-<td
-style="text-align: center;"><code>shared_ptr&lt;Ty&gt; lock()</code></td>
-<td
-style="text-align: center;">等价于<code>return expired() ? shared_ptr&lt;Ty&gt;(ptr) : shared_ptr&lt;Ty&gt;()</code>，<code>ptr</code>为观测的<code>shared_ptr</code></td>
-</tr>
-</tbody>
-</table>
-<p>其应用场景在某个函数/线程<strong>不知道某堆内存是否仍可用</strong>，但又要观察并“按需取之”时，能安全地实现相应的语义。<br />
-简单示例：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;memory&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(std::weak_ptr&lt;<span class="type">int</span>&gt; wp)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(<span class="keyword">auto</span> ptr = wp.<span class="built_in">lock</span>())</span><br><span class="line">    &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Get number:&quot;</span> &lt;&lt; *ptr &lt;&lt; std::endl;</span><br><span class="line">    &#125;   </span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Pointer expired&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::shared_ptr&lt;<span class="type">int</span>&gt; sp;</span><br><span class="line">    <span class="built_in">fun</span>(sp);</span><br><span class="line"></span><br><span class="line">    sp.<span class="built_in">reset</span>(<span class="keyword">new</span> <span class="built_in">int</span>(<span class="number">5</span>));</span><br><span class="line">    <span class="built_in">fun</span>(sp);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">delete</span> sp.<span class="built_in">release</span>();</span><br><span class="line">    <span class="built_in">fun</span>(sp);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<h2 id="神秘的第二模板参数">神秘的第二模板参数</h2>
-<p>若仔细观察，可以发现这些智能指针作为类模板，实际上有两个模板参数，声明形如：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>,<span class="keyword">class</span> <span class="title class_">Dx</span> = std::default_delete&lt;Ty&gt;&gt;</span><br><span class="line"><span class="keyword">class</span> unique_ptr</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">/*...*/</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>多数情况下只会用到第一个模板参数（指定指针的类型）。<br />
-第二个参数意为指定删除器(Deleter)，若不指定则默认为<code>::operator delete</code>（或<code>operator delete[]</code>，下同）来释放内存，指定之能适配部分手动管理“内存块”的场景。<br />
-类似的还有<code>std::vector</code>等容器的模板声明：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>,<span class="keyword">class</span> <span class="title class_">Ax</span> = std::allocator&lt;Ty&gt;&gt;</span><br><span class="line"><span class="keyword">class</span> vector</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">/*...*/</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>此处的<code>std::allocator</code>若不指定，则默认为<code>::operator new</code>的方式分配内存；指定之可改用自定义的内存分配器。</p>
-<h1 id="外传raii">外传：RAII</h1>
-<p>RAII，全称 Resource Acquisition Is
-Initialization，是一种的程序设计“哲学”，适用于多种编程语言（越“低级”适用性越强）。<br />
-智能指针就是RAII的生动实践实例之一，同样地还有<code>fstream</code>、<code>lock_guard</code>、<code>vector</code>等。</p>
-<p>有关RAII（还有SFINAE、Rule-of-3/5/0等C++
-Idioms）的更详解可移步<del>可能还在咕的</del><a
-href="">C++——Idioms</a></p>
+<pre><code><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty1,<span class="keyword">class</span> Ty2&gt;</span></span><br><span class="line"><span class="function">std::pair&lt;Ty1,Ty2&gt; <span class="title">make_pair</span><span class="params">(Ty1 arg1,Ty2 arg2)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> std::<span class="built_in">pair</span>&lt;Ty1,Ty2&gt;(arg1,arg2);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></code></pre>
+<h1 id="前行">前行</h1>
+<h2 id="c20">C++20</h2>
+<p>C++17中<code>lambda</code>不能捕获 <em>Structured Binding</em>
+初始化的变量，C++20解除了此限制。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span>[] arr = &#123;<span class="number">1</span>,<span class="number">2</span>&#125;;</span><br><span class="line"><span class="keyword">auto</span> [x,y] = arr;</span><br><span class="line"><span class="keyword">auto</span> fn = [x,y]&#123;<span class="keyword">return</span> x+y;&#125;; <span class="comment">//OK Since C++20</span></span><br><span class="line"><span class="built_in">assert</span>(<span class="built_in">fn</span>() == <span class="number">3</span>);</span><br></pre></td></tr></table></figure>
+<h2 id="c26">C++26</h2>
+<p>C++26将新时代的“可变参数”概念进一步拓展，使 <em>structured
+binding</em> 也获得了“可变”绑定的能力。<br />
+此前所述，接收并初始化的变量数必须和待绑定对象数一致；但C++26起允许将最后一个变量名以前置<code>...</code>而变为一个可变参数包，其类型是一个<code>std::tuple</code>，类型参数同样在编译期即被决定，其大小最小为0：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span>[] arr = &#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">auto</span> [...pack] = arr; <span class="comment">//pack is `std::tuple&lt;int,int,int&gt;`</span></span><br><span class="line"><span class="keyword">auto</span> [a,b,...pack2] = arr; <span class="comment">// a is `int`,b is `int`,pack2 is `std::tuple&lt;int&gt;`</span></span><br><span class="line"><span class="keyword">auto</span> [x,y,z,...pack3] = arr; <span class="comment">//OK: pack3 is `std::tuple&lt;&gt;`</span></span><br><span class="line"><span class="keyword">auto</span> [m1,m2,m3,m4,...pack4] = arr; <span class="comment">//Not compile: too few values to be unpacked</span></span><br></pre></td></tr></table></figure>
 
       
 
@@ -353,6 +342,10 @@ href="">C++——Idioms</a></p>
 			 
         		<li class="article-tag-list-item">
         			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">长文精选</a>
         		</li>
       		
 		</ul>
@@ -373,7 +366,7 @@ href="">C++——Idioms</a></p>
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/cpp/smart-ptr/">展开全文 >></a>
+          <a class="article-more-a" href="/cpp/st-bind/">展开全文 >></a>
         </p>
       
 
@@ -405,20 +398,20 @@ href="">C++——Idioms</a></p>
 
 
   
-    <article id="post-cpp/explicit" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-cpp/idioms" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/cpp/explicit/">C++——explicit</a>
+      <a class="article-title" href="/cpp/idioms/">C++——俗语集锦</a>
     </h1>
   
 
         
-        <a href="/cpp/explicit/" class="archive-article-date">
-  	<time datetime="2025-07-13T06:20:34.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-07-13</time>
+        <a href="/cpp/idioms/" class="archive-article-date">
+  	<time datetime="2025-08-02T01:32:30.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-08-02</time>
 </a>
         
       </header>
@@ -426,179 +419,194 @@ href="">C++——Idioms</a></p>
     <div class="article-entry" itemprop="articleBody">
       
         <blockquote>
-<p>闲登小阁看新晴。</p>
+<p>杏花疏影里，吹笛到天明。</p>
 </blockquote>
-<p><code>explicit</code>修饰符是C++11引入的两个短小精悍，而又对编程风格产生较大影响的特性，可谓之“新晴”。</p>
-<h1 id="c之阙漏隐式转换">C之阙漏：隐式转换</h1>
-<p>C语言中类型的转换只分显式和隐式两种。其中隐式转换则在参数传递、赋值（含初始化）等操作时自动完成<del>毕竟作为POP语言并没有对象、及其关联的构造/析构等概念</del>。</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> x = <span class="number">3.14</span>; <span class="comment">//Implicit conversion from `double` to `int`</span></span><br></pre></td></tr></table></figure>
-<p>隐式转换虽在程序设计中带来了不少便利，但其亦引来了最为诟病的一点——难以达成精确的类型转换控制/约束。<br />
-C中如<code>strcpy</code>的库函数函数大量应用了无符号整型作为形参类型/返回值，但编程中经常需要将有符号整型传进传出<del>点名<code>int</code>抛给<code>size_t</code>或者反之</del>，许多时候因图方便就没有进行严格的转换检查，同<code>fopen</code>不看<code>errno</code>等“陋习”共为许多C语言代码埋下了祸根：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> x = <span class="built_in">strlen</span>(str);</span><br><span class="line"><span class="built_in">strcpy</span>(str,str + <span class="number">5</span>,x - <span class="number">3</span>);</span><br></pre></td></tr></table></figure>
-<p>先不论第一行<code>size_t</code>向<code>int</code>的截断<del>毕竟相比之下已经算小问题了</del>；<br />
-第二行中若<code>x &lt; 3</code>，则传入<code>strcpy</code>的长度转为<code>size_t</code>后产生无符号下溢出(unsigned
-underflow)，进而导致内存“无限”访问而导致段错误/UB。</p>
-<p>显然，在类型转换的便捷性和类型安全性之间，现代C++亟需找到一个新的平衡。</p>
-<h1 id="c11的答案explicit">C++11的答案——<code>explicit</code></h1>
-<h2 id="语法">语法</h2>
-<p><code>explicit</code>关键字可用于修饰构造函数和转换构造函数(conversion
-constructor，即形如<code>operator X()</code>的成员函数)。<br />
-回顾二者的联系和区别：</p>
-<table>
-<colgroup>
-<col style="width: 33%" />
-<col style="width: 33%" />
-<col style="width: 33%" />
-</colgroup>
-<thead>
-<tr>
-<th style="text-align: center;">属性</th>
-<th style="text-align: center;">构造函数</th>
-<th style="text-align: center;">转换构造函数</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;">函数签名</td>
-<td style="text-align: center;"><code>X(...)</code></td>
-<td style="text-align: center;"><code>operator Y()</code></td>
-</tr>
-<tr>
-<td style="text-align: center;">属性</td>
-<td style="text-align: center;">特殊成员函数</td>
-<td style="text-align: center;">普通成员函数</td>
-</tr>
-<tr>
-<td style="text-align: center;">可为虚函数？</td>
-<td style="text-align: center;">否（因为调用时对象的建立尚未完成）</td>
-<td style="text-align: center;">是</td>
-</tr>
-<tr>
-<td style="text-align: center;">形参列表</td>
-<td style="text-align: center;">可有任意数量形参</td>
-<td style="text-align: center;">必定为空</td>
-</tr>
-<tr>
-<td style="text-align: center;">可否重载？</td>
-<td style="text-align: center;">可以参数列表差分重载</td>
-<td style="text-align: center;">只能以<code>const</code>属性重载</td>
-</tr>
-<tr>
-<td style="text-align: center;">返回类型？</td>
-<td
-style="text-align: center;">没有返回类型，在构造新对象时自动调用</td>
-<td
-style="text-align: center;">不显式声明返回类型，返回的是类<code>Y</code>的一个新对象</td>
-</tr>
-<tr>
-<td style="text-align: center;"><strong>本质</strong></td>
-<td
-style="text-align: center;">将其它对象（形参列表）转换为类<code>X</code>的对象</td>
-<td
-style="text-align: center;">将类<code>X</code>的对象转换为类<code>Y</code>的对象</td>
-</tr>
-<tr>
-<td style="text-align: center;">其它</td>
-<td
-style="text-align: center;">可以<code>= default;</code>声明；编译器会为一个类自动生成默认构造函数（若没有声明构造函数）</td>
-<td style="text-align: center;"></td>
-</tr>
-</tbody>
-</table>
-<p><code>explicit</code>作为修饰符应出现在函数名之前，形如<code>explicit MyClass()</code>、<code>explicit operator bool()</code>。</p>
-<blockquote>
-<p>同为前缀修饰符，<code>constexpr</code>和<code>explicit</code>的顺序没有限制，但出于语义和可读性的考虑，笔者较倾向<code>explicit</code>在前的写法。</p>
-</blockquote>
-<h2 id="作用">作用</h2>
-<p>被<code>explicit</code>修饰的构造函数和转换构造函数<strong>不能被隐式调用</strong>。<br />
-“隐式调用”的概念：C++中每次进行“类型转换”时（参考上述列表的“本质”一栏），编译器都会将之转化为对构造/转换构造函数的重载决议（若无法选择合适的函数，则将产生编译错误）。</p>
-<blockquote>
-<p>即使是内置类型（或“平凡类型”，<em>trivial-types</em>），其截断、拓展等本质上也可以看作一种对相应函数调用的重载决议。</p>
-</blockquote>
-<p>不能“隐式调用”的内涵可参见下述示例：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">X</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">explicit</span> <span class="title">X</span><span class="params">(<span class="type">int</span>)</span></span>&#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">operator</span> <span class="title">int</span><span class="params">()</span> <span class="type">const</span> </span>&#123;<span class="keyword">return</span> <span class="number">1</span>;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">X a = <span class="number">1</span>; <span class="comment">//Error: no suitable constructor from `int` to `X`(marked as explicit, cannot be invoked implicitly)</span></span><br><span class="line">X b&#123;<span class="number">1</span>&#125;; <span class="comment">//OK</span></span><br><span class="line">X c = X&#123;<span class="number">1</span>&#125;; <span class="comment">//OK</span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> y = b; <span class="comment">//Invokes `X::operator int() const` implicitly</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Y</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">explicit</span> <span class="keyword">operator</span> <span class="title">int</span><span class="params">()</span> <span class="type">const</span> </span>&#123;<span class="keyword">return</span> <span class="number">2</span>;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> z1 = Y&#123;&#125;; <span class="comment">//Error: no suitable constructor from `Y` to `int`</span></span><br><span class="line"><span class="type">int</span> z2 = <span class="built_in">int</span>(Y&#123;&#125;); <span class="comment">//OK</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>在函数返回值的应用中也非常广泛，用于明确“是否真的需要转换”或“是否知晓正在转换”的语义：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function">X <span class="title">func1</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>; <span class="comment">//Error (`explicit` specifier for `X::X(int)`)</span></span><br><span class="line">    <span class="keyword">return</span> X&#123;<span class="number">1</span>&#125;; <span class="comment">//OK</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">func2</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Y y;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> y; <span class="comment">//Error (`explicit` specifier for `Y::operator int() const`)</span></span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">int</span>(y); <span class="comment">//OK</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>不知各位有没有发现上述代码中，堪称“蝶影纷堕”的初始化方式：等号、大括号、小括号齐“上阵”，它们的作用时而无异，时而又大相径庭。<del>显然又可以挖一个大坑——C++花样初始化的盘点，欢迎催更</del></p>
-</blockquote>
-<h2 id="特例">特例</h2>
-<p>C++中有大量场景“需要”使用<code>bool</code>类型的变量。<br />
-为保证在这类场景（所谓 "type <code>bool</code> is
-expected"）中，相应向<code>bool</code>类型的转换能更加“流利”地进行，引出了C++中<code>explicit</code>的一个“特例”：<br />
-对于表达式<code>e</code>，只要<code>bool t(e);</code>语句是
-<em>良构(well-formed)</em>（简单理解为可通过编译），则说明<code>e</code>可以在上下文中("contextually")隐式地被转化为<code>bool</code>，<strong>此时<code>explicit operator bool</code>亦会被考虑在内</strong>。</p>
-<p>适用于这个“特例”的场景包括条件表达式（<code>if</code>/<code>while</code>/<code>for</code>）、逻辑运算符（<code>||</code>/<code>&amp;&amp;</code>/<code>!</code>/<code>?:</code>）、<code>static_assert</code>/<code>noexcept</code>/<code>explicit</code>的操作数。</p>
-<p>总结来说，若一个类的对象可以被“有条件”地作为<code>bool</code>使用，则其可以选择声明一个<code>explicit operator bool</code>，或以<code>operator int</code>一类的其它非<code>explicit</code>转换函数占位。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">MyInt</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">constexpr</span> <span class="keyword">operator</span> <span class="title">int</span><span class="params">()</span> <span class="type">const</span></span>;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">expected</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">explicit</span> <span class="keyword">constexpr</span> <span class="keyword">operator</span> <span class="title">bool</span><span class="params">()</span> <span class="type">const</span></span>;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(expected&#123;&#125;) <span class="comment">//OK: contextually converted to bool</span></span><br><span class="line">    <span class="keyword">if</span>(MyInt&#123;&#125;) <span class="comment">//OK: convertion sequence is MyInt -&gt; int -&gt; bool</span></span><br><span class="line"></span><br><span class="line">    <span class="type">bool</span> x = expected&#123;&#125;; <span class="comment">//Error: operator bool is marked explicit</span></span><br><span class="line">    <span class="type">bool</span> x = !!expected&#123;&#125;; <span class="comment">//OK: expected&#123;&#125; is contextually converted to bool through unary operator `!`</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>C++中，从一个类型向另一个类型的转换的“决策”为以下三步<del>某种意义上是一个NFA（非确定有限自动机）</del>：<br />
-先执行0/1次 <em>标准转换顺序 (standard conversion
-sequence)</em>，再进行一次 <em>用户自定义的转换 (user-defined
-conversion)</em>，最后再进行0/1次 <em>标准转换顺序</em>
-（当且仅当用户自定义转换被调用时才可触发）。</p>
-<p>其中“标准转换顺序”指“内置”的类型转换，如熟知的普通整型/浮点型互转（含截断）、整型/浮点型转<code>bool</code>（或反之）、指针转<code>bool</code>。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">X</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">explicit</span> <span class="keyword">operator</span> <span class="title">bool</span><span class="params">()</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">Y</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">operator</span> <span class="title">int</span><span class="params">()</span> <span class="type">const</span> </span>&#123;<span class="keyword">return</span> <span class="number">1</span>;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">Z</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">explicit</span> <span class="keyword">operator</span> <span class="title">int</span><span class="params">()</span> <span class="type">const</span> </span>&#123;<span class="keyword">return</span> <span class="number">1</span>;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(X&#123;&#125;) <span class="comment">//OK: explicit `operator bool` still works</span></span><br><span class="line">    <span class="keyword">if</span>(Y&#123;&#125;) <span class="comment">//OK: conversion from Y to int, then to bool</span></span><br><span class="line">    <span class="keyword">if</span>(Z&#123;&#125;) <span class="comment">//Error: conversion from Y to int is marked explicit</span></span><br><span class="line">    <span class="keyword">if</span>(<span class="built_in">int</span>(Z&#123;&#125;)) <span class="comment">//OK</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>这对于许多希望只“有条件”地用于测试<code>true</code>/<code>false</code>的类型来说极为有用<del>比如<code>std::cin</code>就有过这么一段黑历史</del>：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(std::cin) <span class="comment">//Normal usage on testing std::istream object&#x27;s EOF, yet the type cast path is std::istream&amp; -&gt; void* -&gt; bool</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">delete</span> std::cin; <span class="comment">//This line compiles prior to C++11</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>是不是觉得后面一行莫名其妙？实际上是因为C++11前，没有<code>explicit</code>关键字导致<code>std::istream</code>使用了一个非常奇怪的workaround：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">std::istream::<span class="keyword">operator</span> <span class="type">void</span>*() <span class="type">const</span>;</span><br></pre></td></tr></table></figure>
-<p>其选择提供一个<code>operator void*</code>来规避<code>bool</code>赋值的问题，副作用就是让它变得“可删除了”<del>乱删“野”指针，UB警告</del>。C++11后（及其后新的相关类）均改用<code>explicit operator bool</code>。<br />
-同样“别扭”的还有使用<code>private</code>+不给定义来“封印”函数（C++11后用<code>= delete</code>一键解决）。</p>
-<blockquote>
-<p>有关上述内容的“天书”般全解，可移步<a
-target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/language/implicit_cast.html">cppreference</a>。</p>
-</blockquote>
-<h2 id="应用指北">应用指北</h2>
-<p>显然任何需要“阻挡”无意间隐式转换场景中，<code>explicit</code>均可大展身手——其多用于需要保证类型安全时。</p>
-<p>“联动”一个比较简单的例子：<del>众所周知以下代码在java中不能通过编译</del></p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">float</span> <span class="variable">x</span> <span class="operator">=</span> <span class="number">3.14</span>; <span class="comment">//Error: ...?</span></span><br><span class="line"><span class="type">float</span> <span class="variable">y</span> <span class="operator">=</span> (<span class="type">float</span>)<span class="number">3.14</span>; <span class="comment">//OK</span></span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>类似的“截断”在C/C++中常只以<del>很容易被忽略/关闭的</del>Warning的形式出现<del>突击检查之谁在编译选项里加了<code>-Wno-narrowing</code></del>；尽管主流编译器都提供了将之视为Error的选项，但其只能覆盖基本类型转换的截断。</p>
-</blockquote>
-<p>简单来说，<code>explicit</code>应用在构造函数中可以“防外”，转换构造函数则是“防内”。</p>
-<p><code>explicit</code>可以同时应用之于二者，亦可只应用于一端，创造更灵巧于<code>enum class</code>的类（<code>enum class</code>可视为向底层类型的构造函数和转换构造函数均为<code>explicit</code>的类）；甚至可以只阻隔一部分的构造函数，而允许另一部分通过，以更适配实际应用场景。</p>
-<p>如，对于自定义的大整数类<code>MyInt</code>，即可存在以下几方面的考量：</p>
+<p>C++中有许多<del>脍炙人口、妇孺皆知</del>的俗语，其是C++程序设计者间“会心一笑”的载体，更蕴含了C++乃至大量编程语言的设计哲学。</p>
+<h1 id="raii">RAII</h1>
+<p>全称 Resource Acquisition Is Initialization，数据获取即初始化。</p>
+<p>其基本概念在于对每个需要“申请”资源（所谓 <em>acquired before
+use</em>，即使用前必须显式“请求”，如堆内存、文件标识符、数据库连接、互斥锁等）的C++对象，其均在构造函数中初始化它们，并在析构函数中将之释放。<br />
+结合变量的生命周期机制、移动语义等工具，其目标有两点：</p>
 <ul>
-<li><code>MyInt</code>可表示整数的取值范围是极广的，但<code>int</code>只限于
-<span class="math inline">\(-2^{31} ~
-2^{31}-1\)</span>，故从允许拓展而不允许截断的角度出发，构造函数不应声明为<code>explicit</code>；同时我们又希望保留这个转换构造的窗口（但需要调用者明示之，以确定其知会截断风险），则可以声明<code>explicit</code>的<code>operator int() const</code>；<br />
+<li>该对象完成初始化（构造时不抛出异常）后，可认为其使用的资源一定被正确地初始化过而“放心”地使用；<br />
 </li>
-<li>设计算术运算符重载时，我们希望只在<code>MyInt</code>的逻辑下进行（以保证设计语义一致并避免逻辑混乱、难以维护），故只会声明形如<code>MyInt operator+(MyInt x,MyInt y);</code>的重载，显然此时不应将构造函数声明为<code>explicit</code><del>否则将无法如此“丝滑”地调用</del>。</li>
+<li>无论为何该对象的生命周期结束（包括函数执行结束、提早<code>return</code>、抛出异常等等），该对象获取的资源一定能正确地释放，且无需显式管理之。</li>
+</ul>
+<p>以内存管理为例，与手动管理动态数组相比，<code>std::vector</code>的优越性一目了然：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">(<span class="type">int</span>*)</span></span>;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">bad</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span>* ptr = <span class="keyword">new</span> <span class="type">int</span>[<span class="number">10</span>]; <span class="comment">//?</span></span><br><span class="line">    <span class="built_in">foo</span>(ptr); <span class="comment">//?</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(ptr[<span class="number">0</span>] &lt; <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span>; <span class="comment">//?</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">delete</span>[] ptr; <span class="comment">//?</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">good</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="function">std::vector&lt;<span class="type">int</span>&gt; <span class="title">vc</span><span class="params">(<span class="number">10</span>)</span></span>;</span><br><span class="line">    <span class="built_in">foo</span>(vc.<span class="built_in">data</span>());</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(vc[<span class="number">0</span>] &lt; <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上述代码中，<code>bad</code>函数在许多代码中堪称司空见惯，但其在内存管理上实际上漏洞百出。</p>
+<ul>
+<li>若内存申请失败（不论<code>malloc</code>或<code>operator new</code>，虽然后者在多数实现中失败时会抛出异常，但亦需考虑一些行为默认“加了”<code>std::nothrow_t</code>的场景），空的<code>ptr</code>就这么成为“漏网之鱼”被继续使用了。类似的还有<code>fopen</code>（无效的<code>FILE*</code>）、各种数学运算后（无效结果）不检查<code>errno</code>；<del>当然错误处理这块在C++23中也被开辟了“第三赛道”，即以<code>std::expected</code>打头的新时代
+<em>sum-types</em></del><br />
+</li>
+<li>若<code>foo</code>函数抛出异常而触发栈回溯(<em>stack
+rewinding</em>)，则<code>ptr</code>对应的内存空间将不会被<code>delete[]</code>释放而泄露<del>这里都不考虑<code>ptr</code>传进去所有权(ownership)不明确导致的潜在double-free等问题</del>；<br />
+</li>
+<li>若<code>ptr[0]&lt;0</code>，则触发了 <em>early
+return</em>，在大型的、存在多个出口(<code>return</code>)的函数中，在每个<code>return</code>前都分别<code>delete[]</code>显然不可行，产生的内存漏洞原理同上；<br />
+</li>
+<li>只有当程序运行到<code>delete[] ptr;</code>时，<code>ptr</code>对应的内存才被释放。然而如此做依然有诸多漏洞——若<code>ptr</code>的值中途被更改了，将会如何？若<code>ptr</code>对应的内存已经被<del>不小心</del>释放过了呢？</li>
+</ul>
+<hr />
+<p>相比之下，<code>std::vector</code>封装了“动态数组”头指针及长度，在构造函数中申请堆内存并检查是否成功，并在析构函数中释放之。如此做保证了以下数点：</p>
+<ul>
+<li><code>std::vector</code>的对象初始化成功（可用）是该对象底层指针可用的<strong>充分条件</strong>，无需担心初始化问题（若分配内存失败，则抛出异常并触发栈回溯，该<code>std::vector</code>的变量即因离开其范围(scope)而不可用；<br />
+</li>
+<li>无论以何种方式离开该变量的生命周期（即其所在的函数执行中止，包括正常完成、抛出异常和
+<em>early return</em>
+等），该<code>std::vector</code>都会将自身获得的堆内存释放；<br />
+</li>
+<li>通过恰当地声明移动构造函数/赋值运算符，对移动语义的践行到位，使得堆内存资源所有权清晰且易于管理（移动<code>vector</code>时，新对象的指针、长度置为当前对象的对应值，当前对象的数据值置空）。</li>
+</ul>
+<hr />
+<h2 id="应用侧闲谈">应用侧闲谈</h2>
+<p><a
+target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/language/raii.html">cppreference</a>也给出了在应用侧使得RAII类的语义、作用能正确发挥的实践方法：</p>
+<ul>
+<li>将之声明为自动存储周期(automatic storage
+duration)的变量，即不以<code>static</code>、<code>thread_local</code>等修饰的、<strong>自身在栈上</strong>的变量；<br />
+</li>
+<li>或使之与一个具备自动存储周期/临时对象相绑定（如，作为另一个类的非静态数据成员）。</li>
+</ul>
+<p>核心观点在于令其构造（初始化）和析构（销毁）均<strong>自动进行</strong>；同时应避免手动“接管”资源，不改变其既有所有权的语义（如避免调用智能指针的<code>release()</code>）。</p>
+<p>C++中典型的 <em>RAII-Classes</em>
+包括标准库的容器(Containers)类，如<code>std::vector</code>、<code>std::deque</code>、<code>std::string</code>等；还包括它们衍生的
+<em>容器适配类(container adaptors)</em>
+（在采用的底层容器符合RAII原则的情况下），如<code>std::priority_queue</code>等；亦有用户自定义资源的适配器，如<code>std::lock_guard</code>、<code>std::ostream</code>一族、<code>std::unique_ptr</code>等。</p>
+<p>典型的 <em>Non-RAII Classes</em>
+即为仅具有<code>lock()</code>/<code>unlock()</code>、<code>open()</code>/<code>close()</code>等一对“手动”获取/释放相应资源的类（映射到堆内存即为<code>operator new</code>/<code>operator delete</code>等）。<strong><em>RAII-Classes</em>
+也可以主动申请/释放资源，但底层过程是被封装、自动调用且安全的，如<code>vector</code>的<code>reserve()</code>和<code>clear()</code>。</strong></p>
+<hr />
+<h2 id="设计侧简述">设计侧简述</h2>
+<p>设计侧除了让函数应当满足上述申请/释放资源的要求外，语法上还应具备以下几个特点：</p>
+<ul>
+<li>构造函数、复制构造函数/赋值运算符若申请资源失败，应当抛出异常以触发顶层函数的栈回溯，进而“阻止”该对象的初始化；<br />
+</li>
+<li>析构函数不应抛出异常，即必定为<code>noexcept</code>；<br />
+</li>
+<li>移动构造函数/赋值运算符亦不应抛出异常（更准确地，遵守完整且正确的移动语义）。</li>
 </ul>
 <blockquote>
-<p>二元算术运算符建议都声明为“传值进，传值出”：参见<a
-href="/cpp/rrefs/">C++——右值引用与移动语义</a>。<br />
-简而言之，其动机在于可以充分利用移动语义的优势，能在无需编写模板/大量重载的情况下最好地优化各种情况（临时对象，常对象，普通对象等）的空间应用。</p>
+<p>C++中析构函数默认均被标记为<code>noexcept</code>，即只要不显式声明/解析为<code>noexcept(false)</code>的析构函数均为<code>noexcept</code>。编译器自动生成的移动构造函数（含<code>= default;</code>）也是<code>noexcept</code>的，但用户自定义的移动构造函数并不会自动成为<code>noexcept</code>，应手动声明之以高效利用语言库和工具——详见<a
+href="/cpp/rrefs/">C++——右值引用和移动语义</a></p>
 </blockquote>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MyInt</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>: </span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">    <span class="built_in">MyInt</span>(<span class="type">int</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">    <span class="function"><span class="keyword">explicit</span> <span class="keyword">operator</span> <span class="title">int</span><span class="params">()</span> <span class="type">const</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    MyInt a&#123;<span class="number">3</span>&#125;,b&#123;<span class="number">5</span>&#125;;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">    <span class="keyword">auto</span> c = a*<span class="number">3</span>;  <span class="comment">//c is MyInt automatically,calls `MyInt::MyInt(int)` to construct a MyInt object in the process</span></span><br><span class="line"></span><br><span class="line">    <span class="type">int</span> x = c; <span class="comment">//Error: `MyInt::operator int() const` is specified explicit</span></span><br><span class="line">    </span><br><span class="line">    std::cout &lt;&lt; <span class="built_in">int</span>(c) &lt;&lt; std::endl; <span class="comment">//OK</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h2 id="实例">实例</h2>
-<p>以笔者的<a
-target="_blank" rel="noopener" href="https://github.com/CrystalJiang232/AES-Integrals">AES-Integrals</a>为例。<br />
-为在密码学应用的代码维护中充分发挥Modern
-C++的优势，笔者选择了推翻既有的直接视<code>unsigned char</code>/<code>uint8_t</code>为
-<em>"Byte"</em>
-的做法，亦未使用C++17提供的<code>enum class byte</code>，而选择另起炉灶，自立一派——自定义<code>struct byte</code>（可见于<a
-target="_blank" rel="noopener" href="https://github.com/CrystalJiang232/AES-Integrals/blob/main/AES/include/aes.h">aes.h</a>中），封装<code>unsigned char</code>并定义相应的重载等，其中转换构造函数就利用了单向/部分<code>explicit</code>：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> uc = <span class="type">unsigned</span> <span class="type">char</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">byte</span> </span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">explicit</span> <span class="keyword">constexpr</span> <span class="title">byte</span><span class="params">(<span class="type">unsigned</span> <span class="type">char</span> _val)</span> : value&#123;</span>_val&#125; &#123;&#125;</span><br><span class="line">    <span class="function"><span class="keyword">constexpr</span> <span class="title">byte</span><span class="params">()</span> : byte(<span class="number">0</span>) &#123;</span>&#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Default special member functions</span></span><br><span class="line">    <span class="function"><span class="keyword">constexpr</span> <span class="title">byte</span><span class="params">(<span class="type">const</span> byte&amp;)</span> </span>= <span class="keyword">default</span>;</span><br><span class="line">    <span class="function"><span class="keyword">constexpr</span> <span class="title">byte</span><span class="params">(byte&amp;&amp;)</span> <span class="keyword">noexcept</span> </span>= <span class="keyword">default</span>;</span><br><span class="line">    <span class="keyword">constexpr</span> byte&amp; <span class="keyword">operator</span>=(<span class="type">const</span> byte&amp;) = <span class="keyword">default</span>;</span><br><span class="line">    <span class="keyword">constexpr</span> byte&amp; <span class="keyword">operator</span>=(byte&amp;&amp;) <span class="keyword">noexcept</span> = <span class="keyword">default</span>;</span><br><span class="line">    <span class="keyword">constexpr</span> ~<span class="built_in">byte</span>() = <span class="keyword">default</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Conversion</span></span><br><span class="line">    <span class="function"><span class="keyword">constexpr</span> <span class="keyword">operator</span> <span class="type">unsigned</span> <span class="title">char</span><span class="params">()</span> <span class="type">const</span> <span class="keyword">noexcept</span> </span>&#123; <span class="keyword">return</span> value; &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Bitwise operators</span></span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>此处笔者倾向于强调<code>byte</code>作为一个自定义类的特殊性，设置了较高的“准入门槛”，即用<code>explicit</code>修饰<code>byte::byte(unsigned char)</code>，以达成避免普通的字面量和<code>struct byte</code>混合位运算的语义混乱。结合自定义的字面量操作符<code>operator""_t</code>，效果形如：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//byte x = 3; //Not compile</span></span><br><span class="line"></span><br><span class="line">byte x;</span><br><span class="line"><span class="comment">//byte z = x ^ 3; //Not Compile</span></span><br><span class="line">byte z = x ^ <span class="type">3_t</span>; <span class="comment">//OK</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h1 id="c20带条件的explicit">C++20：带条件的<code>explicit</code></h1>
-<p>C++20中，<code>explicit</code>关键字变得更加灵活：声明时可以写出<code>explicit(expr)</code>，其中<code>expr</code>为<code>bool</code>类型的编译期常量（<em>compile-time
-constant</em>）。<br />
-当<code>expr</code>解析为<code>true</code>时，该函数视为被<code>explicit</code>修饰，否则视为未被<code>explicit</code>修饰。</p>
+<p>自定义一个简单的<code>MyVector</code>类的示例如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">MyVector</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">MyVector</span>():<span class="built_in">ptr</span>(<span class="literal">nullptr</span>),<span class="built_in">length</span>(<span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">MyVector</span>(<span class="type">const</span> MyVector&amp; rhs):ptr&#123;<span class="keyword">new</span> <span class="type">int</span>[rhs.length]&#125;,<span class="built_in">length</span>(rhs.length)</span><br><span class="line">    &#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">MyVector</span>(MyVector&amp;&amp; rhs) <span class="keyword">noexcept</span> : <span class="built_in">ptr</span>(rhs.ptr),<span class="built_in">length</span>(rhs.length)</span><br><span class="line">    &#123;</span><br><span class="line">        rhs.ptr = <span class="literal">nullptr</span>;</span><br><span class="line">        rhs.length = <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ~<span class="built_in">MyVector</span>() <span class="comment">//noexcept by default</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span>(ptr) <span class="comment">//Can be eliminated for deleting nullptr is safe</span></span><br><span class="line">        <span class="comment">//Yet keep this conditional statement for consistant sematics for RAII in other resources&#x27; management</span></span><br><span class="line">        <span class="comment">//i.e. File descriptors checking whether it&#x27;s open(active) before closing it</span></span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">delete</span>[] ptr;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span>* ptr;</span><br><span class="line">    <span class="type">size_t</span> length;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h1 id="rule-of-threefivezero">Rule-of-Three/Five/Zero</h1>
 <blockquote>
-<p>相当于单纯的<code>explicit</code>等价于<code>explicit(true)</code>，参考<code>noexcept</code>和<code>noexcept(expr)</code>的用法间联系。</p>
+<p>对右值引用和移动语义尚不熟悉的道友，建议先移步<a
+href="/cpp/rrefs/">C++——右值引用与移动语义</a>以更好地理解如此设计的必要性。</p>
 </blockquote>
-<p>其作用亦和<code>noexcept</code>一类有相通之处，即用于模板编程中<del>和<code>requires</code>和<code>noexcept</code>等一众神魔乱舞</del>：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">T</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">explicit</span>(!<span class="keyword">requires</span>&#123;<span class="type">int</span> x = std::<span class="built_in">declval</span>&lt;Ty&gt;();&#125;) <span class="function"><span class="keyword">operator</span> <span class="title">int</span><span class="params">()</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> a = T&lt;<span class="type">int</span>&gt;&#123;&#125;; <span class="comment">//OK, conversion ctor resolves to explicit(false)</span></span><br><span class="line">    <span class="type">int</span> b = T&lt;std::string&gt;&#123;&#125;; <span class="comment">//Error: conversion ctor resolves to explicit(true)</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><del>什么？你还不知道<code>requires</code>？嘿嘿，又可以打广告啦：欢迎移步<a
-href="/cpp/concepts">C++——concepts</a></del></p>
-<h1 id="结语">结语</h1>
-<p>C++进化中许多语义检查的设计哲学之一，即为保证语义安全的“目标”同时，提供尽可能便捷的灵活性选项。<code>explicit</code>、<code>= delete;</code>、<code>[[fallthrough]]</code>、<code>[[nodiscard]]</code>等一众attributes即为其实例——所谓“有求者自取之”。</p>
-<p>灵活应用<code>explicit</code>的目的同<code>const</code>、<code>&amp;&amp;</code>等所趋目标是一致的：作为镇寰宇玉门之守，不在最终生成的可执行代码中，而在保护这片代码不受有意无意的破坏侵蚀。</p>
+<h2 id="基本知识">基本知识</h2>
+<p>“3”“5”“0”指代对象是类的<strong>析构、复制构造、复制赋值、移动构造、移动赋值</strong>五个函数。</p>
+<p>先看编译器的“默认”处理方式：</p>
 <blockquote>
-<p>由于C/C++的类型转换同<code>return</code>、引用等一样是个极大的课题，加之笔者认识有限，上述内容或存诸多疏漏之处。如有出错，请见谅并欢迎指正之；亦可关注<del>还在咕咕咕的</del><a
-href="/cpp/cast/">C++——万类霜天竞自由</a></p>
+<p>从编译器的角度出发，<br />
+-
+若自定义了复制构造函数/复制赋值运算符，则编译器将不生成<strong>移动构造函数/移动赋值运算符</strong>；（注意，此时<code>std::move</code>等对右值的使用<strong>不会报错</strong>，只是无法发挥移动语义的优势；且此时编译器仍然会默认生成“复制”的另一半）<br />
+-
+若自定义了移动构造函数/移动赋值运算符，则编译器将不生成<strong>复制构造函数/复制赋值运算符</strong>，亦不会生成“移动”的另一半；<br />
+- 若类存在 <strong><em>任意</em></strong>
+自定义构造函数（包括上述的复制/移动构造函数），则编译器将不生成默认构造函数；</p>
+</blockquote>
+<p><strong>重点：显式地将函数主体声明为<code>= default</code>也算自定义。</strong></p>
+<p>上述语言机制对语义上的约束也非常明显：</p>
+<ul>
+<li>不允许只定义移动/复制构造函数，而不定义（普通）构造函数，即移动/复制语义不能基于缺省的初始化语义；<br />
+</li>
+<li>若一个类自定义了复制语义的实现，则<strong>应当</strong>自定义移动语义的实现（不存在缺省值，若不然，则依靠引用绑定机制，移动语义会退化为复制语义）；<br />
+</li>
+<li>若一个类自定义了移动语义的实现，则<strong>必须</strong>自定义复制语义的实现（不存在缺省值，否则该类的复制语义默认不可用，即视为<code>= delete;</code>）。</li>
+</ul>
+<blockquote>
+<p>上述分析站从C++的较顶层出发，或较抽象而难以理解，尽可能自行设计、思考模拟一个实例的语义实现，或将之实例化“降维”理解——
+<em>Beyond</em> 者皆见仁见智。</p>
+</blockquote>
+<hr />
+<p>回到正题：</p>
+<ul>
+<li><em>Rule of Three</em>：若类自定义了 (<em>user-defined</em>)
+析构、复制构造/赋值运算符三个函数中的任意一个，则<strong>语义上其必须</strong>定义剩下两个函数（所谓
+<em>it almost certainly requires all three</em>）。<br />
+</li>
+<li><em>Rule of
+Five</em>：若类需要利用移动语义进行优化，则在上述基础上还应定义移动构造函数/赋值运算符，即“凑够五行”。<br />
+</li>
+<li><em>Rule of
+Zero</em>：若可能，尽量不自定义任何的这五类函数，即让编译器自动生成之。</li>
+</ul>
+<h2 id="三清rule-of-three">三清——Rule of Three</h2>
+<p>何为如此？</p>
+<blockquote>
+<p>铺垫：可以认为每个C++的<code>class</code>都是资源与数据（可以只有一者）的集合。二者皆无的情况下类的对象不存在OOP意义下的实际意义，仅供语法特性适配之用，如泛滥至极的
+<em>tag types</em>（标签类型）和 C++20<code>ranges</code>中大面积应用的
+<em>function object</em> 。<br />
+“数据”本身是 <em>trivial</em>
+（平凡）的，其包括C++中所有的基本类型，即各类普通类型（各种浮点/整型/<code>bool</code>；<code>enum</code>/<code>enum class</code>是特殊的整型）和指针类型等。“数据”的特点是没有特殊的移动语义，即移动与复制相同（简单地进行内存复制，参考汇编中的<code>mov</code>亦不会改变原地址的值），且不存在“析构”这一概念<del>逝以飘零</del>。<br />
+“资源”可以参考<a href="#raii">上述</a>的描述。</p>
+</blockquote>
+<p>对于 <em>Rule of Three</em>，若 <strong><em>需要</em></strong>
+自定义析构函数，说明该类中存在需要手动清理的资源/善后工作；则该类的复制构造/赋值必不可能是平凡(trivial)的——即不可能是像C的<code>struct</code>那样，简单地将数据复制到新的内存中。若不然，则该类的资源将同时被多个对象所有且不可区分，极易出现资源管理的疏漏。<br />
+如下，C++复制构造函数“入门”的经典<del>踩坑</del>实例就完美地诠释了这一点：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">BadString</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">BadString</span>(<span class="type">const</span> <span class="type">char</span>* s):<span class="built_in">ptr</span>(<span class="keyword">new</span> <span class="type">char</span>[<span class="built_in">strlen</span>(s) + <span class="number">1</span>])</span><br><span class="line">    &#123;</span><br><span class="line">        std::<span class="built_in">strcpy</span>(s,ptr);</span><br><span class="line">    &#125;</span><br><span class="line">    ~<span class="built_in">BadString</span>()</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">delete</span>[] ptr;</span><br><span class="line">    &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">char</span>* ptr;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p><code>BadString</code>类必须自定义析构函数以释放申请的堆内存。但其未定义复制构造函数，直接导致不能正确地实现复制语义（按照默认的复制构造函数进行，新对象和原对象会指向同一块堆内存），结果自然而然就是
+<em>double-free</em> 导致的段错误：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="function">BadString <span class="title">a</span><span class="params">(<span class="string">&quot;ni hao&quot;</span>)</span></span>;</span><br><span class="line">    <span class="function">BadString <span class="title">b</span><span class="params">(a)</span></span>;</span><br><span class="line"></span><br><span class="line">&#125; <span class="comment">//Program collaspes here - Segment Fault for double-free(XD)</span></span><br></pre></td></tr></table></figure>
+<p>因此其必须自定义复制构造函数/复制赋值运算符，正确地为新对象重新分配堆内存资源、执行复制操作等。</p>
+<blockquote>
+<p>一定程度上，复制赋值可以视为对象内部“析构-重新复制构造”的过程。但C++不将之和上述过程混为一谈，除因部分场景下复制赋值可以有更高效的实现外（如两个<code>vector</code>大小相同，此时赋值显然直接执行数据复制即可，无需进行释放-再申请的过程），更多地是为了规避开一个非常无趣的应用场景——“自导自演”。<br />
+没反应过来咩？欢迎收看2026春节小品之<del>我与我周旋久(bushi)</del></p>
+</blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">MyVector</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line"></span><br><span class="line">    MyVector&amp; <span class="keyword">operator</span>=(<span class="type">const</span> MyVector&amp; rhs)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span>(std::<span class="built_in">addressof</span>(*<span class="keyword">this</span>) == std::<span class="built_in">addressof</span>(rhs))</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">return</span> *<span class="keyword">this</span>; <span class="comment">//......</span></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span>(length != rhs.length)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">delete</span>[] ptr;</span><br><span class="line">            ptr = <span class="keyword">new</span> <span class="type">int</span>[rhs.length];</span><br><span class="line">            length = rhs.length;</span><br><span class="line">        &#125;</span><br><span class="line">        std::<span class="built_in">memcpy</span>(ptr,rhs.ptr,length);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span>* ptr;</span><br><span class="line">    <span class="type">size_t</span> length;</span><br><span class="line">&#125;;  </span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>反过来，若一个类<strong>不需要自定义析构函数也能正确地管理资源（通常通过封装的类实现，或其根本没有资源）</strong>，则为之编写自定义的复制构造函数和复制赋值运算符也大概率没有意义（均可以通过语言内置的默认复制实现，参考下述的
+<em>Rule of Zero</em> 。</p>
+<h2 id="五行rule-of-five">五行——Rule of Five</h2>
+<p>“五行”者对应的动机也很简单，即利用语言的重载匹配机制来让右值能得到优化。<br />
+因在 <em>Rule of Three</em>
+中，自定义三个函数之一会令编译器<strong>不生成默认的移动构造函数/赋值运算符</strong>。<br />
+尽管此时多数情况下不会出现编译错误<del>除非把复制函数族给<code>= delete;</code></del>，但此时类对右值实参会“退化”到调用复制构造函数/赋值运算符（常引用绑定至右值），错失了优化良机：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">BadClass</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">BadClass</span>() = <span class="keyword">default</span>;</span><br><span class="line">    <span class="built_in">BadClass</span>(<span class="type">const</span> BadVector&amp;) = <span class="keyword">default</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    std::string s;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    BadClass x;</span><br><span class="line">    BadClass y = std::<span class="built_in">move</span>(x);  </span><br><span class="line">    <span class="comment">/*This line Invokes BadClass::BadClass(const BadClass&amp;) </span></span><br><span class="line"><span class="comment">    rather than BadClass::BadClass(BadClass&amp;&amp;) since it&#x27;s deleted implicitly</span></span><br><span class="line"><span class="comment">    resulting in unable to take advantage of move sematics*/</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>fun</code>第二行中，对象<code>y</code>在初始化时会调用复制构造函数<code>BadClass::BadClass(const BadClass&amp;)</code>而非移动构造函数<code>BadClass::BadClass(BadClass&amp;&amp;)</code>。<br />
+尽管二者都是默认生成的，但后者在初始化时会对所有变量进行“移动”处理（即适配移动语义，无论其底层实现如何），如对于下图的类模板：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty1</span>,<span class="keyword">class</span> <span class="title class_">Ty2</span>&gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">A</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    Ty1 a;</span><br><span class="line">    Ty2 b;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>则对模板类<code>A&lt;Ty1,Ty2&gt;</code>，其默认生成的复制构造函数和移动构造函数就会形如：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">A&lt;Ty1,Ty2&gt;::<span class="built_in">A</span>(<span class="type">const</span> A&amp; rhs):<span class="built_in">a</span>(rhs.a),<span class="built_in">b</span>(rhs.b)&#123;&#125;</span><br><span class="line">A&lt;Ty1,Ty2&gt;::<span class="built_in">A</span>(A&amp;&amp; rhs):<span class="built_in">a</span>(std::<span class="built_in">move</span>(rhs.a)),<span class="built_in">b</span>(std::<span class="built_in">move</span>(rhs.b))&#123;&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>严格地后者应为<code>static_cast&lt;Ty1&amp;&amp;&gt;(rhs.a)</code>（因语言核心特性不依赖标准库），<code>std::move</code>只是标准库的提高可读性的wrapper<del>虽然有<code>std::move</code>的时候没人会闲着没事干让<code>static_cast</code>满天飞</del></p>
+</blockquote>
+<p>若定义了<code>A&lt;Ty1,Ty2&gt;::A(const A&amp;)</code>（包括函数主体声明为<code>= default</code>），则<code>A&lt;Ty1,Ty2&gt;::A(A&amp;&amp;)</code>会被隐式删除，进而导致所有本可调用移动构造函数的场景均“改为”调用复制构造函数，导致不必要的复制。</p>
+<blockquote>
+<p>C++11后，类模板内的函数声明可以<strong>且“应当”</strong>直接使用类模板名（视为一个完整的类型），默认其模板参数和类模板的参数一致，如：<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MyVector</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">swap</span><span class="params">(MyVector&amp;)</span></span>;  <span class="comment">//Type of `rhs` is `MyVector&lt;Ty&gt;`, no need to specify</span></span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> UTy&gt;</span></span><br><span class="line"><span class="function">    <span class="type">void</span> <span class="title">swap</span><span class="params">(MyVector&lt;UTy&gt;&amp;)</span> </span>= <span class="keyword">delete</span>; <span class="comment">//Can be explicitly specified and instaniated(as a class template)</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+</blockquote>
+<p>同时不难发现，移动语义的实现是递归的——让一个上层“适配”类实现移动语义，若其并不直接管理资源，则只需令各非静态成员均实现其移动语义即可。</p>
+<h2 id="太初rule-of-zero">太初——Rule of Zero</h2>
+<blockquote>
+<p>If you can avoid defining default operations, do. ——C++ Core
+Guidelines</p>
+</blockquote>
+<p>对于较上层的实现/适配类，尽可能避免自定义五个函数中的任意一个（令编译器自动补全完整的语义实现），即只定义（普通）构造函数用于初始化这些数据成员。<br />
+比如一个自定义字符串类的“托管”实现就可以形如：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">MyString</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">MyString</span>() = <span class="keyword">default</span>;</span><br><span class="line">    <span class="built_in">MyString</span>(std::string_view sv):<span class="built_in">data</span>(std::from_range,sv)&#123;&#125;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    std::vector&lt;<span class="type">char</span>&gt; data;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>由于<code>std::vector</code>能够胜任内存管理的任务，因而不再需要为<code>MyString</code>这一上层适配类再自定义“五类函数”。<br />
+自定义五类函数不仅麻烦，而且容易在函数主体编写、函数类型声明等方面出现疏漏，导致不能充分利用语言工具乃至出现编译错误。</p>
+<blockquote>
+<p>不能充分利用语言工具的实例可见<a
+href="/cpp/rrefs#“手搓”了不恰当的移动构造函数/赋值运算符">C++——右值引用与移动语义</a></p>
+</blockquote>
+<hr />
+<p>附录：</p>
+<p>C++（乃至很多程序设计语言）的较好实践之一就是尽可能利用被无数代码不断检验测试过的、多次优化过的、实现统一且准确的<strong>标准库</strong>实现。不建议在程序设计中“手搓”资源管理、基本算法（如排序、查找等）的代码，尽可能采用既有的标准库实现——手搓费时费力<del>虽然也算是一种乐趣，上述观点更多地用于大型、正经的程序/项目开发</del>且极易出现各种疏漏，且其在基本算法上的效率几乎必定次于被优化检验过的标准库算法。</p>
+<p>如C++中的<code>std::(ranges::)sort</code>，其就会根据待排序目标大小来动态决策采用何种排序方式：</p>
+<ul>
+<li>子序列长度特别大时，会先采用堆排序(heap sort)；<br />
+</li>
+<li>子序列长度中等时，采用改良过的快速排序(quick sort)；</li>
+<li>子序列很短时，直接采用插入排序(insert sort)。</li>
+</ul>
+<blockquote>
+<p>更多有关C++设计哲学的解读参考可移步<a href="">C++ Core
+Guidelines</a>，其间内容致力于在基本语法要求的前提下，提供一种编写更高效、可读、易于维护与拓展代码的思路。</p>
 </blockquote>
 
       
@@ -634,7 +642,7 @@ href="/cpp/cast/">C++——万类霜天竞自由</a></p>
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/cpp/explicit/">展开全文 >></a>
+          <a class="article-more-a" href="/cpp/idioms/">展开全文 >></a>
         </p>
       
 
@@ -668,7 +676,7 @@ href="/cpp/cast/">C++——万类霜天竞自由</a></p>
   
   
     <nav id="page-nav">
-      <a class="extend prev" rel="prev" href="/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><span class="space">&hellip;</span><a class="page-number" href="/page/14/">14</a><a class="extend next" rel="next" href="/page/3/">Next &raquo;</a>
+      <a class="extend prev" rel="prev" href="/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><span class="space">&hellip;</span><a class="page-number" href="/page/15/">15</a><a class="extend next" rel="next" href="/page/3/">Next &raquo;</a>
     </nav>
   
 

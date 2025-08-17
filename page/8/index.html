@@ -152,205 +152,246 @@
           <div id="js-content" class="content-ll">
             
   
-    <article id="post-cpp/hierachy" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-cpp/concepts" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/cpp/hierachy/">C++——类继承的一隅</a>
+      <a class="article-title" href="/cpp/concepts/">C++20——concepts</a>
     </h1>
   
 
         
-        <a href="/cpp/hierachy/" class="archive-article-date">
-  	<time datetime="2025-04-02T13:59:38.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-04-02</time>
+        <a href="/cpp/concepts/" class="archive-article-date">
+  	<time datetime="2025-04-06T02:37:44.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-04-06</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h1 id="类基本特性概述">类基本特性概述</h1>
-<p>作为一门OOP(Object-Oriented
-Programming)语言，类和继承的相关概念和语法无疑是C++的立身之本。</p>
-<p>C++中类(<code>class</code>)的概念由C语言的结构体(<code>struct</code>)衍生而来，在C++中二者除成员的默认访问权限、默认继承方式(private/public)外，其余是完全等价的。<br />
-类可以拥有数据成员(data member)和函数成员(function
-member)，其可以是静态(static)或非静态的。<br />
-类的静态成员可以通过类或者类的成员来访问，非静态成员则只允许通过类的成员来访问；对于非静态的数据成员，每个类的实例都保有该数据成员的一个实例。因此，类中只有<strong>非静态的数据成员</strong>才占有空间（依<code>operator sizeof</code>获取，若一个类里没有任何的非静态数据成员，则其大小为最小值1。）</p>
-<blockquote>
-<p><code>sizeof</code>的两个特例：内存对齐(memory
-alignment)问题和虚类(virtual classes)的隐式虚指针(vptr)。</p>
+        <blockquote>
+<p><del>concepts是C++20最“简单”的大特性之一了</del></p>
 </blockquote>
-<p>“一笔带过”初始化问题：对于类的<code>static</code>数据成员，编写者可以在类外指定一次类内成员的初始化值（没有<code>static</code>关键字），若不指定，其则会默认采用
-<em>zero-initialization</em>（零初始化）的方式初始化。<br />
-特别地，<code>static const</code>的数据成员必须被初始化，但其初始化可以在类体内进行，如<code>static constexpr size_t T = 65537;</code></p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">T</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="type">int</span> x;</span><br><span class="line">    <span class="type">static</span> <span class="type">int</span> y;</span><br><span class="line">    <span class="function">std::string <span class="title">get</span><span class="params">()</span></span>&#123;<span class="keyword">return</span> <span class="string">&quot;1&quot;</span>;&#125;</span><br><span class="line">    <span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">nihao</span><span class="params">()</span></span>&#123;std::cout &lt;&lt; <span class="string">&quot;1&quot;</span> &lt;&lt; std::endl;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> T::y = <span class="number">5</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    T t&#123;&#125;;</span><br><span class="line">    t.x += t.y;</span><br><span class="line">    t.<span class="built_in">nihao</span>();</span><br><span class="line">    T::<span class="built_in">nihao</span>();</span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,t.<span class="built_in">get</span>());</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>所有类都拥有6个特殊成员函数：构造(constructor)、复制构造(copy
-constructor)、移动构造(move constructor)、复制赋值(copy assignment
-operator)、移动赋值(move assignment operator)、析构(destructor)。<br />
-用户若不定义这些函数，则编译器将自动生成之。默认生成的三个构造函数和析构函数的函数体为空，其中移动构造函数和析构函数自动声明为<code>noexcept</code>；三个构造函数在初始化列表中会分别用(变量声明中的初始化列表/原对象的对应变量/原对象的对应变量转化为右值后)初始化自身的成员变量。若依此法得到的任一变量的初始化不能通过编译，则该默认生成的构造函数不可用。</p>
+<p>C++20的更新量级极大：其开创了大量新的编程模式，引入了大量语法点、标准库等等，对C++体系的影响可以与C++11相提并论。<br />
+其中更有“四大金刚”——<code>concepts</code>、<code>modules</code>、<code>ranges</code>和<code>coroutines</code>。本篇将深入浅出地探讨<code>concepts</code>这一大特性。</p>
+<h1 id="pastsfinae">Past——SFINAE</h1>
+<p>"Substitution Failure Is Not An Error"<br />
+其在元编程(metaprogramming)和模板重载决议时发挥重要作用：<br />
+当将推导的模板参数，或将指定的模板参数代入模板列表“失败”时，被代入的模板将从重载备选集中被移除。</p>
+<h2 id="sfinae详解">SFINAE详解</h2>
+<p>当实例化一个模板时，显然需要对该模板内所有带模板参数的元素，以给定的模板参数进行代入。<br />
+SFINAE阶段，代入的目标对象只包括<strong>函数类型</strong>和<strong>其它模板参数</strong>中的所有<strong>类型(types)及表达式(expressions)</strong>；只有在此阶段遇到的错误会被视为
+<em>SFINAE Errors</em>
+，触发重载决议前的筛选机制（将之移除而非卡出一个编译错误）。</p>
 <blockquote>
-<p>更多有关移动构造/移动赋值/移动语义/右值引用可参阅：<a
+<p>C++会先将显式给定的模板参数进行代入，随后再执行模板参数推导(template
+parameter deduction)，再代入推导的参数及默认参数。</p>
+</blockquote>
+<p>代入目标对象“失败”示例：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//Example of substituting template parameters in types and expressions used to determine function type</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function">Ty&amp; <span class="title">fun</span><span class="params">(Ty* arg = <span class="literal">nullptr</span>)</span> <span class="title">noexcept</span><span class="params">(<span class="keyword">sizeof</span>(Ty) &lt; <span class="number">4</span>)</span></span>&#123;&#125; <span class="comment">//#1</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//Ty is used in determining return type and function parameter list(substituting type), and noexcept specifier(substituting expression)</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">()</span></span>&#123;&#125; <span class="comment">//#2</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">()</span></span>&#123;Ty arg;&#125; <span class="comment">//#3</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">()</span></span>&#123;std::<span class="built_in">println</span>(<span class="string">&quot;ni hao&quot;</span>);&#125; <span class="comment">//#4</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">fun</span>&lt;<span class="type">void</span>&gt;(); <span class="comment">//Triggers a SFINAE Error for function template #1: attempting to create reference to void / obtaining sizeof(void)</span></span><br><span class="line">    <span class="comment">//Thus #1 is discarded from overload resolution set, and #2 is chosen and instanated</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">foo</span>&lt;<span class="type">void</span>&gt;(); <span class="comment">//This DOES NOT trigger a SFINAE Error, since the &quot;substitution failure&quot; occurs in the function body</span></span><br><span class="line">    <span class="comment">//Thus this line will not compile for ambiguity</span></span><br><span class="line">    <span class="comment">//If removing #4, then the error would be trying to create an object of type void</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以发现，运用SFINAE的重点在于将潜在的错误点置于模板参数列表、函数类型涉及的表达式中，而非函数体内（函数体内的代码解析优先级非常低）。<br />
+常见的 <em>SFINAE Errors</em> 有：</p>
+<ul>
+<li>数组类：尝试创建一个非正整数长度的数组、函数数组、引用数组、<code>void</code>类型的数组；<br />
+</li>
+<li>域解析符<code>::</code>类：当尝试使用域解析符时，
+<ul>
+<li>左操作数不是一个类名/命名空间名；<br />
+</li>
+<li>右操作数试图访问的成员不存在；<br />
+</li>
+<li>右操作数试图访问的成员属性不符（预期成员属性是一个类型/非类型/模板，但访问到的成员属性不匹配）；<br />
+</li>
+</ul></li>
+<li>引用类：尝试创建指向引用的指针、<code>void</code>的引用；<br />
+</li>
+<li>其它：对非类型的模板参数，赋予了一个不合法的类型（包括不能实现转换）</li>
+</ul>
+<blockquote>
+<p>注意代入模板参数后，出现的“引用的引用”会触发<strong>引用折叠(reference
+collasping)</strong>而非错误，详见<a
 href="/cpp/rrefs/">C++——右值引用和移动语义</a></p>
 </blockquote>
-<p>上述初始化方法的特例是"POD(Plain Old
-Data)-types"（C++17后弃置了这种说法，改为 <em>aggreate-type</em> -
-聚合类型）。<br />
-简单理解，POD/aggreate-types就是长得像C中的<code>struct</code>的类型，其所有数据成员都是<code>public</code>的，且没有定义任何的前五类特殊函数（也不能显式声明为<code>= default;</code>）。<br />
-对它们可以通过依次指定每个成员的方式来初始化（若参数个数小于变量数，则只默认初始化后续的变量），名为“聚合初始化”，此时传参只允许使用大括号<code>&#123;&#125;</code>。</p>
+<h2 id="type_traits有关"><code>&lt;type_traits&gt;</code>有关</h2>
+<p>C++11引入的<code>&lt;type_traits&gt;</code>带来了极大量基于SFINAE和模板匹配、可用于识别给定类型参数的traits。几个示例如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>,std::<span class="type">enable_if_t</span>&lt;!std::is_array_v&lt;Ty&gt;,<span class="type">int</span>&gt; = <span class="number">0</span>&gt;</span><br><span class="line"><span class="type">void</span> <span class="built_in">func</span>(Ty arg);</span><br></pre></td></tr></table></figure>
+<p>对于初次接触SFINAE的读者而言，上述模板声明会显得非常拗口难解。实际上其作用就是约束了<code>func</code>的参数，要求其不能是数组类型。<br />
+<code>std::is_array_v</code>是一个<code>bool</code>类型的变量模板，接受一个类型参数实例化，返回该类型参数是否为数组类型；<br />
+而<code>std::enable_if_t</code>（及其C++14前的原型<code>std::enable_if</code>）则是一个由类型偏特化(partial
+specialization)铸就的非常精巧的traits之一。其实现如下：<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="type">bool</span> Cond, <span class="keyword">class</span> <span class="title class_">Ty</span> = <span class="type">void</span>&gt;</span><br><span class="line"><span class="keyword">struct</span> enable_if</span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">enable_if</span>&lt;<span class="literal">true</span>,Ty&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">using</span> type = Ty;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="type">bool</span> Cond,<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">using</span> <span class="type">enable_if_t</span> = <span class="keyword">typename</span> enable_if::type; <span class="comment">//No need for &quot;typename&quot; since C++20</span></span><br></pre></td></tr></table></figure></p>
+<p>可见<code>enable_if</code>存在一个偏特化的模板，当第一个模板参数<code>Cond</code>为<code>true</code>时，匹配的偏特化模板中存在一个别名声明<code>type = Ty</code>；否则匹配的一般模板为空。<br />
+而<code>enable_if_t</code>则利用了SFINAE，若<code>Cond</code>为<code>true</code>，则<code>enable_if_t</code>这个语句是合法的，否则不合法（域解析符试图访问的成员不存在）。<br />
+在应用时，可以将待判定条件<code>Cond</code>置为其第一参数，<code>int</code>置为其第二参数，并赋予默认值<code>= 0</code>：如此即可实现<code>Cond</code>为<code>true</code>时，剩余模板参数自动推导并匹配成功（宏观上，该模板可以被实例化）；<code>Cond</code>为<code>false</code>时，该模板不能被实例化。</p>
 <blockquote>
-<p><del>这里感觉又可以开一个关于C++初始化的新坑</del>，不过C++的初始化确实可讲的也非常非常多</p>
+<p>这个<code>0</code>的<code>int</code>型模板参数没有任何意义，只是为了满足语法要求。理论上完全可以采用其它模板参数来满足语法限制，比如将类型替换为<code>char</code>：<code>template&lt;class Ty,std::enable_if_t&lt;Ty,char&gt; = 0&gt;</code>。注意不能替换为<code>void</code>（因为不允许创建<code>void</code>类型的对象）。</p>
 </blockquote>
+<p>梳理至此，读者应也不难<del>一眼</del>看出该模板对<code>Ty</code>的约束了。<br />
+但很显然利用SFINAE进行模板约束时，写出的代码可读性非常堪忧，毕竟上述还是非常简单的单一约束的状况。<br />
+来看一个（相对）很简单的标准库中双约束示例（<code>std::make_unique</code>实现）：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">_EXPORT_STD <span class="keyword">template</span> &lt;<span class="keyword">class</span> <span class="title class_">_Ty</span>, <span class="type">enable_if_t</span>&lt;is_array_v&lt;_Ty&gt; &amp;&amp; extent_v&lt;_Ty&gt; == <span class="number">0</span>, <span class="type">int</span>&gt; = <span class="number">0</span>&gt;</span><br><span class="line">_NODISCARD_SMART_PTR_ALLOC _CONSTEXPR23 unique_ptr&lt;_Ty&gt; <span class="built_in">make_unique</span>(<span class="type">const</span> <span class="type">size_t</span> _Size) &#123; <span class="comment">// make a unique_ptr</span></span><br><span class="line">    <span class="keyword">using</span> _Elem = <span class="type">remove_extent_t</span>&lt;_Ty&gt;;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">unique_ptr</span>&lt;_Ty&gt;(<span class="keyword">new</span> _Elem[_Size]());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><del>宏看不懂没关系，</del>模板的约束条件是：<code>Ty</code>是一个数组类型，并且其大小(Extent)为零（形如<code>int[]</code>）。</p>
+<h2 id="出路在何">出路在何？</h2>
+<p>SFINAE应用中依然存在着诸多缺点，因而C++也在不断探索，并为程序设计者提供了诸多出路：<em>tag
+dispatch</em>，C++17的<code>if constexpr</code>，以及下方将述的重头戏——C++20的<code>concepts</code>。</p>
 <blockquote>
-<p>聚合类型可以拥有<code>private</code>/<code>public</code>的函数成员，但不能是虚类，其所有的数据成员也应是
-<em>fundamental type</em>（基本类型）或聚合类型。</p>
+<p>上述几种方式都是辅助“决议”型的方法。若只是希望在一定条件下产生一个编译错误，可以改用<code>static_assert</code>。<br />
+但这亦为其不能用于模板实例化选择的原因：<code>static_assert</code>的生效域是在函数体/类体的内部（对于模板而言），任何含有<code>static_assert(false)</code>的语句被实例化（将被编译）会立即产生编译错误，且显然根据定义其不属于
+<em>SFINAE Errors</em>。<br />
+唯一的例外是结合<code>if constexpr</code>使用（本质上依然是令该行不被实例化）。详见<a
+href="/cpp/constexpr/">C++——编译期运算</a></p>
 </blockquote>
-<h1 id="类的继承">类的继承</h1>
-<h2 id="继承和虚继承">继承和虚继承</h2>
-<p>类的继承有普通继承和虚继承两种。继承时需要声明继承方式（若不声明，<code>class</code>默认以<code>private</code>，<code>struct</code>默认以<code>public</code>）。<br />
-可以在继承方式前/后声明<code>virtual</code>声明为虚继承，虚继承下对于最末端的派生类，被虚继承的类（该类的所有直接派生类都需要声明为虚继承）的成员只会保有一个副本，其构造函数的调用发生于其它非虚基类的构造函数之前。</p>
-<p>构造函数的调用优先级如下：</p>
-<ol type="1">
-<li>所有虚基类的构造函数；</li>
-<li>所有直接基类的构造函数；<br />
-</li>
-<li>所有数据成员的构造函数；<br />
-</li>
-<li>自身的构造函数。</li>
-</ol>
-<p>对于同为直接基类的构造函数，调用顺序由函数<strong>继承声明</strong>顺序决定；对于同为数据成员的构造函数，调用顺序由<strong>变量声明</strong>顺序决定（总之和初始化列表的顺序无关）。<br />
-若初始化列表所“展现”的构造函数调用顺序与实际顺序不一致，部分编译器会给出<code>warning</code>。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;print&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">B</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">B</span>(<span class="type">int</span> _x):x&#123;_x&#125;&#123;std::<span class="built_in">println</span>(<span class="string">&quot;B::B()&quot;</span>);&#125;</span><br><span class="line">    <span class="function"><span class="type">int</span> <span class="title">visit</span><span class="params">()</span></span>&#123;<span class="keyword">return</span> x;&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> x;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">D1</span>:<span class="keyword">virtual</span> <span class="keyword">public</span> B</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">D1</span>(<span class="type">int</span> _x):B&#123;_x&#125;&#123;std::<span class="built_in">println</span>(<span class="string">&quot;D1::D1()&quot;</span>);&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">D2</span>:<span class="keyword">virtual</span> <span class="keyword">public</span> B</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">D2</span>(<span class="type">int</span> _x):B&#123;_x&#125;&#123;std::<span class="built_in">println</span>(<span class="string">&quot;D2::D2()&quot;</span>);&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">D3</span>:<span class="keyword">public</span> D1,<span class="keyword">public</span> D2</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">D3</span>(<span class="type">int</span> _x):B&#123;<span class="number">3</span>&#125;,D2&#123;_x&#125;,D1&#123;_x&#125;&#123;std::<span class="built_in">println</span>(<span class="string">&quot;D3::D3()&quot;</span>);&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    D3 d&#123;<span class="number">2</span>&#125;;</span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,d.<span class="built_in">visit</span>()); </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>输出：（<del>不考虑<code>[-Wreorder]</code>的<code>warning</code></del>）
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">B::B()</span><br><span class="line">D1::D1()</span><br><span class="line">D2::D2()</span><br><span class="line">D3::D3()</span><br><span class="line">3</span><br></pre></td></tr></table></figure></p>
-<h2 id="继承成员访问权限和赋值兼容">继承成员、访问权限和赋值兼容</h2>
-<p>类继承时，会继承被继承类<strong>所有的函数成员和数据成员</strong>，但只有基类<code>protected</code>和<code>public</code>的成员才能被派生类直接访问（<code>private</code>成员依然存在于派生类中，只是不能被直接访问）。<br />
-这点是“赋值兼容原则”的基础，即一个派生类对象（或其地址）可以被用于初始化基类引用或指针，因为基类的成员是派生类成员的真子集。<br />
-作为一门编译期语言，C++中一个对象能够访问的成员（包括函数成员、数据成员的寻址、调用及访问权限控制等）是由<strong>该变量的当前类型决定的</strong>，而非由对象本身决定（对象本身不存储任何类型信息，RTII(Runtime
-Type Identity Information，运行时类信息)除外）。</p>
-<p>因此，如果一个对象被绑定至其基类的指针或引用，通过基类引用<code>Base&amp;</code>只能访问基类有的函数/成员变量，而不能访问派生类新定义/重写的函数/成员变量，同时访问权限均以基类的定义为准（就如同派生类从未存在过）。</p>
-<blockquote>
-<p>即使是下面将述的虚函数，其访问权限依然由引用类型类内的定义为基准。</p>
-</blockquote>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Base</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">()</span></span>&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Derived</span>: <span class="keyword">public</span> Base</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">()</span></span>&#123;&#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">()</span></span>&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Derived d&#123;&#125;;</span><br><span class="line">    Base&amp; b = d;</span><br><span class="line">    <span class="comment">//d.fun(); //Error: fun() is private in this context</span></span><br><span class="line">    b.<span class="built_in">fun</span>(); <span class="comment">//OK, invokes Base::fun() instead of Derived::fun()</span></span><br><span class="line">    <span class="comment">//b.foo(); //Error: foo() is not a member of class Base</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="虚类和虚函数">虚类和虚函数</h2>
-<p>虚函数通过<code>virtual</code>关键字声明。若派生类中某函数和基类虚函数的签名相同，则该函数也会自动成为虚函数。<strong>为了保证语义一致，依然建议在编程实践中派生类的对应函数上依然加上<code>virtual</code>。</strong></p>
-<blockquote>
-<p>类成员函数的函数签名由函数名（含该类的命名空间约束）、形参列表和
-<em>cvref</em> (<code>const</code>、<code>volatile</code>、引用)
-属性决定。（<em>cvref</em> 中的 <em>cv</em>
-属性本质上是形参列表的一部分，由于成员函数的调用协定采用<code>thiscall</code>，即函数传参时本质是将调用实例的地址传入了（隐式的）第一个参数，为一个变量名为<code>this</code>，变量类型为
-<em>cv</em> +指针修饰的形参； <em>ref</em>
-只是约束了允许绑定至的对象类型，<code>&amp;</code>约束左值，<code>&amp;&amp;</code>约束右值，空则不约束之）。</p>
-</blockquote>
-<p>虚函数的实现原理是 <em>vptr</em> （虚指针） 和 <em>vtbl</em>
-（虚表）。带有虚函数的类被称为虚类(virtual
-classes)，继承了虚类的类也自动成为虚类。<br />
-所有虚类都会隐式地具有一个数据成员
-vptr，因而虚类所占的内存空间会偏大一个指针的<code>sizeof</code>。</p>
-<p>动态多态性的实现原理：<br />
-编译器会将获取虚函数的地址，并依虚表的次序将之填入一段静态的内存空间内（这段内存可以认为是一个指针的数组），派生类会继承基类的虚表。若一个派生类重写(override)了某个虚函数，则该派生类会将基类该虚函数对应位置的地址，重写为派生类重写函数的地址。<br />
-所有该类实例的构造函数中，其vptr都会被赋值为这个指针数组的起始地址（本质是一个二级指针）。<br />
-基类（或任何虚类的引用/指针等）调用虚函数时，会获取当前实例的vptr，随后到该类的vtbl中查找地址偏移量，以确定最终调用虚函数的地址。因而这一调用机制被称为“动态多态性”——函数寻址和传参是在运行时而非编译时进行。</p>
-<p>上述纯文字讲述可能稍有抽象，留一张参考图：<img
-src="/img/post_pics/vptr.png" title="vptr and vtbl demostration"
-alt="vptr" /> 依此图对vptr和vtbl的实现原理做进一步讲解。<br />
-从右侧的C++函数代码来看，这是非常典型的继承结构。A类定义了两个虚函数<code>vfunc1</code>和<code>vfunc2</code>，如图。在程序<strong>开始运行时</strong>会获取这两个虚函数的地址，并且填入A类所对应的vtbl中，形如<code>0x401ed0</code>和<code>0x401f10</code>。最后的空地址则起到类似于C样式字符串中“结束符”的作用，标志着vtbl（虚表）的结束。<br />
-对于B类，其公有继承了类A，这里需要注意的有两点：</p>
+<h1 id="presentconcepts">Present——concepts</h1>
+<p>C++20与"concepts"有关的关键字有两个：<code>concept</code>和<code>requires</code>。</p>
+<h2 id="concept"><code>concept</code></h2>
 <ul>
-<li>如此前所述，虽然A类的两个<code>int</code>数据成员<code>m_data1</code>，<code>m_data2</code>被声明为<code>private</code>，但它们依然会被继承（占据了内存空间），只是在B类内不可访问而已。<br />
-</li>
-<li>B类会先将A类的vtbl复制一份（目标虚函数的地址），但由于B类<strong>重写</strong>了<code>vfunc1</code>，则在B类的vtbl中，对应<code>vfunc1</code>的地址会被重写为<code>B::vfunc1</code>的地址<code>0x401f80</code>。<strong>同时因为B类没有重写<code>vfunc2</code>，因此<code>vfunc2</code>的地址依然是<code>A::vfunc2</code>的不变。</strong></li>
+<li><p><code>concept</code>声明一个“概念”，其本质是一个编译期的模板<code>bool</code>变量。其必须以一个编译期布尔常量(compile-time
+boolean constant)初始化之。如： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> example = <span class="literal">true</span>; <span class="comment">//A concept that always evaluate to be true</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//Its equivalent compile-time boolean constant is like:</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">bool</span> equivlant_cpvar = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> small = <span class="built_in">sizeof</span>(Ty) &lt; <span class="number">4</span>; <span class="comment">//For sizeof(Ty) &lt; 4, evaluates to a compile-time boolean constant of true</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">static_assert</span>(small&lt;<span class="type">int</span>&gt;);</span><br><span class="line"><span class="built_in">static_assert</span>(!small&lt;<span class="type">double</span>&gt;);</span><br></pre></td></tr></table></figure></p></li>
+<li><p><code>requires</code>则既可以作为specifier修饰一个模板（进行约束），亦是定义concepts元素的一部分。</p></li>
 </ul>
+<h2 id="requires作为约束提示字"><code>requires</code>作为约束提示字</h2>
+<p>通过requires显式约束模板变量时，操作数可以是任意于编译期能解析为<code>bool</code>的变量。</p>
 <blockquote>
-<p>假设B类新定义了一个虚函数<code>vfunc3</code>，则其地址在vtbl中会被追加在<code>vfunc2</code>之后；B的派生类的与虚函数有关的规则同上。</p>
+<p>C++11引入的<code>&lt;type_traits&gt;</code>中定义了极大量用于解析类型特征，并生成<code>constexpr bool</code>的变量模板。</p>
 </blockquote>
-<blockquote>
-<p>vptr和vtbl只处理和虚函数有关的问题；对于非虚函数，其地址和访问以另一种类似<code>static</code>的表形式实现，相信读者在理解vptr和vtbl的访问逻辑后能无师自通之。</p>
-</blockquote>
-<p>对于C类，逻辑基本和上述相同。需要留意的是C类定义了一个<code>m_data1</code>，<del>但由于C++并没有虚数据成员的概念(bushi)，</del>，结果就是类C中保有两份<code>m_data1</code>的副本，一份是继承自A类的<code>A::m_data1</code>（显然类C内不可直接访问之），另一份是自身定义的<code>m_data1</code>。</p>
-<p>现在观察一下虚函数的调用底层原理：<br />
-左侧<code>a</code>、<code>b</code>和<code>c</code>分别是A、B、C三个类的对象。每个虚类对象的实例都会保有一个vptr（一个二级指针），对于同一类的实例，其存储的地址是相同的（都是本类vtbl的起始地址）。<br />
-现在假设我们用一个A类的引用指向对象b：<code>A&amp; ra = b;</code>。观察左侧图中b对象加粗黑框的内容，这就是赋值兼容原则下，通过A类引用能访问到B类的全部成员（即A类既有的成员）。</p>
-<blockquote>
-<p>可见赋值兼容原则的基础就是基类的成员会被全部继承，并在派生类的内存中优先排列。</p>
-</blockquote>
-<p>此时：</p>
-<ul>
-<li>若调用<code>ra.vfunc1();</code>，由于<code>vfunc1</code>是虚函数，因此程序会根据该对象的vptr，获取到B类的vtbl；随后根据既定的偏移量（A类中，<code>vfunc1</code>处于vtbl中下标为<code>0</code>的位置），找到了对应函数<code>B::vfunc1</code>并开始调用。<br />
-</li>
-<li>若调用<code>ra.vfunc2();</code>，同理，但因为B类没有重写<code>vfunc2</code>，因此B类的vtbl中下标<code>1</code>依然指向<code>A::vfunc2</code>，因此最终未被重写的函数<code>A::vfunc2</code>被调用。<br />
-</li>
-<li>若调用<code>ra.func1();</code> 或
-<code>ra.func2();</code>，这两个函数并不是虚函数，因此程序只能寻址到<code>A::func1</code>和<code>A::func2</code>（程序没有提供任何能寻址到<code>B::func2()</code>的机制，毕竟当使用类型为<code>A&amp;</code>的引用变量<code>ra</code>时，其就决定了只能按A类的方式解读该对象的内存）。<br />
-</li>
-<li>即使<code>b</code>类新定义了一个虚函数<code>vfunc3()</code>，即通过<code>b</code>的vptr可以寻址到<code>B::vfunc3()</code>，但由于现在的引用类型是<code>A&amp;</code>，寻址是通过A类的vtbl偏移量进行，而A类并不知道该如何寻址到<code>vfunc3</code>（因为其在类A中没有定义），因此<code>ra.vfunc3()</code>这一语句不能通过编译。</li>
-</ul>
-<blockquote>
-<p>实践中由于其在运行时才能确定函数寻址和传参，因而一方面动态多态性的效率远不如静态多态性，另一方面其亦留下了很多漏洞攻击的空间(<del>pwn警告</del>)。实践中若需要实现类似动态多态性的功能，还有另一选项CRTP(Curiously
-Recursive Template
-Parameter，奇异递归模板参数)，其是一种较高阶的<code>template</code>运用技巧，可以在编译期实现基类引用调用派生类函数的效果，缺点是应用难度比较大且容易带来代码膨胀的问题<del><code>template</code>通病</del>。</p>
-</blockquote>
-<h2 id="纯虚函数和访问权限的差分">纯虚函数和访问权限的差分</h2>
-<p>长篇大论了这么多有关vptr和vtbl的机制，若能通晓之，也就不难理解纯虚函数和抽象类的底层逻辑了。<br />
-纯虚函数的声明就是将虚函数的主体以<code>= 0;</code>替代。放在vptr和vtbl的机制来看，显然其意义在于让该类的vtbl对应下标存储的地址置空(<code>0</code>,<code>NULL</code>,<code>nullptr</code>)。<br />
-显然程序运行中不能寻址一个地址为<code>NULL</code>的函数。因而：</p>
-<ul>
-<li>底层来看，该类派生类的vtbl中，该位置的地址被重写之前；<br />
-</li>
-<li>顶层来看，该类派生类中，该纯虚函数被定义（给出实现）之前；</li>
-</ul>
-<p>这个派生类都是抽象类，即不能创建对象的实例。</p>
-<hr />
-<p>结合此前关于类继承中访问权限区分的相关机制，结合访问权限差分，可以衍生出一些虚函数的有趣用法：</p>
-<ul>
-<li>基类将虚函数声明为<code>private</code>，则派生类能重写之，但不能访问基类未被重写的该函数；纯虚函数其理类似。<br />
-</li>
-<li>派生类将虚函数声明为<code>private</code>（基类依然声明为<code>public</code>），则只有派生类实例被基类引用绑定时，在类外可以访问该函数。</li>
-</ul>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Base</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">encrypt</span><span class="params">()</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="comment">/*...*/</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Derived</span>:<span class="keyword">public</span> Base</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">visit</span><span class="params">()</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="comment">//this-&gt;encrypt(); //Error: encrypt() is private in this context</span></span><br><span class="line">        <span class="comment">//Equivalent to that Base::encrypt() is unable to be visited directly outside class Base, disregarding the approach </span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt; <span class="title">requires</span> <span class="params">(small&lt;Ty&gt;)</span></span></span><br><span class="line"><span class="function"><span class="keyword">class</span> smallvector</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;  <span class="title">requires</span><span class="params">(!small&lt;Ty&gt; &amp;&amp; std::is_nothrow_destructible&lt;Ty&gt;)</span> </span>&#123;&#125; <span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(Ty)</span></span>;</span><br></pre></td></tr></table></figure>
 <h2
-id="c11的干将override和final修饰符">C++11的“干将”：<code>override</code>和<code>final</code>修饰符</h2>
+id="requires作为concepts一部分"><code>requires</code>作为concepts一部分</h2>
+<p>requires可以发起一个子句，语法是<code>requires (init_params)&#123;...&#125;</code>。<br />
+其中，init_params为可选项，如果加上了括号，则其中可以放置一些参数（如同写出函数的实参一样），可在下面的内嵌约束中使用。
+大括号内可以添加任意数量的内嵌约束语句(nested
+constraints)，以分号分隔且存在逻辑与的关系（当且仅当内嵌约束全部满足时，该requires解析为<code>true</code>）。
+Nested constraints的分类如下：</p>
+<ul>
+<li>简单约束：一个任意的表达式，该表达式合法（可以通过编译）时通过；<br />
+</li>
+<li>变量约束:
+<code>requires</code>加上一个编译期的<code>bool</code>变量，该变量为<code>true</code>时通过；<br />
+</li>
+<li>复合约束：语法为<code>&#123;expr&#125; (noexcept) (-&gt; [concept])</code>，通过条件如下：
+<ol type="1">
+<li>expr必须能通过编译（和“简单约束”相同）；<br />
+</li>
+<li>若声明了noexcept，则expr必须被声明为<code>noexcept(true)</code>；<br />
+</li>
+<li>若指定了后继的<code>-&gt; [concept]</code>（所谓"trailing
+type"-后继类型），则按以下的步骤校验：
+<ul>
+<li>将<code>decltype(expr)</code>代入至后继的concept中（作为第一个变量，规则可以参考模板隐式约束），</li>
+<li>该concept也必须最终解析为<code>true</code>。</li>
+</ul></li>
+</ol>
+上述任何一个步骤失败，则该约束的解析结果为<code>false</code>。</li>
+</ul>
+<p>如现在希望约束一个迭代器类，要求：</p>
+<ol type="1">
+<li>其必须可以与同类对象比较并返回bool，且不能抛出异常；</li>
+<li>其必须支持（前置）自增和自减运算；</li>
+<li>其必须可以解引用并返回一个int&amp;；</li>
+<li>其大小必须不大于8。</li>
+</ol>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> biint_iterators = <span class="built_in">requires</span>(Ty it) <span class="comment">//这里“幻化”出了一个变量it，可以在下文约束中使用。</span></span><br><span class="line">&#123;</span><br><span class="line">&#123;it != it&#125; <span class="keyword">noexcept</span> -&gt; std::same_as&lt;<span class="type">bool</span>&gt;;</span><br><span class="line">++it; --it;</span><br><span class="line">&#123;*it&#125; -&gt; std::same_as&lt;<span class="type">int</span>&amp;&gt;;</span><br><span class="line"><span class="function"><span class="keyword">requires</span> <span class="title">sizeof</span><span class="params">(it)</span> &lt; 8</span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>显然concepts的约束比起SFINAE等方法可读性、维护性提升了数个数量级。</p>
+<h2 id="concepts的无数花式用法">concepts的无数花式用法</h2>
+<p>前文提到C++标准委员会的<del>绥靖政策</del>导致了大量奇奇怪怪的concepts用法被选入标准。以对函数模板的约束为例，如下将具述之：<br />
+假设存在一个一元模板<code>cpt</code>，</p>
+<ol type="1">
+<li><p>常规写法：<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt; <span class="comment">/*p1*/</span> <span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(Ty arg)</span> <span class="comment">/*p2*/</span> </span>&#123;&#125;</span><br></pre></td></tr></table></figure>
+在p1或p2插入<code>requires cpt&lt;Ty&gt;</code>皆可（总结：在模板参数/函数形参声明后）。</p></li>
+<li><p>融合写法：<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;cpt Ty&gt; <span class="type">void</span> <span class="title">func</span><span class="params">(Ty arg)</span> </span>&#123;&#125;</span><br></pre></td></tr></table></figure></p></li>
+</ol>
 <blockquote>
-<p>为了避免既有代码命名冲突问题，这两个关键字(keyword)并未作为保留字(reserved)，意即其可以作为变量名、类名等，其修饰作用只在特定位置生效（<del>又不是Java，<code>final</code>随便用</del>）</p>
+<p>本质上这种写法是将<code>Ty</code>代入<code>cpt</code>的第一个参数，因此若<code>cpt</code>是一个多元模板，可以手动指定后续参数，如<code>template&lt;cpt&lt;int&gt; Ty&gt;</code>
+等价于施加了<code>requires cpt&lt;Ty,int&gt;</code>的约束。<br />
+注意为避免编译链接冲突等，C++规定在这种“融合”写法中默认模板参数无效（因而若存在默认模板参数，你仍需手动指定之）。最“实用”的例子形如：<code>template&lt;std::formattable&lt;char&gt; Ty&gt;</code>。</p>
 </blockquote>
-<p>C++11引入了<code>override</code>和<code>final</code>两个修饰符，这两个修饰符并不会生成可执行代码，只是在编译阶段为程序语义提供了更为明确的指引。</p>
+<ol start="3" type="1">
+<li>和<code>auto</code>结合的写法，直接约束<code>auto</code>推导的模板形参、非类型模板参数、模板变量：<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(cpt <span class="keyword">auto</span> arg)</span></span>; <span class="comment">//constraining function template&#x27;s argument list</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;cpt <span class="keyword">auto</span> arg&gt; <span class="type">void</span> <span class="title">func</span><span class="params">()</span></span>; <span class="comment">//constraining non-type template parameter</span></span><br><span class="line">cpt <span class="keyword">auto</span> bar = ...; <span class="comment">//constraining variable template</span></span><br></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="注意事项">注意事项</h2>
+<ul>
+<li><p><code>concept</code><strong>自身不能被约束</strong>，如果需要复用既有<code>concept</code>，请在初始化表达式中指明：<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> one = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;one Ty&gt;</span><br><span class="line"><span class="keyword">concept</span> two = <span class="literal">true</span>; <span class="comment">//Not compile: concepts cannot be constrained, disregarding implicitly(as this) or explicitly using `requires`</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> three = one&lt;Ty&gt; &amp;&amp; <span class="literal">true</span>; <span class="comment">//OK, Correct approach of using existing concepts</span></span><br></pre></td></tr></table></figure></p></li>
+<li><p><code>concept</code><strong>不能重载或特化</strong>；<br />
+</p></li>
+<li><p><code>concept</code>一定是模板，不能<del>空手套白狼</del>定义一个模板参数个数少于1的<code>concept</code>。<br />
+</p></li>
+<li><p>若一个模板<code>requires</code>的<code>(expr)</code>被解析为<code>false</code>，则其行为类似于
+<em>SFINAE
+Error</em>，即会将之从重载候选表中移除；但如果表达式<code>expr</code>的解析本身是非法的，则其不属于SFINAE的范畴，会无视条件直接报编译错误（即使甚至没有对该<code>concept</code>涉及的模板进行重载决议，如下述情况中存在非模板的重载<code>void f(int)</code>）。解析非法除了表达式出现了类似"
+<em>SFINAE Error</em>
+"的情况外，其类型只要不是<code>bool</code>亦会触发这一机制（不会进行隐式转换）：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">S</span> </span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">constexpr</span> <span class="keyword">operator</span> <span class="title">bool</span><span class="params">()</span> <span class="type">const</span> </span>&#123; <span class="keyword">return</span> <span class="built_in">sizeof</span>(Ty) &lt;= <span class="number">4</span>; &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt; <span class="title">requires</span> <span class="params">(S&lt;Ty&gt;&#123;&#125;)</span></span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">(Ty)</span></span>; <span class="comment">// #1</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">(<span class="type">int</span>)</span></span>; <span class="comment">// #2</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">g</span><span class="params">()</span> </span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">f</span>(<span class="number">0</span>); <span class="comment">// error: S&lt;int&gt;&#123;&#125; does not have type bool when checking #1,</span></span><br><span class="line">        <span class="comment">// even though #2 is a better match</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>修改方式为将<code>requires</code>子句改为
+<code>requires (static_cast&lt;bool&gt;(S&lt;Ty&gt;&#123;&#125;))</code>。<br />
+再考虑下面这种情况，复用上述的<code>struct S</code>：
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt; <span class="title">requires</span> <span class="params">(<span class="type">bool</span>(S&lt;Ty&gt;&#123;&#125;))</span></span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;&gt;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">()</span></span>;</span><br><span class="line"></span><br></pre></td></tr></table></figure></p></li>
+</ul>
+<h1
+id="future浅谈底层原理和进阶应用">Future——浅谈底层原理和进阶应用</h1>
+<p><code>concept</code>和<code>requires</code>是SFINAE、<code>constexpr bool</code>的进阶，但后者在元编程(metaprogramming)中的作用依然不可动摇。</p>
+<h2 id="模板特化和重载">模板特化和重载</h2>
+<p>传统模板接受一个模板参数后，</p>
+<ul>
+<li>若存在既有重载，则会优先选择之（即不会进行模板实例化）；<br />
+</li>
+<li>否则，若存在模板特化，则会优先选择匹配的模板特化，并且特化程度越高，优先级越高；<br />
+</li>
+<li>最后再选择最为通用的模板。</li>
+</ul>
 <blockquote>
-<p>对于C++一类的编译型语言，注释之外也有很多声明、定义等，或于一定条件下，或必定——不会生成可执行代码。<br />
-作为一门常用于大型程序开发的语言，这些不生成可执行代码的修饰符，代表着无数的语义约束，亦代表着程序设计者与自我、与上下游的合作者、与标准库和三方库、与编译器的永无止境的合作与博弈。</p>
+<p>函数模板重载(overload)和特化(specialization)的区别：<br />
+若函数模板被重载（重载的函数不是模板函数），则该重载函数必定会生成可执行代码，且在程序运行时会具有地址入口（除非其因未被调用等原因被编译器优化掉）。<br />
+但若函数模板被特化，其依然不一定会生成可执行代码，取决于是否有对该特化模板函数的调用（导致其发生了实例化）。</p>
+<p>同时，被特化的函数模板必须能够由原模板所“生成”（相当于，若以参数<code>Ty</code>特化原模板，则该函数的签名必须形如将<code>Ty</code>代入原模板后，生成的函数签名）；<br />
+而重载则不存在此限制，可以自由指定返回值、形参列表等等。</p>
+<p>无论是何种模板，其必须实例化(instanlize)后才会生成可执行代码，存在函数地址入口。<br />
+对于一个未被实例化的模板，其中允许存在<strong>部分</strong>不能通过编译的语句。</p>
 </blockquote>
-<p><code>override</code>关键字用于修饰一个虚函数，等价于显式声明了这个虚函数会重写了基类虚函数（纯虚函数亦然，亦即覆写了既有vtbl的函数地址）。<strong>若其没有做到“覆写虚函数”这一点，或其本身不是虚函数，编译阶段将报错。</strong></p>
-<p>其起到的检查作用颇为实用，因派生类欲覆写虚函数时，若不慎导致函数签名不一致，则将无法重写既有虚函数，而是创建了一个新的虚函数。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Base</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">show</span><span class="params">()</span></span>&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Derived</span>: <span class="keyword">public</span> Base</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">show</span><span class="params">(<span class="type">int</span> x)</span></span>&#123;&#125; <span class="comment">//Paremeter list differs</span></span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">sh0w</span><span class="params">()</span></span>&#123;&#125; <span class="comment">//Function name differs</span></span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">show</span><span class="params">()</span> <span class="type">const</span> </span>&#123;&#125; <span class="comment">//const-specifier differs</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>如：（为展示重载相关，以函数为例）</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(Ty)</span></span>&#123;&#125; <span class="comment">//#1: Primative template</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;&gt;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(<span class="type">int</span>)</span></span>&#123;&#125; <span class="comment">//#2: Explicit specialization</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//template&lt;&gt;</span></span><br><span class="line"><span class="comment">//char func(double)&#123;&#125; //Not Compile: no instance of function template &quot;func&quot; matches the specified type </span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">()</span></span>&#123;&#125; <span class="comment">//OK: A overload function, doesn&#x27;t need to obey the requirements of template specialization</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(<span class="type">int</span>)</span></span>&#123;&#125; <span class="comment">//#3</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">func</span>(<span class="number">1</span>); <span class="comment">//Invocation priority: #3 &gt; #2 &gt; #1</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>编译后生成的代码中，只会有后两个<code>void func()</code>和<code>void func(int)</code>的地址入口（不考虑优化）。</p>
+<h2
+id="concepts和constexpr-bool">concepts和<code>constexpr bool</code></h2>
+<p>目前<code>&lt;concepts&gt;</code>提供的许多标准“概念”的实现，或多或少都转发了<code>&lt;type_traits&gt;</code>的既有<code>constexpr bool</code>变量模板。<br />
+由于后者的本质还是模板变量和模板变量的特化，因此模板的偏特化通过给出特化程度的差分，实现匹配优先级的区别。<br />
+下面给出两个（模仿）<code>&lt;type_traits&gt;</code>的实例，其分别使用了变量模板特化和类模板特化：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">bool</span> is_array_v = <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">bool</span> is_array_v&lt;Ty[]&gt; = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>,<span class="type">size_t</span> N&gt;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">bool</span> is_array_v&lt;Ty[N]&gt; = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">remove_reference</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">using</span> type = Ty;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">remove_reference</span>&lt;Ty&amp;&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">using</span> type = Ty;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">remove_reference</span>&lt;Ty&amp;&amp;&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">using</span> type = Ty;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">//since C++14, official &quot;forwarding&quot;</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">using</span> <span class="type">remove_reference_t</span> = <span class="keyword">typename</span> remove_reference&lt;Ty&gt;::type;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>相对地，<code>concept</code><strong>不支持重载/特化</strong>，试图重定义一个<code>concept</code>（或“特化”之）会导致编译错误。</p>
+<h2 id="从sfinae到requires">从SFINAE到<code>requires</code></h2>
+<p>SFINAE的一大缺点是，对于应用了同样的约束条件的同名类模板，任意两个模板的SFINAE约束条件的交集必须是空集（或，“互斥”）。<br />
+否则当代入的模板参数处在二者交集时，由于SFINAE只会将匹配失败的模板列表从备选项中移除（而不会进行优先级判断等），故会因歧义而产生编译错误。<br />
+带来的最大问题出现在一个约束是另一个约束子集的情况：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>,std::<span class="type">enable_if_t</span>&lt;!std::is_array_v&lt;Ty&gt;,<span class="type">int</span>&gt; = <span class="number">0</span>&gt;</span><br><span class="line"><span class="type">void</span> <span class="built_in">fun</span>(Ty); <span class="comment">//#1</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>,std::<span class="type">enable_if_t</span>&lt;!std::is_array_v&lt;Ty&gt; &amp;&amp; !std::is_reference_v&lt;Ty&gt;,<span class="type">int</span>&gt; = <span class="number">0</span>&gt;</span><br><span class="line"><span class="type">void</span> <span class="built_in">fun</span>(Ty); <span class="comment">//#2</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> a&#123;&#125;;</span><br><span class="line">    <span class="type">int</span>&amp; b&#123;a&#125;;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">fun</span>(b); <span class="comment">//#1</span></span><br><span class="line">    <span class="built_in">fun</span>(a); <span class="comment">//Not Compile - Ambiguious: #1 and #2 both matches, SFINAE does not offer mechanism to distinguish the conjunction logics or something</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>因此，标准库中不少既有实现都为了避此嫌而在<code>enable_if</code>中“大排长龙”，如书接上回的<code>make_unique</code>，三个重载的签名如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">std::unique_ptr&lt;_Ty, std::default_delete&lt;_Ty&gt;&gt; &lt;<span class="keyword">typename</span> _Ty, std::<span class="type">enable_if_t</span>&lt;std::is_array_v&lt;_Ty&gt; &amp;&amp; std::extent_v&lt;_Ty, <span class="number">0U</span>&gt; == <span class="number">0</span>, <span class="type">int</span>&gt; &lt;unnamed&gt; = <span class="number">0</span>&gt; <span class="built_in">make_unique</span>(<span class="type">size_t</span> _Size);</span><br><span class="line"></span><br><span class="line">std::unique_ptr&lt;_Ty, std::default_delete&lt;_Ty&gt;&gt; &lt;<span class="keyword">typename</span> _Ty, <span class="keyword">typename</span> ..._Types, std::<span class="type">enable_if_t</span>&lt;!std::is_array_v&lt;_Ty&gt;, <span class="type">int</span>&gt; &lt;unnamed&gt; = <span class="number">0</span>&gt; <span class="built_in">make_unique</span>(_Types &amp;&amp;..._Args);</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> &lt;<span class="keyword">typename</span> _Ty, <span class="keyword">typename</span> ..._Types, std::<span class="type">enable_if_t</span>&lt;std::extent_v&lt;_Ty, <span class="number">0U</span>&gt; != <span class="number">0</span>, <span class="type">int</span>&gt; &lt;unnamed&gt; = <span class="number">0</span>&gt; <span class="built_in">make_unique</span>(_Types &amp;&amp;...);</span><br></pre></td></tr></table></figure>
+<p>而对于<code>requires</code>，其用法相对就讲究了不少：若进行模板匹配时，给定的模板参数可以满足两个模板的<code>concept</code>约束要求，则满足<strong>一个模板的约束蕴含了另一个模板的约束</strong>时，能够选择该约束更高的模板；否则将因歧义而编译失败。<br />
+定义约束A蕴含约束B：将二者都拆解成原子约束(atomic
+constraint)后，逻辑上B是A的真子集。<br />
+如此做的优点非常明显，即若欲定义一个具有更严格约束的模板，只需在<code>requires</code>或定义<code>concept</code>时，在既有约束后以逻辑与<code>&amp;&amp;</code>追加一些东西即可，不需要回头考虑既有模板的问题。</p>
 <blockquote>
-<p>尽管返回值类型不是函数签名的一部分，但重写虚函数时，重写函数的返回值类型必须和既有虚函数相同，否则将产生编译错误。<br />
-相对地，如果只是普通成员函数（或其它可以明确优先级的命名空间场景下）的同名覆盖则没有对函数签名做出任何约束。</p>
+<p><del>经典转发<code>&lt;type_traits&gt;</code>警告</del></p>
 </blockquote>
-<p>此时，派生类相当于定义了三个新的虚函数，基类的虚函数则未被重写。<br />
-而加上<code>override</code>关键字则<del>可以手动产生一个编译错误</del>，可以让编程者意识到自身函数签名的相关问题：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Base</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">show</span><span class="params">()</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Derived</span>: <span class="keyword">public</span> Base</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">//Not Compile: &#x27;virtual void Derived::show() const&#x27; marked &#x27;override&#x27;, but does not override</span></span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">show</span><span class="params">()</span> <span class="type">const</span> <span class="keyword">override</span> </span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;  </span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<hr />
-<p><code>final</code>关键字则可以用于修饰一个虚函数或一个类。<code>final</code>修饰的虚函数不能被重写（可以和<code>override</code>叠加）；其修饰的类不能被继承（修饰类时，将之置于类名后）。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Base</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">show</span><span class="params">()</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Derived</span>: <span class="keyword">public</span> Base</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">show</span><span class="params">()</span> <span class="keyword">override</span> <span class="keyword">final</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Derived2</span>: <span class="keyword">public</span> Derived</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">//Not compile: virtual function &#x27;virtual void Derived2::show()&#x27; overriding final function</span></span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">show</span><span class="params">()</span> <span class="keyword">override</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Derived3</span> <span class="keyword">final</span>: <span class="keyword">public</span> Derived</span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">//Not compile: cannot derive from &#x27;final&#x27; base &#x27;Derived3&#x27; in derived type &#x27;Derived4&#x27;</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Derived4</span>: <span class="keyword">public</span> Derived3</span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h1 id="浅谈友元">浅谈友元</h1>
-<p>友元通过<code>friend</code>关键字声明。一旦使用<code>friend</code>关键字，则被声明(declare)的函数/类所处的命名空间就是在<strong>当前类外的命名空间</strong>，不是当前类的成员函数（因而也就没有隐式<code>this</code>指针，可以被视为一种特殊的<code>static</code>函数）。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> array = std::is_array_v&lt;Ty&gt;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> unextented_array = array&lt;Ty&gt; &amp;&amp; std::extent_v&lt;Ty&gt; == <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;array Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">()</span></span>&#123;&#125; <span class="comment">//#1</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;unextented_array Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">()</span></span>&#123;&#125; <span class="comment">//#2</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">f</span>&lt;<span class="type">int</span>[<span class="number">3</span>]&gt;(); <span class="comment">//Conceivibly #1</span></span><br><span class="line">    <span class="built_in">f</span>&lt;<span class="type">int</span>[]&gt;(); <span class="comment">//#2, Not ambiguious as SFINAE would otherwise do</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <blockquote>
-<p>事实上从访问方式来看，<code>static</code>函数和友元函数的唯二区别之一是是否加域解析符<code>::</code>。<br />
-另一个区别是，<code>static</code>函数依然具有访问权限的属性，但<code>friend</code>由于本来就被“放置”在了类外，因而不存在访问权限的问题。<br />
-在类外给出其定义(definition)时，不应再加<code>friend</code>/<code>static</code>关键字。</p>
+<p>C++认为每个<code>concept</code>都仅由三个部件组成：逻辑与、逻辑或、原子约束。<br />
+注意原子约束具有<strong>唯一性</strong>，只有同名的约束才是相同的。换言之，即使两个原子约束解析的结果一定一致，其也属于不同的原子约束，如定义一个<code>concept B = A;</code>，<code>A</code>和<code>B</code>依然属于不同的原子约束。<br />
+同时原子约束虽有其名，但其不一定是<code>concept</code>，应理解作最小的<code>constexpr bool</code>单元。如：<code>requires(true &amp;&amp; std::convertible_to&lt;int,char&gt; || std::is_trivial_v&lt;const char*&gt;)</code>，其中出现了字面量-<code>true</code>、<code>concept</code>-<code>std::convertible_to</code>、<code>constexpr bool</code>模板变量-<code>std::is_trivial_v</code>，三者都是原子约束。<br />
+<del>什么？你问为什么<code>requires</code>后面可以接不是<code>concept</code>的表达式？那自然是因为<code>requires</code>的一定是<code>concept</code>，若表达式自身不然，则会自动转化成匿名<code>concept</code></del></p>
 </blockquote>
-<p>其作用也很简单：被友元声明的函数/类可以访问自身类的<code>protected</code>和<code>private</code>成员。注意友元声明必须是<strong>前向性</strong>的，意即此“特权”必须在友元声明出现后才会生效。<br />
-友元声明不具有对称性和传递性。一个类的派生类/基类也不是本类的友元。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">A</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">private</span>:   </span><br><span class="line">    <span class="type">int</span> x;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">friend</span> <span class="keyword">class</span> <span class="title class_">B</span>; <span class="comment">//B is a friend class declared in the global namespace</span></span><br><span class="line">    <span class="function"><span class="keyword">friend</span> <span class="type">void</span> <span class="title">fun</span><span class="params">(<span class="type">const</span> A&amp;)</span></span>; <span class="comment">//fun(const A&amp;) is a friend function declared in the global namespace</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">//Currently B and fun() still has no definition</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(<span class="type">const</span> A&amp; a)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,a.x);</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>前向性声明的一段应用示例：
-C++20后，为令<code>class C</code>能被格式化，希望将<code>std::formatter&lt;C,char&gt;</code>置为其友元。显然，我们应当先完成对<code>class C</code>的定义（各类数据/函数成员设置）后再定义<code>std::formatter&lt;C,char&gt;</code>，此时就会用到前向声明：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;print&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">C</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> x;</span><br><span class="line">    <span class="keyword">friend</span> std::formatter&lt;C,<span class="type">char</span>&gt;; <span class="comment">//前向声明</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;C,<span class="type">char</span>&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="title">parse</span><span class="params">(std::format_parse_context&amp; fpc)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> fpc.<span class="built_in">begin</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">auto</span> <span class="title">format</span><span class="params">(<span class="type">const</span> C&amp; c,std::format_context&amp; fc)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> std::format_to(fc,<span class="string">&quot;C:&#123;:^5d&#125;&quot;</span>,c.x);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h1 id="结语">结语</h1>
-<p>类和对象提供的封装性、继承性、多态性对于任何OOP语言来说都极为重要，而不同的语言对于OOP中概念的支持、实现及底层逻辑可能大相径庭。<br />
-作为一门追求高效、简洁和语义清晰的编译期语言，学习运用C++语言进行面向对象的程序设计时，除了对应用规则更加通晓之外，还应对其底层实现有所涉猎。<br />
-如此方能更好地理解各种语法规则，并对现代C++的特性缘由、设计哲学有所知晓；并在和编译器、标准库、其它程序设计者和自身既有的代码更好地合作共进。</p>
+<p>这里就出现了一些非常奇怪的坑，引用<a
+target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/language/constraints">cppreference</a>的例子：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">T</span>&gt;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">bool</span> is_meowable = <span class="literal">true</span>;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">T</span>&gt;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">bool</span> is_cat = <span class="literal">true</span>;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">T</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> Meowable = is_meowable&lt;T&gt;;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">T</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> BadMeowableCat = is_meowable&lt;T&gt; &amp;&amp; is_cat&lt;T&gt;;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">T</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> GoodMeowableCat = Meowable&lt;T&gt; &amp;&amp; is_cat&lt;T&gt;;</span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;Meowable T&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f1</span><span class="params">(T)</span></span>; <span class="comment">// #1</span></span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;BadMeowableCat T&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f1</span><span class="params">(T)</span></span>; <span class="comment">// #2</span></span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;Meowable T&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f2</span><span class="params">(T)</span></span>; <span class="comment">// #3</span></span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;GoodMeowableCat T&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f2</span><span class="params">(T)</span></span>; <span class="comment">// #4</span></span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">g</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">f1</span>(<span class="number">0</span>); <span class="comment">// error, ambiguous:</span></span><br><span class="line">           <span class="comment">// the is_meowable&lt;T&gt; in Meowable and BadMeowableCat forms distinct atomic</span></span><br><span class="line">           <span class="comment">// constraints that are not identical (and so do not subsume each other)</span></span><br><span class="line"> </span><br><span class="line">    <span class="built_in">f2</span>(<span class="number">0</span>); <span class="comment">// OK, calls #4, more constrained than #3</span></span><br><span class="line">           <span class="comment">// GoodMeowableCat got its is_meowable&lt;T&gt; from Meowable</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>虽然<code>Meowable</code>和<code>is_meowable</code>的解析结果必定相同（事实上前者直接转发了后者），但其依然属于不同的原子约束，因而在对<code>f1</code>实例化阶段进行模板匹配时，会因存在歧义而报错。</p>
+<h1 id="总结">总结</h1>
+<p><code>concept</code>对于元编程(metaprogramming)是一次巨大更新，其极大提高了模板约束的复用性、可读性与可维护性，让本晦涩难懂的模板约束语句变得极为清晰。<br />
+学习<code>concept</code>前仍因掌握与模板、SFINAE等有关的基础知识，<code>concept</code>并非完全取代既有的几种模板约束机制，而是对其的有益补充。</p>
 
       
 
@@ -365,6 +406,10 @@ C++20后，为令<code>class C</code>能被格式化，希望将<code>std::forma
 			 
         		<li class="article-tag-list-item">
         			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">C++20</a>
         		</li>
       		
 		</ul>
@@ -385,7 +430,7 @@ C++20后，为令<code>class C</code>能被格式化，希望将<code>std::forma
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/cpp/hierachy/">展开全文 >></a>
+          <a class="article-more-a" href="/cpp/concepts/">展开全文 >></a>
         </p>
       
 
@@ -417,319 +462,241 @@ C++20后，为令<code>class C</code>能被格式化，希望将<code>std::forma
 
 
   
-    <article id="post-crypto/wp/nctf2024" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-cpp/ranges" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/crypto/wp/nctf2024/">NCTF2024 Crypto Official Writeup</a>
+      <a class="article-title" href="/cpp/ranges/">C++20——ranges</a>
     </h1>
   
 
         
-        <a href="/crypto/wp/nctf2024/" class="archive-article-date">
-  	<time datetime="2025-03-19T13:59:04.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-03-19</time>
+        <a href="/cpp/ranges/" class="archive-article-date">
+  	<time datetime="2025-04-03T23:53:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-04-04</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>Hibiscus
-为<del>鸽到2025年的nctf2024</del>命制了三道Crypto题，下述为官方Writeup。</p>
+        <h1 id="ranges简介">ranges简介</h1>
+<p><em>ranges</em>
+是一个比较抽象的概念。广义上说，任何可以按一定规则遍历的变量集合都是范围。<br />
+C++中的容器、容器的一部分可以被视为范围；被“容器工厂”函数产出的一些可迭代对象也可以被视为范围；数组、“指针+长度”的组合也可以视为范围。<br />
+更进一步地，上述范围按一定规则筛选出的子范围也可以被视为范围，比如任取一个range，取其最初的5个元素也可以组成一个range，将该range“隔三取一”的元素集合也可以组成一个range。<br />
+将其中元素按一定规则组合也可以“转化”为新的range：如创建一个滑动视窗，每次访问ranges中连续的三个元素。</p>
 <blockquote>
-<p>NCTF2024 Crypto部分附件：<a
-target="_blank" rel="noopener" href="https://github.com/CrystalJiang232/nctf2024-Crypto">github</a><br />
-NCTF2024 全部附件：<a
-target="_blank" rel="noopener" href="https://https://github.com/X1cT34m/NCTF2024">github</a></p>
+<p>为什么长篇大论介绍抽象的C++哲学？<em>ranges</em>
+作为C++中的“高难”板块，对语法的掌握只决定应用的下限，而对其深入理解决定了应用的上限。</p>
 </blockquote>
-<h1 id="sign">Sign</h1>
+<h1 id="stlc标准库的中流砥柱">STL：C++标准库的中流砥柱</h1>
+<p>任何一种语言中对于 <em>ranges</em>
+的处理都是亟待解决的问题之一。<br />
+面对之，C++98中即引入了STL(Standard Template
+Library，标准模板库)，其核心元素为 <em>Containers</em>、
+<em>Algorithms</em> 和 <em>Iterators</em> ：</p>
+<ul>
+<li><p>Containers：容器，通过特定方式封装底层存储空间，并提供对之操作接口的类模板。如<code>std::vector</code>提供动态连续存储空间，<code>std::array</code>实现了对数组的封装，<code>std::list</code>表征双向链表，<code>std::map</code>是基于红黑树的映射集、<code>std::unordered_set</code>基于哈希表的集合，等等。标准库中除了直接处理底层存储空间的容器，还有一类被称为
+<em>Container
+Adaptor</em>（容器适配器）的类模板，其“帮助”我们进一步封装了既有的这些初始容器（以提供较为便捷的数据结构操作），如<code>std::priority_queue</code>（优先权队列）封装了<code>std::vector</code>，<code>std::queue</code>（单向队列）封装了<code>std::deque</code><del>虽然我也不知道为什么不封装<code>std::forward_list</code></del>。</p></li>
+<li><p>Algorithms：算法，本质上是函数模板，通过分别传入<code>begin</code>和<code>end</code>的“迭代器”来确定操作范围。常见的包括<code>std::sort</code>、<code>std::transform</code>、<code>std::reverse</code>等等。</p></li>
+<li><p>Iterators：迭代器，多为 <em>nested class</em>
+（嵌套类，又名“类中类”），专属于某个容器实例化后的模板类。</p></li>
+</ul>
+<p>这三者其实都可以看作是在C样式的容器、算法组件上的进阶：</p>
+<ul>
+<li>C中由于并没有类与对象的概念，因此“标准”的 <em>Containers</em>
+只有数组<code>Ty[]</code>（包括指针+长度的组合，本质上表征的都是连续的存储空间），链表等特殊数据结构则需用户自行实现。C++的标准库则极大丰富了
+<em>Containers</em> 家族；</li>
+</ul>
 <blockquote>
-<p>这是恢复互联网的密钥，密码是实时生成的三万个随机数。</p>
+<p>C++设计哲学：功能相同或相近的前提下，组件应用优先级：标准库 &gt;
+三方库 &gt;
+手搓(hand-crafting)。其理由主要有二：标准库内容多经过极大量调试，相较三方库和手写代码而言bug率极低，事实上多数时候标准库组件调用出问题时都不应先行质疑标准库；同时标准库的可迁移性最强，在不同代码间的复用性佳。</p>
 </blockquote>
-<h2 id="解析">解析</h2>
-<p><del>签到题</del>，主要是两部分：MT19937的逆向、和基于AGCD问题的FHE（全同态加密）。</p>
-<p>显然我们的目标就是恢复<code>string</code>。而题目对<code>string</code>实行了逐字节加密，具体地：
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> m <span class="keyword">in</span> string:</span><br><span class="line">    f = FHE()</span><br><span class="line">    s = long_to_bytes(Random().getrandbits(<span class="number">20000</span>))</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> s[<span class="number">4</span>:]:</span><br><span class="line">        Keys.extend(f.encrypt([i]))</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> s[:<span class="number">4</span>]:</span><br><span class="line">        Keys.extend(f.encrypt([i * (m &amp; <span class="number">0x03</span>) % <span class="number">0x101</span>]))</span><br><span class="line">        m &gt;&gt;= <span class="number">2</span></span><br></pre></td></tr></table></figure>
-对于每一个字节，分别初始化了一个<code>FHE</code>、使用<code>Random().getrandbits(20000)</code>拿到了20000位随机数，将随机数的后19968位加密后直接输出，前32位用于和<code>string</code>的当前字节<code>m</code>按一个自定义规则进行加密。</p>
-<p>python中<code>getrandbits(n)</code> 在 <span class="math inline">\(n
-&gt; 32\)</span>
-时会多次调用<code>getrandbits(32)</code>，将新随机数拼接在既有随机数的高位。如此，显然我们需要利用这个大随机数的后（低）19968位来预测前（高）32位的值。<br />
-已知完整的一组<code>state</code>的情况下随机数预测部分的资料/既有脚本都比较多<del>实在不行问deepseek</del>，这里不再赘述。任务由此变成了解密FHE。</p>
+<ul>
+<li><p>C中“指针”即为迭代器，C++中面对指针可能存在的诸多问题<del>包括但不限于野指针、空指针、解引用方式错误、边界检查、<code>const</code>约束弱、指针比较语义约束弱、只能访问连续存储空间等</del>提出了
+<em>Iterators</em>
+家族，其在不改变指针使用习惯（通过重载<code>operator++()/operator++(int)</code>、<code>operator*()</code>等）的基础上将之封装，以实现对不同容器的相同语义适配（比如链表的<code>operator++()</code>重载为需要前进到下一个指针）和越界检查等。</p></li>
+<li><p>C的<code>&lt;stdlib.h&gt;</code>提供了少量的算法函数（不知有多少学过C的人听闻过<code>qsort</code>和<code>bsearch</code><del>C语言里快乐快排/二分糊作业</del>？广义上的算法函数可能多些，如<code>strcmp</code>、<code>memcpy</code>、<code>strcat</code>等等都算）。而C++依靠模板函数的优势，提供了极大量较为安全的、适配大量容器的算法函数，多分布于<code>&lt;algorithm&gt;</code>和<code>&lt;numeric&gt;</code>中。</p></li>
+</ul>
 <blockquote>
-<p>FHE（全同态加密）相关：对于一个加/解密系统 <span
-class="math inline">\((E,D)\)</span> 和其域下任意的 <span
-class="math inline">\((m_i,c_i)\)</span>，<br />
-若其满足 <span class="math inline">\(E(\sum_{i=1}^{n} m_i) =
-\sum_{i=1}{n} c_i\)</span> 且 <span
-class="math inline">\(D(\sum_{i=1}^{n} c_i) = \sum_{i=1}^{n}
-m_i\)</span>，则称其是（完全）加法同态的；<br />
-若其满足 <span class="math inline">\(E(\prod_{i=1}^{n} m_i) =
-\prod_{i=1}{n} c_i\)</span> 且 <span
-class="math inline">\(D(\prod_{i=1}^{n} c_i) = \prod_{i=1}^{n}
-m_i\)</span>，则称其是（完全）乘法同态的；<br />
-若 <span class="math inline">\((E,D)\)</span>
-既是加法同态又是乘法同态的，则称之为全同态加密系统。</p>
+<p>现代C++提倡尽量避免“手搓”算法函数，若存在既有的库函数则应优先使用之。实际上<code>&lt;algorithm&gt;</code>（尤其是C++20后得到<code>ranges</code>加持的版本）配合<del>到处乱飞的</del><code>lambda</code>可以应对绝大多数程序设计中遇到的轻量算法需求，如排序、查找、全排列、计数、折叠(fold)等等。</p>
 </blockquote>
-<p>再观察<code>FHE</code>的加密逻辑：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">FHE</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="variable language_">self</span>.p = getPrime(<span class="number">77</span>)</span><br><span class="line">        <span class="variable language_">self</span>.pubkeys = []</span><br><span class="line">        <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">16</span>):</span><br><span class="line">            <span class="variable language_">self</span>.pubkeys.append(<span class="variable language_">self</span>.p * getrandint(<span class="number">177</span>) + (getrandint(<span class="number">17</span>) &lt;&lt; <span class="number">8</span>))</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">encrypt</span>(<span class="params">self,msg:<span class="built_in">list</span>[<span class="built_in">int</span>] | <span class="built_in">bytes</span></span>):</span><br><span class="line">        result = []</span><br><span class="line">        <span class="keyword">for</span> m <span class="keyword">in</span> msg:</span><br><span class="line">            tmp = <span class="number">0</span></span><br><span class="line">            shuffle_base = urandom(<span class="number">16</span>)</span><br><span class="line">            <span class="keyword">for</span> i <span class="keyword">in</span> shuffle_base:</span><br><span class="line">                x,y = <span class="built_in">divmod</span>(i,<span class="number">16</span>)</span><br><span class="line">                tmp += x*<span class="variable language_">self</span>.pubkeys[y] + y*<span class="variable language_">self</span>.pubkeys[x]</span><br><span class="line">            result.append(tmp + m)</span><br><span class="line">        <span class="keyword">return</span> result</span><br></pre></td></tr></table></figure>
-<p>初始化时，其会选定一个质数 <span class="math inline">\(p\)</span>
-，随后生成了一个公钥集 <span
-class="math inline">\(\{pk_i\}\)</span>，其中 <span
-class="math inline">\(pk_i = pa_i + 256*b_i\)</span>，<span
-class="math inline">\(\log_{2}a_i \approx 177\)</span>，<span
-class="math inline">\(\log_{2}b_i \approx 17\)</span>。<br />
-每次加密 <span class="math inline">\(m &lt;
-256\)</span>，选择公钥集的一个随机小系数（各维度不大于16）的线性组合，与
-<span class="math inline">\(m\)</span> 求和得到密文。</p>
-<p>首先考虑解密逻辑：AGCD-FHE的解密关键点在于获得私钥 <span
-class="math inline">\(p\)</span>。<br />
-获得 <span class="math inline">\(p\)</span> 后，对于任意密文 <span
-class="math inline">\(c = k_1p + 256*k_2 + m\)</span>，<span
-class="math inline">\(m &lt; 256\)</span>、<span
-class="math inline">\(256*k_2 &lt; p\)</span>时不难证明存在 <span
-class="math inline">\(m \equiv (c \bmod p) \bmod 256\)</span>。</p>
+<h1 id="ranges扶摇直上">ranges：扶摇直上</h1>
+<p>上述介绍了传统C++中STL的三大组件。在现代C++的诸版本中，它们也都有所迭代提升，如C++11中大量新容器、新算法的加入（包括<code>unordered_set</code>等哈希容器、<code>&lt;algorithm&gt;</code>中<code>any_of</code>和<code>is_heap</code>等等）使之被称为“STL的第二春”。</p>
+<p>在C++20中，<em>ranges</em> 的加入则无疑是为C++
+STL家族增添了极为得力的干将。<em>ranges</em>
+更像是一个抽象的概念，笔者认为其可由以下几部分组成：</p>
+<ul>
+<li>Ranges Algorithm，“范围函数”；<br />
+</li>
+<li>Views/Ranges factory/adaptors，“范围/视图 工厂/适配器”。</li>
+</ul>
+<h2
+id="algorithms可读性与可靠性的双提升">Algorithms：可读性与可靠性的双提升</h2>
+<h3 id="概论">概论</h3>
+<p><em>Ranges Algorithms</em>
+在C++20中被引入<code>&lt;algorithm&gt;</code>库中，其主要提供的是既有STL
+Algorithm的ranges版本（即实现的算法与既有函数完全相同），亦有少量新函数。<br />
+其标志是置于命名空间<code>std::ranges</code>而非<code>std</code>中。</p>
+<p>用法上的异同，从以下代码中即能略窥一二：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">std::vector&lt;<span class="type">int</span>&gt; vc&#123;<span class="number">2</span>,<span class="number">3</span>,<span class="number">5</span>,<span class="number">7</span>,<span class="number">11</span>,<span class="number">0</span>&#125;;</span><br><span class="line"></span><br><span class="line">std::<span class="built_in">sort</span>(vc.<span class="built_in">begin</span>(),vc.<span class="built_in">end</span>()); </span><br><span class="line">std::ranges::<span class="built_in">sort</span>(vc); <span class="comment">//simple, isn&#x27;t it?</span></span><br><span class="line">std::ranges::<span class="built_in">sort</span>(vc.<span class="built_in">begin</span>(),vc.<span class="built_in">end</span>()); <span class="comment">//Also works</span></span><br><span class="line"></span><br><span class="line">std::ranges::<span class="built_in">sort</span>(vc,[](<span class="type">int</span> x,<span class="type">int</span> y)&#123;<span class="keyword">return</span> x&gt;y;&#125;);</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">constexpr</span> <span class="type">bool</span> <span class="keyword">operator</span>==(<span class="type">int</span> v) <span class="type">const</span> &#123;<span class="keyword">return</span> v == <span class="number">7</span>;&#125;</span><br><span class="line">&#125;Se;</span><br><span class="line"></span><br><span class="line">std::ranges::<span class="built_in">sort</span>(vc.<span class="built_in">begin</span>(),Se); <span class="comment">//Novel usage #1</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3
+id="迭代器-哨兵对锚定范围更为自由">迭代器-哨兵对：锚定范围更为自由</h3>
+<p>以<code>std::ranges::sort</code>为例，其<code>operator()</code>提供的两个重载如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">std::<span class="function">ranges::<span class="type">borrowed_iterator_t</span>&lt;_Rng&gt; <span class="title">operator</span><span class="params">()</span>&lt;_Rng, _Pr, _Pj&gt;<span class="params">(_Rng &amp;&amp;_Range, _Pr _Pred = &#123;&#125;, _Pj _Proj = &#123;&#125;)</span></span>;</span><br><span class="line"><span class="function">_It <span class="title">operator</span><span class="params">()</span>&lt;_It, _Se, _Pr, _Pj&gt;<span class="params">(_It _First, _Se _Last, _Pr _Pred = &#123;&#125;, _Pj _Proj = &#123;&#125;)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>从函数签名看，最直观的一点不同在于ranges
+algorithm作用的对象不再是迭代器对(<em>iterator
+pair</em>，形如<code>vc.begin()</code>-<code>vc.end()</code>)，而是
+<em>iterator-sentinel pair</em>
+（迭代器-哨兵对）。可以认为其是既有的迭代器对的升级版：只要迭代器和哨兵类型定义了返回<code>bool</code>的<code>operator!=</code>，那么它们就可以组成一个<code>range</code>。</p>
+<p>同时其也提供了直接作用于既定“范围”(<em>ranges</em>)上的重载，支持单独将自身作为ranges直接传递的变量，主要就是各种带有<code>.begin()</code>和<code>.end()</code>方法的容器和内置数组。</p>
+<p>上述特性使得对"ranges"的创建变得极为灵活，如确定范围终点时可以自定义一个类型/采用其它类型，可以极大地提高代码的可读性和维护性，同时避免了不必要的时间/空间开销。<br />
+上述代码中，新建的“哨兵”<code>Se</code>就是一个极为轻量化的对象（其不占任何空间，只负责检验是否遇到7并截止之），为编译器优化开拓了极大空间的同时，让程序变得极为简洁（如此功能在既有STL中实现极为繁琐）。</p>
+<p>同时，由于C++
+Concepts并不会进行语义上的约束，故亦存在非常有趣且实用的用法，比如所谓的<code>std::unreachable_sentinel</code>就是一个“不可达”的哨兵，可以用于开拓无限range供使用：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">unreachable_sentinel_t</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line">    <span class="keyword">constexpr</span> <span class="type">bool</span> <span class="keyword">operator</span>==(Ty&amp;&amp;) <span class="type">const</span> <span class="keyword">noexcept</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="keyword">constexpr</span> <span class="keyword">inline</span> <span class="type">unreachable_sentinel_t</span> unreachable_sentinel = &#123;&#125;;</span><br></pre></td></tr></table></figure>
+<h3
+id="极精妙之剑法映射-projection">极精妙之剑法：“映射”-Projection</h3>
+<p>回顾ranges
+algorithm的形参，<code>_Pr</code>是我们熟悉的“比较函数”(predicate)，<code>_Pj</code>则是新元素-“映射”(projection)。<br />
+<code>_Pj</code>是一个非常精巧有趣的设计，从调用效果而言其会令所有元素均经过<code>_Proj</code>“处理”一次（即<code>_Proj</code>应为一个接受单个元素类型的可调用对象）。由于其调用时用到了<code>std::invoke</code>，
+因而其能接受多种方式完成这个语义转换，其中不乏非常简洁清晰的版本：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">T</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span> a;</span><br><span class="line">    <span class="type">int</span> b;</span><br><span class="line">    std::string c;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">std::vector&lt;T&gt; vc&#123;&#125;;</span><br><span class="line"><span class="comment">//...</span></span><br><span class="line">std::ranges::<span class="built_in">sort</span>(vc,&#123;&#125;,[](<span class="keyword">auto</span>&amp;&amp; x)&#123;<span class="keyword">return</span> x.a+x.c.<span class="built_in">length</span>();&#125;)</span><br><span class="line"><span class="comment">//This might seems differ little from traditional predicate lambdas in trivial usages, yet consider this...</span></span><br><span class="line">std::ranges::<span class="built_in">sort</span>(vc,[](<span class="keyword">auto</span>&amp;&amp; x)&#123;<span class="keyword">return</span> x.a;&#125;) <span class="comment">//Conventional approach</span></span><br><span class="line">std::ranges::<span class="built_in">sort</span>(vc,&#123;&#125;,&amp;T::a); <span class="comment">//Surprise!</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="函数对象而非函数遁形于adl">函数对象而非函数：“遁形”于ADL</h3>
+<p>另外，细心者不难发现ranges
+algorithm并不是以函数形式存在，而是以重载了<code>operator()</code>的函数对象形式表现。<br />
+如此是为了避免ADL(Argument-Dependent
+Lookup)，规避了与既有命名空间<code>std</code>、或其它命名空间（含自定义）的同名算法等产生冲突。</p>
+<p>ADL(Argument-Dependent
+Lookup)也是和SFINAE、Rule-of-three/five-zero等并列的C++著名“几大缩写”之一。<br />
+简单来说，设命名空间<code>N</code>中存在类型<code>N::T</code>和函数<code>N::f(T)</code>，则当试图调用这个函数（隐式或显式皆然）时，这个函数会被自动引入当前的命名空间（即使最开始并没有引入之）。<br />
+最为简单常见的实例无疑是<code>&lt;iostream&gt;</code>的爱恨情仇：<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Hello C++23!&quot;</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这个程序是可以通过编译的，但需要注意的是，此处我们只使用了<code>std::cout</code>，并没有声明过<code>using std::operator&lt;&lt;(std::ostream&amp;,const char*);</code>；相当于这个函数是被自动引入当前命名空间的。<br />
+如此做确实会带来很多便利之处，亦避开了潜在的链接等问题；但作为一把双刃剑，其带来的命名空间冲突问题也极为严重，考虑以下这个非常简单的<del>炸编译器</del>实例：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">namespace</span> N</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">T</span>&#123;&#125;;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">(T&amp; arg)</span></span>&#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">(T&amp; arg)</span></span>&#123;&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    N::T var&#123;&#125;;</span><br><span class="line">    <span class="built_in">f</span>(var); <span class="comment">//Not compile: ambiguious -  N::f(T&amp;) or ::f(T&amp;)?</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>对于不求甚解于C++者来说，很难发现ADL的“鬼斧神工”。<br />
+而ADL并不适用于类的成员函数，因此通过<code>operator()</code>重载并创建一个类的实例作为函数名即可规避此问题。</p>
 <blockquote>
-<p>此处不难发现FHE（全同态加密）性质的具体体现：<br />
-记加密函数为 <span class="math inline">\(E\)</span>，显然 <span
-class="math inline">\(Z_{256}\)</span> 下 <span
-class="math inline">\(E(\sum_{i=1}{n} m_i) = \sum_{i=1}{n}
-c_i\)</span>。解密亦然，在 <span class="math inline">\(n\)</span>
-不太大时近似认为其是完全加法同态的。<br />
-同理可知其也存在乘法同态，但基于AGCD的FHE在进行密文乘时误差累积非常快，因而某种意义上只能算“部分”乘法同态。相比之下如RSA就满足<strong>完全</strong>乘法同态。</p>
+<p>注意，只有类的<strong>成员</strong>函数才具备不可见于ADL的性质；<code>std::operator&lt;&lt;(std::ostream&amp;,int)</code>一类的输入/输出运算符虽然在类内声明，但<code>friend</code>关键字表示该运算符的命名空间依然在类外。事实上<code>friend</code>和<code>static</code>函数为数不多的区别之一就在访问方式到底是不是要加类名+域解析符<code>C::</code>。详见<a
+href="/cpp-hierachy/">C++类与继承基础全解</a></p>
 </blockquote>
-<p>而对AGCD-FHE的攻击可以通过构造格进行。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">namespace</span> N</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">T</span>&#123;&#125;;</span><br><span class="line">    <span class="keyword">class</span> <span class="title class_">_F</span></span><br><span class="line">    &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">operator</span><span class="params">()</span><span class="params">(T&amp;)</span> <span class="type">const</span> </span>&#123;&#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="type">static</span> <span class="keyword">constexpr</span> <span class="keyword">inline</span> _F f = &#123;&#125;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">(T&amp; arg)</span></span>&#123;&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    N::T var&#123;&#125;;</span><br><span class="line">    <span class="built_in">f</span>(var); <span class="comment">//OK: invokes ::f(T&amp;),does not use ADL to somehow seek N::f::operator()(T&amp;)</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="concepts行于">Concepts：行于</h3>
+<p>随着另一“金刚” Concepts的引入，所有的Ranges
+Algorithm都有concepts约束之，极大地保证了调用语义的正确性。<br />
+在经典的C++中，这一约束以 <em>Legacy Iterator Specification</em>
+的形式存在，如各位可能都看到过这样的函数签名：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="built_in">sort</span>&lt;_RanIt, _Pr&gt;(<span class="type">const</span> _RanIt _First, <span class="type">const</span> _RanIt _Last, _Pr _Pred);</span><br><span class="line">_OutIt <span class="built_in">copy</span>&lt;_InIt, _OutIt&gt;(_InIt _First, _InIt _Last, _OutIt _Dest);</span><br></pre></td></tr></table></figure>
+<p>这里的<code>_RanIt</code>就是 <em>random access iterator</em> -
+随机迭代器的缩写。其表示，这个函数会“希望”你传入一个能够随机访问的迭代器，因而实际上下述的调用是UB（并不能通过编译）：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">std::list&lt;<span class="type">int</span>&gt; ls&#123;<span class="number">6</span>,<span class="number">5</span>,<span class="number">5</span>,<span class="number">3</span>,<span class="number">7</span>&#125;;</span><br><span class="line">std::<span class="built_in">sort</span>(ls.<span class="built_in">begin</span>(),ls.<span class="built_in">end</span>());</span><br></pre></td></tr></table></figure>
+<p>再比如，迭代器对对于传入的迭代器类型会有一定要求，如：</p>
+<ul>
+<li>支持<code>operator*()</code>解引用；<br />
+</li>
+<li>迭代器间是可以比较异同的（至少支持<code>operator!=</code>和<code>operator==</code>其一）；<br />
+</li>
+<li>对于“输出迭代器”(<em>output
+iterator</em>，即上述<code>std::copy</code>的一个模板参数)，应当支持<code>operator=(Ty&amp;&amp;)</code>，其中<code>Ty</code>是该输入迭代器解引用后返回的类型；<br />
+</li>
+<li>...</li>
+</ul>
+<p>但在没有<code>concepts</code>的时代，虽然有SFINAE寥寥草草地进行着一些语法约束，但其观感极差且难以表达很多复合约束，故并没有被应用到STL
+Algorithm中。这也直接导致了STL
+Algorithm中可能存在许多莫名其妙的调用：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">std::<span class="built_in">sort</span>(<span class="number">1</span>,<span class="number">2</span>);</span><br></pre></td></tr></table></figure>
+<p>而这段代码虽然不能通过编译，但大部分IDE并不能直接检测出其错误，而编译时报错信息的解析非常繁琐（以GCC
+13.1 - C++23为例）：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">In file included from /usr/local/include/c++/14.2.0/algorithm:61,</span><br><span class="line">                 from main.cpp:1:</span><br><span class="line"></span><br><span class="line">(省略200余行...)</span><br><span class="line"></span><br><span class="line">/usr/local/include/c++/14.2.0/bits/stl_algo.h:4771:18:   required from &#x27;constexpr void std::sort(_RAIter, _RAIter) [with _RAIter = int]&#x27;</span><br><span class="line"> 4771 |       std::__sort(__first, __last, __gnu_cxx::__ops::__iter_less_iter());</span><br><span class="line">      |       ~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span><br><span class="line">main.cpp:5:14:   required from here</span><br><span class="line">    5 |     std::sort(1,2);</span><br><span class="line">      |     ~~~~~~~~~^~~~~</span><br><span class="line">/usr/local/include/c++/14.2.0/bits/stl_algobase.h:185:12: error: invalid type argument of unary &#x27;*&#x27; (have &#x27;int&#x27;)</span><br><span class="line">  185 |       swap(*__a, *__b);</span><br><span class="line">      |            ^~~~</span><br><span class="line">/usr/local/include/c++/14.2.0/bits/stl_algobase.h:185:18: error: invalid type argument of unary &#x27;*&#x27; (have &#x27;int&#x27;)</span><br><span class="line">  185 |       swap(*__a, *__b);</span><br><span class="line">      |                  ^~~~</span><br></pre></td></tr></table></figure>
 <blockquote>
-<p>AGCD(Approximate Greatest Common
-Divisor)/近似最大公约数问题简介：<br />
-已知 <span class="math inline">\(\{pq_1 + e_1,pq_2 + e_2, \cdots, pq_n +
-e_n\}\)</span>，满足 <span class="math inline">\(e_i &lt;&lt;
-p\)</span>， 求 <span class="math inline">\(p\)</span>。<br />
-可以发现其相较传统的GCD问题“无非”就是多了误差 <span
-class="math inline">\(e_i\)</span>，但这会让求最大公约数的经典算法全部失效，必须另辟蹊径。</p>
+<p>现在知道为什么C++20的Concepts那么受欢迎了吧(bushi)有关C++20
+Concepts的更多可移步：<a href="/cpp/concepts/">C++20——Concepts</a></p>
 </blockquote>
-<p>以上述AGCD的参数名为例：<br />
-记 <span class="math inline">\(x_i = pq_i + e_i\)</span>，注意到存在
-<span class="math inline">\(x_0q_i - x_iq_0 = e_0q_i -
-e_iq_0\)</span>，其中 <span class="math inline">\(\{x_i\}\)</span>
-均已知，<span class="math inline">\(\{q_i\}\)</span> 是未知的整数，<span
-class="math inline">\(\{e_i\}\)</span> 是未知的小整数。<br />
-构造格的矩阵等式如下：</p>
-<p><span class="math inline">\(\begin{bmatrix}q_1 &amp; q_2 &amp; \cdots
-&amp; q_n &amp; q_0 \end{bmatrix} \cdot \begin{bmatrix} \\ -x_0 \\ &amp;
--x_0 \\ &amp;&amp; \ddots \\ &amp;&amp;&amp; -x_0 \\ x_1 &amp; x_2 &amp;
-\cdots &amp; x_n &amp; 2^{\rho + 1} \end{bmatrix} = \begin{bmatrix}
-e_1q_0 - e_0q_1 &amp; e_2q_0 - e_0q_2 &amp; \cdots &amp; e_nq_0 - e_0q_n
-&amp; q_{0}2^{\rho+1} \end{bmatrix}\)</span></p>
-<p>显然锚定的是格中的短向量（<span class="math inline">\(2^{\rho +
-1}\)</span> 用于配平），对格进行规约即可还原出 <span
-class="math inline">\(q_0\)</span>，随后计算 <span
-class="math inline">\(e_0 \equiv x_0 (\bmod q_0)\)</span>、<span
-class="math inline">\(p = \frac{x_0-e_0}{q_0}\)</span>。<br />
-获得 <span class="math inline">\(p\)</span>
-后，完成对加密后数字的解密，随后MT19937逆向+预测随机数后，梳理下后续的模乘逻辑等步骤就都比较普通了。</p>
-<h2 id="完整exp">完整exp</h2>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># sage</span></span><br><span class="line"><span class="built_in">__import__</span>(<span class="string">&#x27;os&#x27;</span>).environ[<span class="string">&#x27;TERM&#x27;</span>] = <span class="string">&#x27;xterm&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> sage.<span class="built_in">all</span> <span class="keyword">import</span> * </span><br><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> functools <span class="keyword">import</span> reduce</span><br><span class="line"><span class="keyword">from</span> random <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> Crypto.Util.Padding <span class="keyword">import</span> unpad</span><br><span class="line"><span class="keyword">from</span> Crypto.Cipher <span class="keyword">import</span> AES</span><br><span class="line"><span class="keyword">from</span> hashlib <span class="keyword">import</span> md5</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">inv_shift_right</span>(<span class="params">x:<span class="built_in">int</span>,bit:<span class="built_in">int</span>,mask:<span class="built_in">int</span> = <span class="number">0xffffffff</span></span>) -&gt; <span class="built_in">int</span>:</span><br><span class="line">    tmp = x </span><br><span class="line">    <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">32</span>//bit):</span><br><span class="line">        tmp = x ^^ tmp &gt;&gt; bit &amp; mask</span><br><span class="line">    <span class="keyword">return</span> tmp</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">inv_shift_left</span>(<span class="params">x:<span class="built_in">int</span>,bit:<span class="built_in">int</span>,mask:<span class="built_in">int</span> = <span class="number">0xffffffff</span></span>) -&gt; <span class="built_in">int</span>:</span><br><span class="line">    tmp = x</span><br><span class="line">    <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">32</span>//bit):</span><br><span class="line">        tmp = x ^^ tmp &lt;&lt; bit &amp; mask</span><br><span class="line">    <span class="keyword">return</span> tmp</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">rev_extract</span>(<span class="params">y:<span class="built_in">int</span></span>) -&gt; <span class="built_in">int</span>:</span><br><span class="line">    y = inv_shift_right(y,<span class="number">18</span>)</span><br><span class="line">    y = inv_shift_left(y,<span class="number">15</span>,<span class="number">4022730752</span>)</span><br><span class="line">    y = inv_shift_left(y,<span class="number">7</span>,<span class="number">2636928640</span>)</span><br><span class="line">    y = inv_shift_right(y,<span class="number">11</span>)</span><br><span class="line">    <span class="keyword">return</span> y</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">exp_mt19937</span>(<span class="params">output:<span class="built_in">list</span></span>) -&gt; <span class="built_in">int</span>:</span><br><span class="line">    <span class="keyword">assert</span> <span class="built_in">len</span>(output) == <span class="number">624</span></span><br><span class="line">    cur_stat = [rev_extract(i) <span class="keyword">for</span> i <span class="keyword">in</span> output]</span><br><span class="line">    r = Random()</span><br><span class="line">    r.setstate((<span class="number">3</span>, <span class="built_in">tuple</span>([<span class="built_in">int</span>(i) <span class="keyword">for</span> i <span class="keyword">in</span> cur_stat] + [<span class="number">624</span>]), <span class="literal">None</span>))</span><br><span class="line">    <span class="keyword">return</span> r.getrandbits(<span class="number">32</span>)</span><br><span class="line"></span><br><span class="line">io = remote(<span class="string">&#x27;39.106.16.204&#x27;</span>,<span class="number">24259</span>)</span><br><span class="line">io.recvuntil(<span class="string">b&#x27;:&#x27;</span>)</span><br><span class="line">aes_cipher = <span class="built_in">bytes</span>.fromhex(io.recvline().strip().decode())</span><br><span class="line">io.sendlineafter(<span class="string">b&#x27;:&#x27;</span>,<span class="string">b&#x27;&#x27;</span>)</span><br><span class="line">msg = []</span><br><span class="line"><span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">30000</span>):</span><br><span class="line">    io.recvuntil(<span class="string">b&#x27;[+]&#x27;</span>)</span><br><span class="line">    msg.append(<span class="built_in">int</span>(io.recvline().strip().decode()))</span><br><span class="line"></span><br><span class="line">io.close()</span><br><span class="line">msg = [msg[i:i+<span class="number">2500</span>] <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,<span class="number">30000</span>,<span class="number">2500</span>)]</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">d1 = []</span><br><span class="line"><span class="keyword">for</span> dx <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">12</span>):</span><br><span class="line">    cp = msg[dx]</span><br><span class="line"></span><br><span class="line">    mt = matrix(ZZ,<span class="number">21</span>,<span class="number">21</span>)</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">20</span>):</span><br><span class="line">        mt[i,i] = cp[-<span class="number">1</span>]</span><br><span class="line">        mt[-<span class="number">1</span>,i] = cp[i]</span><br><span class="line">    </span><br><span class="line">    const = <span class="number">2</span> ^ <span class="number">30</span></span><br><span class="line">    mt[-<span class="number">1</span>,-<span class="number">1</span>] = const</span><br><span class="line">    mt = mt.LLL()</span><br><span class="line"></span><br><span class="line">    temp = <span class="built_in">abs</span>(mt[<span class="number">0</span>,-<span class="number">1</span>])</span><br><span class="line">    <span class="keyword">assert</span> temp % const == <span class="number">0</span></span><br><span class="line"></span><br><span class="line">    q0 = temp / const</span><br><span class="line">    e0 = ZZ(cp[-<span class="number">1</span>] % q0)</span><br><span class="line">    p = ZZ((cp[-<span class="number">1</span>] - e0) / q0)</span><br><span class="line"></span><br><span class="line">    d1.append(<span class="built_in">list</span>(<span class="built_in">map</span>(<span class="keyword">lambda</span> x: x % p % <span class="number">256</span>,cp)))</span><br><span class="line"></span><br><span class="line">d2 = <span class="string">b&#x27;&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> dx <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">12</span>):</span><br><span class="line">    ran_output = [bytes_to_long(<span class="built_in">bytes</span>(d1[dx][i:i+<span class="number">4</span>])) <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,<span class="number">2496</span>,<span class="number">4</span>)]</span><br><span class="line">    invmul_key = [<span class="built_in">pow</span>(i,-<span class="number">1</span>,<span class="number">0x101</span>) <span class="keyword">for</span> i <span class="keyword">in</span> long_to_bytes(exp_mt19937(ran_output[::-<span class="number">1</span>]))]</span><br><span class="line"></span><br><span class="line">    res = []</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">4</span>):</span><br><span class="line">        res.append(invmul_key[i] * d1[dx][-<span class="number">4</span> + i] % <span class="number">0x101</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">assert</span> <span class="built_in">all</span>(<span class="number">0</span> &lt;= i &lt; <span class="number">4</span> <span class="keyword">for</span> i <span class="keyword">in</span> res)</span><br><span class="line">    res.reverse()</span><br><span class="line">    d2 += <span class="built_in">bytes</span>([reduce(<span class="keyword">lambda</span> x,y: <span class="number">4</span>*x+y,res)])</span><br><span class="line">    </span><br><span class="line"><span class="built_in">print</span>(unpad(AES.new(md5(d2).digest(),AES.MODE_ECB).decrypt(aes_cipher),<span class="number">16</span>).decode())</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h1 id="arcahv">Arcahv</h1>
+<p>若试图将函数改为<code>std::ranges::sort</code>，则一方面IDE会直接报错（没有匹配的<code>operator()</code>重载）；另一方面，编译的报错信息也相对简短直观许多：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">main.cpp: In function &#x27;int main()&#x27;:</span><br><span class="line">main.cpp:5:22: error: no match for call to &#x27;(const std::ranges::__sort_fn) (int, int)&#x27;</span><br><span class="line">    5 |     std::ranges::sort(1,2);</span><br><span class="line">      |     ~~~~~~~~~~~~~~~~~^~~~~</span><br><span class="line">In file included from /usr/local/include/c++/14.2.0/algorithm:63,</span><br><span class="line">                 from main.cpp:1:</span><br><span class="line">/usr/local/include/c++/14.2.0/bits/ranges_algo.h:1779:7: note: candidate: &#x27;template&lt;class _Iter, class _Sent, class _Comp, class _Proj&gt;  requires (random_access_iterator&lt;_Iter&gt;) &amp;&amp; (sentinel_for&lt;_Sent, _Iter&gt;) &amp;&amp; (sortable&lt;_Iter, _Comp, _Proj&gt;) constexpr _Iter std::ranges::__sort_fn::operator()(_Iter, _Sent, _Comp, _Proj) const&#x27;</span><br><span class="line"> 1779 |       operator()(_Iter __first, _Sent __last,</span><br><span class="line">      |       ^~~~~~~~</span><br><span class="line"></span><br><span class="line">(依然省略40行)</span><br><span class="line"></span><br><span class="line">/usr/local/include/c++/14.2.0/bits/ranges_base.h:501:22: note: the required expression &#x27;std::ranges::_Cpo::begin(__t)&#x27; is invalid</span><br><span class="line">  501 |         ranges::begin(__t);</span><br><span class="line">      |         ~~~~~~~~~~~~~^~~~~</span><br><span class="line">/usr/local/include/c++/14.2.0/bits/ranges_base.h:502:20: note: the required expression &#x27;std::ranges::_Cpo::end(__t)&#x27; is invalid</span><br><span class="line">  502 |         ranges::end(__t);</span><br><span class="line">      |         ~~~~~~~~~~~^~~~~</span><br></pre></td></tr></table></figure>
+<p>其中也可以一窥ranges
+algorithm对于迭代器-哨兵对的约束：存在几个具名concepts，包括<code>random_access_iterator</code>、<code>sentinel_for</code>等。<br />
+以<code>random_access_iterator</code>为例，对于 <em>Legacy random
+iterator</em>，其只是在<a
+target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/iterator">cppreference</a>上以文本形式指明了语义要求：<br />
+<img src="/img/post_pics/iterator_req.png"
+alt="C++_Itereator_requirements" /><br />
+而在ranges
+algorithm中，其则是直接了当地用concepts约束了迭代器类应当满足的语法要求：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">class</span> <span class="title class_">_It</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> random_access_iterator = bidirectional_iterator&lt;_It&gt;</span><br><span class="line">    &amp;&amp; derived_from&lt;_Iter_concept&lt;_It&gt;, random_access_iterator_tag&gt; &amp;&amp; totally_ordered&lt;_It&gt;</span><br><span class="line">    &amp;&amp; sized_sentinel_for&lt;_It, _It&gt; &amp;&amp; <span class="built_in">requires</span>(_It __i, <span class="type">const</span> _It __j, <span class="type">const</span> <span class="type">iter_difference_t</span>&lt;_It&gt; __n) &#123;</span><br><span class="line">        &#123; __i += __n &#125; -&gt; same_as&lt;_It&amp;&gt;;</span><br><span class="line">        &#123; __j + __n &#125; -&gt; same_as&lt;_It&gt;;</span><br><span class="line">        &#123; __n + __j &#125; -&gt; same_as&lt;_It&gt;;</span><br><span class="line">        &#123; __i -= __n &#125; -&gt; same_as&lt;_It&amp;&gt;;</span><br><span class="line">        &#123; __j - __n &#125; -&gt; same_as&lt;_It&gt;;</span><br><span class="line">        &#123; __j[__n] &#125; -&gt; same_as&lt;<span class="type">iter_reference_t</span>&lt;_It&gt;&gt;;</span><br><span class="line">    &#125;;</span><br></pre></td></tr></table></figure>
+<p>对concepts语法有一定了解就不难完整地解读上述约束：<br />
+在满足双向迭代器要求的基础上，满足<code>sized_sentinel_for</code>和<code>totally_ordered</code>，同时对于标定的<code>iter_difference_t</code>（迭代器差值类型）的一个实例，本迭代器与该实例进行<code>operator+</code>（含左右和加减的重载）、加/减复合赋值都会返回<code>It&amp;</code>或<code>It</code>，并且支持下标运算后返回一个引用类型（详情参阅C++标准库）。</p>
+<p>显然<code>_It = int</code>必定无法满足上述约束，而既有的随机访问迭代器（主要是<code>std::vector</code>和原始指针）都满足之。</p>
+<h2 id="viewsranges的灵魂">Views：Ranges的灵魂</h2>
+<p>至此来说，ranges algorithm依然“只是”STL
+Algorithm加上了一些<code>concepts</code>约束和多了几层打包工作<del>而已</del>。Ranges迷人的灵魂所在，亦作为其中最复杂迷离的要素，还是在"Views"——视图之上。</p>
+<h3
+id="语法向namespace-views-和-operator">语法向：<code>namespace views</code>
+和 <code>operator|</code></h3>
+<p>视图是一种特殊的函数对象，其被定义在<code>&lt;ranges&gt;</code>的<code>namespace std::ranges::views</code>中。但由于库中存在声明：<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">namespace</span> std</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">namespace</span> views = ranges::views;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+因此，调用视图对象时只需要使用<code>std::views::XXX</code>即可。</p>
 <blockquote>
-<p>Delightful.</p>
+<p>注释：所有的视图对象都是轻量级、且能被平凡地复制( <em>trivially
+copyable</em> )的。</p>
 </blockquote>
-<h2 id="解析-1">解析</h2>
-<p>题如其名 —— <em>Arcahv</em>，聚合，大杂烩。<br />
-核心考点包括 RSA LSB Orcale <del>Pro Max版</del>，LCG，Coppersmith。</p>
-<h3 id="rsa-lsb-orcale">RSA LSB Orcale</h3>
-<p>最简单的RSA LSB Orcale应是RSA Parity
-Orcale（奇偶Orcale，每次解密返回结果的奇偶性），此时攻击所需要的次数为
-<span class="math inline">\(\lceil \log_{2}N \rceil\)</span>。<br />
-同样地，如果LSB Orcale每次返回的值是解密结果对 <span
-class="math inline">\(2^{k}\)</span> 取模的结果，则解密所需要的次数应为
-<span class="math inline">\(\lceil log_{2^{k}}N = \lceil
-\frac{log_{2}N}{k} \rceil\)</span>。</p>
-<p>本题首先大幅约束了解密次数，旨在考验各位师傅对于 Parity
-Orcale的理解和数论推导。</p>
+<p>在调用方式方面，大多数视图支持以下几种调用方式：</p>
+<ul>
+<li>直接调用（即传统的<code>operator()</code>），如<code>std::views::filter(vc,[](int v)&#123;return v&gt;3;&#125;)</code>。<br />
+</li>
+<li>串联调用，又名“管道操作符”-"pipeline
+operator"，即<code>operator|</code>，如此做会间接调用右侧视图对象的<code>operator()</code>，并将左操作数作为第一形参放入其中。</li>
+</ul>
 <blockquote>
-<p>Parity
-Orcale的核心就是“溢出”导致的余数变化，以及我们根据RSA的乘法同态能构造出使解密结果为
-<span class="math inline">\(Cm (\bmod N)\)</span> 的密文。</p>
+<p>串联调用支持将多种<code>views</code>操作连接在一起的原因类似于流插入/输出运算符<code>operator&lt;&lt;</code>/<code>operator&gt;&gt;</code>，利用了其从左向右的结合性，同时每次调用都会返回一个（类似）自身的对象。</p>
 </blockquote>
-<p>通过在 <span class="math inline">\(Z_{p}\)</span> 下将密文乘以 <span
-class="math inline">\(C^{e}\)</span>，我们解密得到的明文即为 <span
-class="math inline">\(m^{&#39;} = Cm \bmod N\)</span>。显然存在等式
-<span class="math inline">\(m^{&#39;} + kN =
-Cm\)</span>。本题中由于我们可以得到 <span
-class="math inline">\(m^{&#39;} \bmod 256\)</span>，因而亦令 $ C =
-256$。由此，<br />
-- 若 <span class="math inline">\(k = 0\)</span>，由于 <span
-class="math inline">\(256m \equiv 0 (\bmod 256)\)</span>，则显然 <span
-class="math inline">\(m^{&#39;} \bmod 256 = 0\)</span>。<br />
-- 若 <span class="math inline">\(k \neq 0\)</span>，则 <span
-class="math inline">\(m^{&#39;} \equiv kN (\bmod 256)\)</span>。又因为
-<span class="math inline">\(N\)</span> 必为奇数，<span
-class="math inline">\(gcd(N,256) = 1\)</span>，因而 <span
-class="math inline">\(Z_{256}\)</span> 下 <span
-class="math inline">\(N^{-1}\)</span> 存在，即可以计算 <span
-class="math inline">\(k \equiv m^{&#39;}N^{-1} (\bmod
-256)\)</span>。<br />
-又 <span class="math inline">\(m^{&#39;} \in (0,N)\)</span>，推定 <span
-class="math inline">\(256m = m^{&#39;} + kN \in (kN,(k+1)N)\)</span>，即
-<span class="math inline">\(m \in
-(\frac{k}{256}N,\frac{k+1}{256}N)\)</span>。</p>
-<p>重复上述步骤（每次将上一次得到的 <span
-class="math inline">\(m\)</span> 在 <span
-class="math inline">\(Z_{N}\)</span> 下乘以 <span
-class="math inline">\(256\)</span>），每次可以将原明文 <span
-class="math inline">\(m\)</span> 的取值范围缩小至原来的 <span
-class="math inline">\(\frac{1}{256}\)</span>，近似于获得了高8位的信息。</p>
-<p>同时，题目中原明文是 <span class="math inline">\(p \in
-(0,2^{1024})\)</span>，在交互次数有限的情况下，应选择跳过前127次交互（因为已知这127次交互必定会得到
-<span class="math inline">\(k = 0\)</span>；注意明文仍需直接乘以 <span
-class="math inline">\(2^{1016e} \bmod N\)</span>）。最终我们近似可以得到
-<code>r1.p</code> 的高600位信息。</p>
-<h3 id="lcg">LCG</h3>
-<p>LCG部分是非常经典的PRNG逆向。<br />
-本题中LCG没有给出任何参数<del>而且还被玩坏了</del>，但难度依然不大。唯一稍微有些迷惑性的点就是不会告诉你随机数的分隔点在哪里，但通过简单分析<del>乱糊+瞎猜</del>和获得随机数后的存在性校验也不难从一堆<code>unsigned long long</code>里得到五个LCG的连续输出随机数。</p>
-<p>得到随机数后，由于LCG的参数 <span
-class="math inline">\((p,a,b)\)</span>
-均未知，因此需要通过这些随机数来从前向后逐个恢复，这里只讲恢复 <span
-class="math inline">\(p\)</span>。<br />
-记恢复的随机数序列为 <span class="math inline">\(\{x_i\} (i \in
-[0,5))\)</span>，<br />
-<span class="math inline">\(x_{i+1} \equiv ax_i + b \bmod p, x_{i+2}
-\equiv ax_{i+1} + b \bmod p \rightarrow x_{i+2}-x_{i+1} \equiv
-a(x_{i+1}-x_i) \bmod p\)</span>。<br />
-再记 <span class="math inline">\(x_{i+1}-x_{i} = D_{i} (i \in
-[0,4))\)</span>，既有 <span class="math inline">\(D_{i+2} \equiv
-aD_{i+1} \bmod p, D_{i+1} \equiv aD_i \bmod p \rightarrow D^{2}_{i+1}
-\equiv D_{i+2}D_{i} \bmod p\)</span>，即 <span
-class="math inline">\(D^{2}_{i+1} - D_{i+2}D_{i} \equiv 0 \bmod
-p\)</span>。<br />
-对上式取 <span class="math inline">\(i =
-0,1\)</span>，得到的二式取最大公约数（即 <span
-class="math inline">\(gcd(D^{2}_{2} - D_{3}D_{1}, D^{2}_{1} -
-D_{2}D_{0})\)</span>），即有很大概率得到 <span
-class="math inline">\(p\)</span>。</p>
+<p>因此，以下几种调用方法是等价的：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">std::vector&lt;<span class="type">int</span>&gt; vc&#123;<span class="number">6</span>,<span class="number">5</span>,<span class="number">5</span>,<span class="number">3</span>,<span class="number">7</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">auto</span> fn = [](<span class="type">int</span> v)&#123;<span class="keyword">return</span> v&gt;<span class="number">3</span>;&#125;</span><br><span class="line">std::views::<span class="built_in">filter</span>(vc,fn);</span><br><span class="line">vc | std::views::<span class="built_in">filter</span>(fn);</span><br></pre></td></tr></table></figure>
+<h3 id="逻辑向随心所欲不逾矩的组合">逻辑向：“随心所欲不逾矩”的组合</h3>
+<p>有了前面的<code>operator|</code>铺垫，现在也就不难理解views<del>容易用上头</del>的原因了：<br />
+Ranges Library提供的原子函数(atomic
+functions)颇为丰富，语法分类来看，这些函数一部分属于"Ranges factory" -
+范围工厂，可根据给定参数产生一个新的Range；一部分属于"Ranges adaptor" -
+容器适配器，可作用于既有Range上并产生一个操作过的Range；有少量函数二者皆然（取决于其形参）。<br />
+这些函数多处于<code>std::views::</code>中，亦有少量在<code>std::ranges</code>内。</p>
 <blockquote>
-<p>可以发现5个连续随机数是LCG参数完全未知时下还原 <span
-class="math inline">\(p\)</span>
-所需的最小数目，因此构造的最大公约数经常会掺杂一些其它的小因子，简单<code>factor</code>一下的成功率还是不低的。</p>
+<p>严格地，由于Ranges的惰性计算机制，这里的“操作过的Range”事实上不太准确：任何Range在被“使用”前均都不会进行任何计算。详见下一节内容。</p>
 </blockquote>
-<p>得到 <span class="math inline">\(p\)</span>
-后依述推导过程中的部分式即可得到 <span
-class="math inline">\(a,b\)</span>，过程不再赘述。<br />
-至于被“玩坏”的LCG，注意到作为种子的AES密钥<code>key</code>只有128位长，而LCG的
-<span class="math inline">\(p\)</span>
-为1024位，因此只需一直向前逆向，即可认为第一个遇到的不大于128位的数就是<code>key</code>。</p>
+<p>这些操作涵盖了编程实践中对于Ranges的大部分“需求”，如：</p>
+<ul>
+<li>只读型：过滤(filter)、分隔(stride)、分块(chunk)、取舍(drop/count)等；<br />
+</li>
+<li>视图型：滑动(slide)、相邻(adjacent)等；<br />
+</li>
+<li>修改型：转化(transform)等；<br />
+</li>
+<li>工厂型：枚举(enumerate)、压缩(zip)、迭代(iota)、重复(repeat)等。</li>
+</ul>
 <blockquote>
-<p>相当于整道 <em>Arcahv</em>
-两次应用到了“小明文攻击”的思想，即已知明文的部分信息的前提下攻击可以另辟蹊径，<del>同时也强调了密码学应用中pad的重要性</del></p>
+<p>在C++20中只引入了16个views，C++23又向其中添加了16个，C++26依然会继续添加。</p>
 </blockquote>
-<h3 id="coppersmith">Coppersmith</h3>
-<p>RSA LSB Orcale中并没有获得 <span class="math inline">\(p\)</span>
-的全部信息，但已知其高位的情况下即可通过 Coppersmith 对 <span
-class="math inline">\(N\)</span>
-进行分解，具体构造方法也非常简单<del>而且没有技巧</del>，同样不再赘述。</p>
-<h2 id="完整exp-1">完整exp</h2>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line"><span class="built_in">__import__</span>(<span class="string">&#x27;os&#x27;</span>).environ[<span class="string">&#x27;TERM&#x27;</span>] = <span class="string">&#x27;xterm&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> sage.<span class="built_in">all</span> <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> Crypto.Cipher <span class="keyword">import</span> AES</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">hexify_send</span>(<span class="params">num:<span class="built_in">int</span></span>) -&gt; <span class="built_in">bytes</span>:</span><br><span class="line">    <span class="keyword">return</span> long_to_bytes(num).<span class="built_in">hex</span>().encode()</span><br><span class="line"></span><br><span class="line">io = remote(<span class="string">&#x27;39.106.16.204&#x27;</span>,<span class="number">28575</span>)</span><br><span class="line"><span class="comment"># io = process([&#x27;python3&#x27;,&#x27;arcahv.py&#x27;])</span></span><br><span class="line"></span><br><span class="line">io.sendlineafter(<span class="string">b&#x27;&gt;&#x27;</span>,<span class="string">b&#x27;1&#x27;</span>)</span><br><span class="line"></span><br><span class="line">io.recvuntil(<span class="string">b&#x27;:&#x27;</span>)</span><br><span class="line">enc_flag = <span class="built_in">int</span>(io.recvline().strip().decode(),<span class="number">16</span>)</span><br><span class="line">io.recvuntil(<span class="string">b&#x27;:&#x27;</span>)</span><br><span class="line">enc_hint = <span class="built_in">int</span>.from_bytes(<span class="built_in">bytes</span>.fromhex(io.recvline().strip().decode()),<span class="string">&#x27;little&#x27;</span>)</span><br><span class="line">io.recvuntil(<span class="string">b&#x27;:&#x27;</span>)</span><br><span class="line">enc_hint2 = <span class="built_in">bytes</span>.fromhex(io.recvline().strip().decode())</span><br><span class="line"></span><br><span class="line"><span class="comment"># RSA LSB Orcale</span></span><br><span class="line"></span><br><span class="line">m = enc_hint</span><br><span class="line">omit_count = <span class="number">127</span></span><br><span class="line">io.sendlineafter(<span class="string">b&#x27;&gt;&#x27;</span>,<span class="string">b&#x27;2&#x27;</span>)</span><br><span class="line">io.recvuntil(<span class="string">b&#x27;(&#x27;</span>)</span><br><span class="line">rn = <span class="built_in">int</span>(io.recvuntil(<span class="string">b&#x27;,&#x27;</span>,drop=<span class="literal">True</span>).strip().decode(),<span class="number">16</span>)</span><br><span class="line">re = <span class="built_in">int</span>(io.recvuntil(<span class="string">b&#x27;)&#x27;</span>,drop=<span class="literal">True</span>).strip().decode(),<span class="number">16</span>)</span><br><span class="line"></span><br><span class="line">upper_bound = reduce(<span class="keyword">lambda</span> x,y:floor(x/<span class="number">256</span>),<span class="built_in">range</span>(omit_count),rn)</span><br><span class="line"></span><br><span class="line">lower_bound = <span class="number">0</span></span><br><span class="line">single_mul = <span class="built_in">pow</span>(<span class="number">256</span>,re,rn)</span><br><span class="line">inv = <span class="built_in">pow</span>(rn,-<span class="number">1</span>,<span class="number">256</span>)</span><br><span class="line"></span><br><span class="line">m = m * <span class="built_in">pow</span>(single_mul,omit_count,rn) % rn</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">75</span>):</span><br><span class="line">    m = <span class="built_in">int</span>(m * single_mul % rn)</span><br><span class="line">    </span><br><span class="line">    io.sendlineafter(<span class="string">b&#x27;?&#x27;</span>,<span class="string">b&#x27;y&#x27;</span>)</span><br><span class="line">    io.sendlineafter(<span class="string">b&#x27;:&#x27;</span>,hexify_send(m))</span><br><span class="line">    io.recvuntil(<span class="string">b&#x27;:&#x27;</span>)</span><br><span class="line">    this = <span class="built_in">int</span>(io.recvline().strip().decode()[:<span class="number">2</span>],<span class="number">16</span>)</span><br><span class="line"></span><br><span class="line">    k = <span class="built_in">int</span>(-this * inv % <span class="number">256</span>)</span><br><span class="line">    ttl = (upper_bound - lower_bound) / <span class="number">256</span></span><br><span class="line"></span><br><span class="line">    lower_bound += ceil(k * ttl)</span><br><span class="line">    upper_bound = lower_bound + floor(ttl)</span><br><span class="line"></span><br><span class="line">res_pp = lower_bound</span><br><span class="line"></span><br><span class="line"><span class="comment"># LCG</span></span><br><span class="line"></span><br><span class="line">io.sendlineafter(<span class="string">b&#x27;&gt;&#x27;</span>,<span class="string">b&#x27;3&#x27;</span>)</span><br><span class="line">ls = []</span><br><span class="line"><span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">80</span>):</span><br><span class="line">    io.sendlineafter(<span class="string">b&#x27;?&#x27;</span>,<span class="string">b&#x27;y&#x27;</span>)</span><br><span class="line">    ls.append(<span class="built_in">int</span>(io.recvline().strip().decode()))</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">hexstr = <span class="string">&#x27;&#x27;</span>.join(<span class="built_in">hex</span>(i)[<span class="number">2</span>:].zfill(<span class="number">16</span>) <span class="keyword">for</span> i <span class="keyword">in</span> ls)</span><br><span class="line">lcgnums = [<span class="built_in">int</span>(hexstr[i:i+<span class="number">256</span>],<span class="number">16</span>) <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,<span class="built_in">len</span>(hexstr),<span class="number">256</span>)]</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">A = [lcgnums[i+<span class="number">1</span>]-lcgnums[i] <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">4</span>)]</span><br><span class="line">p = gcd(A[<span class="number">1</span>]^<span class="number">2</span> - A[<span class="number">2</span>]*A[<span class="number">0</span>],A[<span class="number">2</span>]^<span class="number">2</span> - A[<span class="number">3</span>]*A[<span class="number">1</span>])</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> <span class="keyword">not</span> isPrime(p):</span><br><span class="line">    p = factor(p)[-<span class="number">1</span>][<span class="number">0</span>]</span><br><span class="line"></span><br><span class="line"><span class="keyword">assert</span> isPrime(p)</span><br><span class="line"></span><br><span class="line">a = <span class="built_in">int</span>(A[<span class="number">1</span>] * <span class="built_in">int</span>(<span class="built_in">pow</span>(A[<span class="number">0</span>],-<span class="number">1</span>,p)) % p)</span><br><span class="line">b = <span class="built_in">int</span>((lcgnums[<span class="number">1</span>] - a * lcgnums[<span class="number">0</span>]) % p)</span><br><span class="line"></span><br><span class="line">cur = Zmod(p)(lcgnums[<span class="number">0</span>])</span><br><span class="line">count = <span class="number">0</span></span><br><span class="line"><span class="keyword">while</span> <span class="built_in">int</span>(cur).bit_length() &gt; <span class="number">128</span>:</span><br><span class="line">    cur = (cur - b) * <span class="built_in">pow</span>(a,-<span class="number">1</span>,p)</span><br><span class="line">    count += <span class="number">1</span></span><br><span class="line"></span><br><span class="line">key = <span class="built_in">int</span>(cur).to_bytes(<span class="number">16</span>,<span class="string">&#x27;big&#x27;</span>)</span><br><span class="line">res_n = <span class="built_in">int</span>.from_bytes(AES.new(key,AES.MODE_ECB).decrypt(enc_hint2),<span class="string">&#x27;big&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Coppersmith</span></span><br><span class="line">P.&lt;x&gt; = Zmod(res_n)[]</span><br><span class="line">rt = (res_pp + x).small_roots(X=<span class="number">2</span>^<span class="number">453</span>,beta=<span class="number">0.4</span>)[<span class="number">0</span>]</span><br><span class="line"></span><br><span class="line">p0 = <span class="built_in">int</span>(res_pp + rt)</span><br><span class="line"></span><br><span class="line"><span class="keyword">assert</span> res_n % p0 == <span class="number">0</span></span><br><span class="line">q0 = res_n // p0</span><br><span class="line"></span><br><span class="line">d0 = <span class="built_in">int</span>(<span class="built_in">pow</span>(<span class="number">65537</span>,-<span class="number">1</span>,(p0-<span class="number">1</span>)*(q0-<span class="number">1</span>)))</span><br><span class="line"><span class="built_in">print</span>(long_to_bytes(<span class="built_in">int</span>(<span class="built_in">pow</span>(enc_flag,d0,res_n))))</span><br></pre></td></tr></table></figure>
-<h1 id="绮云">绮云</h1>
-<blockquote>
-<p>花灯百盏遥遥一线牵</p>
-</blockquote>
-<h2 id="解析-2">解析</h2>
-<p>某种意义上的水题，RSA双Orcale(N-Orcale + fault injection orcale)
-和简单的ECDSA守个门。</p>
-<blockquote>
-<p>笔者设想过此类Encryption
-Orcale有一些偏现实的应用场景，比如存在一个小型的加密器，其提供由一个既定私钥
-<span class="math inline">\(d\)</span> 生成大量公钥对 <span
-class="math inline">\((N,e)\)</span>
-对输入的任意消息进行加密的功能，同时其并不会主动暴露自身公钥对（相当于攻击者/加密者只能得到密文，<del>唯密文攻击Plus</del>）。攻击者可以对其进行
-<em>Fault
-injection</em>，而现实中对于小型加密设备，通过侧信道攻击等方式同样也可以获取
-<span class="math inline">\(e\)</span>。</p>
-</blockquote>
-<h3 id="rsa-n-orcale">RSA N-Orcale</h3>
-<p>首先我们希望在没有公钥的情况下获得 <span
-class="math inline">\(N\)</span>。<br />
-传递 <span class="math inline">\(m \in \{2,2^2,2^3,2^4,\cdots\}\)</span>
-，收集加密的密文。<br />
-设 <span class="math inline">\(m_i = 2^{i} (i \in Z_+)\)</span>，显然
-<span class="math inline">\(m_i = m_1^{i}\)</span>。<br />
-又， <span class="math inline">\(c_i \equiv m_i^e (\bmod
-N)\)</span>，推定 <span class="math inline">\(c_1 \equiv m_1^e (\bmod
-N)\)</span>，结合上式可得 <span class="math inline">\(c_1^i - c_i \equiv
-0 (\bmod N)\)</span>，即 <span class="math inline">\(c_1^i - c_i = kN (k
-\in Z)\)</span>。<br />
-在加密了足够多的 <span class="math inline">\(m_i\)</span> 后，对 <span
-class="math inline">\({c_1^i - c_i}\)</span>
-求其最大公约数，即可有很大把握得到 <span
-class="math inline">\(N\)</span>。</p>
-<blockquote>
-<p>RSA N-Orcale步中，由于 <span class="math inline">\(e &lt;
-2^{2048}\)</span>，所以建议选择传输interfere位为2048。尽管单从
-<em>N-Orcale</em> 这一步来看没有区别，但如此可以在解出 <span
-class="math inline">\(N\)</span> 后立即获得 <span
-class="math inline">\(m^{e} \bmod N\)</span>
-的确值<del>进而避开了一些奇奇怪怪的<code>if-elif</code>的纠缠</del></p>
-</blockquote>
-<h3 id="rsa-fault-injection">RSA Fault injection</h3>
-<p>单个RSA Encryption Orcale的剩下部分就是比较经典的RSA Fault
-injection攻击，虽然攻击目标不一样（从传统fault的针对私钥 <span
-class="math inline">\(d\)</span> 变为现在针对公钥 <span
-class="math inline">\(e\)</span>），但数学逻辑完全相同。具体原理不再赘述（<del>既有wp太多了</del>）。</p>
-<h3 id="格攻击">格攻击</h3>
-<p>但至此我们得到的依然只是大量的公钥对 <span
-class="math inline">\((N,e)\)</span>，题目中的 <span
-class="math inline">\(d\)</span> 并不能通过 <em>Wiener's
-Attack</em>获得（应用的私钥 <span class="math inline">\(d =
-x^{4}\)</span> 仍有928位）。<br />
-注意到每次RSA生成公钥对对应的私钥是相同的，由RSA的基本关系式可以列出：<span
-class="math inline">\(e_{i}d \equiv 1 \bmod
-\varphi(N_{i})\)</span><br />
-进而，<span class="math inline">\(e_{i}d + k_{i}\varphi(N_{i}) - 1 =
-0\)</span>，得到 <span class="math inline">\(e_{i}d + k_{i}N_{i} - C_{i}
-= 0\)</span>，其中 <span class="math inline">\(C_{i}\)</span> 的数量级与
-<span class="math inline">\(k_{i}p_{i}\)</span> 相当。</p>
-<p>又，RSA中存在 <span class="math inline">\(e_{i}d \approx
-|k_i|(N_{i})\)</span>（<em>Wiener's attack</em> 连分数逼近的基础），因此
-<span class="math inline">\(k_{i} \approx
-\frac{e_{i}d}{N_{i}}\)</span>，结合 <span class="math inline">\(e_{i}d
-\equiv 1 \bmod \varphi(N)\)</span>，可以认为 <span
-class="math inline">\(k_{i}\)</span> 数量级与 <span
-class="math inline">\(d\)</span> 相当。</p>
-<p>结合本题的实例，<span class="math inline">\(p_{i}\)</span>
-约为1024位，<span class="math inline">\(d_{i}\)</span> 为928位，因而
-<span class="math inline">\(C_{i}\)</span> 应在1950位左右，满足明显小于
-<span class="math inline">\(e_{i}\)</span>、<span
-class="math inline">\(N_{i}\)</span> 的条件。
-考虑下述行向量的线性组合：</p>
-<p><span class="math inline">\(\begin{bmatrix} k_{1} &amp; k_{2} &amp;
-\cdots &amp; k_{n} &amp; d\end{bmatrix} \cdot \begin{bmatrix} N_{1}
-\\&amp;N_{2} \\ &amp;&amp; \ddots \\ &amp;&amp;&amp; N_{n} \\ e_{1}
-&amp; e_{2} &amp; \cdots &amp; e_{n} &amp; K \end{bmatrix} =
-\begin{bmatrix} C_{1} &amp; C_{2} &amp; \cdots &amp; C_{n} &amp; Kd
-\end{bmatrix}\)</span></p>
-<p>可以认为，等号右侧的向量是该矩阵构成的格中的短向量。因此由该矩阵构造格
-<span class="math inline">\(L\)</span>，对之进行规约即可从中提取出私钥
-<span class="math inline">\(d\)</span>。</p>
-<blockquote>
-<p>关于配平和格维度的选择，笔者建议 <span class="math inline">\(K =
-2^{1024}\)</span>，<span class="math inline">\(n \geq
-10\)</span>。<del>同时本题也因为格维度的问题非常耗时，众所周知Fault
-injection交互的时间开销非常大，而本题中需要将这个步骤重复数遍，因而出现了大半个小时出flag的奇观，笔者最后懒得改题了，在这给各位师傅磕一个</del></p>
-</blockquote>
-<h3 id="ecdsa">ECDSA</h3>
-<p>这部分就没什么了<del>为了让各位拿flag更舒服点，ECDSA类的<code>sign</code>方法都留给各位了，不是坑</del>。唯一的小插曲是需要进行非常轻度的爆破，不过每次交互
-<span class="math inline">\(\frac{1}{256}\)</span>
-的概率出flag也不算太低（？）</p>
-<h2 id="完整exp-2">完整exp</h2>
-<blockquote>
-<p>远程交互时本exp耗时预计为45-90分钟。时间开销主要在每次 <em>fault
-injection</em> 获取 <span class="math inline">\(e\)</span>
-时都需要进行2048次交互才能得到结果，本应微不足道的ping、计算耗时等累加数万次后耗时依然极为可观<del>在这里给因为交互压力没做出来的师傅磕一个</del><br />
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line"><span class="built_in">__import__</span>(<span class="string">&#x27;os&#x27;</span>).environ[<span class="string">&#x27;TERM&#x27;</span>] = <span class="string">&#x27;xterm&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> sage.<span class="built_in">all</span> <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> time <span class="keyword">import</span> time</span><br><span class="line"><span class="keyword">from</span> hashlib <span class="keyword">import</span> sha256</span><br><span class="line"></span><br><span class="line">io = remote(<span class="string">&#x27;39.106.16.204&#x27;</span>,<span class="number">10645</span>)</span><br><span class="line"><span class="comment"># io = process([&#x27;python3&#x27;,&#x27;task.py&#x27;])</span></span><br><span class="line"></span><br><span class="line">nls = []</span><br><span class="line">els = []</span><br><span class="line"></span><br><span class="line">recv_hexint = <span class="keyword">lambda</span>: <span class="built_in">int</span>(io.recvline().strip().decode(),<span class="number">16</span>)</span><br><span class="line"></span><br><span class="line">t0 = time()</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">10</span>):</span><br><span class="line">    io.sendlineafter(<span class="string">b&#x27;option:&#x27;</span>,<span class="string">b&#x27;1&#x27;</span>)</span><br><span class="line">    <span class="comment">#decipher N via GCD</span></span><br><span class="line"></span><br><span class="line">    numls = []</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">9</span>):</span><br><span class="line">        msg = <span class="built_in">int</span>(<span class="number">1</span> &lt;&lt; (i + <span class="number">1</span>)).to_bytes(<span class="number">2</span>,<span class="string">&#x27;big&#x27;</span>)</span><br><span class="line">        io.sendlineafter(<span class="string">b&#x27;exit:&#x27;</span>,<span class="string">b&#x27;e&#x27;</span>)</span><br><span class="line">        io.sendlineafter(<span class="string">b&#x27;message:&#x27;</span>,msg.<span class="built_in">hex</span>().encode())</span><br><span class="line">        io.sendlineafter(<span class="string">b&#x27;interfere?&#x27;</span>,<span class="string">b&#x27;0&#x27;</span>)</span><br><span class="line">        io.recvuntil(<span class="string">b&#x27;Result:&#x27;</span>)</span><br><span class="line">        numls.append(<span class="built_in">int</span>(io.recvline().strip().decode(),<span class="number">16</span>))</span><br><span class="line"></span><br><span class="line">    gcdls = []</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>,<span class="number">9</span>):</span><br><span class="line">        gcdls.append(numls[<span class="number">0</span>] ^ (i+<span class="number">1</span>) - numls[i])</span><br><span class="line"></span><br><span class="line">    n = gcd(gcdls)</span><br><span class="line">    nls.append(n)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&#x27;n #<span class="subst">&#123;_&#125;</span> = <span class="subst">&#123;n&#125;</span>&#x27;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment">#decipher e via fault injection of e</span></span><br><span class="line"></span><br><span class="line">    orcale_msg = <span class="number">3</span></span><br><span class="line"></span><br><span class="line">    io.sendlineafter(<span class="string">b&#x27;exit:&#x27;</span>,<span class="string">b&#x27;e&#x27;</span>)</span><br><span class="line">    io.sendlineafter(<span class="string">b&#x27;message:&#x27;</span>,<span class="built_in">int</span>(orcale_msg).to_bytes(<span class="number">1</span>,<span class="string">&#x27;big&#x27;</span>).<span class="built_in">hex</span>().encode())</span><br><span class="line">    io.sendlineafter(<span class="string">b&#x27;interfere?&#x27;</span>,<span class="string">b&#x27;2048&#x27;</span>)</span><br><span class="line">    io.recvuntil(<span class="string">b&#x27;Result:&#x27;</span>)</span><br><span class="line">    basis = recv_hexint() * <span class="built_in">pow</span>(orcale_msg, -<span class="number">2</span>^<span class="number">2048</span>, n) % n <span class="comment">#basis, = pow(m,e,n)    </span></span><br><span class="line"></span><br><span class="line">    e_rng = [<span class="number">0</span>] * <span class="number">2048</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">2048</span>):</span><br><span class="line">        io.sendlineafter(<span class="string">b&#x27;exit:&#x27;</span>,<span class="string">b&#x27;e&#x27;</span>)</span><br><span class="line">        io.sendlineafter(<span class="string">b&#x27;message:&#x27;</span>,<span class="built_in">int</span>(orcale_msg).to_bytes(<span class="number">1</span>,<span class="string">&#x27;big&#x27;</span>).<span class="built_in">hex</span>().encode())</span><br><span class="line">        io.sendlineafter(<span class="string">b&#x27;interfere?&#x27;</span>,<span class="built_in">str</span>(i).encode())</span><br><span class="line">        io.recvuntil(<span class="string">b&#x27;Result:&#x27;</span>)</span><br><span class="line">        </span><br><span class="line">        temp = recv_hexint()</span><br><span class="line">        multiplier = <span class="built_in">pow</span>(orcale_msg,<span class="number">2</span>^i,n)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> temp == basis * multiplier % n: <span class="comment">#0 -&gt; 1, original = 0</span></span><br><span class="line">            e_rng[i] = <span class="number">0</span></span><br><span class="line">        <span class="keyword">else</span>: <span class="comment">#1 -&gt; 0, original = 1</span></span><br><span class="line">            <span class="keyword">assert</span> temp == basis * <span class="built_in">pow</span>(multiplier,-<span class="number">1</span>,n) % n <span class="comment">#ensure</span></span><br><span class="line">            e_rng[i] = <span class="number">1</span></span><br><span class="line"></span><br><span class="line">    e_res = <span class="built_in">int</span>(<span class="string">&#x27;&#x27;</span>.join(<span class="built_in">str</span>(i) <span class="keyword">for</span> i <span class="keyword">in</span> e_rng)[::-<span class="number">1</span>],<span class="number">2</span>)</span><br><span class="line">    <span class="keyword">assert</span> <span class="built_in">pow</span>(orcale_msg,e_res,n) == basis</span><br><span class="line">    els.append(e_res)</span><br><span class="line"></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&#x27;e #<span class="subst">&#123;_&#125;</span> = <span class="subst">&#123;e_res&#125;</span>&#x27;</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&#x27;Time elasped: <span class="subst">&#123;time()-t0:<span class="number">.2</span>f&#125;</span>s&#x27;</span>)</span><br><span class="line">    io.sendlineafter(<span class="string">b&#x27;exit:&#x27;</span>,<span class="string">b&#x27;&#x27;</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">const = <span class="number">2</span>^<span class="number">1024</span></span><br><span class="line">mt = matrix.diagonal(ZZ,nls + [<span class="number">0</span>]).dense_matrix()</span><br><span class="line">mt[-<span class="number">1</span>] = els + [const]</span><br><span class="line">mt = mt.LLL()</span><br><span class="line"></span><br><span class="line">temp = <span class="built_in">abs</span>(mt[<span class="number">0</span>,-<span class="number">1</span>])</span><br><span class="line"><span class="keyword">assert</span> temp % const == <span class="number">0</span></span><br><span class="line">d = ZZ(temp / const)</span><br><span class="line"></span><br><span class="line">x = d.nth_root(<span class="number">4</span>)</span><br><span class="line">E = EllipticCurve(Zmod(<span class="number">0xFFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000FFFFFFFFFFFFFFFF</span>),[<span class="number">0xFFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000FFFFFFFFFFFFFFFC</span>,<span class="number">0x28E9FA9E9D9F5E344D5A9E4BCF6509A7F39789F515AB8F92DDBCBD414D940E93</span>])</span><br><span class="line">n = <span class="number">0xFFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFF7203DF6B21C6052B53BBF40939D54123</span></span><br><span class="line"><span class="keyword">assert</span> E.order() == n</span><br><span class="line"></span><br><span class="line">G = E((<span class="number">0x32C4AE2C1F1981195F9904466A39C9948FE30BBFF2660BE1715A4589334C74C7</span>,<span class="number">0xBC3736A2F4F6779C59BDCEE36B692153D0A9877CC62A474002DF32E52139F0A0</span>))</span><br><span class="line">m0 = <span class="built_in">int</span>.from_bytes(sha256(<span class="string">&#x27;nctf2024-00&#x27;</span>.encode()).digest(),<span class="string">&#x27;big&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">    k = <span class="built_in">int</span>(time() * <span class="number">1000</span>) <span class="comment">#should be smaller than n</span></span><br><span class="line">    P = k * G</span><br><span class="line">    r = <span class="built_in">int</span>(P.xy()[<span class="number">0</span>]) % n</span><br><span class="line">    s = (<span class="built_in">pow</span>(k,-<span class="number">1</span>,n) * (m0 + x*r)) % n</span><br><span class="line">    <span class="keyword">if</span> r != <span class="number">0</span> <span class="keyword">and</span> s != <span class="number">0</span>:</span><br><span class="line">        <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">send = <span class="string">f&#x27;<span class="subst">&#123;r&#125;</span> <span class="subst">&#123;s&#125;</span>&#x27;</span>.encode()</span><br><span class="line"><span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">    io.sendlineafter(<span class="string">b&#x27;option:&#x27;</span>,<span class="string">b&#x27;2&#x27;</span>)</span><br><span class="line">    io.sendlineafter(<span class="string">b&#x27;:&#x27;</span>,send)</span><br><span class="line">    msg = io.recvline()</span><br><span class="line">    <span class="keyword">if</span> <span class="string">b&#x27;flag&#x27;</span> <span class="keyword">in</span> msg:</span><br><span class="line">        <span class="built_in">print</span>(msg.decode())</span><br><span class="line">        <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">io.close()</span><br></pre></td></tr></table></figure></p>
-</blockquote>
+<p>由此，C++20被称为继C++11后又一个划时代的C++版本也就不难理解了。C++11颠覆了许多传统C++的代码写法，而C++20的ranges亦然：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">std::vector&lt;<span class="type">int</span>&gt; vc&#123;&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">auto</span>&amp;&amp; [x,y] : vc | std::views::<span class="built_in">filter</span>([](<span class="type">int</span> x)&#123;<span class="keyword">return</span> x &gt; <span class="number">0</span>;&#125;) </span><br><span class="line">                  |std::views::<span class="built_in">take</span>(<span class="number">10</span>) | std::views::enumerate)</span><br><span class="line">            <span class="comment">//Sematics can&#x27;t be more explicit and clear: filter scores above 0, take 10 and enumerate them</span></span><br><span class="line">            <span class="comment">//If one wishes to reverse the range, simply append std::views::reverse to the end</span></span><br><span class="line">            &#123;</span><br><span class="line">                  std::<span class="built_in">println</span>(<span class="string">&quot;No.#&#123;&#125;: score = &#123;&#125;&quot;</span>,x<span class="number">+1</span>,y);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="设计向惰性视图分秒必争">设计向：惰性视图，分秒必争</h3>
+<p>上述所有组合产生的ranges对象都是一个<strong>惰性的</strong>可迭代对象，类似于python的<code>generator object</code>。<br />
+惰性对象的含义在于，对ranges进行管道组合的时候并不会执行任何计算（或者让ranges
+factory开工什么的），计算发生的时机是调用之时。<br />
+可以理解为，ranges对象实际上是一份该如何进行ranges的产生与变换的“说明书”，进行管道组合等操作只是在改说明书（而非其中出现的目标range）。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">std::vector&lt;<span class="type">int</span>&gt; vc&#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>&#125;;</span><br><span class="line"><span class="keyword">auto</span> rng = vc | std::views::reverse | std::views::<span class="built_in">transform</span>([](<span class="type">int</span> x)&#123;<span class="keyword">return</span> std::format(<span class="string">&quot;&#123;&#125;&quot;</span>,x);&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">//No invocation of the lambda function, visit of the vector or calling std::format until here: the view is lazy</span></span><br><span class="line"><span class="comment">//You can even further modify the view upon the beginning of iteration</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">auto</span> x : rng | std::views::<span class="built_in">take</span>(<span class="number">3</span>))</span><br><span class="line">&#123;</span><br><span class="line">      <span class="comment">//The iteration starts, thus the ranges object gets working</span></span><br><span class="line">      std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,x);</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>同时，为了保证语义的正确性，并非所有的Range都是等价的。典型地，如
+<em>contiguous
+range</em>（连续范围）就是一类对底层要求较高的Range，可以用于其上的算法显然会多于能用于其它一般Range（比如单向Range）的算法。又如<code>std::ranges::sort</code>就要求目标range是一个可读写的、能够随机访问的Range；很多range（或经过部分操作的range）会不满足这一条件，如</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">std::list&lt;<span class="type">int</span>&gt; ls&#123;&#125;;</span><br><span class="line"><span class="comment">//std::ranges::sort(ls);  //Not Compile</span></span><br><span class="line"></span><br><span class="line">std::vector&lt;<span class="type">int</span>&gt; vc&#123;&#125;;</span><br><span class="line">std::ranges::<span class="built_in">sort</span>(vc); <span class="comment">//OK</span></span><br><span class="line">std::ranges::<span class="built_in">sort</span>(vc | std::views::reverse); <span class="comment">//Still OK</span></span><br><span class="line"><span class="comment">//std::ranges::sort(vc | std::views::chunk(3)); //Not Compile</span></span><br></pre></td></tr></table></figure>
+<h1 id="结语">结语</h1>
+<p>Ranges作为STL继往开来的产物，结合Concepts约束、Views的灵活组合等特性开创了新时代C++算法的新纪元，同时也体现了C++新特性的几个特点：关联语法点多，通晓难度极大；但其接口亦易于上手调用，且开发上限极高。本篇仅讲解了Ranges的基本使用方法、部分设计哲学和底层原理等，关于
+<em>user-defined</em> 的视图等在C++23中又有诸多更新与亮点。<br />
+关于视图的进阶用法等，以后可能可以<del>咕</del>一篇专题来讲.sage</p>
 
       
 
@@ -743,11 +710,11 @@ injection</em> 获取 <span class="math inline">\(e\)</span>
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
         		</li>
       		 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">wp</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">C++20</a>
         		</li>
       		
 		</ul>
@@ -759,7 +726,7 @@ injection</em> 获取 <span class="math inline">\(e\)</span>
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="/categories/CTF-Writeups//" class="article-tag-list-link color3">CTF Writeups</a>
+        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
         		</li>
       		
 		</ul>
@@ -768,7 +735,7 @@ injection</em> 获取 <span class="math inline">\(e\)</span>
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/crypto/wp/nctf2024/">展开全文 >></a>
+          <a class="article-more-a" href="/cpp/ranges/">展开全文 >></a>
         </p>
       
 
@@ -802,7 +769,7 @@ injection</em> 获取 <span class="math inline">\(e\)</span>
   
   
     <nav id="page-nav">
-      <a class="extend prev" rel="prev" href="/page/7/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/6/">6</a><a class="page-number" href="/page/7/">7</a><span class="page-number current">8</span><a class="page-number" href="/page/9/">9</a><a class="page-number" href="/page/10/">10</a><span class="space">&hellip;</span><a class="page-number" href="/page/14/">14</a><a class="extend next" rel="next" href="/page/9/">Next &raquo;</a>
+      <a class="extend prev" rel="prev" href="/page/7/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/6/">6</a><a class="page-number" href="/page/7/">7</a><span class="page-number current">8</span><a class="page-number" href="/page/9/">9</a><a class="page-number" href="/page/10/">10</a><span class="space">&hellip;</span><a class="page-number" href="/page/15/">15</a><a class="extend next" rel="next" href="/page/9/">Next &raquo;</a>
     </nav>
   
 
