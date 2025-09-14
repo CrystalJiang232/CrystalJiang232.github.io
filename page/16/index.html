@@ -6,20 +6,14 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="https://crystaljiang232.github.io">
-  <title>C++——Structured Binding | 玲珑</title>
+  <title>玲珑</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="翩若惊鸿，矫若游龙。  Structured Binding，即“结构化绑定”，是C++17中引入的颇为强大的语法糖之一。 前言  阅读本章需要道友具备对右值引用、移动语义、基本模板编程的相关知识与较好理解基础。  由于C&#x2F;C++只允许单个返回值，因而C&#x2F;C++中需要从函数中“获取”多个值时，除了传递可变指针&#x2F;引用所谓OUT变量(bushi)，利用最多的方法无疑就是返回一个st">
-<meta property="og:type" content="article">
-<meta property="og:title" content="C++——Structured Binding">
-<meta property="og:url" content="https://crystaljiang232.github.io/cpp/st-bind/index.html">
+  <meta property="og:type" content="website">
+<meta property="og:title" content="玲珑">
+<meta property="og:url" content="https://crystaljiang232.github.io/page/16/index.html">
 <meta property="og:site_name" content="玲珑">
-<meta property="og:description" content="翩若惊鸿，矫若游龙。  Structured Binding，即“结构化绑定”，是C++17中引入的颇为强大的语法糖之一。 前言  阅读本章需要道友具备对右值引用、移动语义、基本模板编程的相关知识与较好理解基础。  由于C&#x2F;C++只允许单个返回值，因而C&#x2F;C++中需要从函数中“获取”多个值时，除了传递可变指针&#x2F;引用所谓OUT变量(bushi)，利用最多的方法无疑就是返回一个st">
 <meta property="og:locale" content="en_US">
-<meta property="article:published_time" content="2025-08-12T23:07:49.000Z">
-<meta property="article:modified_time" content="2025-09-14T00:30:06.982Z">
 <meta property="article:author" content="Hibiscus">
-<meta property="article:tag" content="Modern C++">
-<meta property="article:tag" content="长文精选">
 <meta name="twitter:card" content="summary">
   
     <link rel="alternative" href="/atom.xml" title="玲珑" type="application/atom+xml">
@@ -156,182 +150,140 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            <article id="post-cpp/st-bind" class="article article-type-post " itemscope itemprop="blogPost">
+            
+  
+    <article id="post-cpp/scanf" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
-    <h1 class="article-title" itemprop="name">
-      C++——Structured Binding
+    <h1 itemprop="name">
+      <a class="article-title" href="/cpp/scanf/">C——细究scanf</a>
     </h1>
   
 
         
-        <a href="/cpp/st-bind/" class="archive-article-date">
-  	<time datetime="2025-08-12T23:07:49.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-08-13</time>
+        <a href="/cpp/scanf/" class="archive-article-date">
+  	<time datetime="2024-12-08T13:16:43.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-08</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <blockquote>
-<p>翩若惊鸿，矫若游龙。</p>
-</blockquote>
-<p>Structured
-Binding，即“结构化绑定”，是C++17中引入的颇为强大的语法糖之一。</p>
-<h1 id="前言">前言</h1>
-<blockquote>
-<p>阅读本章需要道友具备对右值引用、移动语义、基本模板编程的相关知识与较好理解基础。</p>
-</blockquote>
-<p>由于C/C++只允许单个返回值，因而C/C++中需要从函数中“获取”多个值时，除了传递可变指针/引用<del>所谓<code>OUT</code>变量(bushi)</del>，利用最多的方法无疑就是返回一个<code>struct</code>或<code>std::pair</code>/<code>std::tuple</code>了：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">ret_info</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span> x;</span><br><span class="line">    std::string dt;</span><br><span class="line">    <span class="type">const</span> <span class="type">char</span>* c;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function">ret_info <span class="title">func</span><span class="params">()</span></span>;</span><br></pre></td></tr></table></figure>
-<p>如此做的最大缺点之一就是访问每个成员不够便利——一个成员还能通过<del>生命周期冲突百出的</del>临时子成员访问，但访问多个成员时就必须另起一个变量接收之：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> st = <span class="built_in">func</span>();</span><br><span class="line"><span class="type">int</span> y = st.x;</span><br><span class="line">std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,st.dt);</span><br></pre></td></tr></table></figure>
-<p>同时还可能涉及到 <em>cv</em> 修饰符差分、引用绑定等问题。<br />
-由此，C++17给出了 <em>Structured Binding</em>
-这个极为强大的语法糖用于处理此类情景。</p>
-<h1 id="正题">正题</h1>
-<p>首先明确 <em>Structured Binding</em> 的基本属性，一言具述之：</p>
-<p><em>Like a reference, a structured binding is an alias to an existing
-object; unlike a reference,a structured binding does not have to be of a
-reference type.</em></p>
-<p>即结构化绑定和引用相比，皆为<strong>既有对象</strong>的别名；但前者<strong>不一定是引用类型</strong>。</p>
+        <h1 id="scanf简明精干之美">scanf，简明精干之美</h1>
 <h2 id="基本语法">基本语法</h2>
-<p>Structured Binding的语法如下：</p>
-<p><em>attr</em> <em>decl-specifier</em> <em>ref-qualifier</em>
-<em>[identifier-list]</em> <em>initializer</em> ;</p>
-<p>各部分解析：</p>
+<p>scanf的函数签名为：
+<code>int scanf(const char* format, ...);</code><br />
+其中format为格式字符串，后跟不定参数传递待赋值变量的地址。</p>
+<blockquote>
+<p>较高级的C语言提倡使用scanf_s代替scanf以确保内存安全，其函数签名为
+<code>int scanf_s(const char* format, ...)</code>。</p>
+<p>用法区别为，不定参数列表需要传递待赋值变量的地址和<strong>最大写入内存大小</strong>，如：<code>scanf_s("%d", &amp;var, sizeof(int));</code></p>
+</blockquote>
+<p>scanf()的核心在于格式字符串上。<br />
+format-string的说明符形式为：
+<code>[=%[*][width][modifiers]type=]</code><br />
+其中，%标志说明符的开始（"%%"符号的escape-character是"%%"）；<br />
+*是一个可选字符，任何被指定了*的format-string均不会被赋值至对应的变量中（相当于这一段scan后被舍弃）。
+width表示了该说明符读取的最大字符数；<br />
+modifiers表示一个对变量类型的修饰符（“长”“短”一类，比如ll表示long
+long，s表示short，用于修饰%d,%u,%f）；<br />
+type的“全解”如下。<br />
+<strong>以下部分内容可能会因编译器不同而有所不同，仅供MSVC
+19.3参考。</strong></p>
 <ul>
-<li><em>attr</em>：任意数目的属性(attributes)<br />
-</li>
-<li><em>decl-specifier</em>：依下列顺序出现的修饰符（与变量声明规则一致）：<code>static</code>、<code>thread_local</code>、<code>const</code>、<code>volatile</code>、<code>auto</code>；其中<code>auto</code><strong>必须出现</strong><br />
-</li>
-<li><em>ref-qualifier</em>：可选<code>&amp;</code>/<code>&amp;&amp;</code>或置空<br />
-</li>
-<li><em>[identifier-list]</em>：变量名列表<br />
-</li>
-<li><em>initializer</em>：初始化表达式</li>
+<li><p>d:
+表示读入一个十进制整数。<strong>使用之时会优先读取前置负号，如果负号后没有十进制字符，则该次读取失败（变量不会被赋值），但负号已经从流中被读取（“取出”）。</strong><br />
+函数的对应预期变量是一个<code>int*</code>，并将以"1+31"的方式将读取的数值写入该地址（第一位符号，后31位是数值，表示范围<span
+class="math inline">\(-2^{31} ~ 2^{31} - 1\)</span>。<br />
+如果需要读取long/long
+long/short整型，请将modifiers指定为l/ll/s（应用形如<code>%lld</code>）。long
+long的范围自然扩展至<span class="math inline">\(-2^{63} ~ 2^{63} -
+1\)</span>。 如果发生溢出，则结果为未定义行为(Undefined
+Behavior)。</p></li>
+<li><p>s:
+表示读入一个字符串。<strong>此处“字符串”的定义是连续的任意字符，直至终止字符('\0')或空白字符（换行、水平/垂直制表符、空格）。读取时，%s不会读取这些终止符（亦不会将之从流中取出）。</strong><br />
+函数的对应预期变量是一个<code>char*</code>，并将读取到的所有字符（最大数目由width指定）依次写入其中，<strong>并在最后追加一个'\0'，所以需要预留的内存空间至少是(width+1)*<code>sizeof(char)</code></strong>。</p></li>
+<li><p>c：表示读入单个字符。<strong>如果指定了width，则会连续读取width个字符，存储在该对应地址开始的连续位置（增量为<code>sizeof(char)</code>），且末尾不会追加'\0'。</strong>
+函数的对应预期变量是一个<code>char*</code>。</p></li>
+<li><p>u：表示读入一个无符号十进制整数。
+函数的对应预期变量是一个<code>unsigned int*</code>。</p></li>
+<li><p>f：表示读入一个浮点数。
+函数的对应预期变量是一个<code>float*</code>。<strong>如需读取至</strong><code>double*</code><strong>，请使用<code>%lf</code>；long
+double则请使用<code>%llf</code>。</strong></p></li>
 </ul>
 <blockquote>
-<p>显然其中重中之重的关键字无疑是<code>auto</code>——<em>Structured
-Binding</em>的类型<strong>不能手动指定</strong>，只允许使用<code>auto</code>并以一定的修饰符约束之。</p>
+<p>浮点数应形如：[符号]十进制数[.十进制数][e[符号]十进制数]。</p>
+<p>有效的浮点数实例： 3；3.14；+6.24e5；-9e-7。</p>
 </blockquote>
-<h3 id="中间变量初始化">中间变量初始化</h3>
-<p><em>initializer</em>
-中的<code>expr</code>可为<strong>任意表达式</strong>，与普通变量的初始化类似（除未加括号的逗号表达式，即
-<em>unphrenthesized comma expressions</em> ）：</p>
 <ul>
-<li><code>= expr;</code><br />
-</li>
-<li><code>(expr);</code><br />
-</li>
-<li><code>&#123;expr&#125;;</code></li>
-</ul>
-<p>回顾结构化绑定的本质：其为一个既有对象的别名，初始化方式只有两种。首先引入一个隐式、不具名而唯一的变量<code>e</code>（参考
-<em>lambda</em>）：</p>
-<ul>
-<li><p>若 <em>initializer</em> 是一个数组类型且 <em>ref-qualifier</em>
-置空，记 <em>initializer</em> 的类型为
-<code>cv1 A</code>，则定义<code>e</code>为形如 <em>attr</em>
-<em>decl-specifier</em>（去除<code>auto</code>） <code>A e;</code>
-的新数组（即<em>decl-specifier</em>
-<code>std::remove_cvref_t&lt;decltype(initializer)&gt; e;</code>，此处不计属性）；随后将
-<em>[identifier-list]</em> 的各元素依 <em>initializer</em>
-中的各元素复制/直接初始化（若为<code>= expr</code>则为复制初始化，否则为直接初始化）；</p></li>
-<li><p>否则，定义<code>e</code>形如 <em>attr</em>
-<em>decl-specifier</em> <em>ref-qualifier</em> <code>e</code>
-<em>initializer</em>。</p></li>
-</ul>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="keyword">auto</span> [a,b,c] = &#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>&#125;;  <span class="comment">//the implicit `e` is `const std::initializer_list&lt;int&gt;`  </span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span>[] arr = &#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>&#125;;</span><br><span class="line"><span class="type">const</span> <span class="keyword">auto</span> [d,e,f] = arr; <span class="comment">//the implicit `e` is `const int[3]`, with each element in `e` copy-initialized from arr&#x27;s corresponding elements</span></span><br><span class="line"><span class="type">const</span> <span class="keyword">auto</span>&amp; [m,n,p] = arr; <span class="comment">//the implicit `e` is `const int(&amp;)[3]`(derived from `const auto&amp;`,i.e. a reference to an array)  </span></span><br><span class="line"></span><br><span class="line"><span class="type">char</span> ch&#123;&#125;;</span><br><span class="line">std::tuple&lt;<span class="type">int</span>&amp;,<span class="type">char</span>&amp;&amp;,std::string&gt; tp&#123;arr[<span class="number">0</span>],ch,<span class="string">&quot;&quot;</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">const</span> <span class="keyword">auto</span> [r,s,t] = tp; <span class="comment">//the implicit `e` is `const std::tuple&lt;int&amp;,char&amp;&amp;,std::string&gt;`(derived from `const auto`)</span></span><br><span class="line"><span class="comment">//Thus `r` is `int&amp;`,`s` is `char&amp;&amp;`,`t` is `const std::string`</span></span><br><span class="line"></span><br><span class="line"><span class="type">const</span> <span class="keyword">auto</span>&amp; [r2,s2,t2] = tp; <span class="comment">//the implicit `e` is `const std::tuple&lt;int&amp;,char&amp;&amp;,std::string&gt;&amp;`(derived from `const auto&amp;`)</span></span><br><span class="line"><span class="comment">//Thus `r2` is `int&amp;`,`s2` is `char&amp;&amp;`,`t2` is `const std::string&amp;`</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//const auto [y] = (2); //Error: the implicit `e` is `int`, which cannot be &#x27;binded&#x27;</span></span><br><span class="line"><span class="comment">//const auto [x,y] = (1,2); //Same as above</span></span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>理解消化上述类型推导的代码实例对于理解、通晓 <em>Structured
-Binding</em> 的类型逻辑至关重要——建议各位道友自行举例并多加推导之。</p>
-</blockquote>
-<h2 id="应用">应用</h2>
-<p><em>Structured Binding</em>
-中的变量有三种初始化方式，取决于右操作数的类型<code>E</code>（严格地，<code>std::remove_reference_t&lt;decltype((e))&gt;</code>）：</p>
-<ol type="1">
-<li><code>E</code>是数组类型；<br />
-</li>
-<li><code>E</code>是一个非<code>union</code>的<code>class</code>/<code>struct</code>，且<code>std::tuple_size&lt;E&gt;</code>是具备数据成员<code>value</code>的完整类型（<em>complete
-type</em>），无论<code>std::tuple_size&lt;E&gt;::value</code>的变量类型、可访问性(accessibility)如何；<br />
-</li>
-<li><code>E</code>是一个非<code>union</code>的<code>class</code>/<code>struct</code>，除情况2外的其它类型。</li>
-</ol>
-<p>称情况(2)采用的是类元组绑定法(<em>tuple-like
-binding</em>)；情况(3)则绑定至其<strong>可访问</strong>的数据成员上。</p>
-<h3 id="数组绑定法binding-to-an-array">数组绑定法(binding to an
-array)</h3>
-<p>此种情况比较简单，即 <em>Structured Binding</em>
-声明的每个变量名就是数组对应元素的别名(alias)。<br />
-<strong>由于这个数组是“虚拟”的中间数组，因此这些变量就是原始类型而非引用，但其底层存储的逻辑依然不变（连续存储，下同）：</strong></p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span>[] arr = &#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>&#125;;</span><br><span class="line"><span class="type">const</span> <span class="keyword">auto</span> [d,e,f] = arr;</span><br><span class="line"><span class="comment">//since the implicit `e` is `const int[3]`,thus `d`,`e`,`f` refers to the three elements of `e` respectively,</span></span><br><span class="line"><span class="comment">//with their type being `const int`,and address incrementing by 4</span></span><br><span class="line"><span class="type">const</span> <span class="keyword">auto</span>&amp; [m,n,p] = arr;</span><br><span class="line"><span class="comment">//since the implicit `e` is `const int(&amp;)[3]`, thus `d`,`e`,`f` refers to three elements of `arr` respectively</span></span><br><span class="line"><span class="comment">//with their type being `const int&amp;`</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//In both cases, the three variables&#x27; values are 1,2,3</span></span><br></pre></td></tr></table></figure>
-<h3 id="类元组绑定法tuple-like-binding">类元组绑定法(tuple-like
-binding)</h3>
-<p>类元组绑定法的基础是存在成员<code>std::tuple_size&lt;E&gt;::value</code>，所谓“实现了元组操作”(<em>implemented
-tuple operations</em>)。</p>
-<p>首先，<code>std::tuple_size&lt;E&gt;::value</code>必须是良构(well-formed)的<strong>整型常量表达式</strong>，此时
-<em>Structured Binding</em> 的大小与之一致。</p>
-<blockquote>
-<p>即使<code>std::tuple_size&lt;E&gt;::value</code>不符合上述条件，但只要存在此成员（无论类型、可访问性），则编译器均会采用此方式进行绑定——纵使如此会令程序非良构(ill-formed)而不能通过编译。</p>
-</blockquote>
-<p>对于 <em>Structured Binding</em>
-中的第<code>I</code>个数据成员，其类型为<code>std::tuple_element&lt;I,E&gt;::type &amp;&amp;</code>，即底层类型为左值则为左值引用，否则为右值引用（参考
-<em>引用折叠/reference collaspe</em>）。</p>
-<p>其初始化表达式如下：</p>
-<ul>
-<li>若类<code>E</code>存在名为<code>get</code>的成员模板函数，且首个参数是<strong>常量模板参数</strong>(<em>constant
-template parameter</em>)，则为<code>e.get&lt;I&gt;()</code>；<br />
-</li>
-<li>否则为<code>std::get&lt;I&gt;(e)</code>，其中<code>get</code>仅考虑ADL(Argument-Dependent
-Lookups)。</li>
+<li><p>x，X:
+十六进制整数，除字符集合改为所有的十六进制字符（大小写均有效）外行为与d相似。十六进制数前的'0x'/'0X'前缀是可选的。
+函数的对应预期变量是一个<code>int*</code>，修饰规则与前述相同。</p></li>
+<li><p>o： 八进制整数，不再赘述。</p></li>
+<li><p>i：
+读取一个整数，行为类似于python中的<code>int(x,0)</code>（即自动根据前缀判断进制），0-八进制，0x/0X-十六进制，其它-十进制（参考C中的numeric
+constants规则）。</p></li>
+<li><p>[]：扫描字符集合，集成了一个弱化版的正则表达式。<br />
+具体地，[]内部可以放置扫描字符的集合，集合的表达方式有逐个列出/横杠表示范围，并支持'^'表示'否'。<br />
+举例：<code>%[a-zA-Z]</code>扫描所有字母；<code>%[^\n]</code>扫描直至换行符（相当于获取一整行）；<code>%1[x]</code>获取至多一个x字符。</p></li>
 </ul>
 <blockquote>
-<p>变量的生命周期与<code>e</code>一致，配合 <em>lifetime extension</em>
-等保证了一般情况不会出现悬挂引用(dangaling reference)的情况。</p>
+<p>'^'的转义字符为'^'，但在C的源代码中应写作<code>\\^</code>（因为''自身会被预处理转义）。</p>
 </blockquote>
+<p>返回值：赋值成功的变量数，若到达文件末尾则返回EOF（负数宏，在许多平台上通常为-1）。<br />
+<strong>当且仅当赋值成功的变量数为0且到达文件尾时，返回EOF（亦即只要存在赋值成功的变量，即不会返回负数）。</strong></p>
+<h2 id="底层逻辑">底层逻辑</h2>
+<p>假设scanf的目标流为in。scanf从左往右扫描format-string，遇到以下字符时分别采取对应的措施：<br />
+-
+specifier（如上）：尝试根据specifier的规则处理in中的下一段符合要求的字符；<br />
+若specifier没有加星号(*)，则取va_arg（不定参数列表）中的下一个参数，对之解引用并将数据写入其中。<br />
+-
+任意空白字符：将format-string读取点前进至下一个非空白字符，同时跳过流in中所有的空白字符。<strong>即，任意数目的连续空白字符对于scanf而言是等效的。</strong><br />
+-
+其它字符：scanf将从流中尝试取走一个给定的字符<code>(char)</code>，行为类似于给定形如
+<code>%*1[(char)]</code>。</p>
 <blockquote>
-<p>同样地，此处的重载决议不会考虑<code>get</code>如此是否会令程序非良构，即使<code>template&lt;char*&gt; void get();</code>亦会使编译器选择使用第一种“解读”方式<del>进而编译错误</del>。</p>
+<p><strong><em>重点来咯！！！</em></strong></p>
+<ul>
+<li><p>对于上述的第1、3种情况（即扫描format-string需要处理的是specifier/其它非空白字符），一旦读取失败，<strong>则对format-string的扫描终止，读取结束。</strong></p></li>
+<li><p>第2种情况（处理空白字符）时，即使流中没有空白字符，依然继续。</p></li>
+<li><p>每次调用scanf时，如果specifier不是<code>%c</code>或扫描字符合集<code>%[]</code>，则会<strong>自动先跳过所有的空白字符一次</strong>。</p></li>
+</ul>
 </blockquote>
-<p>仔细观察下列实例，必以求甚解为通晓之策：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">char</span> ch&#123;&#125;;</span><br><span class="line">std::tuple&lt;<span class="type">int</span>&amp;,<span class="type">char</span>&amp;&amp;,std::string&gt; tp&#123;arr[<span class="number">0</span>],ch,<span class="string">&quot;&quot;</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">const</span> <span class="keyword">auto</span> [r,s,t] = tp;</span><br><span class="line"><span class="comment">//`E` is `const std::tuple&lt;int&amp;,char&amp;&amp;,std::string&gt;` (derived from `const auto`), initialized from tp</span></span><br><span class="line"><span class="comment">//Thus this derives to that, `r` is `int&amp;` ,`s` is `char&amp;&amp;`,`t` is `const std::string`</span></span><br><span class="line"><span class="comment">//With r referencing same variable as std::get&lt;0&gt;(tp),s to std::get&lt;1&gt;(tp), t being a separate constant std::string object</span></span><br><span class="line"></span><br><span class="line"><span class="type">const</span> <span class="keyword">auto</span>&amp; [r2,s2,t2] = tp; </span><br><span class="line"><span class="comment">//`E` is `const std::tuple&lt;int&amp;,char&amp;&amp;,std::string&gt;&amp;`(derived from `const auto&amp;`), initialized from tp</span></span><br><span class="line"><span class="comment">//Thus `r2` is `int&amp;`,`s2` is `char&amp;&amp;`,`t2` is `const std::string&amp;`</span></span><br><span class="line"><span class="comment">//With r still referencing to std::get&lt;0&gt;(tp), s to std::get&lt;1&gt;(tp), t is a const l-ref to std::get&lt;2&gt;(tp)</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">auto</span>&amp;&amp; [r3,s3,t3] = tp;</span><br><span class="line"><span class="comment">//`auto&amp;&amp;` introduces a universal reference, in this case `e` derives to `std::tuple&lt;int&amp;,char&amp;&amp;,std::string&gt;&amp;` </span></span><br><span class="line"><span class="comment">//Thus `r3` is `int&amp;`, `s3` is `char&amp;&amp;`, `t3` is `std::string&amp;`</span></span><br><span class="line"><span class="comment">//Referencing logic is identical to the case as above</span></span><br></pre></td></tr></table></figure>
-<p>可见<strong>隐式“中间变量”<code>e</code></strong>的存在是关键：前缀无论存在各种
-<em>attributes</em> 、<em>cvref</em>
-修饰符，作用对象都是这个中间变量<code>e</code>而非 <em>Structured
-Binding</em> 自身引入的标识符。<br />
-因而可以发现即使是<code>const auto</code>的结构化绑定，引入的变量亦可以是普通的引用类型。</p>
-<h3
-id="数据成员绑定法accessible-data-member-binding">数据成员绑定法(accessible
-data member binding)</h3>
-<p>此时 <em>Structured Binding</em>
-的对象是<code>e</code>的<strong>所有非静态数据成员</strong>，待绑定的变量数与其非静态数据成员的个数一致。</p>
+<p>假设待读取流形如 <code>1  2\n34abc d</code>，代码及读取效果示例：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">input1</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span> a=<span class="number">0</span>,b=<span class="number">0</span>;</span><br><span class="line">    <span class="type">char</span> c=<span class="number">0</span>;</span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%d%d&quot;</span>,&amp;a,&amp;b); <span class="comment">//a=1,b=2,返回值2，流的下一个字符是\n</span></span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%c&quot;</span>,&amp;c); <span class="comment">//c=&#x27;\n&#x27;,返回值1</span></span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%da%d&quot;</span>,&amp;a,&amp;b); <span class="comment">//a=34，返回值1，流的下一个字符是c，b未更改(b=2)</span></span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%*[^d]&quot;</span>); <span class="comment">//返回值0，流的下一个字符是d</span></span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%x&quot;</span>,&amp;a); <span class="comment">//a=13，返回值1</span></span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%c&quot;</span>,&amp;c); <span class="comment">//返回值-1（假设EOF的宏常量是-1）</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="实战示例">实战示例</h2>
 <blockquote>
-<p>在声明结构化绑定的上下文(context)中，<code>e.name</code>语句必须是良构的（即必须满足可访问性限制等，如不可为非友元的<code>private</code>）。</p>
+<p>Talk is cheap. Show me the code.</p>
 </blockquote>
-<p>绑定后，各结构化绑定成员（即新引入的变量）都是该中间变量<code>e</code>中各数据成员的别名（关于<code>e</code>的各成员初始化见上文），初始化顺序为<code>e</code>-&gt;各绑定成员（按声明顺序）。</p>
-<p>划重点：本质上，每个绑定成员都是<code>e</code>的各成员的<strong>左值别名</strong>，但这个别名<strong>不会呈现引用属性</strong>（虽然指代的是同一个对象）。考虑以下实例：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">F</span></span><br><span class="line">&#123;</span><br><span class="line">    std::ostream&amp; o;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    F f&#123;std::cout&#125;;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">auto</span> [a] = f; <span class="comment">//Type of `a` is `std::ostream`, NOT `std::ostream&amp;`</span></span><br><span class="line">    <span class="built_in">assert</span>(std::<span class="built_in">addressof</span>(a) == std::<span class="built_in">addressof</span>(std::cout)); <span class="comment">//passes</span></span><br><span class="line">    <span class="comment">//a is an alias of data member `e.o`(with `e` being an implicit variable), `e.o` initialized by `f.o`</span></span><br><span class="line">    <span class="comment">//Then `e.o` refers to `std::cout`, thus `a` itself IS `std::cout`</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//In other words, references are alias to existing object, yet so are structured bindings.</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h1 id="注释">注释</h1>
-<p><em>Structured Binding</em> 的类型必须被“自动”推导，不允许被
-<em>concepts</em> 约束(constrained)：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> C = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line">C <span class="keyword">auto</span> [x,y] = std::pair&#123;<span class="number">1</span>,<span class="number">2</span>&#125;; <span class="comment">//Error: Constrained  </span></span><br></pre></td></tr></table></figure>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">//逐位读取整数（比如输入12345，存储于数组[1,2,3,4,5]）</span></span><br><span class="line">    <span class="type">int</span>* data = <span class="built_in">calloc</span>(<span class="number">100</span>,<span class="keyword">sizeof</span>(<span class="type">int</span>));</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;<span class="number">100</span>;++i)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">scanf</span>(<span class="string">&quot;%1d&quot;</span>,data+i);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//读取一整行字符</span></span><br><span class="line">    <span class="type">char</span>* str = <span class="built_in">calloc</span>(<span class="number">255</span>,<span class="keyword">sizeof</span>(<span class="type">char</span>));</span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%[^\n]&quot;</span>,str); <span class="comment">//虽然这种用法不是非常memory-safe</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//只读取十六进制字符，并舍弃前缀的非十六进制字符</span></span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%*[^0-9A-Fa-f]%[0-9A-Fa-f]&quot;</span>,str);</span><br><span class="line"></span><br><span class="line">    <span class="comment">//试探下一个字符是否为&quot;x&quot;，且若是则读取之</span></span><br><span class="line">    <span class="comment">//注意！！绝对不允许将扫描字符集合直接读至单个char中，必须分配至少为两个char的内存空间（数组/堆内存均可），因为其会要求写入一个&#x27;\0&#x27;！</span></span><br><span class="line">    <span class="type">char</span>* temp = <span class="built_in">calloc</span>(<span class="number">2</span>,<span class="keyword">sizeof</span>(<span class="type">char</span>));</span><br><span class="line">    <span class="type">int</span> status = <span class="built_in">scanf</span>(<span class="string">&quot;%1[x]&quot;</span>,temp);</span><br><span class="line">    <span class="keyword">if</span>(status==<span class="number">1</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;x received!&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//连续读取全部字符，直至下一个&#x27;*&#x27;（像不像消除全部注释？）</span></span><br><span class="line">    (<span class="type">void</span>)<span class="built_in">scanf</span>(<span class="string">&quot;%*[^*]&quot;</span>);</span><br><span class="line">    <span class="keyword">if</span>(<span class="built_in">scanf</span>(<span class="string">&quot;%1[/]&quot;</span>,temp) == <span class="number">1</span>) </span><br><span class="line">    <span class="comment">//结合上述，进入这个if分支说明碰到&quot;*/&quot;了，也就是注释结束的意思</span></span><br><span class="line">    <span class="comment">//同时如果下一个字符不是&quot;/&quot;，则其会保留在流中，不会影响后续while操作等。</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">//...</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="pta与巧用scanf有关的题目示例">PTA与巧用scanf有关的题目示例</h2>
+<h3 id="一元多项式函数求导强化版">一元多项式函数求导（强化版）</h3>
 <blockquote>
-<p>有趣的是这里面涉及到的类模板实例化写法，亦是C++17引入的——C++17起类模板满足条件时允许<strong>依构造函数实参推导模板参数</strong>，如上例就会推导为<code>std::pair&lt;int,int&gt;</code>。<br />
-C++17前，由于只有函数模板才可以自动推导参数，因此<del>历史遗留</del>下来的<code>std::make_pair</code>、<code>std::make_tuple</code>等就是适配彼时语言机制的产物：</p>
+<p>给出一个一元多项式函数 (形如<span
+class="math inline">\(f(x)=ax^b+cx^d+...\)</span>)，求出其导函数，结果用标准书写格式输出，必须合并同类项，降幂排列。如果结果多项式为空，仅输出0。</p>
+<p>每一项的系数绝对值小于100，指数为小于100的非负整数。输入字符串长度不超过3000。变量用字母
+x 表示。题目保证输入的多项式均合法。</p>
+<p>输入格式:<br />
+在一行中输入一个多项式字符串。</p>
+<p>输出格式:<br />
+在一行中按照标准书写格式输出字符串。</p>
+<p>输入样例： <code>x^4-3x^2+4</code></p>
+<p>输出样例： <code>4x^3-6x</code></p>
 </blockquote>
-<pre><code><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty1,<span class="keyword">class</span> Ty2&gt;</span></span><br><span class="line"><span class="function">std::pair&lt;Ty1,Ty2&gt; <span class="title">make_pair</span><span class="params">(Ty1 arg1,Ty2 arg2)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> std::<span class="built_in">pair</span>&lt;Ty1,Ty2&gt;(arg1,arg2);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></code></pre>
-<h1 id="前行">前行</h1>
-<h2 id="c20">C++20</h2>
-<p>C++17中<code>lambda</code>不能捕获 <em>Structured Binding</em>
-初始化的变量，C++20解除了此限制。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span>[] arr = &#123;<span class="number">1</span>,<span class="number">2</span>&#125;;</span><br><span class="line"><span class="keyword">auto</span> [x,y] = arr;</span><br><span class="line"><span class="keyword">auto</span> fn = [x,y]&#123;<span class="keyword">return</span> x+y;&#125;; <span class="comment">//OK Since C++20</span></span><br><span class="line"><span class="built_in">assert</span>(<span class="built_in">fn</span>() == <span class="number">3</span>);</span><br></pre></td></tr></table></figure>
-<h2 id="c26">C++26</h2>
-<p>C++26将新时代的“可变参数”概念进一步拓展，使 <em>structured
-binding</em> 也获得了“可变”绑定的能力。<br />
-此前所述，接收并初始化的变量数必须和待绑定对象数一致；但C++26起允许将最后一个变量名以前置<code>...</code>而变为一个可变参数包，其类型是一个<code>std::tuple</code>，类型参数同样在编译期即被决定，其大小最小为0：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span>[] arr = &#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">auto</span> [...pack] = arr; <span class="comment">//pack is `std::tuple&lt;int,int,int&gt;`</span></span><br><span class="line"><span class="keyword">auto</span> [a,b,...pack2] = arr; <span class="comment">// a is `int`,b is `int`,pack2 is `std::tuple&lt;int&gt;`</span></span><br><span class="line"><span class="keyword">auto</span> [x,y,z,...pack3] = arr; <span class="comment">//OK: pack3 is `std::tuple&lt;&gt;`</span></span><br><span class="line"><span class="keyword">auto</span> [m1,m2,m3,m4,...pack4] = arr; <span class="comment">//Not compile: too few values to be unpacked</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">int</span> out[<span class="number">100</span>] = &#123; <span class="number">0</span> &#125;, flag = <span class="number">0</span>;</span><br><span class="line">	<span class="type">char</span> <span class="built_in">string</span>[<span class="number">21</span>] = &#123; <span class="string">&#x27;+&#x27;</span> &#125;, temp[<span class="number">2</span>] = &#123; <span class="number">0</span> &#125;;</span><br><span class="line">	<span class="keyword">while</span> (!feof(<span class="built_in">stdin</span>))</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="type">int</span> factor = <span class="number">0</span>, exponent = <span class="number">0</span>;</span><br><span class="line">		(<span class="type">void</span>)<span class="built_in">scanf</span>(<span class="string">&quot;%1[+-]&quot;</span>, <span class="built_in">string</span>);</span><br><span class="line">		<span class="keyword">if</span> (<span class="built_in">scanf</span>(<span class="string">&quot;%19[0-9]&quot;</span>, <span class="built_in">string</span> + <span class="number">1</span>) == <span class="number">0</span>)</span><br><span class="line">		&#123;</span><br><span class="line">			<span class="built_in">string</span>[<span class="number">1</span>] = <span class="string">&#x27;1&#x27;</span>;</span><br><span class="line">		&#125;</span><br><span class="line">		factor = atoi(<span class="built_in">string</span>);</span><br><span class="line">		<span class="keyword">if</span> (<span class="built_in">scanf</span>(<span class="string">&quot;%1[x]&quot;</span>, temp) == <span class="number">0</span>)</span><br><span class="line">		&#123;</span><br><span class="line">			<span class="keyword">continue</span>;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> (<span class="built_in">scanf</span>(<span class="string">&quot;%1[\\^]&quot;</span>, temp) == <span class="number">1</span>)</span><br><span class="line">		&#123;</span><br><span class="line">			(<span class="type">void</span>)<span class="built_in">scanf</span>(<span class="string">&quot;%d&quot;</span>, &amp;exponent);</span><br><span class="line">			<span class="keyword">if</span> (exponent &gt;= <span class="number">1</span>)</span><br><span class="line">			&#123;</span><br><span class="line">				out[exponent - <span class="number">1</span>] += factor * exponent;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">else</span></span><br><span class="line">		&#123;</span><br><span class="line">			out[<span class="number">0</span>] += factor;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">    <span class="type">char</span>* output = <span class="built_in">calloc</span>(<span class="number">1000</span>,<span class="keyword">sizeof</span>(<span class="type">char</span>));</span><br><span class="line">    <span class="type">int</span> putloc = <span class="number">0</span>;</span><br><span class="line">	<span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">99</span>;i &gt;= <span class="number">2</span>;--i)</span><br><span class="line">	&#123;</span><br><span class="line">        putloc += (out[i] ? <span class="built_in">sprintf</span>(output + putloc, <span class="string">&quot;%+dx^%d&quot;</span>,out[i],i) : <span class="number">0</span>);</span><br><span class="line">	&#125;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&gt;=<span class="number">0</span>;--i)</span><br><span class="line">    &#123;</span><br><span class="line">        putloc += (out[i] ? <span class="built_in">sprintf</span>(output + putloc, i ? <span class="string">&quot;%+dx&quot;</span> : <span class="string">&quot;%+d&quot;</span>,out[<span class="number">1</span>]) : <span class="number">0</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span>(putloc)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%s&quot;</span>,output[<span class="number">0</span>]==<span class="string">&#x27;+&#x27;</span> ? output+<span class="number">1</span> : output);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;0&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">free</span>(output);</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注释：</p>
+<ul>
+<li><p>在scan前置系数上，采用了统一interface的策略（即在接收string的第一个字符设置为'+'，规避开第一项的'+'缺失问题）。</p></li>
+<li><p><code>&lt;stdlib.h&gt;</code>中的<code>atoi</code>可以帮助处理数字字符。</p></li>
+<li><p>每一步都是借助弱化的regex来“步步为营”，<br />
+比如<code>scanf("%1[x]",temp)</code>试探有无'x'，若无则<code>continue</code>；<br />
+<code>scanf("%1[\\^]",temp)</code>试探有无'^'，若无则确定为一次幂。<code>[]</code>的优点体现在<del>strong
+exception guarantee</del>若失败则不会产生其它影响。</p></li>
+</ul>
 
       
 
@@ -345,11 +297,7 @@ binding</em> 也获得了“可变”绑定的能力。<br />
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">长文精选</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">C Libraries</a>
         		</li>
       		
 		</ul>
@@ -369,85 +317,17 @@ binding</em> 也获得了“可变”绑定的能力。<br />
 
 
       
-
+        <p class="article-more-link">
+          <a class="article-more-a" href="/cpp/scanf/">展开全文 >></a>
+        </p>
       
-        
-<div class="share-btn share-icons tooltip-left">
-  <div class="tooltip tooltip-east">
-    <span class="tooltip-item">
-      <a href="javascript:;" class="share-sns share-outer">
-        <i class="icon icon-share"></i>
-      </a>
-    </span>
-    <span class="tooltip-content">
-      <div class="share-wrap">
-        <div class="share-icons">
-          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
-            <i class="icon icon-weibo"></i>
-          </a>
-          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
-            <i class="icon icon-weixin"></i>
-          </a>
-          <a class="qq share-sns" href="javascript:;" data-type="qq">
-            <i class="icon icon-qq"></i>
-          </a>
-          <a class="douban share-sns" href="javascript:;" data-type="douban">
-            <i class="icon icon-douban"></i>
-          </a>
-          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
-            <i class="icon icon-qzone"></i>
-          </a>
-          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
-            <i class="icon icon-facebook"></i>
-          </a>
-          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
-            <i class="icon icon-twitter"></i>
-          </a>
-          <a class="google share-sns" href="javascript:;" data-type="google">
-            <i class="icon icon-google"></i>
-          </a>
-        </div>
-      </div>
-    </span>
-  </div>
-</div>
 
-<div class="page-modal wx-share js-wx-box">
-    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
-    <p>扫一扫，分享到微信</p>
-    <div class="wx-qrcode">
-      <img src="//pan.baidu.com/share/qrcode?url=https://crystaljiang232.github.io/cpp/st-bind/" alt="微信分享二维码">
-    </div>
-</div>
-
-<div class="mask js-mask"></div>
       
       <div class="clearfix"></div>
     </div>
   </div>
   <div>
 </article>
-
-
-  
-<nav id="article-nav">
-  
-    <a href="/cpp/aes-modern/" id="article-nav-newer" class="article-nav-link-wrap">
-      <i class="icon-circle-left"></i>
-      <div class="article-nav-title">
-        
-          C++——与AES-Integrals的双鹭翩舞
-        
-      </div>
-    </a>
-  
-  
-    <a href="/cpp/idioms/" id="article-nav-older" class="article-nav-link-wrap">
-      <div class="article-nav-title">C++——俗语集锦</div>
-      <i class="icon-circle-right"></i>
-    </a>
-  
-</nav>
 
 
 <aside class="wrap-side-operation">
@@ -463,37 +343,172 @@ binding</em> 也获得了“可变”绑定的能力。<br />
         </div>
         
         
-        <div class="toc-container tooltip-left">
-            <i class="icon-font icon-category"></i>
-            <div class="tooltip tooltip-east">
-                <span class="tooltip-item">
-                </span>
-                <span class="tooltip-content">
-                    <div class="toc-article">
-                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%AD%A3%E9%A2%98"><span class="toc-number">2.</span> <span class="toc-text">正题</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E8%AF%AD%E6%B3%95"><span class="toc-number">2.1.</span> <span class="toc-text">基本语法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%AD%E9%97%B4%E5%8F%98%E9%87%8F%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-number">2.1.1.</span> <span class="toc-text">中间变量初始化</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BA%94%E7%94%A8"><span class="toc-number">2.2.</span> <span class="toc-text">应用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%95%B0%E7%BB%84%E7%BB%91%E5%AE%9A%E6%B3%95binding-to-an-array"><span class="toc-number">2.2.1.</span> <span class="toc-text">数组绑定法(binding to an
-array)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B1%BB%E5%85%83%E7%BB%84%E7%BB%91%E5%AE%9A%E6%B3%95tuple-like-binding"><span class="toc-number">2.2.2.</span> <span class="toc-text">类元组绑定法(tuple-like
-binding)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E6%88%90%E5%91%98%E7%BB%91%E5%AE%9A%E6%B3%95accessible-data-member-binding"><span class="toc-number">2.2.3.</span> <span class="toc-text">数据成员绑定法(accessible
-data member binding)</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%B3%A8%E9%87%8A"><span class="toc-number">3.</span> <span class="toc-text">注释</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%89%8D%E8%A1%8C"><span class="toc-number">4.</span> <span class="toc-text">前行</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#c20"><span class="toc-number">4.1.</span> <span class="toc-text">C++20</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c26"><span class="toc-number">4.2.</span> <span class="toc-text">C++26</span></a></li></ol></li></ol>
-                    </div>
-                </span>
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-crypto/wp/gcbctf-wp" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/crypto/wp/gcbctf-wp/">国城杯CTF Crypto Writeup</a>
+    </h1>
+  
+
+        
+        <a href="/crypto/wp/gcbctf-wp/" class="archive-article-date">
+  	<time datetime="2024-12-08T07:37:48.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-08</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="curve">Curve</h1>
+<h2 id="题目代码">题目代码</h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">add</span>(<span class="params">P, Q</span>):</span><br><span class="line">    (x1, y1) = P</span><br><span class="line">    (x2, y2) = Q</span><br><span class="line"></span><br><span class="line">    x3 = (x1*y2 + y1*x2) * inverse(<span class="number">1</span> + d*x1*x2*y1*y2, p) % p</span><br><span class="line">    y3 = (y1*y2 - a*x1*x2) * inverse(<span class="number">1</span> - d*x1*x2*y1*y2, p) % p</span><br><span class="line">    <span class="keyword">return</span> (x3, y3)</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">mul</span>(<span class="params">x, P</span>):</span><br><span class="line">    Q = (<span class="number">0</span>, <span class="number">1</span>)</span><br><span class="line">    <span class="keyword">while</span> x &gt; <span class="number">0</span>:</span><br><span class="line">        <span class="keyword">if</span> x % <span class="number">2</span> == <span class="number">1</span>:</span><br><span class="line">            Q = add(Q, P)</span><br><span class="line">        P = add(P, P)</span><br><span class="line">        x = x &gt;&gt; <span class="number">1</span></span><br><span class="line">    <span class="keyword">return</span> Q</span><br><span class="line"></span><br><span class="line">p = <span class="number">64141017538026690847507665744072764126523219720088055136531450296140542176327</span></span><br><span class="line">a = <span class="number">362</span></span><br><span class="line">d = <span class="number">7</span></span><br><span class="line">e=<span class="number">0x10001</span></span><br><span class="line"></span><br><span class="line">gx=bytes_to_long(<span class="string">b&#x27;D0g3xGC&#123;*****************&#125;&#x27;</span>)</span><br><span class="line"></span><br><span class="line">PR.&lt;y&gt;=PolynomialRing(Zmod(p))</span><br><span class="line">f=(d*gx^<span class="number">2</span>-<span class="number">1</span>)*y^<span class="number">2</span>+(<span class="number">1</span>-a*gx^<span class="number">2</span>)</span><br><span class="line">gy=<span class="built_in">int</span>(f.roots()[<span class="number">0</span>][<span class="number">0</span>])</span><br><span class="line"></span><br><span class="line"><span class="keyword">assert</span> (a*gx^<span class="number">2</span>+gy^<span class="number">2</span>)%p==(<span class="number">1</span>+d*gx^<span class="number">2</span>*gy^<span class="number">2</span>)%p</span><br><span class="line"></span><br><span class="line">G=(gx,gy)</span><br><span class="line"></span><br><span class="line">eG = mul(e, G)</span><br><span class="line"><span class="built_in">print</span>(eG)</span><br><span class="line"></span><br><span class="line"><span class="comment">#eG = (34120664973166619886120801966861368419497948422807175421202190709822232354059, 11301243831592615312624457443883283529467532390028216735072818875052648928463)</span></span><br></pre></td></tr></table></figure>
+<p>题目实现了一个<strong>Twisted
+Edwards</strong>曲线的加法/乘法运算脚本。</p>
+<blockquote>
+<p>方程可由assert语句推出： <span class="math inline">\(ax^2+y^2\equiv
+dx^2y^2+1 (mod p)\)</span>.</p>
+</blockquote>
+<p>椭圆曲线具有多种表示形式，可以将Twisted
+Edwards的方程作变量代换，变为熟悉的Weierstrass方程，对其求系数后构建EllipticCurve，<br />
+利用Sagemath求其阶后，遵循阿贝尔群的加法法则，乘以e在其阶下的模逆即可。</p>
+<h2 id="exp">exp</h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line">p = <span class="number">64141017538026690847507665744072764126523219720088055136531450296140542176327</span></span><br><span class="line">a = <span class="number">362</span></span><br><span class="line">d = <span class="number">7</span></span><br><span class="line">e = <span class="number">0x10001</span></span><br><span class="line"></span><br><span class="line">x2,y2 =  (<span class="number">34120664973166619886120801966861368419497948422807175421202190709822232354059</span>, <span class="number">11301243831592615312624457443883283529467532390028216735072818875052648928463</span>)</span><br><span class="line"><span class="keyword">assert</span> (a*x2^<span class="number">2</span>+y2^<span class="number">2</span>)%p==(<span class="number">1</span>+d*x2^<span class="number">2</span>*y2^<span class="number">2</span>)%p</span><br><span class="line"></span><br><span class="line"><span class="comment">#一阶段，Edwards转Montgomery</span></span><br><span class="line">A = <span class="number">2</span>*(a+d)/(a-d)</span><br><span class="line">B = <span class="number">4</span>/(a-d)</span><br><span class="line"></span><br><span class="line"><span class="comment">#二阶段，Montgomery转Weierstrass</span></span><br><span class="line">aa = (<span class="number">3</span>-A^<span class="number">2</span>)/(<span class="number">3</span>*B^<span class="number">2</span>)</span><br><span class="line">bb = (<span class="number">2</span>*A^<span class="number">3</span>-<span class="number">9</span>*A) / (<span class="number">27</span>*B^<span class="number">3</span>)</span><br><span class="line"></span><br><span class="line">E = EllipticCurve(Zmod(p),[<span class="number">0</span>,<span class="number">0</span>,<span class="number">0</span>,aa,bb])</span><br><span class="line">d = <span class="built_in">int</span>(<span class="built_in">pow</span>(e,-<span class="number">1</span>,E.order()))</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">add</span>(<span class="params">P, Q</span>):</span><br><span class="line">    (x1, y1) = P</span><br><span class="line">    (x2, y2) = Q</span><br><span class="line"></span><br><span class="line">    x3 = (x1*y2 + y1*x2) * inverse(<span class="number">1</span> + d*x1*x2*y1*y2, p) % p</span><br><span class="line">    y3 = (y1*y2 - a*x1*x2) * inverse(<span class="number">1</span> - d*x1*x2*y1*y2, p) % p</span><br><span class="line">    <span class="keyword">return</span> (x3, y3)</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">mul</span>(<span class="params">x, P</span>):</span><br><span class="line">    Q = (<span class="number">0</span>, <span class="number">1</span>)</span><br><span class="line">    <span class="keyword">while</span> x &gt; <span class="number">0</span>:</span><br><span class="line">        <span class="keyword">if</span> x % <span class="number">2</span> == <span class="number">1</span>:</span><br><span class="line">            Q = add(Q, P)</span><br><span class="line">        P = add(P, P)</span><br><span class="line">        x = x &gt;&gt; <span class="number">1</span></span><br><span class="line">    <span class="keyword">return</span> Q</span><br><span class="line"></span><br><span class="line">eG = (<span class="number">34120664973166619886120801966861368419497948422807175421202190709822232354059</span>, <span class="number">11301243831592615312624457443883283529467532390028216735072818875052648928463</span>)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(long_to_bytes(<span class="built_in">int</span>(mul(d,eG)[<span class="number">0</span>])))</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>Flag：D0g3xGC{SOlvE_The_Edcurv3}</p>
+</blockquote>
+<hr />
+<h1 id="ez_sign">Ez_sign</h1>
+<h2 id="题目代码-1">题目代码</h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> gmpy2 <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> hashlib <span class="keyword">import</span>*</span><br><span class="line"><span class="keyword">import</span> random,os</span><br><span class="line"></span><br><span class="line">flag = <span class="string">b&#x27;D0g3xGA&#123;***************&#125;&#x27;</span></span><br><span class="line">msg = <span class="string">b&#x27;e = ?&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">sign</span>(<span class="params">pub, pri, k</span>):</span><br><span class="line">    (p,q,g,y) = pub</span><br><span class="line">    x = pri</span><br><span class="line">    r = <span class="built_in">int</span>(powmod(g, k, p) % q)</span><br><span class="line">    H = bytes_to_long(sha1(os.urandom(<span class="number">20</span>)).digest())</span><br><span class="line">    s = <span class="built_in">int</span>((H + r * x) * invert(k, q) % q)</span><br><span class="line">    <span class="keyword">return</span> (H,r,s)</span><br><span class="line"></span><br><span class="line">k1 = getPrime(<span class="number">64</span>)</span><br><span class="line">k2 = k1 ** <span class="number">2</span></span><br><span class="line">pri = bytes_to_long(msg)</span><br><span class="line">a = <span class="number">149328490045436942604988875802116489621328828898285420947715311349436861817490291824444921097051302371708542907256342876547658101870212721747647670430302669064864905380294108258544172347364992433926644937979367545128905469215614628012983692577094048505556341118385280805187867314256525730071844236934151633203</span></span><br><span class="line">b = <span class="number">829396411171540475587755762866203184101195238207</span></span><br><span class="line">g = <span class="number">87036604306839610565326489540582721363203007549199721259441400754982765368067012246281187432501490614633302696667034188357108387643921907247964850741525797183732941221335215366182266284004953589251764575162228404140768536534167491117433689878845912406615227673100755350290475167413701005196853054828541680397</span></span><br><span class="line">y = <span class="number">97644672217092534422903769459190836176879315123054001151977789291649564201120414036287557280431608390741595834467632108397663276781265601024889217654490419259208919898180195586714790127650244788782155032615116944102113736041131315531765220891253274685646444667344472175149252120261958868249193192444916098238</span></span><br><span class="line"></span><br><span class="line">pub = (a, b, g, y)</span><br><span class="line"></span><br><span class="line">H1, r1, s1 = sign(pub, pri, k1)</span><br><span class="line"></span><br><span class="line">H2, r2, s2 = sign(pub, pri, k2)</span><br><span class="line"></span><br><span class="line">p = getPrime(<span class="number">128</span>)</span><br><span class="line">q = getPrime(<span class="number">128</span>)</span><br><span class="line">n = p * q</span><br><span class="line">c = powmod(bytes_to_long(flag), e, n)</span><br><span class="line"></span><br><span class="line">C = p**<span class="number">2</span> + q**<span class="number">2</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&#x27;(H1, r1, s1) = <span class="subst">&#123;H1&#125;</span>, <span class="subst">&#123;r1&#125;</span>, <span class="subst">&#123;s1&#125;</span>&#x27;</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&#x27;(H2, r2, s2) = <span class="subst">&#123;H2&#125;</span>, <span class="subst">&#123;r2&#125;</span>, <span class="subst">&#123;s2&#125;</span>&#x27;</span>)</span><br><span class="line"><span class="built_in">print</span>(c)</span><br><span class="line"><span class="built_in">print</span>(C)</span><br><span class="line"></span><br><span class="line"><span class="string">&#x27;&#x27;&#x27;</span></span><br><span class="line"><span class="string">(H1, r1, s1) = 659787401883545685817457221852854226644541324571, 334878452864978819061930997065061937449464345411, 282119793273156214497433603026823910474682900640</span></span><br><span class="line"><span class="string">(H2, r2, s2) = 156467414524100313878421798396433081456201599833, 584114556699509111695337565541829205336940360354, 827371522240921066790477048569787834877112159142</span></span><br><span class="line"><span class="string">c = 18947793008364154366082991046877977562448549186943043756326365751169362247521</span></span><br><span class="line"><span class="string">C = 179093209181929149953346613617854206675976823277412565868079070299728290913658</span></span><br><span class="line"><span class="string">&#x27;&#x27;&#x27;</span></span><br></pre></td></tr></table></figure>
+<p>本题分为两部分，第一部分将含有e的信息作为DSA的私钥进行加密，涉及<del>基于蛇皮随机数复用的</del>数学分析<br />
+第二部分将p,q的值放进了一个平方和问题</p>
+<p>先看第一部分，<del>本来想直接上手写草稿图的</del><br />
+<span class="math inline">\(k_1 \equiv H_1s_1^{-1}+r_1s_1^{-1}x (mod
+q)\)</span> <span class="math inline">\(k_1^2 \equiv
+H_2s_2^{-1}+r_2s_2^{-1}x (mod q)\)</span><br />
+记 <span class="math inline">\(r_is_i = A_i\)</span>，<span
+class="math inline">\(H_iS_i = B_i\)</span><br />
+整理后可以得到 <span class="math inline">\(A_1x^2 + (2A_1B_1 - A_2)x +
+(B_1^2-B_2) \equiv 0 (mod q)\)</span><br />
+利用sage解该同余式方程即可。<br />
+第二部分平方和的divisors解法参考了<a
+target="_blank" rel="noopener" href="https://ask.sagemath.org/question/76636/sum-of-2-squares/">asksage</a>上的一行代码，非常简明精炼。</p>
+<h2 id="exp-1">exp</h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> *</span><br><span class="line">(H1, r1, s1) = <span class="number">659787401883545685817457221852854226644541324571</span>, <span class="number">334878452864978819061930997065061937449464345411</span>, <span class="number">282119793273156214497433603026823910474682900640</span></span><br><span class="line">(H2, r2, s2) = <span class="number">156467414524100313878421798396433081456201599833</span>, <span class="number">584114556699509111695337565541829205336940360354</span>, <span class="number">827371522240921066790477048569787834877112159142</span></span><br><span class="line">q = <span class="number">829396411171540475587755762866203184101195238207</span></span><br><span class="line"></span><br><span class="line">ss1 = <span class="built_in">int</span>(<span class="built_in">pow</span>(s1,-<span class="number">1</span>,q))</span><br><span class="line">ss2 = <span class="built_in">int</span>(<span class="built_in">pow</span>(s2,-<span class="number">1</span>,q))</span><br><span class="line"></span><br><span class="line">A1 = r1 * ss1</span><br><span class="line">A2 = r2 * ss2</span><br><span class="line">B1 = H1 * ss1</span><br><span class="line">B2 = H2 * ss2</span><br><span class="line"></span><br><span class="line">P.&lt;x&gt;=Zmod(q)[]</span><br><span class="line">eq = A1^<span class="number">2</span>*x^<span class="number">2</span> + (<span class="number">2</span>*A1*B1-A2)*x + (B1^<span class="number">2</span>-B2)</span><br><span class="line"><span class="built_in">print</span>(eq.roots())</span><br><span class="line"><span class="comment">#[(91973915966463187834053272623425597244095846333, 1), (1865444199836044046649, 1)]</span></span><br><span class="line"><span class="comment">#第二个数to_bytes可以得到b&#x27;e = 44519&#x27;</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">all_two_squares</span>(<span class="params">n</span>):</span><br><span class="line">    <span class="keyword">return</span> [(<span class="built_in">abs</span>(d[<span class="number">0</span>]),<span class="built_in">abs</span>(d[<span class="number">1</span>])) <span class="keyword">for</span> d <span class="keyword">in</span> divisors(GaussianIntegers()(n)) <span class="keyword">if</span> norm(d)==n]</span><br><span class="line"></span><br><span class="line">probs = all_two_squares(C)</span><br><span class="line"><span class="keyword">for</span> p,q <span class="keyword">in</span> probs:</span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">not</span> isPrime(<span class="built_in">int</span>(p)) <span class="keyword">or</span> <span class="keyword">not</span> isPrime(<span class="built_in">int</span>(q)):</span><br><span class="line">        <span class="keyword">continue</span></span><br><span class="line">    e = <span class="number">44519</span></span><br><span class="line">    c = <span class="number">18947793008364154366082991046877977562448549186943043756326365751169362247521</span></span><br><span class="line">    n = p * q</span><br><span class="line">    d = <span class="built_in">pow</span>(e,-<span class="number">1</span>,(p-<span class="number">1</span>)*(q-<span class="number">1</span>))</span><br><span class="line">    <span class="built_in">print</span>(long_to_bytes(<span class="built_in">int</span>(<span class="built_in">pow</span>(c,d,n))))</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>不得不说"sage
+magic"还是挺好用的（毕竟免去了手搓/import乱七八糟东西的麻烦）</p>
+<blockquote>
+<p>flag: D0g3xGC{EZ_DSA_<span class="citation"
+data-cites="nd_C0mplex_QAQ">@nd_C0mplex_QAQ</span>}</p>
+</blockquote>
+<hr />
+<h1 id="ezrsa">EzRSA</h1>
+<h2 id="题目代码-2">题目代码</h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> secret <span class="keyword">import</span> flag</span><br><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span>*</span><br><span class="line"><span class="keyword">from</span> gmpy2 <span class="keyword">import</span>*</span><br><span class="line"></span><br><span class="line">flag = <span class="string">b&#x27;D0g3xGC&#123;****************&#125;&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">gen_key</span>(<span class="params">p, q</span>):</span><br><span class="line">    public_key = p*p*q</span><br><span class="line">    e = public_key</span><br><span class="line">    n = p*q</span><br><span class="line">    phi_n = (p-<span class="number">1</span>)*(q-<span class="number">1</span>)</span><br><span class="line">    private_key = inverse(e,phi_n)</span><br><span class="line">    <span class="keyword">return</span> public_key,private_key,e</span><br><span class="line"></span><br><span class="line">p = getPrime(<span class="number">512</span>)</span><br><span class="line">q = getPrime(<span class="number">512</span>)</span><br><span class="line"></span><br><span class="line">N,d,e = gen_key(p,q)</span><br><span class="line"></span><br><span class="line">c = gmpy2.powmod(bytes_to_long(flag),e,N)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(N)</span><br><span class="line"><span class="built_in">print</span>(d)</span><br><span class="line"><span class="built_in">print</span>(c)</span><br><span class="line"></span><br><span class="line"><span class="string">&#x27;&#x27;&#x27;</span></span><br><span class="line"><span class="string">n = 539403894871945779827202174061302970341082455928364137444962844359039924160163196863639732747261316352083923762760392277536591121706270680734175544093484423564223679628430671167864783270170316881238613070741410367403388936640139281272357761773388084534717028640788227350254140821128908338938211038299089224967666902522698905762169859839320277939509727532793553875254243396522340305880944219886874086251872580220405893975158782585205038779055706441633392356197489</span></span><br><span class="line"><span class="string">d = 58169755386408729394668831947856757060407423126014928705447058468355548861569452522734305188388017764321018770435192767746145932739423507387500606563617116764196418533748380893094448060562081543927295828007016873588530479985728135015510171217414380395169021607415979109815455365309760152218352878885075237009</span></span><br><span class="line"><span class="string">c = 82363935080688828403687816407414245190197520763274791336321809938555352729292372511750720874636733170318783864904860402219217916275532026726988967173244517058861515301795651235356589935260088896862597321759820481288634232602161279508285376396160040216717452399727353343286840178630019331762024227868572613111538565515895048015318352044475799556833174329418774012639769680007774968870455333386419199820213165698948819857171366903857477182306178673924861370469175</span></span><br><span class="line"><span class="string">&#x27;&#x27;&#x27;</span></span><br></pre></td></tr></table></figure>
+<p>就是一个Schmidt-Samoa密码系统，<del>起名叫EzRSA还是有些喧宾夺主的感觉</del><br />
+简单的数论，一把梭。</p>
+<blockquote>
+<p>由欧拉定理可得：<span class="math inline">\(a^{(p-1)(q-1)} \equiv 1
+(mod pq)\)</span></p>
+<p>又有 <span class="math inline">\(Nd \equiv 1 (mod
+(p-1)(q-1))\)</span></p>
+<p>故存在 <span class="math inline">\(a^{Nd} \equiv a^{1+k(p-1)(q-1)}
+\equiv a (mod pq)\)</span></p>
+<p>故求解 <span class="math inline">\(gcd(a^{Nd},N)\)</span>
+即有极大概率得到pq，此处a可取任意的较小数（如2）</p>
+<p>最后执行解密过程即可： <span class="math inline">\(m \equiv c^{d}
+(mod pq)\)</span></p>
+</blockquote>
+<h2 id="exp-2">exp</h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> gmpy2 <span class="keyword">import</span> gcd</span><br><span class="line"></span><br><span class="line">n = <span class="number">539403894871945779827202174061302970341082455928364137444962844359039924160163196863639732747261316352083923762760392277536591121706270680734175544093484423564223679628430671167864783270170316881238613070741410367403388936640139281272357761773388084534717028640788227350254140821128908338938211038299089224967666902522698905762169859839320277939509727532793553875254243396522340305880944219886874086251872580220405893975158782585205038779055706441633392356197489</span></span><br><span class="line">d = <span class="number">58169755386408729394668831947856757060407423126014928705447058468355548861569452522734305188388017764321018770435192767746145932739423507387500606563617116764196418533748380893094448060562081543927295828007016873588530479985728135015510171217414380395169021607415979109815455365309760152218352878885075237009</span></span><br><span class="line">c = <span class="number">82363935080688828403687816407414245190197520763274791336321809938555352729292372511750720874636733170318783864904860402219217916275532026726988967173244517058861515301795651235356589935260088896862597321759820481288634232602161279508285376396160040216717452399727353343286840178630019331762024227868572613111538565515895048015318352044475799556833174329418774012639769680007774968870455333386419199820213165698948819857171366903857477182306178673924861370469175</span></span><br><span class="line"></span><br><span class="line">pq = gcd(<span class="built_in">pow</span>(<span class="number">2</span>,n*d,n)-<span class="number">2</span>,n)</span><br><span class="line"><span class="built_in">print</span>(long_to_bytes(<span class="built_in">pow</span>(c,d,pq)))</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>flag: D0g3xGC{W1sh_Y0u_Go0d_L@ucK-111}</p>
+</blockquote>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">wp</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/CTF-Writeups//" class="article-tag-list-link color3">CTF Writeups</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/crypto/wp/gcbctf-wp/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+  <div>
+</article>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
             </div>
         </div>
+        
         
     </div>
 </aside>
 
 
 
-  
-  
-  
-
-    
 
   
-
   
-
+    <nav id="page-nav">
+      <a class="extend prev" rel="prev" href="/page/15/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/14/">14</a><a class="page-number" href="/page/15/">15</a><span class="page-number current">16</span>
+    </nav>
   
 
 
@@ -554,8 +569,8 @@ data member binding)</span></a></li></ol></li></ol></li><li class="toc-item toc-
     <script>
 	var yiliaConfig = {
 		mathjax: true,
-		isHome: false,
-		isPost: true,
+		isHome: true,
+		isPost: false,
 		isArchive: false,
 		isTag: false,
 		isCategory: false,

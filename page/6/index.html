@@ -152,234 +152,582 @@
           <div id="js-content" class="content-ll">
             
   
-    <article id="post-crypto/ntru" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-cpp/thread" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/crypto/ntru/">NTRU</a>
+      <a class="article-title" href="/cpp/thread/">C++——多线程的晨曦</a>
     </h1>
   
 
         
-        <a href="/crypto/ntru/" class="archive-article-date">
-  	<time datetime="2025-04-15T10:38:03.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-04-15</time>
+        <a href="/cpp/thread/" class="archive-article-date">
+  	<time datetime="2025-05-22T00:35:18.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-05-22</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <blockquote>
-<p><del>格密码入坑到入土一条龙</del></p>
-</blockquote>
-<p>NTRU(Nth-degree TRunctuated polynomial
-Unit)，即“N次截断多项式单元”，是格密码中极为知名、应用较广的一种加密原理。</p>
-<h1 id="截断多项式">截断多项式？</h1>
-<h2 id="卷积多项式环">卷积多项式环</h2>
-<p>给定 <span class="math inline">\(N,q \in Z_{+}\)</span>，则模 <span
-class="math inline">\(q\)</span> 下的 <span class="math inline">\(N -
-1\)</span> 次卷积多项式环是一个商环(quotient ring)，记作 <span
-class="math inline">\(R_{q} = \frac{Z_{q}[x]}{x^{N} - 1}\)</span>。</p>
-<blockquote>
-<p>商环的定义为对环(Ring)上，<span class="math inline">\(\forall a \neq
-0 \in R, \exists a^{-1} \in R\)</span>，即除了加法单位元 <span
-class="math inline">\(0\)</span> 外所有元素均存在逆元。</p>
-</blockquote>
-<p><span class="math inline">\(R_{q}\)</span>
-下的卷积多项式乘法规则如下：假设 <span class="math inline">\(f \cdot g =
-h\)</span>，同样记 <span class="math inline">\(h =
-\sum_{i=0}^{n-1}h_{i}x^{i}\)</span>，存在<br />
-$h_{i} <em>{a+b i (N)} f</em>{a}g_{b} (q) $。</p>
-<blockquote>
-<p>不难发现上述规则和普通的多项式乘法并无显著差异，只是对幂数和项数的计算分别放在了
-<span class="math inline">\(Z_{N}\)</span> 和 <span
-class="math inline">\(Z_{q}\)</span> 下进行。</p>
-</blockquote>
-<p>写作 <span class="math inline">\(Z_{q}\)</span> 下 <span
-class="math inline">\(n \times n\)</span> 矩阵乘法的形式，形如：</p>
-<p><span class="math inline">\(\begin{bmatrix} h_0 &amp; h_1 &amp;
-\cdots &amp; h_{n-2} &amp; h_{n-1} \end{bmatrix} ^ {T} = \begin{bmatrix}
-f_0 &amp; f_1 &amp; \cdots &amp; f_{n-2} &amp; f_{n-1} \\ f_1 &amp; f_2
-&amp; \cdots &amp; f_{n-1} &amp; f_0 \\ \vdots &amp; \vdots &amp;&amp;
-\vdots &amp; \vdots \\ f_{n-1} &amp; f_0 &amp; \cdots &amp; f_{n-3}
-&amp; f_{n-2} \end{bmatrix} \cdot \begin{bmatrix} g_0 &amp; g_1 &amp;
-\cdots &amp; g_{n-2} &amp; g_{n-1} \end{bmatrix} ^ {T}\)</span></p>
-<blockquote>
-<p>若 <span class="math inline">\(q\)</span>
-比较大，考虑到可读性，一般展示时会将 <span
-class="math inline">\(f_{i}\)</span> 转化到 <span
-class="math inline">\((-\frac{q}{2},\frac{q}{2}]\)</span> 的区间内（当然
-<span class="math inline">\(Z_{q}\)</span> 下其是等价的）。</p>
-</blockquote>
-<p>如，<span class="math inline">\((N,q) = (3,5)\)</span> 下 <span
-class="math inline">\(f = 3x^{2} - x + 1\)</span>，<span
-class="math inline">\(g = x + 4\)</span>，计算 <span
-class="math inline">\(f \cdot g\)</span>：<br />
-先按普通的多项式计算，对 <span class="math inline">\(N\)</span>
-次以上的项进行“截断”，得到 <span class="math inline">\(12x^{2} - x^{2} -
-4x + x + 4\)</span>；<br />
-随后将系数映射至 <span class="math inline">\(Z_{5}\)</span>
-下，整理得到结果为 <span class="math inline">\(x^{2} - 3x + 4 = x^{2} +
-2x - 1\)</span>。</p>
-<p>而对于 <span class="math inline">\(R_{q}\)</span> 下的 <span
-class="math inline">\(N-1\)</span> 次多项式 <span
-class="math inline">\(f\)</span>，当且仅当 <span
-class="math inline">\(q\)</span> 为质数且 <span
-class="math inline">\(gcd(f,x^{N} - 1) = 1\)</span>（即，<span
-class="math inline">\(f\)</span> 是其本原多项式）时， <span
-class="math inline">\(f\)</span> 的乘法逆元 <span
-class="math inline">\(f^{-1} \in R_{q}\)</span>。</p>
-<blockquote>
-<p><span class="math inline">\(f^{-1}\)</span>
-的计算同样可以通过拓展欧几里得算法(exgcd)进行，详细原理请自行检索<del>绝对不是因为小姜讲不明白</del>。</p>
-</blockquote>
-<p>多项式的逆元计算实际上较为繁琐，定义等操作亦然，故建议处理多项式时充分利用数学软件的内置支持，如
-<em>“sage magic”</em> 演示：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">q = <span class="number">17</span></span><br><span class="line">N = <span class="number">7</span></span><br><span class="line">Rq_ = PolynomialRing(Zmod(q),<span class="string">&#x27;xq&#x27;</span>) <span class="comment"># Defines a polynomial ring under Zmod(q) and names a variable &#x27;xq&#x27;</span></span><br><span class="line">Rq = Rq_.quotient(Rq_.gen() ^ N - <span class="number">1</span>,<span class="string">&#x27;yq&#x27;</span>) <span class="comment">#Defines a quotient ring under divisor of xq^N - 1, with variable namely &#x27;yq&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Now one&#x27;s possible to carry out such manuevers on Rq</span></span><br><span class="line">ls = [<span class="number">5</span>,<span class="number">0</span>,<span class="number">3</span>,<span class="number">2</span>,<span class="number">1</span>] <span class="comment">#x^4 + 2x^3 + 3x^2 + 5</span></span><br><span class="line">f = Rq(ls) <span class="comment">#lifts a list of integer to a polynomial on quotient ring Rq</span></span><br><span class="line"><span class="built_in">print</span>(f^-<span class="number">1</span>) <span class="comment">#calculates inverse of f under Rq</span></span><br><span class="line"></span><br><span class="line">p = <span class="number">3</span></span><br><span class="line">Rp_ = PolynomialRing(Zmod(p),<span class="string">&#x27;xp&#x27;</span>)</span><br><span class="line">Rp = Rp_.quotient(Rp_.gen() ^ N - <span class="number">1</span>,<span class="string">&#x27;yp&#x27;</span>)</span><br><span class="line">ff = Rp(<span class="built_in">list</span>(f)) <span class="comment">#equivalently changes the modulus of f; must be done by conversion shown in this line</span></span><br><span class="line"><span class="built_in">print</span>(ff)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h1 id="参数与密钥生成">参数与密钥生成</h1>
-<p>NTRU的关键参数为 <span
-class="math inline">\((N,p,q,d)\)</span>。其中，</p>
+        <h1 id="线程">线程</h1>
+<p>线程(thread)和进程(process)都是并发计算中的重要工具。其和程序(program)的基本关系形如：</p>
 <ul>
-<li><span class="math inline">\(N,q\)</span>
-越大则格攻击构造格的维度越高，密码系统越安全，但运算效率会大幅下降；一般选择
-<span class="math inline">\(N \in [250,2500]\)</span>。<br />
+<li>一个程序可以有多个进程，一个进程可以有多个线程；<br />
 </li>
-<li><span class="math inline">\(p,d\)</span> 均为整数，要求 <span
-class="math inline">\(gcd(p,q) = 1\)</span> 且 <span
-class="math inline">\(gcd(q,N) = 1\)</span>，<span
-class="math inline">\(q &gt; (6d + 1)p\)</span>。</li>
+<li>线程是进程的执行单元，每个进程至少有一个主线程，线程不能脱离进程而存在。</li>
 </ul>
-<p>NIST对NTRU的强度-推荐参数组合如下：</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">强度</th>
-<th style="text-align: center;">N</th>
-<th style="text-align: center;">p</th>
-<th style="text-align: center;">q</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;">标准</td>
-<td style="text-align: center;">251</td>
-<td style="text-align: center;">3</td>
-<td style="text-align: center;">128</td>
-</tr>
-<tr>
-<td style="text-align: center;">高</td>
-<td style="text-align: center;">347</td>
-<td style="text-align: center;">3</td>
-<td style="text-align: center;">128</td>
-</tr>
-<tr>
-<td style="text-align: center;">最高</td>
-<td style="text-align: center;">503</td>
-<td style="text-align: center;">3</td>
-<td style="text-align: center;">256</td>
-</tr>
-</tbody>
-</table>
-<p>参数 <span class="math inline">\(d\)</span> 可在满足 <span
-class="math inline">\(q &gt; (6d + 1)p\)</span> 下自行决定，一般选择
-<span class="math inline">\(d \approx \frac{N}{3}\)</span>
-来达到较好的安全性。</p>
+<p>从资源分配（CPU、文件描述符、内存等）上看：</p>
+<ul>
+<li>进程是操作系统分配资源的基本单位，不同进程间不会相互干扰；<br />
+</li>
+<li>线程则只拥有最基本资源（栈、寄存器等），同一进程内的不同线程共享堆内存和其它系统资源。</li>
+</ul>
+<p>进行并发计算时利用线程的优势在于：线程极易被创建、销毁、切换和被调度，可以最大化对CPU多核的利用率。</p>
+<p>C++中的线程可分为四种状态：等待、活动、休眠、结束。</p>
+<ul>
+<li>非空线程被创建后立即进入待执行队列<del>不像某语言非得<code>implements</code>不说还得<code>run()</code>一下(bushi)</del>，处于等待状态；<br />
+</li>
+<li>当CPU有空余资源时，待执行队列中的线程会依次开始执行，进入活动状态；<br />
+</li>
+<li>线程在执行过程中可以主动地进入休眠(<code>sleep_for(...)</code>/<code>sleep_until(...)</code>)或等待(<code>yield()</code>)状态。休眠状态下的进程一段时间后/达到某个条件后会被“唤醒”，重新进入等待状态，新进入等待状态的线程也会自动加入待执行队列；<br />
+</li>
+<li>线程代表的函数执行完成后则进入结束状态。</li>
+</ul>
+<h1 id="stdthread"><code>std::thread</code></h1>
+<blockquote>
+<p>C++标准的宗旨在于 <em>standardizing existing best
+practice</em>，其例之一即为<code>std::thread</code>。</p>
+</blockquote>
+<p>C++11前确实存在实现多线程的方法——现在几乎无人问津，亦不推荐使用的<code>pthread</code>库。<del>当然如果读者认为线程句柄乱窜+函数指针满天飞的C样式老爷车编程非常好玩的话，不妨一试(doge)，</del>此处不再赘述<code>pthread</code>库的有关资料。</p>
+<h2 id="简介">简介</h2>
+<p>C++11中，标准库<code>&lt;thread&gt;</code>引入的<code>std::thread</code>提供了跨平台、面向对象的、语义统一的多线程支持。</p>
+<h2 id="thread类"><code>thread</code>类</h2>
+<p>每个非空线程的本质都是一个函数，故<code>thread</code>的构造必以调用函数为基础。</p>
+<h3 id="重要成员函数">重要成员函数</h3>
+<ul>
+<li><code>thread() noexcept;</code>：默认构造函数，创建<strong>空</strong>线程<br />
+</li>
+<li><code>thread(Fn&amp;&amp; fn,Args&amp;&amp;... args);</code>：以<code>std::invoke(std::forward&lt;Fn&gt;(fn),std::forward&lt;Args&gt;(args)...)</code>开启一个<strong>非空</strong>线程<br />
+</li>
+<li><code>~thread() noexcept</code>：析构函数<br />
+</li>
+<li><code>thread(const thread&amp;) = delete;</code>
+复制构造函数（已显式删除<code>= delete;</code>）<br />
+</li>
+<li><code>thread(thread&amp;&amp;) noexcept</code>：移动构造函数，调用后原<code>thread</code>将被置空</li>
+</ul>
+<blockquote>
+<p>复制/移动赋值运算符与相应构造函数类似。</p>
+</blockquote>
+<blockquote>
+<p>关于<code>std::invoke</code>：其存在意义是统一C++中三种主流的函数调用方式：函数指针(function
+pointer)、函数成员指针(pointer to member function)、可调用对象(callable
+objects)，因为三者的调用语法并不相同。<del>又是一个新坑，哈哈</del></p>
+</blockquote>
+<ul>
+<li><code>static unsigned hardware_concurrency()</code>：<del>一个DETERMINSTIC的函数，</del>获得当前程序运行环境的并发资源数<br />
+</li>
+<li><code>static std::thread::id get_id()</code>：获得当前<code>thread</code>的编号(id)，其以一个嵌套类<code>std::thread::id</code>的形式给出</li>
+</ul>
+<blockquote>
+<p>“并发资源数”指操作系统允许的能够同时运行的计算单元总数，多数情况下其与CPU的逻辑处理器数一致。<br />
+类<code>id</code>没有任何（接口式的）成员函数，其唯一用法是<code>bool std::operator==(std::thread::id,std::thread::id)</code>校验两个既得的<code>thread</code>标识符是否相同。</p>
+</blockquote>
+<ul>
+<li><code>void join()</code>、<code>void detach()</code>、<code>bool joinable() const</code>见下。</li>
+</ul>
+<h3 id="joindetach">join/detach</h3>
+<p>C++中，<code>thread</code>的重要特性之一为其是否"joinable"（可以“加入”/“归并”）。<br />
+每个管理着一个线程句柄(thread
+handle)的<code>thread</code>对象都是joinable的。</p>
+<blockquote>
+<p>简明起见，本标题下接下来描述一个线程是否joinable时直接用<code>true</code>/<code>false</code>简写之。</p>
+</blockquote>
+<p>显然所有新创建的非空线程状态都是<code>true</code>，空线程则为<code>false</code>；对于状态<code>true</code>的线程对象，可以令其<code>join()</code>/<code>detach()</code>。其中，</p>
+<ul>
+<li><code>join()</code>后调用者将被阻塞(block
+execution)，等待该<code>thread</code>代表线程<strong>执行结束</strong>后，调用者恢复运行。<br />
+</li>
+<li><code>detach()</code>后该子线程将从对象中“解离”并令其自由执行（不再受同级线程约束），该<code>thread</code>置空。</li>
+</ul>
+<blockquote>
+<p>可以认为，若将线程开始运行比作放飞风筝，<code>join()</code>对应调用者等待风筝落地（此间操作者什么也不做），<code>detach()</code>则为剪断“风筝线”。<br />
+尽管C++的<code>&lt;thread&gt;</code>并未直接提供对线程进行更为底层操作的函数（比如强行让渡、休眠以至终止一个线程），但通过<code>get_id</code>获得底层句柄后，主线程在子线程未<code>detach()</code>时仍然具备控制之的“潜力”（如强行使其休眠、终止运行等）；但调用<code>detach()</code>后主线程就无法再“控制”该线程了（此时主线程和该线程的地位是“平等”的，想要终止其运行等只能由更上层的OS调度实现）。</p>
+</blockquote>
+<p>从线程句柄的角度来理解：</p>
+<p>C++中每个线程在<code>join()</code>/<code>detach()</code>后该<code>thread</code>对象就会被置空，状态自然变为<code>false</code>（故<code>thread</code>是否储存了一个线程句柄是其状态为<code>true</code>的充要条件）。<br />
+<code>join()</code>相当于“使用”了这个线程句柄，使用完后即弃置之；<code>detach()</code>等价于主动抛弃这个线程句柄。<br />
+由于线程句柄显然只能移动而不能复制，故<code>thread</code>对象被移动后，原<code>thread</code>自然也不再拥有任何句柄，状态置<code>false</code>。</p>
+<blockquote>
+<p>需要留意的是，是否拥有线程句柄和线程是否执行完成无关，线程即使未执行完成，其句柄也可以通过<code>detach()</code>主动丢弃；即使执行完成，其句柄依然有效。</p>
+</blockquote>
+<p>同时为了防止线程句柄泄露，C++中<code>thread</code>对象在析构时会校验其是否依然管理一个线程句柄。若其状态为<code>true</code>（相当于该<code>thread</code>从未<code>join()</code>/<code>detach()</code>过），则会在声明为<code>noexcept</code>的析构函数中抛出一个异常（翻译过来就是调用<code>std::terminate</code>，进而<code>abort()</code>终止程序）。</p>
+<h2 id="namespace-this_thread"><code>namespace this_thread</code></h2>
+<p>C++11同时引入了<code>std::this_thread</code>命名空间，其中定义了四个与多线程控制有关的函数。</p>
+<ol type="1">
+<li><code>void yield()</code>：当前线程“让渡”自身的CPU资源，主动进入等待状态。<br />
+</li>
+<li><code>void sleep_for(const std::chrono::duration&lt;R,P&gt;&amp;)</code>：当前线程休眠一段时间。<br />
+</li>
+<li><code>void sleep_until(const std::chrono::time_point&lt;R,P&gt;&amp;)</code>：当前线程休眠直至某时间点。<br />
+</li>
+<li><code>std::thread::id get_id()</code>：获得该线程的<code>id</code>供比较。</li>
+</ol>
+<h1 id="锁">锁</h1>
+<p>进程间的资源访问由操作系统调度，且两个进程的资源隔离性强（即运行时，一个进程几乎不会和另一个进程产生资源冲突）。<br />
+相对之下，不同线程间的资源共享程度极高（尤其在对内存的访问上），若对它们的数据读写不加以控制，则极易产生“数据竞争”(data
+race)这一现象。</p>
+<blockquote>
+<p>数据竞争：当多个线程试图在同一时间读写某一片数据时，对于某些原子操作其未规定双方进行的先后顺序，继而导致程序的运行流程、输出结果不确定，甚至可能因内存访问冲突而导致程序崩溃的情况。<br />
+比如下述的代码就极易引发数据竞争，导致未定义行为(UB)：<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">std::vector&lt;<span class="type">int</span>&gt; vc;</span><br><span class="line"><span class="keyword">auto</span> fn = [&amp;](<span class="type">int</span> x)&#123;vc.<span class="built_in">push_back</span>(x);&#125;;</span><br><span class="line"></span><br><span class="line">std::array&lt;std::thread,10&gt; th;</span><br><span class="line"><span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;<span class="number">10</span>;++i)</span><br><span class="line">&#123;</span><br><span class="line">    th = std::thread&#123;fn,i&#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+</blockquote>
+<blockquote>
+<p>常见容易引发访问冲突的“资源”包括：文件流(file stream)、堆内存(heap
+memory)等。</p>
+</blockquote>
+<hr />
+<h2 id="互斥锁">互斥锁</h2>
+<p>C++11中引入了<code>std::mutex</code>，作为“互斥锁”来保证进程间执行的安全。mutex之名为
+<em>mutal exclusion</em>，即“独占互斥量”的缩写。</p>
+<p><code>std::mutex</code>只有一个默认（无参）构造函数，<code>mutex</code>对象是<strong>不可复制/移动的</strong>（四个复制/移动相关函数/运算符全部<code>= delete;</code>）；析构函数是平凡(trivial)的。<br />
+其<code>public</code>成员函数只有三个：</p>
+<ul>
+<li><p><code>void lock()</code>：获得该互斥锁。<strong>若该锁已经被锁定，则本函数将阻塞线程执行直至成功获得该锁。</strong>“阻塞执行”这一行为是避免访问可能带访问冲突的资源、函数等时的关键：<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">std::stack&lt;<span class="type">int</span>&gt; stk;</span><br><span class="line">std::mutex mt;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">push</span><span class="params">(<span class="type">int</span> x)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    mt.<span class="built_in">lock</span>();</span><br><span class="line">    stk.<span class="built_in">push</span>(x);</span><br><span class="line">    mt.<span class="built_in">unlock</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>如此做方能保证<code>stk</code>同一时间只有一个线程对之进行操作，防止对同一个内存位置同时读写造成UB。</p>
+<blockquote>
+<p>可以发现<code>std::mutex</code>一般会被设为全局变量，或以引用方式传入函数参数。</p>
+</blockquote></li>
+<li><p><code>void unlock()</code>：解锁。其和<code>lock()</code>操作应当“成对”出现，某线程若锁定了一个<code>mutex</code>，亦必须在退出前解锁之，否则将会造成死锁(deadlock)。<br />
+</p></li>
+<li><p><code>bool try_lock()</code>：尝试锁定（不阻塞线程执行），若锁定成功则返回<code>true</code>，否则返回<code>false</code>。</p></li>
+</ul>
+<blockquote>
+<p>一些有关锁的概念：<br />
+死锁(deadlock)：因各种原因导致一个获得<code>lock</code>的操作无法完成的情况。常见有两种原因：一个线程尝试连续两次锁定一个锁（<code>lock()</code>后再<code>lock()</code>一次，本质上是UB，当然大多数C++标准库实现中，debug下都会选择抛出一个带提示信息的异常）；一个线程获得锁后没有解锁就退出（忘记<code>unlock()</code>、抛出异常、提早<code>return</code>）。<br />
+“呼应”操作(synchorized
+operations)：两个应当“成对”出现的操作，比如<code>new</code>对应<code>delete</code>、<code>lock()</code>对应<code>unlock()</code>、<code>fopen</code>对应<code>fclose</code>等。几乎所有动态“管理”资源的操作
+都应当是“呼应”的，即两个操作应当在某个操作周期内成对出现，否则会造成资源泄露（内存泄漏、死锁、文件标识符丢失等）。</p>
+</blockquote>
+<p>一些容易导致“死锁”的反面示例形如：<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">std::mutex mt;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">bad_fn</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    mt.<span class="built_in">lock</span>();</span><br><span class="line">    <span class="keyword">if</span>(???)</span><br><span class="line">    &#123;</span><br><span class="line">        mt.<span class="built_in">lock</span>(); <span class="comment">//Repeated locks: UB, the program may deadlock</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(???)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span>; <span class="comment">//Early return, the mutex is never released</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">switch</span>(???)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">case</span> ???:</span><br><span class="line">            <span class="keyword">throw</span> std::runtime_error&#123;<span class="string">&quot;&quot;</span>&#125;; <span class="comment">//Early return, the mutex is never released</span></span><br><span class="line">        <span class="comment">/*...*/</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    mt.<span class="built_in">unlock</span>(); <span class="comment">//Only when the program reaches this point, the mutex is released</span></span><br><span class="line">    <span class="comment">//If somehow this line is disregarded, the mutex is never released</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="御守stdlock_guard">御守：<code>std::lock_guard</code></h2>
+<p><code>std::mutex</code>在应用中极易出差错，故恰若对内存的管理有智能指针，对<code>mutex</code>的管理也有<code>lock_guard</code>这个包装类辅助之。</p>
+<blockquote>
+<p>这些类的实现都是RAII(Resource Acquisition Is
+Initialization)原则的生动实践。</p>
+</blockquote>
+<p><code>lock_guard</code>实际上是一个类模板，除构造和析构函数外没有其它公有成员函数。<br />
+其作用只是“代理”一个<code>mutex</code>，在析构函数中自动解锁，构造时自动锁定（可选）。其设计简单而精妙，利用析构函数的特性成功规避了大部分
+<em>early return</em> 导致的“死锁”情况：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">std::mutex mt;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">good_fn</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::lock_guard lg&#123;mt&#125;;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//The mutex is automatically unlocked at function exit, disregarding normal return, early return or returning via exception</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果不希望<code>lock_guard</code>构造时锁定一次，可以构造时传一个
+<em>tag-type</em>
+的第二参数<code>std::adopt_lock</code>进行重载决议：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">std::lock_guard lg&#123;mt,std::adopt_lock&#125;; <span class="comment">//Manages mutex `mt` yet does not lock it(assumes it has been locked)</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>同样地，<code>lock_guard</code>依然不可移动或复制。<br />
+<del>咕咕咕：什么时候讲讲<code>unique_lock</code>和<code>shared_lock</code></del></p>
+</blockquote>
+<hr />
+<h1 id="future"><code>&lt;future&gt;</code></h1>
+<h2 id="异步亦趋stdasync">“异步”亦趋：<code>std::async</code></h2>
+<p>C++中创建一个异步函数使用<code>std::async</code>函数实现。<br />
+<code>std::async</code>相比<code>std::thread</code>（非空构造）的特点之一在于，其通过一个（可选的）第一参数为<code>std::launch</code>的重载来实现可选的“手动调度”：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">f</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">auto</span> f1 = std::<span class="built_in">async</span>(std::launch::async,f); <span class="comment">//Launch the thread immediately(upon available thread resources), similar to normal `thread`</span></span><br><span class="line"><span class="keyword">auto</span> f2 = std::<span class="built_in">async</span>(std::launch::deferred,f); <span class="comment">//Creates a future instance, yet deferres the launch of the thread(the thread&#x27;s life cycle is postponed until the invocation of get(), wait(), wait_for() or wait_until() method)</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">auto</span> f3 = std::<span class="built_in">async</span>(f); <span class="comment">//Same as launching with either std::launch::async depending on the platform.</span></span><br></pre></td></tr></table></figure>
+<p>因此当我们需要延迟一个线程生命周期的开始（或显式地指出这个线程的生命周期将立即开始）时，就可以传入<code>std::launch::deferred</code>/<code>std::launch::async</code>作为第一参数（实际上<code>enum class std::launch</code>也只有这两个选项）。</p>
+<p><code>std::async</code>的返回值是类模板<code>std::future</code>的一个实例。但<code>std::future</code>又为何物？其又何以操控线程生命周期何时开始？<del>稍安勿躁，且听下回分解</del></p>
+<h2 id="逆料其事stdfuture">逆料其事：<code>std::future</code></h2>
+<p>在讲解<code>std::future</code>前，先引入我们并发/异步编程中的一个重要动机：获取子线程执行结果（返回值）。</p>
+<p>在<a
+href="">cppreference</a>中对<code>thread</code>对象的介绍中，有一句描述值得玩味：<br />
+<em>The return value of the top-level function is ignored and if it
+terminates by throwing an exception, std::terminate is called.</em></p>
+<p>即，用于构建<code>thread</code>的最顶层函数的返回值将被忽略，且其亦被隐式的禁用了栈回溯(stack
+rewinding)（异常逃逸后直接调用<code>std::terminate</code>）。</p>
+<p>相较普通的函数调用，其自然引出了两个问题：</p>
+<ul>
+<li>函数返回运行结果最重要的方式之一——返回值，如何在并发/异步编程中实现？<br />
+</li>
+<li>线程执行仍应有异常处理，不能<code>throw</code>的情况下何以让上层函数知晓？</li>
+</ul>
+<p><code>std::future</code>给出了前者的答案，其包装类<code>std::promise</code>则回答了后者。</p>
 <hr />
 <blockquote>
-<p>定义函数 <span class="math inline">\(T(d_{1},d_{2}) (d_{1} + d_{2}
-&lt; q)\)</span> 表示系数 <span class="math inline">\(\{1,-1\}\)</span>
-<strong>计数</strong>分别为 <span
-class="math inline">\(\{d_{1},d_{2}\}\)</span> 的多项式 <span
-class="math inline">\(f\)</span> 的集合。<br />
-如，<span class="math inline">\(f = x^{6} + x^{3} - x^{2} + x - 1 \in
-T(3,2)\)</span>。</p>
+<p>此情可待成追忆，只是当时已惘然。</p>
 </blockquote>
-<p>选择两个多项式 <span class="math inline">\(f = \sum_{i=0}^{N-1}
-f_{i}x^{i} \in T(d+1,d)\)</span>，<span class="math inline">\(g =
-\sum_{i=0}^{N-1} g_{i}x^{i} \in T(d,d)\)</span>。</p>
-<p>再计算 <span class="math inline">\(h \equiv f^{-1}g (\bmod
-q)\)</span>，随后将 <span class="math inline">\(g\)</span>
-的记录销毁。<br />
-公钥为 <span class="math inline">\(h\)</span>，私钥为 <span
-class="math inline">\(R_{p}\)</span> 和 <span
-class="math inline">\(R_{q}\)</span> 下的 <span
-class="math inline">\(f^{-1}\)</span>（由于 <span
-class="math inline">\(p,q\)</span> 是既定参数，可以认为私钥就是 <span
-class="math inline">\(f\)</span>）。</p>
+<p><code>std::future</code>是一个颇为有趣的类模板，其主模板只接受单个类型参数<code>Ty</code>（两个模板特化分别是<code>void</code>和<code>Ty&amp;</code>）。</p>
+<p>线程放出多个子线程进行异步/并发工作时，其知道子线程会返回某个值（比如获取用户输入函数的<code>std::string</code>，某加密函数的<code>std::array&lt;byte,16&gt;</code>等<del>点名AES-128</del>），但在“放出”该子线程时还没有这个值——只知道子线程会在未来的某个时间点返回之。<br />
+由此出现了<code>std::future</code>的概念，<code>std::async</code>以返回<code>T</code>的函数创建线程时，返回值类型就是<code>std::future&lt;T&gt;</code>。</p>
+<h3 id="常用成员函数">常用成员函数</h3>
+<ul>
+<li><code>bool valid() const</code>，返回一个<code>std::future</code>对象是否<strong>有效</strong>。每个非空构造（代表了一个异步线程）的<code>std::future</code>对象构造时都是有效的，但调用<code>get()</code>后其就失效了（且不可恢复）。<br />
+</li>
+<li><code>Ty get()</code>，调用后其会阻塞程序执行，等待子线程完成并获取其返回结果。显然其返回值类型和底层返回值类型一致；只有<strong>有效的</strong>(<code>valid()</code>)的<code>std::future</code>才能调用<code>get()</code>方法——等价于<code>get()</code>也只能调用一次。<br />
+</li>
+<li><code>void wait() const</code>，调用后其会阻塞程序执行，等待子线程完成，但不会使线程失效，亦不提取其返回值。其同样只能对有效的对象上调用（否则抛异常）。<br />
+</li>
+<li><code>std::future_status wait_for(rep) const</code>，和<code>wait()</code>区别在于若子线程在<code>rep</code>后依然未结束，则直接返回。<br />
+</li>
+<li><code>std::future_status wait_until(rep) const</code>，类似地，等待直至<code>rep</code>后不论子线程是否结束，直接返回。</li>
+</ul>
+<p><code>std::future_status</code>是一个<code>enum class</code>，其可能取值有三：<br />
+<code>deferred</code>，代表该线程尚未开始执行；<code>ready</code>，代表该线程已执行结束；<code>timeout</code>，代表该线程截至<code>wait_for/wait_until</code>函数执行完成时尚未执行完毕。</p>
 <blockquote>
-<p><span class="math inline">\(g\)</span> 不是公钥或私钥，但知道 <span
-class="math inline">\(g\)</span> 就可以完全攻破NTRU，其地位类似于RSA中
-<span class="math inline">\(N\)</span> 的因数分解，故不应保留之。</p>
+<p>故<code>std::async</code>产生的异步线程就出现了一个诡异的函数美学：<code>t.wait_for(std::chrono::miliseconds(0))</code>（<del>为什么不先<code>using namespace std::chrono_literals</code>然后直接上<code>0ms</code></del>）就可以检验一个子线程的执行状态。<br />
+当然此类函数美学在C++史上也不是第一次了，<del>点名在C++23的部分wrapper_class加入前的<code>vc.find(1) != vc.last()</code>或者<code>str.find(1) != str.npos</code></del></p>
 </blockquote>
-<h1 id="加密">加密</h1>
-<p>先将明文编码为一个 <span class="math inline">\(n\)</span> 次多项式
-<span class="math inline">\(m \in \{-1,0,1\}^{N}\)</span>。<br />
-加密时另随机生成一个多项式 <span class="math inline">\(r \in
-\{-1,0,1\}^{N}\)</span>，计算 <span class="math inline">\(c \equiv ph
-\cdot r + m (\bmod q)\)</span>，输出密文 <span
-class="math inline">\(c\)</span>。</p>
-<h1 id="解密">解密</h1>
-<p>计算 <span class="math inline">\(m \equiv f^{-1} \cdot (f \cdot c
-(\bmod q)) (\bmod p)\)</span>，输出明文 <span
-class="math inline">\(m\)</span>。</p>
-<blockquote>
-<p>注意其中涉及到了“换环”，即现在 <span
-class="math inline">\(R_{q}\)</span> 下计算 <span
-class="math inline">\(f \cdot c\)</span>，将结果转到 <span
-class="math inline">\(R_{p}\)</span> 下后再与该环下的 <span
-class="math inline">\(f^{-1}\)</span> 相乘。</p>
-</blockquote>
+<p>同时，<code>std::future</code>亦是可移动而不可复制的（复制构造函数和复制赋值运算符被声明为<code>= delete;</code>）。</p>
 <hr />
-<h2 id="正确性证明">正确性证明</h2>
-<p>先在 <span class="math inline">\(R_{q}\)</span> 下计算， <span
-class="math inline">\(f \cdot c = pr \cdot hf + mf \Rightarrow f \cdot c
-= prg + mf\)</span><br />
-随后换环到 <span class="math inline">\(R_{p}\)</span> 上，显然 <span
-class="math inline">\(prg \equiv 0 (\bmod p)\)</span>，因此 <span
-class="math inline">\(R_{p}\)</span> 下 <span class="math inline">\((fc
-\bmod q) \equiv fm\)</span><br />
-进而 <span class="math inline">\(fmf^{-1} = m\)</span><br />
-解密正确性得证。</p>
-<h1 id="公钥攻击与数学难题">公钥攻击与数学难题</h1>
-<p>NTRU作为一种公钥密码体制，其依然依赖于数学难题来实现公钥与私钥间的“陷门”特征——即从公钥推导出私钥在理论上是可行的。<br />
-已知公钥时推导私钥的方法如下：<br />
-假设公钥为 <span class="math inline">\(f =
-\sum_{i=0}^{n}f_{i}x^{i}\)</span>，即 <span
-class="math inline">\(\{f_{i}\}\)</span> 是多项式 <span
-class="math inline">\(f\)</span> 各项的系数。</p>
+<p>现在还可以揭晓之前关于<code>std::async</code>“延迟起步”子线程的答案了：<br />
+对于第一参数为<code>std::launch::deferred</code>的线程，其会在其<code>future</code>对象调用<code>get</code>/<code>wait[_for|_until]</code>成员函数后开始运行。<br />
+若只想使之起步而不想阻塞程序执行，则可以搬出<del>万能的</del><code>t.wait_for(std::chrono::miliseconds(0));</code>，随后再另行获取结果/其执行状态。</p>
+<h3 id="示例">示例</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;future&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;print&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;chrono&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std::chrono_literals;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">double</span> <span class="title">calc</span><span class="params">(<span class="type">int</span> x)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::this_thread::<span class="built_in">sleep_for</span>(std::chrono::<span class="built_in">seconds</span>(x)); <span class="comment">//Assume time consumption</span></span><br><span class="line">    <span class="keyword">return</span> (x &gt;= <span class="number">0</span>) ? (std::<span class="built_in">pow</span>(x,<span class="number">0.5</span>)) : std::<span class="built_in">sin</span>(x);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::vector&lt;std::future&lt;<span class="type">double</span>&gt;&gt; vc;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&lt;=<span class="number">10</span>;++i)</span><br><span class="line">    &#123;</span><br><span class="line">        vc.<span class="built_in">push_back</span>(std::<span class="built_in">async</span>(calc,i));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    std::this_thread::<span class="built_in">sleep_for</span>(<span class="number">5</span>s);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">auto</span>&amp; i : vc)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span>(i.<span class="built_in">valid</span>())</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">if</span>(i.<span class="built_in">wait_for</span>(<span class="number">0</span>s) != std::future_status::ready)</span><br><span class="line">            &#123;</span><br><span class="line">                std::<span class="built_in">println</span>(<span class="string">&quot;Thread isn&#x27;t ready yet!&quot;</span>);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">else</span></span><br><span class="line">            &#123;</span><br><span class="line">                std::<span class="built_in">println</span>(<span class="string">&quot;Thread execution result is &#123;&#125;&quot;</span>,i.<span class="built_in">get</span>());</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="山盟海誓stdpromise">山盟海誓：<code>std::promise</code></h2>
+<p><code>std::future</code>虽然在让线程“善始善终”方面迈出了一大步，但从线程执行过程中的“通信”来看，其依然稍显笨拙——状态的获取仅限于是否开始/结束，传递值亦只能在<code>std::async</code>构造的线程<code>return</code>时进行，且该值不能修改。<br />
+由此，出现了对异步机制更为适配的包装类<code>std::promise</code>。</p>
+<h3 id="特性">特性</h3>
+<p><code>std::promise</code>和<code>std::future</code>的模板参数赋法相同，通过<code>get_future</code>方法可以获得底层的<code>std::future</code>对象进行进一步操作。<br />
+作为包装类，其提供了相较<code>std::future</code>更强大的几个功能：</p>
+<ul>
+<li>可以多次赋值，线程可以对<code>std::promise</code>多次调用<code>set_value(_at_thread_exit)</code>成员函数来多次赋值/在线程退出时赋值。相较只能单次赋值且不可改变的<code>std::future</code>，显然其实现了线程间的动态通信更加灵活；<br />
+</li>
+<li>通过<code>set_exception(_at_thread_exit)</code>成员函数可以设置将抛出的异常（通过赋予一个exception_ptr实现）。</li>
+</ul>
+<h3 id="示例-1">示例</h3>
+<p>如，假设线程A正在等待线程B运行的结果，但它亦有自身的一些其它任务需要运行，此时可以在两个线程代表函数的形参中设置<code>std::promise</code>或<code>std::future</code>的引用用于线程间通信：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std::chrono_literals; <span class="comment">//0s</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">double</span> <span class="title">func_a</span><span class="params">(std::future&lt;<span class="type">int</span>&gt;&amp; ft)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">double</span> result&#123;<span class="number">0</span>&#125;;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span>(ft.<span class="built_in">wait_for</span>(<span class="number">0</span>s) != std::future_status_ready)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">/*Some arbitrary work*/</span></span><br><span class="line">        <span class="type">double</span> x = std::<span class="built_in">sin</span>(<span class="number">3</span>) * std::<span class="built_in">pow</span>(std::<span class="built_in">cosh</span>(<span class="number">0.5</span>),<span class="number">0.35</span>);</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i : std::views::<span class="built_in">iota</span>(<span class="number">10</span>))</span><br><span class="line">        &#123;</span><br><span class="line">            x = std::<span class="built_in">pow</span>(x,<span class="built_in">random</span>());</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        result += x;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="type">int</span> offset = ft.<span class="built_in">get</span>(); <span class="comment">//Guaranteed to complete smoothly without blocking execution</span></span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">static_cast</span>&lt;<span class="type">int</span>&gt;(result) + offset;</span><br><span class="line">    </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func_b</span><span class="params">(std::promise&lt;<span class="type">int</span>&gt;&amp; p)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">/*Simulating work*/</span></span><br><span class="line">    std::this_thread::<span class="built_in">sleep_for</span>(<span class="number">10</span>s);</span><br><span class="line"></span><br><span class="line">    p.<span class="built_in">set_value</span>(<span class="number">15</span>); <span class="comment">//Upon setting value, func_a can directly get() its value(regarded as ready)</span></span><br><span class="line">    <span class="comment">//So func_b&#x27;s following work can still proceed</span></span><br><span class="line">    <span class="comment">/*Simulating some other work*/</span></span><br><span class="line">    std::this_thread::<span class="built_in">sleep_for</span>(<span class="number">15</span>s);</span><br><span class="line"></span><br><span class="line">    p.<span class="built_in">set_value_at_thread_exit</span>(<span class="number">30</span>); <span class="comment">//Upon exiting thread, set it to another value</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::promise&lt;<span class="type">int</span>&gt; p;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">auto</span> ft1 = std::<span class="built_in">async</span>(func_a,p.<span class="built_in">get_future</span>());</span><br><span class="line">    <span class="keyword">auto</span> ft2 = std::<span class="built_in">async</span>(func_b,p);</span><br><span class="line"></span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,ft<span class="number">1.</span><span class="built_in">get</span>());</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="结语">结语</h1>
+<p>并发和异步编程是程序设计实践中的极重要课题之一；善用“”之术可以最大地让程序的执行更贴近现实中事物的运行逻辑，极大地提高程序运行效率，并符合程序在实际应用时的业务逻辑要求。<br />
+因此，C++11引入的“山珍海味”实际上只是开胃菜——其只是拉开了现代C++帷幕，后继的C++版本都在并发/异步编程上有许多大动作，包括C++20四大金刚之一的<code>coroutines</code>，皆在尽可能提高并发/异步编程的效率、可靠性、功能性与易用性。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">长文精选</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/cpp/thread/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+  <div>
+</article>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-crypto/aesatk/4-1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/crypto/aesatk/4-1/">AES积分攻击——云帆</a>
+    </h1>
+  
+
+        
+        <a href="/crypto/aesatk/4-1/" class="archive-article-date">
+  	<time datetime="2025-05-07T00:12:44.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-05-07</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="积分攻击简介">积分攻击简介</h1>
+<p>积分攻击(Integral Attack)是<strong>选择明文攻击(chosen plaintext
+attack)</strong>的一种，主要针对的是采用SPN(Substitution-Permutation
+Network，置换-扩展网络，以AES为代表)进行块加密的加密系统。</p>
+<p>其核心思想在于：SPN中，某一位置的明文差分经过块加密的扩散过程会影响到许多位的密文，此过程可能使得某个中间量（加密部分轮数的密文）具有某种性质；<br />
+且<strong>再进行一轮加密后这种性质会因置换-扩展而被破坏</strong>，此时对该轮的轮密钥进行猜解，将密文集的状态<strong>回退到具有该性质的时刻</strong>，通过<strong>验证其性质是否仍成立</strong>来爆破密钥。</p>
+<h1 id="aes基本要素回顾">AES基本要素回顾</h1>
+<p>AES的主要组件包括SubBytes、ShiftRows、MixColumns、AddRoundKey。<br />
+其中AddRoundKey所用轮密钥由初始密钥“扩展”而来，且该扩展过程可逆。</p>
+<h2 id="密钥扩展">密钥扩展</h2>
+<p>AES-128的密钥扩展是将初始密钥扩展至(加密轮数+1)组密钥的过程，初始密钥与轮密钥大小均为16字节。<br />
+密钥扩展是迭代算法，当前组密钥仅由上一组密钥决定：</p>
+<ul>
+<li>前4字节为 <em>上一组密钥的前4字节</em> 与
+<em>上一组密钥的最后4字节的s_box置换值</em> 对应异或；<br />
+</li>
+<li>将首字节再与 <span class="math inline">\(GF(2^{8})\)</span> 下的
+<span class="math inline">\(2^{i}\)</span> 相加（也就是相异或，<span
+class="math inline">\(i\)</span> 为当前轮数）；<br />
+</li>
+<li>后12字节为 <em>上一组密钥的前12字节</em> 与
+<em>当前密钥的前12字节</em> 对应异或（逐个进行）。</li>
+</ul>
 <blockquote>
-<p>有关格、格基规约(LLL)等相关的基础知识可以移步<a
-href="/crypto/lattice/">格</a>。</p>
+<p>是不是感觉文字描述起来太别扭？那句编程界的名言还在不断发威—— <em>Talk
+is cheap. Show me the code.</em></p>
 </blockquote>
-<h1 id="加解密攻击应用示例">加解密、攻击应用示例</h1>
-<p>假设Alice和Bob<del>怎么又是你们俩</del>需要利用NTRU进行通信，Alice为接收方，参数
-<span class="math inline">\((N,p,q,d) = (77,3,59,3)\)</span>。<br />
-<del>充分利用一番sage对多项式环的支持</del>，代码如下：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># sage</span></span><br><span class="line"><span class="keyword">from</span> random <span class="keyword">import</span> shuffle</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">NTRU</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="variable language_">self</span>.N = <span class="number">77</span></span><br><span class="line">        <span class="variable language_">self</span>.p = <span class="number">3</span></span><br><span class="line">        <span class="variable language_">self</span>.q = <span class="number">59</span></span><br><span class="line">        <span class="variable language_">self</span>.d = <span class="number">3</span></span><br><span class="line"></span><br><span class="line">        <span class="variable language_">self</span>.R_ = PolynomialRing(ZZ,<span class="string">&#x27;x&#x27;</span>)</span><br><span class="line">        <span class="variable language_">self</span>.Rp_ = PolynomialRing(Zmod(p),<span class="string">&#x27;xp&#x27;</span>)</span><br><span class="line">        <span class="variable language_">self</span>.Rq_ = PolynomialRing(Zmod(q),<span class="string">&#x27;xq&#x27;</span>)</span><br><span class="line"></span><br><span class="line">        <span class="variable language_">self</span>.R = <span class="variable language_">self</span>.R_.quotient(<span class="variable language_">self</span>.R_.gen() ^ N - <span class="number">1</span>,<span class="string">&#x27;y&#x27;</span>)</span><br><span class="line">        <span class="variable language_">self</span>.Rp = <span class="variable language_">self</span>.Rp_.quotient(<span class="variable language_">self</span>.Rp_.gen() ^ N - <span class="number">1</span>,<span class="string">&#x27;yp&#x27;</span>)</span><br><span class="line">        <span class="variable language_">self</span>.Rq = <span class="variable language_">self</span>.Rq_.quotient(<span class="variable language_">self</span>.Rq_.gen() ^ N - <span class="number">1</span>,<span class="string">&#x27;yq&#x27;</span>)</span><br><span class="line"></span><br><span class="line">        <span class="variable language_">self</span>.h,<span class="variable language_">self</span>.f = <span class="variable language_">self</span>.keygen()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">T</span>(<span class="params">self,d1,d2</span>):</span><br><span class="line">        <span class="keyword">assert</span> d1 + d2 &lt;= N</span><br><span class="line">        ls = [<span class="number">1</span>] * d1 + [-<span class="number">1</span>] * d2 + [<span class="number">0</span>] * (N-(d1+d2))</span><br><span class="line">        shuffle(ls)</span><br><span class="line">        <span class="keyword">return</span> <span class="variable language_">self</span>.R(ls)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">keygen</span>(<span class="params">self</span>):</span><br><span class="line">        f = <span class="variable language_">self</span>.T(d+<span class="number">1</span>,d)</span><br><span class="line">        g = <span class="variable language_">self</span>.T(d,d)</span><br><span class="line">        h = <span class="variable language_">self</span>.Rp(g) * <span class="variable language_">self</span>.Rp(f) ^ -<span class="number">1</span> </span><br><span class="line">        <span class="keyword">return</span> h,f</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">get_pubkey</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">list</span>(<span class="variable language_">self</span>.h)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__==<span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    ntru = NTRU()</span><br><span class="line">    <span class="built_in">print</span>(ntru.get_pubkey())</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>现在生成了一组公钥：<br />
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[0, 0, 2, 1, 1, 0, 2, 2, 1, 1, 1, 2, 2, 0, 1, 1, 1, 0, 2, 1, 2, 0, 1, 0, 2, 1, 0, 0, 2, 1, 2, 0, 0, 0, 2, 2, 0, 1, 1, 2, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 2, 0, 2, 2, 2, 0, 0, 2, 2, 1, 0, 1, 0, 0, 2, 0, 1]</span><br></pre></td></tr></table></figure> 其中该列表下标为<code>i</code>的数就是 <span
-class="math inline">\(h_{i}\)</span>，即 <span
-class="math inline">\(h\)</span> 中 <span
-class="math inline">\(i\)</span> 次项的系数。<br />
-Bob使用该公钥，对接下来通信使用的密钥进行加密，为<code>NTRU</code>类添加一个<code>encrypt</code>方法并运行之：<br />
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">encrypt</span>(<span class="params">self,m:<span class="built_in">list</span></span>):</span><br><span class="line">    <span class="keyword">assert</span> <span class="built_in">len</span>(m) == <span class="variable language_">self</span>.N</span><br><span class="line">    <span class="keyword">assert</span> <span class="built_in">all</span>(i <span class="keyword">in</span> (-<span class="number">1</span>,<span class="number">0</span>,<span class="number">1</span>) <span class="keyword">for</span> i <span class="keyword">in</span> m)</span><br><span class="line"></span><br><span class="line">    r = <span class="variable language_">self</span>.T(<span class="number">7</span>,<span class="number">7</span>)</span><br><span class="line">    c = <span class="variable language_">self</span>.p * <span class="variable language_">self</span>.h * <span class="variable language_">self</span>.Rp(<span class="built_in">list</span>(r)) + <span class="variable language_">self</span>.Rp(m)</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">list</span>(c)</span><br></pre></td></tr></table></figure></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># Key generated</span><br><span class="line">[-1, -1, -1, -1, 0, -1, -1, -1, 0, 0, 1, 0, 0, -1, -1, 0, 1, -1, -1, -1, 0, -1, 0, 1, -1, 1, 1, 1, -1, 1, 0, -1, -1, 0, 0, 1, -1, -1, 1, 0, 0, 0, 1, -1, 1, 1, -1, 1, 0, 1, 1, -1, -1, 1, -1, 1, 0, 1, 0, -1, 0, 1, 0, 1, -1, -1, 0, -1, -1, 0, 1, 0, -1, 1, 1, -1, 0]</span><br><span class="line"># Encryption result</span><br><span class="line">[2, 2, 2, 2, 0, 2, 2, 2, 0, 0, 1, 0, 0, 2, 2, 0, 1, 2, 2, 2, 0, 2, 0, 1, 2, 1, 1, 1, 2, 1, 0, 2, 2, 0, 0, 1, 2, 2, 1, 0, 0, 0, 1, 2, 1, 1, 2, 1, 0, 1, 1, 2, 2, 1, 2, 1, 0, 1, 0, 2, 0, 1, 0, 1, 2, 2, 0, 2, 2, 0, 1, 0, 2, 1, 1, 2, 0]</span><br></pre></td></tr></table></figure>
-<p>Alice接收之，并利用私钥进行解密，获得密钥：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">decrypt</span>(<span class="params">self,c:<span class="built_in">list</span></span>):</span><br><span class="line">    t = <span class="variable language_">self</span>.Rp(<span class="built_in">list</span>(<span class="variable language_">self</span>.Rq(<span class="variable language_">self</span>.f) * <span class="variable language_">self</span>.Rq(c)))</span><br><span class="line">    m = t * <span class="variable language_">self</span>.Rp(<span class="built_in">list</span>(<span class="variable language_">self</span>.f)) ^ -<span class="number">1</span></span><br><span class="line">    <span class="keyword">assert</span> <span class="built_in">all</span>(i <span class="keyword">in</span> (-<span class="number">1</span>,<span class="number">0</span>,<span class="number">1</span>) <span class="keyword">for</span> i <span class="keyword">in</span> m)</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">list</span>(m)</span><br><span class="line"> </span><br></pre></td></tr></table></figure>
-<p>结果正确。 但由于参数选择得比较小，若某人获得了他们的公钥 <span
-class="math inline">\(h\)</span>，即可实施格攻击来还原私钥，需要的参数仅为
-<span class="math inline">\((N,q)\)</span>。攻击过程：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> itertools <span class="keyword">import</span> product</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">attack</span>(<span class="params">h:<span class="built_in">list</span></span>):</span><br><span class="line">    N = <span class="number">77</span></span><br><span class="line">    q = <span class="number">59</span></span><br><span class="line">    coef = matrix(ZZ,[[h[-i:] + h[:-i]] <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(N)])</span><br><span class="line">    mt = matrix.Block([[matrix.diagonal(N),coef],[matrix.zero(N),q * matrix.diagonal(N)]])</span><br><span class="line">    mt = mt.LLL()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">assert</span> <span class="built_in">all</span>(i <span class="keyword">in</span> (-<span class="number">1</span>,<span class="number">0</span>,<span class="number">1</span>) <span class="keyword">for</span> i <span class="keyword">in</span> mt[<span class="number">0</span>])</span><br><span class="line">    </span><br><span class="line">    </span><br><span class="line">    f_ = Rq(<span class="built_in">list</span>(mt[<span class="number">0</span>][:N]))</span><br><span class="line">    g_ = Rq(<span class="built_in">list</span>(mt[<span class="number">0</span>][N:]))</span><br><span class="line">    h_ = Rq(h)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> xf,xg <span class="keyword">in</span> product([i <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(N)],repeat=<span class="number">2</span>):</span><br><span class="line">        ls_f = [<span class="number">0</span>] * N</span><br><span class="line">        ls_f[xf] = <span class="number">1</span></span><br><span class="line">        ls_g = [<span class="number">0</span>] * N</span><br><span class="line">        ls_g[xg] = <span class="number">1</span></span><br><span class="line"></span><br><span class="line">        f = Rq(ls_f) * f_</span><br><span class="line">        g = Rq(ls_g) * g_</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> g * f ^ -<span class="number">1</span> == h:</span><br><span class="line">            <span class="keyword">return</span> <span class="built_in">list</span>(f)</span><br><span class="line">        </span><br></pre></td></tr></table></figure>
-<h1 id="总结">总结</h1>
-<p>格密码是后量子密码学中极为重要的一环，而其中NTRU亦以其实现开销低等特性称为其中耀眼的新星。<br />
-学习NTRU算法的加密、解密原理时更应发挥离散数学的优雅之处——只定义“模板”，无论最终的实现是在
-<span class="math inline">\(Z_{q}\)</span>、<span
-class="math inline">\(P_{q}\)</span> 还是 <span
-class="math inline">\(R_{q}\)</span> 等等都能一通百通。<br />
-而对NTRU的格攻击则开启了基于分块矩阵的多变量、较复杂格构造的新大门。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">key_expansion</span>(<span class="params">init_key:<span class="built_in">bytes</span></span>):</span><br><span class="line">    rnd_key = [init_key]</span><br><span class="line">    r_con = (<span class="number">0x01</span>,<span class="number">0x02</span>,<span class="number">0x04</span>,<span class="number">0x08</span>,<span class="number">0x10</span>,<span class="number">0x20</span>,<span class="number">0x40</span>,<span class="number">0x80</span>,<span class="number">0x1b</span>,<span class="number">0x36</span>) <span class="comment">#2^n under GF(2^8)</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>,rounds + <span class="number">1</span>):</span><br><span class="line">        prv = rnd_key[-<span class="number">1</span>]</span><br><span class="line">        cur = []</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">4</span>):</span><br><span class="line">            cur[j] = prv[j] ^ s_box[prv[-j]]</span><br><span class="line"></span><br><span class="line">        cur[<span class="number">0</span>] ^= r_con[i]</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">4</span>,<span class="number">16</span>):</span><br><span class="line">            cur[j] = prv[j] ^ cur[j-<span class="number">4</span>]</span><br><span class="line"></span><br><span class="line">        rnd_key.append(cur)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> rnd_key</span><br><span class="line">    </span><br></pre></td></tr></table></figure>
+<h2 id="微观">微观</h2>
+<h3 id="subbytes">SubBytes</h3>
+<p>这是AES中唯一的非线性变换步骤，其通过一个设计极为精巧的S盒(S-Box)实现。S-Box本质上是
+<span class="math inline">\(GF(2^{8})\)</span> 下元素的双射。</p>
+<p>对于给定的元素 <span class="math inline">\(a \in
+GF(2^{8})\)</span>，计算其S-Box的对应元素过程如下：</p>
+<ol type="1">
+<li>计算 <span class="math inline">\(GF(2^{8}) 下的
+a^{-1}\)</span>（基于模不可约多项式 <span class="math inline">\(x^8 +
+x^4 + x^3 + x + 1\)</span>
+进行，可利用扩展欧几里得算法/“查表”实现）；<br />
+</li>
+<li>将 <span class="math inline">\(a^{-1}\)</span> 扩展为 <span
+class="math inline">\(GF(2)\)</span> 下的向量 <span
+class="math inline">\(v = (v_7,v_6,\cdots,v_0)\)</span>，计算 <span
+class="math inline">\(v&#39; = v \cdot M + c_0\)</span>，将结果向量
+<span class="math inline">\(v&#39;\)</span> 还原为 <span
+class="math inline">\(GF(2^{8})\)</span> 下的元素即为结果。</li>
+</ol>
+<p>其中第二步应用的 <span class="math inline">\(GF(2)\)</span> 下的矩阵
+<span class="math inline">\(M = \begin{bmatrix} 1 &amp; 0 &amp; 0 &amp;
+0 &amp; 1 &amp; 1 &amp; 1 &amp; 1 \\1 &amp; 1 &amp; 0 &amp; 0 &amp; 0
+&amp; 1 &amp; 1 &amp; 1 \\1 &amp; 1 &amp; 1 &amp; 0 &amp; 0 &amp; 0
+&amp; 1 &amp; 1 \\1 &amp; 1 &amp; 1 &amp; 1 &amp; 0 &amp; 0 &amp; 0
+&amp; 1 \\1 &amp; 1 &amp; 1 &amp; 1 &amp; 1 &amp; 0 &amp; 0 &amp; 0 \\0
+&amp; 1 &amp; 1 &amp; 1 &amp; 1 &amp; 1 &amp; 0 &amp; 0 \\0 &amp; 0
+&amp; 1 &amp; 1 &amp; 1 &amp; 1 &amp; 1 &amp; 0 \\0 &amp; 0 &amp; 0
+&amp; 1 &amp; 1 &amp; 1 &amp; 1 &amp; 1 \end{bmatrix},c =
+\begin{bmatrix} 1 &amp; 1 &amp; 0 &amp; 0 &amp; 0 &amp; 1 &amp; 1 &amp;
+0 \end{bmatrix}\)</span> 。</p>
+<p>最终的S盒形如：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">s_box = (</span><br><span class="line">            <span class="number">0x63</span>, <span class="number">0x7c</span>, <span class="number">0x77</span>, <span class="number">0x7b</span>, <span class="number">0xf2</span>, <span class="number">0x6b</span>, <span class="number">0x6f</span>, <span class="number">0xc5</span>, <span class="number">0x30</span>, <span class="number">0x01</span>, <span class="number">0x67</span>, <span class="number">0x2b</span>, <span class="number">0xfe</span>, <span class="number">0xd7</span>, <span class="number">0xab</span>, <span class="number">0x76</span>,</span><br><span class="line">            <span class="number">0xca</span>, <span class="number">0x82</span>, <span class="number">0xc9</span>, <span class="number">0x7d</span>, <span class="number">0xfa</span>, <span class="number">0x59</span>, <span class="number">0x47</span>, <span class="number">0xf0</span>, <span class="number">0xad</span>, <span class="number">0xd4</span>, <span class="number">0xa2</span>, <span class="number">0xaf</span>, <span class="number">0x9c</span>, <span class="number">0xa4</span>, <span class="number">0x72</span>, <span class="number">0xc0</span>,</span><br><span class="line">            <span class="number">0xb7</span>, <span class="number">0xfd</span>, <span class="number">0x93</span>, <span class="number">0x26</span>, <span class="number">0x36</span>, <span class="number">0x3f</span>, <span class="number">0xf7</span>, <span class="number">0xcc</span>, <span class="number">0x34</span>, <span class="number">0xa5</span>, <span class="number">0xe5</span>, <span class="number">0xf1</span>, <span class="number">0x71</span>, <span class="number">0xd8</span>, <span class="number">0x31</span>, <span class="number">0x15</span>,</span><br><span class="line">            <span class="number">0x04</span>, <span class="number">0xc7</span>, <span class="number">0x23</span>, <span class="number">0xc3</span>, <span class="number">0x18</span>, <span class="number">0x96</span>, <span class="number">0x05</span>, <span class="number">0x9a</span>, <span class="number">0x07</span>, <span class="number">0x12</span>, <span class="number">0x80</span>, <span class="number">0xe2</span>, <span class="number">0xeb</span>, <span class="number">0x27</span>, <span class="number">0xb2</span>, <span class="number">0x75</span>,</span><br><span class="line">            <span class="number">0x09</span>, <span class="number">0x83</span>, <span class="number">0x2c</span>, <span class="number">0x1a</span>, <span class="number">0x1b</span>, <span class="number">0x6e</span>, <span class="number">0x5a</span>, <span class="number">0xa0</span>, <span class="number">0x52</span>, <span class="number">0x3b</span>, <span class="number">0xd6</span>, <span class="number">0xb3</span>, <span class="number">0x29</span>, <span class="number">0xe3</span>, <span class="number">0x2f</span>, <span class="number">0x84</span>,</span><br><span class="line">            <span class="number">0x53</span>, <span class="number">0xd1</span>, <span class="number">0x00</span>, <span class="number">0xed</span>, <span class="number">0x20</span>, <span class="number">0xfc</span>, <span class="number">0xb1</span>, <span class="number">0x5b</span>, <span class="number">0x6a</span>, <span class="number">0xcb</span>, <span class="number">0xbe</span>, <span class="number">0x39</span>, <span class="number">0x4a</span>, <span class="number">0x4c</span>, <span class="number">0x58</span>, <span class="number">0xcf</span>,</span><br><span class="line">            <span class="number">0xd0</span>, <span class="number">0xef</span>, <span class="number">0xaa</span>, <span class="number">0xfb</span>, <span class="number">0x43</span>, <span class="number">0x4d</span>, <span class="number">0x33</span>, <span class="number">0x85</span>, <span class="number">0x45</span>, <span class="number">0xf9</span>, <span class="number">0x02</span>, <span class="number">0x7f</span>, <span class="number">0x50</span>, <span class="number">0x3c</span>, <span class="number">0x9f</span>, <span class="number">0xa8</span>,</span><br><span class="line">            <span class="number">0x51</span>, <span class="number">0xa3</span>, <span class="number">0x40</span>, <span class="number">0x8f</span>, <span class="number">0x92</span>, <span class="number">0x9d</span>, <span class="number">0x38</span>, <span class="number">0xf5</span>, <span class="number">0xbc</span>, <span class="number">0xb6</span>, <span class="number">0xda</span>, <span class="number">0x21</span>, <span class="number">0x10</span>, <span class="number">0xff</span>, <span class="number">0xf3</span>, <span class="number">0xd2</span>,</span><br><span class="line">            <span class="number">0xcd</span>, <span class="number">0x0c</span>, <span class="number">0x13</span>, <span class="number">0xec</span>, <span class="number">0x5f</span>, <span class="number">0x97</span>, <span class="number">0x44</span>, <span class="number">0x17</span>, <span class="number">0xc4</span>, <span class="number">0xa7</span>, <span class="number">0x7e</span>, <span class="number">0x3d</span>, <span class="number">0x64</span>, <span class="number">0x5d</span>, <span class="number">0x19</span>, <span class="number">0x73</span>,</span><br><span class="line">            <span class="number">0x60</span>, <span class="number">0x81</span>, <span class="number">0x4f</span>, <span class="number">0xdc</span>, <span class="number">0x22</span>, <span class="number">0x2a</span>, <span class="number">0x90</span>, <span class="number">0x88</span>, <span class="number">0x46</span>, <span class="number">0xee</span>, <span class="number">0xb8</span>, <span class="number">0x14</span>, <span class="number">0xde</span>, <span class="number">0x5e</span>, <span class="number">0x0b</span>, <span class="number">0xdb</span>,</span><br><span class="line">            <span class="number">0xe0</span>, <span class="number">0x32</span>, <span class="number">0x3a</span>, <span class="number">0x0a</span>, <span class="number">0x49</span>, <span class="number">0x06</span>, <span class="number">0x24</span>, <span class="number">0x5c</span>, <span class="number">0xc2</span>, <span class="number">0xd3</span>, <span class="number">0xac</span>, <span class="number">0x62</span>, <span class="number">0x91</span>, <span class="number">0x95</span>, <span class="number">0xe4</span>, <span class="number">0x79</span>,</span><br><span class="line">            <span class="number">0xe7</span>, <span class="number">0xc8</span>, <span class="number">0x37</span>, <span class="number">0x6d</span>, <span class="number">0x8d</span>, <span class="number">0xd5</span>, <span class="number">0x4e</span>, <span class="number">0xa9</span>, <span class="number">0x6c</span>, <span class="number">0x56</span>, <span class="number">0xf4</span>, <span class="number">0xea</span>, <span class="number">0x65</span>, <span class="number">0x7a</span>, <span class="number">0xae</span>, <span class="number">0x08</span>,</span><br><span class="line">            <span class="number">0xba</span>, <span class="number">0x78</span>, <span class="number">0x25</span>, <span class="number">0x2e</span>, <span class="number">0x1c</span>, <span class="number">0xa6</span>, <span class="number">0xb4</span>, <span class="number">0xc6</span>, <span class="number">0xe8</span>, <span class="number">0xdd</span>, <span class="number">0x74</span>, <span class="number">0x1f</span>, <span class="number">0x4b</span>, <span class="number">0xbd</span>, <span class="number">0x8b</span>, <span class="number">0x8a</span>,</span><br><span class="line">            <span class="number">0x70</span>, <span class="number">0x3e</span>, <span class="number">0xb5</span>, <span class="number">0x66</span>, <span class="number">0x48</span>, <span class="number">0x03</span>, <span class="number">0xf6</span>, <span class="number">0x0e</span>, <span class="number">0x61</span>, <span class="number">0x35</span>, <span class="number">0x57</span>, <span class="number">0xb9</span>, <span class="number">0x86</span>, <span class="number">0xc1</span>, <span class="number">0x1d</span>, <span class="number">0x9e</span>,</span><br><span class="line">            <span class="number">0xe1</span>, <span class="number">0xf8</span>, <span class="number">0x98</span>, <span class="number">0x11</span>, <span class="number">0x69</span>, <span class="number">0xd9</span>, <span class="number">0x8e</span>, <span class="number">0x94</span>, <span class="number">0x9b</span>, <span class="number">0x1e</span>, <span class="number">0x87</span>, <span class="number">0xe9</span>, <span class="number">0xce</span>, <span class="number">0x55</span>, <span class="number">0x28</span>, <span class="number">0xdf</span>,</span><br><span class="line">            <span class="number">0x8c</span>, <span class="number">0xa1</span>, <span class="number">0x89</span>, <span class="number">0x0d</span>, <span class="number">0xbf</span>, <span class="number">0xe6</span>, <span class="number">0x42</span>, <span class="number">0x68</span>, <span class="number">0x41</span>, <span class="number">0x99</span>, <span class="number">0x2d</span>, <span class="number">0x0f</span>, <span class="number">0xb0</span>, <span class="number">0x54</span>, <span class="number">0xbb</span>, <span class="number">0x16</span></span><br><span class="line">        )</span><br></pre></td></tr></table></figure>
+<h3 id="shiftrows">ShiftRows</h3>
+<p>“行移位”，AES的线性变换步骤之一，第 <span
+class="math inline">\(i\)</span> 行向左循环移位 <span
+class="math inline">\(i\)</span> 次。</p>
+<blockquote>
+<p>注意AES块(block)中字节排布是列优先（而非多数矩阵计算的“惯例”行优先），因此在代码实现中看起来就像第
+<span class="math inline">\(i\)</span> 列向上循环移位了 <span
+class="math inline">\(i\)</span> 次一样。</p>
+</blockquote>
+<p>以Python代码演示之：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">shift_rows</span>(<span class="params">ls</span>):</span><br><span class="line">    <span class="keyword">return</span> [</span><br><span class="line">    ls[<span class="number">0</span>],ls[<span class="number">5</span>],ls[<span class="number">10</span>],ls[<span class="number">15</span>],</span><br><span class="line">    ls[<span class="number">4</span>],ls[<span class="number">9</span>],ls[<span class="number">14</span>],ls[<span class="number">3</span>],</span><br><span class="line">    ls[<span class="number">8</span>],ls[<span class="number">13</span>],ls[<span class="number">2</span>],ls[<span class="number">7</span>],</span><br><span class="line">    ls[<span class="number">12</span>],ls[<span class="number">1</span>],ls[<span class="number">6</span>],ls[<span class="number">11</span>]</span><br><span class="line">    ]</span><br></pre></td></tr></table></figure>
+<p>若将原块视为 <span class="math inline">\(GF(2^{8})\)</span> 下的
+<span class="math inline">\(4 \times 4\)</span>
+矩阵，也可以认为其与给定矩阵 <span class="math inline">\(M_{S}\)</span>
+进行了乘法（“线性变换”的本质），形如 <span class="math inline">\(M_{S} =
+\begin{bmatrix} 1 &amp; 0 &amp; 0 &amp; 0 \\ 0 &amp; 0 &amp; 0 &amp; 1
+\\ 0 &amp; 1 &amp; 0 &amp; 0 \\ 0 &amp; 0 &amp; 1 &amp; 0
+\end{bmatrix}\)</span>。</p>
+<h3 id="mixcolumns">MixColumns</h3>
+<p>“列混淆”，AES的又一线性变换模块。直接给出对应的矩阵变换：</p>
+<p><span class="math inline">\(M_{M} = \begin{bmatrix} 2 &amp; 3 &amp; 1
+&amp; 1 \\1 &amp; 2 &amp; 3 &amp; 1 \\1 &amp; 1 &amp; 2 &amp; 3 \\3
+&amp; 1 &amp; 1 &amp; 2 \end{bmatrix}\)</span></p>
+<blockquote>
+<p>注意此处的乘法运算依然在 <span
+class="math inline">\(GF(2^{8})\)</span> 下进行，在运算结果小于 <span
+class="math inline">\(2^{8}\)</span>
+时其和通常的数乘结果一致，溢出时其处理方法有所不同（<strong>不是模 <span
+class="math inline">\(2^{8}\)</span></strong>）。可以参考如下实现 <span
+class="math inline">\(GF(2^{8})\)</span>
+下乘法的Python代码，其利用“快速乘”的溢出处理逻辑： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">gmul</span>(<span class="params">a,b</span>):</span><br><span class="line">    res = <span class="number">0</span></span><br><span class="line">    <span class="keyword">while</span> b:</span><br><span class="line">        <span class="keyword">if</span> b&amp;<span class="number">1</span>:</span><br><span class="line">            res ^= a</span><br><span class="line">        </span><br><span class="line">        a &lt;&lt;= <span class="number">1</span></span><br><span class="line">        <span class="keyword">if</span> a &amp; <span class="number">0x100</span>:</span><br><span class="line">            a ^= <span class="number">0x1b</span></span><br><span class="line">        </span><br><span class="line">        a &amp;= <span class="number">0xff</span></span><br><span class="line">        b &gt;&gt;= <span class="number">1</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> res</span><br></pre></td></tr></table></figure></p>
+</blockquote>
+<blockquote>
+<p>而在加密算法的实践中，可以发现矩阵乘法的系数只有2,3两种<del>（1可以算也可以不算）</del>，在部分追求高效的加密算法实践中，会选择将256个字节的乘法结果“打表”并以常量数组体现之，其理与S盒“预定义”类似。</p>
+</blockquote>
+<h3 id="addroundkey">AddRoundKey</h3>
+<p>将轮密钥和块进行逐字节加操作（在 <span
+class="math inline">\(GF(2^{8})\)</span>
+下，等价于按字节异或；对于矩阵运算而言即为两个矩阵相加）。</p>
+<h2 id="宏观">宏观</h2>
+<p>AES加密时，每轮会依次进行SubBytes、ShiftRows、MixColumns、AddRoundKey四个操作（混淆-扩散-密钥），例外：<br />
+-
+轮密钥RoundKey的组数比加密轮数多1，实际上<code>RoundKey[0]</code>就是初始密钥，第<code>i</code>轮调用的轮密钥是<code>RoundKey[i]</code>。在第一轮加密开始前，明文会先和<code>RoundKey[0]</code>进行一次AddRoundKey，此所谓“预白化”(pre-whitening)；<br />
+- 最后一轮加密没有MixColumns步骤。</p>
+<h1 id="δ集delta-set及攻击过程">Δ集(delta-set)及攻击过程</h1>
+<h2 id="δ-集和活跃位置">Δ-集和活跃位置</h2>
+<blockquote>
+<p>下述内容的参考文章：<a
+target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/589141550">知乎 - 初探AES Square
+Attack</a>，亦为笔者的square attack“入坑”之文。<br />
+<del>由于小姜懒得再重新作图了，因此</del>下述出现的注解性图示大量引用了该文的示意图。</p>
+</blockquote>
+<p>考虑一个大小为256的16Bytes密文集 <span
+class="math inline">\(c_{i}\)</span>。本密文集只有第一个字节遍历<code>0x00</code>到<code>0xff</code>，其余字节相同。<br />
+此时我们称块中 <span class="math inline">\((0,0)\)</span>
+这个位置是“活跃”(active)的。</p>
+<blockquote>
+<p>约定若块中某位置在块集中的值不同，则该位置是“活跃”的，反之则其“不活跃”，即在块集中的值相同。<br />
+对于一个良好的加密算法/哈希函数（具备较好扩散性），对某块经过多轮加密处理后，块中的活跃位置数应逐渐增加（直至全部活跃）。</p>
+</blockquote>
+<p>同时对于这种仅首字节（或某特定字节）完全遍历 <span
+class="math inline">\([0,256)\)</span>、其余字节不变的块集合为 <em>Δ-集
+(delta-set)</em> 。</p>
+<h2 id="活跃位置的扩散">活跃位置的扩散</h2>
+<p>现在分析AES加密中，每个组件对于活跃位置扩散的影响：</p>
+<blockquote>
+<p>注意判定活跃位置的变化时，横向观测量为<strong>仅第一个位置不同的明文块</strong>。</p>
+</blockquote>
+<ul>
+<li><p>SubBytes：不改变活跃位置分布情况。因为SubBytes的本质是<strong>每个Byte位置自身</strong>在
+<span class="math inline">\(GF(2^{8})\)</span>
+下的双射，因而活跃的位置依然活跃，不活跃的位置亦然（取值一定）。</p></li>
+<li><p>ShiftRows：行移位，其会让第 <span
+class="math inline">\(i\)</span> 行的活跃位置循环左移 <span
+class="math inline">\(i\)</span> 位，但不会增加活跃位置数。</p></li>
+<li><p>MixColumns：列混淆，从矩阵乘法理解之较好：考虑矩阵乘法的定义，某一位置上的新值是<strong>左矩阵对应行和右矩阵对应列的内积</strong>，因此这个活跃位置会且仅会扩散到<strong>其所在行</strong>上的所有元素。</p></li>
+<li><p>AddRoundKey：不改变活跃位置分布情况，因为对于同个密钥初始化的AES，对不同密文进行加密时轮密钥一定。</p></li>
+</ul>
+<p>对于前两轮来说，下图能更为直观地体现活跃位置（绿块）经过不同加密步骤后的扩散情况：</p>
+<figure>
+<img src="/img/post_pics/aes/1.png" alt="Active location diffusion" />
+<figcaption aria-hidden="true">Active location diffusion</figcaption>
+</figure>
+<p>可以发现，经过两轮加密后，明文块的所有位置都已经变成“活跃”的了，即<strong>所有位置对Δ-集都能遍历0-255的所有字节</strong>。</p>
+<h2 id="归元">归元</h2>
+<p>第三轮就比较有趣了：依然照葫芦画瓢式地分析，SubBytes、ShiftRows操作结束后，块(block)依然是所有位置均活跃的状态。<br />
+但MixColumns会打破这个性质（比较显然，因为无法预测某个位置是否仍能恰好遍历0-255）。</p>
+<p>不过作为<strong>线性变换</strong>组件，MixColumns后密文块依然有一些性质可被利用。<br />
+记<strong>在一个Δ-集内</strong>，某列的第 <span
+class="math inline">\(i\)</span> 个字节取值为 <span
+class="math inline">\(j\)</span> 时，列混淆前、后的取值分别为 <span
+class="math inline">\(x_{i,j}\)</span>、<span
+class="math inline">\(y_{i,j}\)</span>。</p>
+<blockquote>
+<p>显然 <span class="math inline">\(i\)</span> 的取值范围为 <span
+class="math inline">\([0,4)\)</span>，<span
+class="math inline">\(j\)</span> 的取值范围为 <span
+class="math inline">\([0,256)\)</span>。下述约定 <span
+class="math inline">\(i\)</span> 的运算在 <span
+class="math inline">\(Z_{4}\)</span>（模4整数环）下进行；注意 <span
+class="math inline">\(x_{i,j}\)</span> 和 <span
+class="math inline">\(y_{i,j}\)</span> 的运算均在 <span
+class="math inline">\(GF(2^{8})\)</span> 下进行。</p>
+</blockquote>
+<p>根据列混淆的计算式，可以推出：<span class="math inline">\(y_{i,j} =
+2x_{i,j} + 3x_{i+1,j} + x_{i+2,j} + x_{i+3,j}\)</span>。<br />
+继而，存在 <span class="math inline">\(\sum_{j=0}^{255} y_{i,j} =
+2\sum_{j=0}^{255} x_{i,j} + \cdots = 0 + 0 + 0 + 0 = 0\)</span>。</p>
+<blockquote>
+<p><span class="math inline">\(\sum_{j=0}^{255} x_{i,j} = 0\)</span>
+这点比较显然（因为 <span class="math inline">\(i\)</span>
+是活跃位置，其遍历了 <span
+class="math inline">\([0,256)\)</span>，自然存在其和为 <span
+class="math inline">\(0\)</span>），其亦为表述“活跃位置”的数学方法之一。</p>
+</blockquote>
+<p>而最后一步AddRoundKey由于只是给 <span
+class="math inline">\(y_{i,j}\)</span>
+加上了一个常量偏移，求和后相当于对该偏移乘以256，结果依然为 <span
+class="math inline">\(0\)</span>，即AddRoundKey并不改变这一性质（某一位置在Δ-集中的和为0）。</p>
+<h2 id="逆流的第四轮借力打力">逆流的第四轮：借力打力</h2>
+<p>上述“归元”确实得到了某一位置在Δ-集中和为0的特性，然而第四轮加密的SubBytes作为非线性变换组件会完全破坏之。<br />
+但如此我们的分析就结束了吗？</p>
+<p>假设我们拥有一个密文集，由于每轮的AddRoundKey实现的是<strong>按字节加</strong>，即每轮轮密钥只会影响当前块的一个特定字节，因此我们可以试着将密文“回溯”到这个性质依然成立的状态（即第三轮AddRoundKey结束后）。<br />
+此时，因为对于某一位置的密文，<strong>该位置的轮密钥正确</strong>是<strong>回溯至第三轮时Δ-集追踪其位置的密文和为0</strong>的充分条件，故可以<strong>逐个位置</strong>爆破第四轮的轮密钥，通过将密文回溯至第三轮并验证此性质是否成立，来得出轮密钥每个位置可能的值。</p>
+<blockquote>
+<p>尽管轮密钥正确并非该性质成立的充分必要条件，但在完全选择明文攻击中，攻击者可以构造多组Δ-集，对爆破的每一位密钥的可能值取交集，可以极快地锁定密钥（笔者测试多数情况下2组Δ-集有极大把握可以唯一确定轮密钥，<del>数学分析什么的就先咕着</del>）。<br />
+即使只有一组Δ-集，测试表明轮密钥的可能取值组合也不会太多（记 <span
+class="math inline">\(c_{i}\)</span> 为第 <span
+class="math inline">\(i\)</span> 位的轮密钥可能取值，可能组合数显然为
+<span class="math inline">\(\sum_{i=1}^{16}
+c_{i}\)</span>，但实践中多数的 $c_{i} $ 取值均为1，可能密钥数一般在
+<span class="math inline">\(10^{4}\)</span>
+的数量级左右），其后再通过完整解密校验等方式亦极易得出正确密钥。</p>
+</blockquote>
+<p>下附前四轮加密中位置特性变化的示意图，以便理解：</p>
+<blockquote>
+<p>白色：非活跃位置，该位置在<strong>同一状态</strong>的Δ-集中是<strong>定值</strong>；<br />
+绿色：活跃位置，该位置在<strong>同一状态</strong>的Δ-集中<strong>遍历了0-255的所有字节</strong>；<br />
+红色：“归元”特性，该位置在<strong>同一状态</strong>的Δ-集中<strong>值求和为0</strong>；<br />
+紫色：未知，该位置没有特殊性质。</p>
+</blockquote>
+<blockquote>
+<p>上述说明的“同一状态”对充分理解积分攻击非常关键。</p>
+</blockquote>
+<p><img src="/img/post_pics/aes/2.png" /></p>
+<h1 id="参考代码">参考代码</h1>
+<blockquote>
+<p>欢迎关注Hibiscus在github上的AES-Integrals项目鸭a.a：<a
+target="_blank" rel="noopener" href="https://github.com/CrystalJiang232/AES-Integrals">github -
+AES-Integrals</a></p>
+</blockquote>
+<h2 id="python">Python</h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line">inv_s_box = (<span class="number">82</span>, <span class="number">9</span>, <span class="number">106</span>, <span class="number">213</span>, <span class="number">48</span>, <span class="number">54</span>, <span class="number">165</span>, <span class="number">56</span>, <span class="number">191</span>, <span class="number">64</span>, <span class="number">163</span>, <span class="number">158</span>, <span class="number">129</span>, <span class="number">243</span>, <span class="number">215</span>, <span class="number">251</span>, <span class="number">124</span>, <span class="number">227</span>, <span class="number">57</span>, <span class="number">130</span>, <span class="number">155</span>, <span class="number">47</span>, <span class="number">255</span>, <span class="number">135</span>, <span class="number">52</span>, <span class="number">142</span>, <span class="number">67</span>, <span class="number">68</span>, <span class="number">196</span>, <span class="number">222</span>, <span class="number">233</span>, <span class="number">203</span>, <span class="number">84</span>, <span class="number">123</span>, <span class="number">148</span>, <span class="number">50</span>, <span class="number">166</span>, <span class="number">194</span>, <span class="number">35</span>, <span class="number">61</span>, <span class="number">238</span>, <span class="number">76</span>, <span class="number">149</span>, <span class="number">11</span>, <span class="number">66</span>, <span class="number">250</span>, <span class="number">195</span>, <span class="number">78</span>, <span class="number">8</span>, <span class="number">46</span>, <span class="number">161</span>, <span class="number">102</span>, <span class="number">40</span>, <span class="number">217</span>, <span class="number">36</span>, <span class="number">178</span>, <span class="number">118</span>, <span class="number">91</span>, <span class="number">162</span>, <span class="number">73</span>, <span class="number">109</span>, <span class="number">139</span>, <span class="number">209</span>, <span class="number">37</span>, <span class="number">114</span>, <span class="number">248</span>, <span class="number">246</span>, <span class="number">100</span>, <span class="number">134</span>, <span class="number">104</span>, <span class="number">152</span>, <span class="number">22</span>, <span class="number">212</span>, <span class="number">164</span>, <span class="number">92</span>, <span class="number">204</span>, <span class="number">93</span>, <span class="number">101</span>, <span class="number">182</span>, <span class="number">146</span>, <span class="number">108</span>, <span class="number">112</span>, <span class="number">72</span>, <span class="number">80</span>, <span class="number">253</span>, <span class="number">237</span>, <span class="number">185</span>, <span class="number">218</span>, <span class="number">94</span>, <span class="number">21</span>, <span class="number">70</span>, <span class="number">87</span>, <span class="number">167</span>, <span class="number">141</span>, <span class="number">157</span>, <span class="number">132</span>, <span class="number">144</span>, <span class="number">216</span>, <span class="number">171</span>, <span class="number">0</span>, <span class="number">140</span>, <span class="number">188</span>, <span class="number">211</span>, <span class="number">10</span>, <span class="number">247</span>, <span class="number">228</span>, <span class="number">88</span>, <span class="number">5</span>, <span class="number">184</span>, <span class="number">179</span>, <span class="number">69</span>, <span class="number">6</span>, <span class="number">208</span>, <span class="number">44</span>, <span class="number">30</span>, <span class="number">143</span>, <span class="number">202</span>, <span class="number">63</span>, <span class="number">15</span>, <span class="number">2</span>, <span class="number">193</span>, <span class="number">175</span>, <span class="number">189</span>, <span class="number">3</span>, <span class="number">1</span>, <span class="number">19</span>, <span class="number">138</span>, <span class="number">107</span>, <span class="number">58</span>, <span class="number">145</span>, <span class="number">17</span>, <span class="number">65</span>, <span class="number">79</span>, <span class="number">103</span>, <span class="number">220</span>, <span class="number">234</span>, <span class="number">151</span>, <span class="number">242</span>, <span class="number">207</span>, <span class="number">206</span>, <span class="number">240</span>, <span class="number">180</span>, <span class="number">230</span>, <span class="number">115</span>, <span class="number">150</span>, <span class="number">172</span>, <span class="number">116</span>, <span class="number">34</span>, <span class="number">231</span>, <span class="number">173</span>, <span class="number">53</span>, <span class="number">133</span>, <span class="number">226</span>, <span class="number">249</span>, <span class="number">55</span>, <span class="number">232</span>, <span class="number">28</span>, <span class="number">117</span>, <span class="number">223</span>, <span class="number">110</span>, <span class="number">71</span>, <span class="number">241</span>, <span class="number">26</span>, <span class="number">113</span>, <span class="number">29</span>, <span class="number">41</span>, <span class="number">197</span>, <span class="number">137</span>, <span class="number">111</span>, <span class="number">183</span>, <span class="number">98</span>, <span class="number">14</span>, <span class="number">170</span>, <span class="number">24</span>, <span class="number">190</span>, <span class="number">27</span>, <span class="number">252</span>, <span class="number">86</span>, <span class="number">62</span>, <span class="number">75</span>, <span class="number">198</span>, <span class="number">210</span>, <span class="number">121</span>, <span class="number">32</span>, <span class="number">154</span>, <span class="number">219</span>, <span class="number">192</span>, <span class="number">254</span>, <span class="number">120</span>, <span class="number">205</span>, <span class="number">90</span>, <span class="number">244</span>, <span class="number">31</span>, <span class="number">221</span>, <span class="number">168</span>, <span class="number">51</span>, <span class="number">136</span>, <span class="number">7</span>, <span class="number">199</span>, <span class="number">49</span>, <span class="number">177</span>, <span class="number">18</span>, <span class="number">16</span>, <span class="number">89</span>, <span class="number">39</span>, <span class="number">128</span>, <span class="number">236</span>, <span class="number">95</span>, <span class="number">96</span>, <span class="number">81</span>, <span class="number">127</span>, <span class="number">169</span>, <span class="number">25</span>, <span class="number">181</span>, <span class="number">74</span>, <span class="number">13</span>, <span class="number">45</span>, <span class="number">229</span>, <span class="number">122</span>, <span class="number">159</span>, <span class="number">147</span>, <span class="number">201</span>, <span class="number">156</span>, <span class="number">239</span>, <span class="number">160</span>, <span class="number">224</span>, <span class="number">59</span>, <span class="number">77</span>, <span class="number">174</span>, <span class="number">42</span>, <span class="number">245</span>, <span class="number">176</span>, <span class="number">200</span>, <span class="number">235</span>, <span class="number">187</span>, <span class="number">60</span>, <span class="number">131</span>, <span class="number">83</span>, <span class="number">153</span>, <span class="number">97</span>, <span class="number">23</span>, <span class="number">43</span>, <span class="number">4</span>, <span class="number">126</span>, <span class="number">186</span>, <span class="number">119</span>, <span class="number">214</span>, <span class="number">38</span>, <span class="number">225</span>, <span class="number">105</span>, <span class="number">20</span>, <span class="number">99</span>, <span class="number">85</span>, <span class="number">33</span>, <span class="number">12</span>, <span class="number">125</span>)</span><br><span class="line"></span><br><span class="line">inv_shift_row_idx = (<span class="number">0</span>,<span class="number">13</span>,<span class="number">10</span>,<span class="number">7</span>,</span><br><span class="line">                    <span class="number">4</span>,<span class="number">1</span>,<span class="number">14</span>,<span class="number">11</span>,</span><br><span class="line">                    <span class="number">8</span>,<span class="number">5</span>,<span class="number">2</span>,<span class="number">15</span>,</span><br><span class="line">                    <span class="number">12</span>,<span class="number">9</span>,<span class="number">6</span>,<span class="number">3</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">bytes_xor</span>(<span class="params">a:<span class="built_in">bytes</span>,b:<span class="built_in">bytes</span></span>):</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">bytes</span>([i^j <span class="keyword">for</span> i,j <span class="keyword">in</span> <span class="built_in">zip</span>(a,b)])</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">inv_shift_rows</span>(<span class="params">a:<span class="built_in">bytes</span></span>):</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">bytes</span>([a[inv_shift_row_idx[i]] <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">16</span>)])</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">inv_sub_bytes</span>(<span class="params">a:<span class="built_in">bytes</span></span>):</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">bytes</span>([inv_s_box[i] <span class="keyword">for</span> i <span class="keyword">in</span> a])</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">atk</span>(<span class="params">ciphers:<span class="built_in">list</span>[<span class="built_in">list</span>[<span class="built_in">bytes</span>]]</span>):</span><br><span class="line">    result = [[] <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">16</span>)]</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> cipher <span class="keyword">in</span> ciphers:</span><br><span class="line">        <span class="keyword">assert</span> <span class="built_in">len</span>(cipher) == <span class="number">256</span>, <span class="string">&quot;Delta-set required to conduct the integral attack&quot;</span></span><br><span class="line"></span><br><span class="line">        trykey = <span class="built_in">bytes</span>(<span class="number">16</span>)</span><br><span class="line">        </span><br><span class="line">        tempopt = []</span><br><span class="line">        <span class="keyword">for</span> idx <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">16</span>):</span><br><span class="line">            keyidx = inv_shift_row_idx[idx]</span><br><span class="line">            <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">256</span>):</span><br><span class="line">                trykey[keyidx] = i</span><br><span class="line">                sumval = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">                <span class="keyword">for</span> bk <span class="keyword">in</span> cipher:</span><br><span class="line">                    bk = bytes_xor(bk,trykey)</span><br><span class="line">                    bk = inv_shift_rows(bk)</span><br><span class="line">                    bk = inv_sub_bytes(bk)</span><br><span class="line">                    sumval ^= bk[idx]</span><br><span class="line"></span><br><span class="line">                <span class="keyword">if</span> sumval == <span class="number">0</span>:</span><br><span class="line">                    tempopt.append(i)        </span><br><span class="line"></span><br><span class="line">        result[keyidx] = <span class="built_in">list</span>(<span class="built_in">set</span>(tempopt) &amp; <span class="built_in">set</span>(result[keyidx]))</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> result</span><br></pre></td></tr></table></figure>
+<h2 id="c">C++</h2>
+<blockquote>
+<p>因考虑了预留扩展攻击接口、类型安全、编译链接、可维护性与可读性等问题，下述实现不是最简攻击代码，亦不是效率最极限的代码<del>毕竟还没有上什么手搓set呀，多线程呀之类的极限操作</del>。<br />
+但依然架不住运行效率极高（以最佳优化方式编译，三组 <em>delta-set</em>
+在笔者搭载 Intel i7-13700H CPU的笔记本上的密钥破解耗时小于100ms）。</p>
+</blockquote>
+<blockquote>
+<p>考虑篇幅因素，此处仅给出关键代码（比如<code>Attack_Interface</code>等实现未给出），完整代码可以移步上述的AES-Integrals项目获取<del>欢迎乱叉(fork)</del>。</p>
+</blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">namespace</span> atk4_1</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">class</span> <span class="title class_">Attack</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">using</span> ciphertexts = std::vector&lt;block&gt;;</span><br><span class="line">        <span class="keyword">using</span> ciphertext_rvw = std::span&lt;<span class="type">const</span> block&gt;;</span><br><span class="line">        <span class="keyword">using</span> keyls = std::array&lt;std::unordered_set&lt;byte&gt;, <span class="number">16</span>&gt;;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="keyword">constexpr</span> <span class="title">Attack</span><span class="params">()</span> :copy&#123;</span>&#125;</span><br><span class="line">        &#123;</span><br><span class="line"></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">constexpr</span> <span class="title">Attack</span><span class="params">(<span class="type">const</span> Attack&amp;)</span> </span>= <span class="keyword">delete</span>;</span><br><span class="line">        <span class="keyword">constexpr</span> Attack&amp; <span class="keyword">operator</span>=(<span class="type">const</span> Attack&amp;) = <span class="keyword">delete</span>;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">constexpr</span> <span class="type">void</span> <span class="title">append_ciphertexts</span><span class="params">(ciphertext_rvw vw)</span></span></span><br><span class="line"><span class="function">        </span>&#123;</span><br><span class="line">            <span class="keyword">if</span> (vw.<span class="built_in">size</span>() != <span class="number">256</span>)</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="keyword">throw</span> std::invalid_argument&#123;<span class="string">&quot;Each group of ciphertext must be a delta-set of length 256&quot;</span>&#125;;</span><br><span class="line">            &#125;</span><br><span class="line">            copy.<span class="built_in">push_back</span>(&#123; std::from_range,vw &#125;);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">solve</span><span class="params">()</span></span></span><br><span class="line"><span class="function">        </span>&#123;</span><br><span class="line">            <span class="keyword">if</span> (copy.<span class="built_in">empty</span>())</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="keyword">throw</span> std::runtime_error&#123; <span class="string">&quot;No ciphertexts provided yet!&quot;</span> &#125;;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">for</span> (ciphertext_rvw v: copy)</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="keyword">if</span> (!status)</span><br><span class="line">                &#123;</span><br><span class="line">                    status = <span class="built_in">verify</span>(v);</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">else</span></span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="keyword">auto</span> temp = <span class="built_in">verify</span>(v);</span><br><span class="line">                    <span class="keyword">for</span> (<span class="keyword">auto</span>&amp;&amp; [s1,s2] : std::views::<span class="built_in">zip</span>(*status,temp))</span><br><span class="line">                    &#123;</span><br><span class="line">                        <span class="keyword">for</span> (byte i : s1)</span><br><span class="line">                        &#123;</span><br><span class="line">                            <span class="keyword">if</span> (!s<span class="number">2.</span><span class="built_in">contains</span>(i))</span><br><span class="line">                            &#123;</span><br><span class="line">                                s<span class="number">1.</span><span class="built_in">erase</span>(i);</span><br><span class="line">                            &#125;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (std::ranges::<span class="built_in">all_of</span>(*status, [](<span class="keyword">auto</span> x) &#123;<span class="keyword">return</span> x == <span class="number">1</span>;&#125;, &amp;std::unordered_set&lt;byte&gt;::size)) <span class="comment">//Only key combination possible</span></span><br><span class="line">            &#123;</span><br><span class="line">                std::<span class="built_in">println</span>(<span class="string">&quot;Key resolved:&quot;</span>);</span><br><span class="line">                <span class="keyword">for</span> (<span class="type">const</span> <span class="keyword">auto</span>&amp; i : *status)</span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="keyword">for</span> (<span class="keyword">auto</span> t : i)</span><br><span class="line">                    &#123;</span><br><span class="line">                        std::<span class="built_in">print</span>(<span class="string">&quot;&#123;&#125;&quot;</span>, t);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">                std::<span class="built_in">println</span>();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    <span class="keyword">private</span>:</span><br><span class="line">        <span class="function"><span class="keyword">constexpr</span> keyls <span class="title">verify</span><span class="params">(ciphertext_rvw vw)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">        </span>&#123;</span><br><span class="line">            keyls ret;</span><br><span class="line">            block sample_key;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">auto</span> idx : std::views::<span class="built_in">iota</span>(<span class="number">0</span>, <span class="number">16</span>))</span><br><span class="line">            &#123;</span><br><span class="line">                uc keyidx = Attack_Interface::inv_shift_rows_idx[idx];</span><br><span class="line">                <span class="comment">//Checking at index 0-15 through the ciphertexts rewinded to round 3</span></span><br><span class="line">                <span class="comment">//Keys that await to be enumerated should be forward-mapped to round 4(the keys trying to ...</span></span><br><span class="line"></span><br><span class="line">                <span class="keyword">for</span> (<span class="keyword">auto</span> i : Attack_Interface::iota_byte)</span><br><span class="line">                &#123;</span><br><span class="line">                    sample_key[keyidx] = i;</span><br><span class="line">                    uc sumval = <span class="number">0</span>;</span><br><span class="line">                    <span class="keyword">for</span> (block bk : vw)</span><br><span class="line">                    &#123;</span><br><span class="line">                        Attack_Interface::<span class="built_in">bytes_xor</span>(bk, sample_key); <span class="comment">//AddRoundKey</span></span><br><span class="line">                        Attack_Interface::<span class="built_in">inv_shift_rows</span>(bk);</span><br><span class="line">                        Attack_Interface::<span class="built_in">inv_sub_bytes</span>(bk);</span><br><span class="line"></span><br><span class="line">                        sumval ^= bk[idx];</span><br><span class="line">                    &#125;</span><br><span class="line"></span><br><span class="line">                    <span class="keyword">if</span> (sumval == <span class="number">0</span>)</span><br><span class="line">                    &#123;</span><br><span class="line">                        ret[keyidx].<span class="built_in">insert</span>(i);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">return</span> ret;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        std::vector&lt;ciphertexts&gt; copy;</span><br><span class="line">        std::optional&lt;keyls&gt; status;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">atk4_1::test_atk4_1</span><span class="params">()</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">using</span> <span class="type">group_t</span> = std::array&lt;block, <span class="number">256</span>&gt;; <span class="comment">//delta-set</span></span><br><span class="line"></span><br><span class="line">        Func_Timer t;</span><br><span class="line">        std::string str&#123;&#125;;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">auto</span> key = <span class="built_in">block_fromhex</span>(str).<span class="built_in">value_or</span>(block&#123;&#125;);</span><br><span class="line">        <span class="keyword">auto</span> aes = <span class="built_in">AES</span>&lt;<span class="number">4</span>&gt;(key);</span><br><span class="line"></span><br><span class="line">        std::<span class="built_in">println</span>(<span class="string">&quot;4th round key:\n&#123;&#125;&quot;</span>, aes.<span class="built_in">output_rk4</span>());</span><br><span class="line"></span><br><span class="line">        Attack atk&#123;&#125;;</span><br><span class="line">        block sample&#123;&#125;;</span><br><span class="line">        <span class="type">group_t</span> ciphers&#123;&#125;;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">auto</span> q : Attack_Interface::iota_byte | std::views::<span class="built_in">take</span>(<span class="number">2</span>))</span><br><span class="line">        &#123;</span><br><span class="line">            sample[<span class="number">15</span>] = <span class="built_in">byte</span>(q);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">auto</span> i : Attack_Interface::iota_byte)</span><br><span class="line">            &#123;</span><br><span class="line">                sample[<span class="number">0</span>] = <span class="built_in">byte</span>(i);</span><br><span class="line">                ciphers[i] = aes.<span class="built_in">encrypt</span>(sample);</span><br><span class="line">            &#125;</span><br><span class="line">            atk.<span class="built_in">append_ciphertexts</span>(ciphers);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        atk.<span class="built_in">solve</span>();</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h1 id="section">!...?</h1>
+<h2 id="靶子">靶子</h2>
+<p>假设存在这样一个非常有趣的加密系统：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">what</span>():</span><br><span class="line">    aes = AES.new(key,<span class="built_in">round</span> = <span class="number">4</span>) <span class="comment">#AES is custom-defined class enabling round designation</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        lucky = urandom(<span class="number">1</span>)</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&#x27;[+] Today my lucky byte is:<span class="subst">&#123;lucky.<span class="built_in">hex</span>()&#125;</span>&#x27;</span>)</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&#x27;[+] And the ciphertext is: <span class="subst">&#123;aes.encrypt(pad(lucky)).<span class="built_in">hex</span>()&#125;</span>&#x27;</span>)</span><br><span class="line">        <span class="keyword">if</span> <span class="built_in">input</span>(<span class="string">&#x27;[-] Still want more interactions(y/[n])?&#x27;</span>) != <span class="string">&#x27;y&#x27;</span>:</span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>实际上类似于这种加密系统的应用颇为广泛——对一个固定前缀（或后缀）加上少量的“活跃”字节进行加密。<br />
+对于形如上文的加密系统，我们只需与之不断交互，直至能获取到一个Δ-集所对应的密文，即可展开AES积分攻击，破解轮密钥。</p>
+<h2 id="能不能再给力一点">能不能再给力一点？</h2>
+<p>上述我们讨论了当我们能够获得一个（最好是多个）<em>delta-set</em>
+时的攻击方法。那么，假如受制于攻击条件等（如上述的加密Orcale只给了100次“随机”加密机会，最终获得的不同密文甚至可能只有60-70个），无法获得这样的
+<em>delta-set</em> 呢？</p>
 
       
 
@@ -414,497 +762,7 @@ class="math inline">\(R_{q}\)</span> 等等都能一通百通。<br />
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/crypto/ntru/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-  <div>
-</article>
-
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-misc/bomblab_wp" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/misc/bomblab_wp/">CSAPP-BOMBLAB Writeup</a>
-    </h1>
-  
-
-        
-        <a href="/misc/bomblab_wp/" class="archive-article-date">
-  	<time datetime="2025-04-13T07:55:10.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-04-13</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <blockquote>
-<p><del>Crypto手勇闯Reverse新手村现状</del></p>
-</blockquote>
-<blockquote>
-<p>前言：本wp不涉及任何x86-64汇编指令<del>（因为在写这份wp时笔者还没好好学汇编）</del></p>
-</blockquote>
-<h1 id="背景介绍">背景介绍</h1>
-<p>这不是CTF比赛，而是一次<del>平平无奇</del>的“拆弹”实验。</p>
-<p>实验要求：<br />
-给了一个可执行文件<del><code>./bomb</code></del>，要求解析其每一阶段逻辑，将答案存储在<code>./bomb.txt</code>中。</p>
-<p>本质上是一道逆向分析题。<br />
-本意这是想让人去用命令行的gdb等去磕汇编代码，但显然上千行的汇编还是稍微有些难顶，因而有必要让IDA这一逆向“外挂”助人一臂之力。<br />
-当然IDA此处利用的主要功能还是反编译协助生成伪C代码进行分析，虽然可读性依然极低（毕竟作为编译期语言，变量名和很多结构体之类的内存特征都被抹去，加上各种<del>乱七八糟的寄存器横跳</del>导致令人眼花缭乱的类型转换，以及各种调用协定+系统底层函数串门袭扰——<br />
-<strong>但总归是好过汇编吧！！！</strong></p>
-<h1 id="程序流程梳理">程序流程梳理</h1>
-<p>娴熟地IDA启动，bomb拖入，一通OK，找main函数，f5的结果形如：<br />
-<img src="/img/post_pics/CSrev/1.png" alt="mainfunc" /></p>
-<p>可以大致看出程序的主要流程（初始化以及六个衔接的阶段）。</p>
-<blockquote>
-<p><del>题目的<code>.tar</code>中明明提供了<code>main</code>函数啊喂</del></p>
-</blockquote>
-<blockquote>
-<p>IDA进行分析的经验法则：敢于“不求甚解”，即对于一些语义不太明确的函数/变量区域等，若能通过一些其它手段（调试、搜索、基础知识和盲猜等）确定其功能/含义，则应相信自身对含义的解析正确并继续分析。<del>有时候看不懂不是自身的锅</del></p>
-</blockquote>
-<p>不难推断出<code>read_line()</code>就是一个取一行字符串的函数。查看其反编译代码后，可发现其中还有一些过长字符串截断和已读字符串总数统计等小功能。<br />
-略去无关紧要的部分，直接开始逐个<code>phase</code>点进去反编译分析：</p>
-<blockquote>
-<p>由于每个人的题目数据不同，加之笔者并非专业Re手，因此题解和解析均仅供参考，欢迎读者交流、指正。</p>
-</blockquote>
-<h1 id="阶段一">阶段一</h1>
-<blockquote>
-<p>最友好的一个阶段<del>签到题.sage</del></p>
-</blockquote>
-<h2 id="反编译代码">反编译代码</h2>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">__int64 __fastcall <span class="title function_">phase_1</span><span class="params">(__int64 a1)</span></span><br><span class="line">&#123;</span><br><span class="line">  __int64 result; <span class="comment">// rax</span></span><br><span class="line"></span><br><span class="line">  result = strings_not_equal(a1, <span class="string">&quot;I can see Russia from my house!&quot;</span>);</span><br><span class="line">  <span class="keyword">if</span> ( (_DWORD)result )</span><br><span class="line">    explode_bomb();</span><br><span class="line">  <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="解析">解析</h2>
-<p>虽然逐行阅读后<del>可以发现一种废话文学的美</del>，但易看出只需要让<code>a1</code>字符串与后续字符串内容相同即可。</p>
-<blockquote>
-<p>“废话文学”是因为由汇编重组成C时，只能还原程序的（大体）执行流程而不能完全还原源代码。源代码完全可以形如：<br />
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">phase_1</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* x)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span>(!strings_not_equal(x,<span class="string">&quot;I can see Russia from my house!&quot;</span>))</span><br><span class="line">    &#123;</span><br><span class="line">        explode_bomb();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<del>什么？你问我为什么返回值我置而不顾？我也不知道，但反正不重要，孩子对调用协定也没什么研究，不要强求一个crypto手太多</del></p>
-</blockquote>
-<p>解为：<code>I can see Russia from my house!</code></p>
-<h1 id="阶段二">阶段二</h1>
-<p>反编译代码：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">unsigned</span> __int64 __fastcall <span class="title function_">phase_2</span><span class="params">(__int64 a1)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">int</span> *v1; <span class="comment">// rbx</span></span><br><span class="line">  <span class="type">int</span> v3[<span class="number">4</span>]; <span class="comment">// [rsp+0h] [rbp-38h] BYREF</span></span><br><span class="line">  <span class="type">char</span> v4; <span class="comment">// [rsp+10h] [rbp-28h] BYREF</span></span><br><span class="line">  <span class="type">unsigned</span> __int64 v5; <span class="comment">// [rsp+18h] [rbp-20h]</span></span><br><span class="line"></span><br><span class="line">  v5 = __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">  read_six_numbers(a1, v3);</span><br><span class="line">  <span class="keyword">if</span> ( v3[<span class="number">0</span>] || v3[<span class="number">1</span>] != <span class="number">1</span> )</span><br><span class="line">    explode_bomb();</span><br><span class="line">  v1 = v3;</span><br><span class="line">  <span class="keyword">do</span></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">if</span> ( v1[<span class="number">2</span>] != *v1 + v1[<span class="number">1</span>] )</span><br><span class="line">      explode_bomb();</span><br><span class="line">    ++v1;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">while</span> ( v1 != (<span class="type">int</span> *)&amp;v4 );</span><br><span class="line">  <span class="keyword">return</span> v5 - __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h2 id="解析-1">解析</h2>
-<p>略去各种奇怪的变量和系统函数调用，核心有几点：</p>
-<ul>
-<li><p>调用<code>read_six_numbers</code>函数，这个函数会从<code>a1</code>中读取6个数字(<code>int</code>)并存储在<code>v3</code>开始的数组中，并且<code>scanf</code>的返回值不能小于5（否则GG）；<br />
-</p></li>
-<li><p>第一个<code>if</code>翻译一下，约束了<code>v3[0] == 0 &amp;&amp; v3[1] == 1</code>；<br />
-</p></li>
-<li><p><code>do_while</code>循环结合<code>if</code>应当翻译成这样：
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;<span class="number">4</span>;++i)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span>(v3[i+<span class="number">2</span>] != v3[i] + v3[i+<span class="number">1</span>])</span><br><span class="line">    &#123;</span><br><span class="line">        explode_bomb();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<blockquote>
-<p>上述“转译”过程对逆向者的C语言功底要求还是极高的，尤其是涉及内存布局和指针的部分；可以自行体会和复现一下这部分“转译”是怎么进行的。</p>
-</blockquote></li>
-</ul>
-<p>转译完成后的逻辑就很简单了，即希望我们读取的6个数字能构成前2项为(0,1)的斐波那契数列。</p>
-<p>解为：<code>0 1 1 2 3 5</code></p>
-<h1 id="阶段三">阶段三</h1>
-<h2 id="反编译代码-1">反编译代码</h2>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">unsigned</span> __int64 __fastcall <span class="title function_">phase_3</span><span class="params">(__int64 a1)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">int</span> v1; <span class="comment">// eax</span></span><br><span class="line">  <span class="type">int</span> v3; <span class="comment">// [rsp+0h] [rbp-18h] BYREF</span></span><br><span class="line">  <span class="type">int</span> v4; <span class="comment">// [rsp+4h] [rbp-14h] BYREF</span></span><br><span class="line">  <span class="type">unsigned</span> __int64 v5; <span class="comment">// [rsp+8h] [rbp-10h]</span></span><br><span class="line"></span><br><span class="line">  v5 = __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">  <span class="keyword">if</span> ( (<span class="type">int</span>)__isoc99_sscanf(a1, <span class="string">&quot;%d %d&quot;</span>, &amp;v3, &amp;v4) &lt;= <span class="number">1</span> )</span><br><span class="line">    explode_bomb();</span><br><span class="line">  <span class="keyword">switch</span> ( v3 )</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">case</span> <span class="number">0</span>:</span><br><span class="line">      v1 = <span class="number">104</span>;</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> <span class="number">1</span>:</span><br><span class="line">      v1 = <span class="number">735</span>;</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> <span class="number">2</span>:</span><br><span class="line">      v1 = <span class="number">815</span>;</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> <span class="number">3</span>:</span><br><span class="line">      v1 = <span class="number">943</span>;</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> <span class="number">4</span>:</span><br><span class="line">      v1 = <span class="number">924</span>;</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> <span class="number">5</span>:</span><br><span class="line">      v1 = <span class="number">93</span>;</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> <span class="number">6</span>:</span><br><span class="line">      v1 = <span class="number">757</span>;</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> <span class="number">7</span>:</span><br><span class="line">      v1 = <span class="number">208</span>;</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">default</span>:</span><br><span class="line">      explode_bomb();</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> ( v4 != v1 )</span><br><span class="line">    explode_bomb();</span><br><span class="line">  <span class="keyword">return</span> v5 - __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h2 id="解析-2">解析</h2>
-<blockquote>
-<p><del>难得的第三关比第二关简单的一天</del></p>
-</blockquote>
-<p>没啥好说的，很容易就看出有七组可能解，随便选一组。</p>
-<p>解为： <code>0 104</code>（不唯一）</p>
-<h1 id="阶段四">阶段四</h1>
-<blockquote>
-<p>原来实验中“选做题”的出现不是师出无名……</p>
-</blockquote>
-<h2 id="反编译代码-2">反编译代码</h2>
-<p>和本题有关的函数有两个，除了<code>phase_4</code>外还有一个<code>func4</code>。</p>
-<h3 id="phase_4"><code>phase_4</code></h3>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">unsigned</span> __int64 __fastcall <span class="title function_">phase_4</span><span class="params">(__int64 a1)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">unsigned</span> <span class="type">int</span> v2; <span class="comment">// [rsp+0h] [rbp-18h] BYREF</span></span><br><span class="line">  <span class="type">int</span> v3; <span class="comment">// [rsp+4h] [rbp-14h] BYREF</span></span><br><span class="line">  <span class="type">unsigned</span> __int64 v4; <span class="comment">// [rsp+8h] [rbp-10h]</span></span><br><span class="line"></span><br><span class="line">  v4 = __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">  <span class="keyword">if</span> ( (<span class="type">unsigned</span> <span class="type">int</span>)__isoc99_sscanf(a1, <span class="string">&quot;%d %d&quot;</span>, &amp;v3, &amp;v2) != <span class="number">2</span> || v2 - <span class="number">2</span> &gt; <span class="number">2</span> )</span><br><span class="line">    explode_bomb();</span><br><span class="line">  <span class="keyword">if</span> ( v3 != (<span class="type">unsigned</span> <span class="type">int</span>)func4(<span class="number">7LL</span>, v2) )</span><br><span class="line">    explode_bomb();</span><br><span class="line">  <span class="keyword">return</span> v4 - __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="func4"><code>func4</code></h3>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">__int64 __fastcall <span class="title function_">func4</span><span class="params">(<span class="type">int</span> a1, __int64 a2)</span></span><br><span class="line">&#123;</span><br><span class="line">  __int64 result; <span class="comment">// rax</span></span><br><span class="line">  <span class="type">int</span> v3; <span class="comment">// r12d</span></span><br><span class="line"></span><br><span class="line">  result = <span class="number">0LL</span>;</span><br><span class="line">  <span class="keyword">if</span> ( a1 &gt; <span class="number">0</span> )</span><br><span class="line">  &#123;</span><br><span class="line">    result = (<span class="type">unsigned</span> <span class="type">int</span>)a2;</span><br><span class="line">    <span class="keyword">if</span> ( a1 != <span class="number">1</span> )</span><br><span class="line">    &#123;</span><br><span class="line">      v3 = func4((<span class="type">unsigned</span> <span class="type">int</span>)(a1 - <span class="number">1</span>), a2) + a2;</span><br><span class="line">      <span class="keyword">return</span> v3 + (<span class="type">unsigned</span> <span class="type">int</span>)func4((<span class="type">unsigned</span> <span class="type">int</span>)(a1 - <span class="number">2</span>), (<span class="type">unsigned</span> <span class="type">int</span>)a2);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h2 id="解析-3">解析</h2>
-<p>单论<code>phase_4</code>的逻辑实际上还是比较简单的，约束整理：</p>
-<ul>
-<li>读取两个整数<del>并且还必须是两个整数</del>，并且要求<code>v2 - 2 &lt;= 2</code>；<br />
-</li>
-<li><code>v3 == func4(7,v2)</code></li>
-</ul>
-<blockquote>
-<p><code>v2 - 2 &gt; 2</code>中，由于<code>v2</code>的变量类型是<code>unsigned int</code>，因此最终的约束是
-<code>v2 &lt;= 4 &amp;&amp; v2 &gt;= 2</code>。</p>
-</blockquote>
-<blockquote>
-<p>强制类型转换的处理应更为灵活：有些可以忽略，而有些则需认真考量之。<br />
-主要原因是这些转换多数并不是源代码中显式出现，或与变量的隐式转换有关（如返回值类型<code>int</code>但调用函数使用了一个<code>unsigned long long</code>来接收），或与编译过程中寄存器类型横跳有关<del>反正寄存器都在那，<code>ax</code>变<code>rax</code>/<code>eax</code>/<code>sax</code>等等就是编译器大手一挥的事(bushi)</del>，具体对逆向逻辑是否有影响无法一概而论。</p>
-</blockquote>
-<p>而<code>func4</code>不难看出是一个递归函数，其递归定义如下：对于<code>f(i)</code>(<code>i &gt;= 0</code>，此处忽略<code>v2</code>的不变传递)，</p>
-<ul>
-<li><code>f(0) == 0</code>；<br />
-</li>
-<li><code>f(1) == v2</code>；</li>
-<li><code>f(i) == f(i-1) + f(i-2) + v2 (i &gt;= 2)</code>。</li>
-</ul>
-<p>数学上应该也碰到过不少这种递归定义，由于<code>i == 7</code>，因此手动计算即可满足要求。<br />
-取合法的<code>v2 = 2</code>时：</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">i</th>
-<th style="text-align: center;">0</th>
-<th style="text-align: center;">1</th>
-<th style="text-align: center;">2</th>
-<th style="text-align: center;">3</th>
-<th style="text-align: center;">4</th>
-<th style="text-align: center;">5</th>
-<th style="text-align: center;">6</th>
-<th style="text-align: center;">7</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;">f(i)</td>
-<td style="text-align: center;">0</td>
-<td style="text-align: center;">2</td>
-<td style="text-align: center;">4</td>
-<td style="text-align: center;">8</td>
-<td style="text-align: center;">14</td>
-<td style="text-align: center;">24</td>
-<td style="text-align: center;">40</td>
-<td style="text-align: center;">66</td>
-</tr>
-</tbody>
-</table>
-<p>解为：<code>66 2</code>（不唯一）</p>
-<h1 id="阶段五">阶段五</h1>
-<blockquote>
-<p>Crypto入门之古典密码？</p>
-</blockquote>
-<h2 id="反编译代码-3">反编译代码</h2>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">unsigned</span> __int64 __fastcall <span class="title function_">phase_5</span><span class="params">(__int64 a1)</span></span><br><span class="line">&#123;</span><br><span class="line">  __int64 i; <span class="comment">// rax</span></span><br><span class="line">  <span class="type">char</span> v3[<span class="number">7</span>]; <span class="comment">// [rsp+1h] [rbp-17h] BYREF</span></span><br><span class="line">  <span class="type">unsigned</span> __int64 v4; <span class="comment">// [rsp+8h] [rbp-10h]</span></span><br><span class="line"></span><br><span class="line">  v4 = __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">  <span class="keyword">if</span> ( (<span class="type">unsigned</span> <span class="type">int</span>)string_length() != <span class="number">6</span> )</span><br><span class="line">    explode_bomb();</span><br><span class="line">  <span class="keyword">for</span> ( i = <span class="number">0LL</span>; i != <span class="number">6</span>; ++i )</span><br><span class="line">    v3[i] = array_0[*(_BYTE *)(a1 + i) &amp; <span class="number">0xF</span>];</span><br><span class="line">  v3[<span class="number">6</span>] = <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">if</span> ( (<span class="type">unsigned</span> <span class="type">int</span>)strings_not_equal(v3, <span class="string">&quot;flames&quot;</span>) )</span><br><span class="line">    explode_bomb();</span><br><span class="line">  <span class="keyword">return</span> v4 - __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h2 id="解析-4">解析</h2>
-<blockquote>
-<p>反编译代码在某些情况下还是可能让人发懵的——比如函数调用的传参问题<del>需要“自行体会”</del>。</p>
-</blockquote>
-<p>整理约束时起手就遇上了“意外”：出现了一个没有形参的<code>string_length()</code>，但点进看<code>string_length()</code>的反编译代码却是这样的：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">__int64 __fastcall <span class="title function_">string_length</span><span class="params">(_BYTE *a1)</span></span><br><span class="line">&#123;</span><br><span class="line">  __int64 result; <span class="comment">// rax</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> ( !*a1 )</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0LL</span>;</span><br><span class="line">  LODWORD(result) = <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">do</span></span><br><span class="line">  &#123;</span><br><span class="line">    ++a1;</span><br><span class="line">    result = (<span class="type">unsigned</span> <span class="type">int</span>)(result + <span class="number">1</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">while</span> ( *a1 );</span><br><span class="line">  <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>该函数本身就是一个非常正常的<code>strlen</code><del>高仿</del>实现，但反编译代码中调用方没有传递参数。<br />
-如上情景和函数调用协定有关。本次程序中所有函数的调用协定都采用了<code>__fastcall</code>，<code>__fastcall</code>调用的特点：</p>
-<ul>
-<li>前2个(x86)/前4个(x64)整型参数使用速度更快的寄存器*CX和*DX传递；x64的Linux更为复杂，最前2个整型参数通过<code>RDI</code>、<code>RSI</code>传递；</li>
-<li>其余参数从右至左压栈；<br />
-</li>
-<li>被调用者(x86)/调用者(x64)负责清理栈。</li>
-</ul>
-<p>回到<code>main</code>函数中，以<code>phase_5</code>的调用前后为例，可以发现有如下汇编代码片段：<del>关键时候还是得回去磕汇编</del></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">call    phase_defused</span><br><span class="line">lea     rdi, aSoYouGotThatOn ; &quot;So you got that one.  Try this one.&quot;</span><br><span class="line">call    _puts</span><br><span class="line">call    read_line</span><br><span class="line">mov     rdi, rax</span><br><span class="line">call    phase_5</span><br><span class="line">call    phase_defused</span><br><span class="line">lea     rdi, aGoodWorkOnToTh ; &quot;Good work!  On to the next...&quot;</span><br></pre></td></tr></table></figure>
-<p><code>read_line</code>会将返回值（一个<code>const char*</code>）放在<code>rax</code>中，随后<code>mov rdi,rax</code>将<code>rax</code>的值移入<code>rdi</code>中，再调用<code>phase_5</code>时<code>rdi</code>就是隐式的第一参数。</p>
-<p>虽然看上去<code>phase_5</code>“接受”了这个形参，但因为其并没有改变<code>rdi</code>的值，因此再去<code>call string_length</code>时<code>rdi</code>还是第一参数，因而上述调用其实就是<code>string_length(a1)</code>，亦即获取<code>a1</code>指向字符串的长度（<code>a1</code>的类型被标注为<code>__int64</code>，本质上就是x64系统下指针的数据类型，参考C++的<code>std::ptrdiff_t</code>）。</p>
-<p>需要注意的是，阶段六中还会出现一次相同的情况（“消失的第一参数”）。</p>
-<blockquote>
-<p>各位无需担心编程的问题——毕竟作为<del>不那么高级的</del>高级语言，编程时函数的调用方式一定为<code>string_length(str)</code>（也就是只要<del>不像可变参数越界那样</del>乱搞，函数参数传递一定是正确的）。<br />
-此现象是因为IDA反汇编时，由于其“观测”到<code>phase_5</code>中没有对<code>rdi</code>进行操作，故会以为调用<code>string_length</code>时没有传参——毕竟IDA的反汇编的目标不是对函数语义进行检查，亦不是去完全重构原函数，而是为了将汇编语言的逻辑以尽可能“眼熟”的方式展现出来。同时不自动填充参数的另一个原因是<code>phase_5</code>自身并不知道谁在调用它，或给它传递的参数如何。</p>
-</blockquote>
-<blockquote>
-<p><del>当然即使不知道汇编语言和调用协定之类的逻辑，盲猜也能知道这个函数获取的就是传入字符串的长度</del></p>
-</blockquote>
-<p>解决这一小插曲后，对于一个目标字符串<code>char v3[7]</code>，其进行了一次单表映射加密，令<code>v3[i] = array_0[a1[i] &amp; 0xF]</code>（翻译后）；<br />
-需满足的目标约束是令字符串<code>v3</code>为<code>"flames"</code>。</p>
-<p>首先找到<code>array_0</code>，双击<code>array_0</code>可以在栈内存区中找到其定义：<br />
-<img src="/img/post_pics/CSrev/2.png" alt="Stack" /></p>
-<blockquote>
-<p>实际上这片内存被称为“字符串常量区”，C/C++程序开始运行时会在栈中开辟一段只读内存区，存放所有的字符串常量，即<del>妇孺皆知</del>的<code>const char*</code>。<br />
-因此其中也能发现一些有趣的内容，<del>包括但不限于So you think you can
-stop the bomb with ctrl-c, do you?</del></p>
-</blockquote>
-<p>直接逐个目标字符搜索其下标，即为令<code>a1[i] &amp; 0xF</code>应达成的目标值；为令<code>a1[i]</code><del>在<code>string.printable</code>中</del>可以打印，给目标下标加上16的整数倍后转化成字符即可，解同样不唯一。</p>
-<blockquote>
-<p>如果当作CTF-Crypto题的话，应试着尽可能高效地写出Python解题代码：<br />
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> string <span class="keyword">import</span> ascii_letters <span class="keyword">as</span> lts</span><br><span class="line"></span><br><span class="line">sec = <span class="string">&quot;maduiersnfotvbyl&quot;</span></span><br><span class="line">ls = [sec.index(i) <span class="keyword">for</span> i <span class="keyword">in</span> <span class="string">&quot;flames&quot;</span>]</span><br><span class="line">res = <span class="string">&#x27;&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> ls:</span><br><span class="line">    <span class="keyword">while</span> <span class="keyword">not</span> <span class="built_in">chr</span>(i) <span class="keyword">in</span> lts:</span><br><span class="line">        i += <span class="number">0x10</span></span><br><span class="line">    res += <span class="built_in">chr</span>(i)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(res)</span><br></pre></td></tr></table></figure></p>
-</blockquote>
-<p>解为：<code>IOAPEG</code>（不唯一）</p>
-<h1 id="阶段六">阶段六</h1>
-<h2 id="反编译代码-4">反编译代码</h2>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">unsigned</span> __int64 __fastcall <span class="title function_">phase_6</span><span class="params">(__int64 a1)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">int</span> *v1; <span class="comment">// r13</span></span><br><span class="line">  __int64 i; <span class="comment">// r14</span></span><br><span class="line">  __int64 v3; <span class="comment">// rbx</span></span><br><span class="line">  __int64 j; <span class="comment">// rsi</span></span><br><span class="line">  <span class="type">int</span> v5; <span class="comment">// ecx</span></span><br><span class="line">  <span class="type">int</span> v6; <span class="comment">// eax</span></span><br><span class="line">  _QWORD *v7; <span class="comment">// rdx</span></span><br><span class="line">  __int64 v8; <span class="comment">// rbx</span></span><br><span class="line">  __int64 v9; <span class="comment">// rax</span></span><br><span class="line">  __int64 v10; <span class="comment">// rdx</span></span><br><span class="line">  __int64 v11; <span class="comment">// rax</span></span><br><span class="line">  __int64 v12; <span class="comment">// rdx</span></span><br><span class="line">  __int64 v13; <span class="comment">// rax</span></span><br><span class="line">  <span class="type">int</span> v14; <span class="comment">// ebp</span></span><br><span class="line">  <span class="type">int</span> v16[<span class="number">8</span>]; <span class="comment">// [rsp+0h] [rbp-88h] BYREF</span></span><br><span class="line">  __int64 v17; <span class="comment">// [rsp+20h] [rbp-68h]</span></span><br><span class="line">  __int64 v18; <span class="comment">// [rsp+28h] [rbp-60h]</span></span><br><span class="line">  __int64 v19; <span class="comment">// [rsp+30h] [rbp-58h]</span></span><br><span class="line">  __int64 v20; <span class="comment">// [rsp+38h] [rbp-50h]</span></span><br><span class="line">  __int64 v21; <span class="comment">// [rsp+40h] [rbp-48h]</span></span><br><span class="line">  __int64 v22; <span class="comment">// [rsp+48h] [rbp-40h]</span></span><br><span class="line">  <span class="type">unsigned</span> __int64 v23; <span class="comment">// [rsp+58h] [rbp-30h]</span></span><br><span class="line"></span><br><span class="line">  v23 = __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">  v1 = v16;</span><br><span class="line">  read_six_numbers(a1, v16);</span><br><span class="line">  <span class="keyword">for</span> ( i = <span class="number">1LL</span>; ; ++i )</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">if</span> ( (<span class="type">unsigned</span> <span class="type">int</span>)(*v1 - <span class="number">1</span>) &gt; <span class="number">5</span> )</span><br><span class="line">      explode_bomb();</span><br><span class="line">    <span class="keyword">if</span> ( (<span class="type">int</span>)i &gt; <span class="number">5</span> )</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    v3 = i;</span><br><span class="line">    <span class="keyword">do</span></span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">if</span> ( *v1 == v16[v3] )</span><br><span class="line">        explode_bomb();</span><br><span class="line">      ++v3;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">while</span> ( (<span class="type">int</span>)v3 &lt;= <span class="number">5</span> );</span><br><span class="line">    ++v1;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">for</span> ( j = <span class="number">0LL</span>; j != <span class="number">6</span>; ++j )</span><br><span class="line">  &#123;</span><br><span class="line">    v5 = v16[j];</span><br><span class="line">    v6 = <span class="number">1</span>;</span><br><span class="line">    v7 = &amp;node1;</span><br><span class="line">    <span class="keyword">if</span> ( v5 &gt; <span class="number">1</span> )</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">do</span></span><br><span class="line">      &#123;</span><br><span class="line">        v7 = (_QWORD *)v7[<span class="number">1</span>];</span><br><span class="line">        ++v6;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">while</span> ( v6 != v5 );</span><br><span class="line">    &#125;</span><br><span class="line">    *(&amp;v17 + j) = (__int64)v7;</span><br><span class="line">  &#125;</span><br><span class="line">  v8 = v17;</span><br><span class="line">  v9 = v18;</span><br><span class="line">  *(_QWORD *)(v17 + <span class="number">8</span>) = v18;</span><br><span class="line">  v10 = v19;</span><br><span class="line">  *(_QWORD *)(v9 + <span class="number">8</span>) = v19;</span><br><span class="line">  v11 = v20;</span><br><span class="line">  *(_QWORD *)(v10 + <span class="number">8</span>) = v20;</span><br><span class="line">  v12 = v21;</span><br><span class="line">  *(_QWORD *)(v11 + <span class="number">8</span>) = v21;</span><br><span class="line">  v13 = v22;</span><br><span class="line">  *(_QWORD *)(v12 + <span class="number">8</span>) = v22;</span><br><span class="line">  *(_QWORD *)(v13 + <span class="number">8</span>) = <span class="number">0LL</span>;</span><br><span class="line">  v14 = <span class="number">5</span>;</span><br><span class="line">  <span class="keyword">do</span></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">if</span> ( *(_DWORD *)v8 &gt; **(_DWORD **)(v8 + <span class="number">8</span>) )</span><br><span class="line">      explode_bomb();</span><br><span class="line">    v8 = *(_QWORD *)(v8 + <span class="number">8</span>);</span><br><span class="line">    --v14;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">while</span> ( v14 );</span><br><span class="line">  <span class="keyword">return</span> v23 - __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="解析-5">解析</h2>
-<p><code>phase_6</code>的代码逻辑就比较冗长了，当然一部分是因为其将全部流程均打包在了一个函数中。</p>
-<p>将程序的流程分为以下几部分：</p>
-<ol type="1">
-<li>读取六个整数存储于<code>v16</code>指向的数组中，用第一个<code>for</code>循环进行约束；<br />
-</li>
-<li>第二个<code>for</code>循环进行了链表转写的操作；<br />
-</li>
-<li>一系列非常奇怪的赋值语句；<br />
-</li>
-<li><code>do-while</code>循环再次进行约束。</li>
-</ol>
-<h3 id="part-1">Part 1</h3>
-<p>第一个<code>for</code>循环的约束逻辑：伪C部分形如<br />
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> ( i = <span class="number">1LL</span>; ; ++i )</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">if</span> ( (<span class="type">unsigned</span> <span class="type">int</span>)(*v1 - <span class="number">1</span>) &gt; <span class="number">5</span> )</span><br><span class="line">      explode_bomb();</span><br><span class="line">    <span class="keyword">if</span> ( (<span class="type">int</span>)i &gt; <span class="number">5</span> )</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    v3 = i;</span><br><span class="line">    <span class="keyword">do</span></span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">if</span> ( *v1 == v16[v3] )</span><br><span class="line">        explode_bomb();</span><br><span class="line">      ++v3;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">while</span> ( (<span class="type">int</span>)v3 &lt;= <span class="number">5</span> );</span><br><span class="line">    ++v1;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
-依然还是编译-反编译带来的语义崩坏通病<del>有点类似于将语言A的句子翻译成语言B再翻译回来的感觉</del>。梳理其逻辑可以转写如下：</p>
-<ul>
-<li><code>*v1</code>访问过的所有元素（也就是<code>v16</code>的所有元素）数值必须在
-<span class="math inline">\([1,6]\)</span>；<br />
-</li>
-<li><code>v1</code>和<code>&amp;v16[v3]</code>都是指针，其中<code>v3</code>在<code>do-while</code>循环前的初始值必为<code>v1+1</code>，相当于其访问元素初始下标比<code>v1</code>大1。进而，<code>do-while</code>循环的约束拓展、简写后可写作“<code>v16</code>中的元素两两不同”。</li>
-</ul>
-<p>合并起来就是：<strong>v16[6]中唯一地存放了1~6这六个数字。</strong></p>
-<h3 id="part-2">Part 2</h3>
-<p>再把对应部分的伪代码搬过来： <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> ( j = <span class="number">0LL</span>; j != <span class="number">6</span>; ++j )</span><br><span class="line">&#123;</span><br><span class="line">  v5 = v16[j];</span><br><span class="line">  v6 = <span class="number">1</span>;</span><br><span class="line">  v7 = &amp;node1;</span><br><span class="line">  <span class="keyword">if</span> ( v5 &gt; <span class="number">1</span> )</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">do</span></span><br><span class="line">    &#123;</span><br><span class="line">      v7 = (_QWORD *)v7[<span class="number">1</span>];</span><br><span class="line">      ++v6;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">while</span> ( v6 != v5 );</span><br><span class="line">  &#125;</span><br><span class="line">  *(&amp;v17 + j) = (__int64)v7;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>首先又涉及到了一个栈变量<code>node1</code>，查看其内容：<br />
-<img src="/img/post_pics/CSrev/3.png" alt="node1" />
-可以发现其邻域还有<code>node2</code>，<code>node3</code>等，结合题目描述推测其与链表有关。但链表的<code>struct</code>在此处已无法还原，所以只能看循环体内对内存的操作：</p>
-<ul>
-<li>先令<code>v5 = v16[j]</code>(<del><code>j in range(6)</code></del>)，显然若<code>v5 &lt;= 1</code>，则直接令<code>v17[j] = &amp;node1</code>；<br />
-</li>
-<li>否则进入<code>do-while</code>循环，发现其寻址方式特别有趣——<code>v7 = (_QWORD *)v7[1]</code>，强制类型转换由于没有发生截断（原来是<code>__int64</code>，现在<code>QWORD</code>四字类型依然是64位，相当于将该位置开始的8Byte数据按指针的方式解读，参考C++的<code>reinterpret_cast</code>）故近似可忽略（但注意此时其已经具备了“指针”的属性，可以执行下标访问等操作）。
-随后结合<code>operator[]</code>，相当于<code>v7</code>移动到了根据<code>v7</code>后的下一个变量（即8Byte后）的“数据地址”。</li>
-</ul>
-<p>结合上图可能会更加直观：<br />
-如假设<code>v5 = 2</code>，相当于其只前进了一次，首先<code>v7 = 0x405330</code>，其获取<code>0x405338</code>开始8Byte的数据，由于x86-64架构小端序的特性，其得到的数据是<code>0x405340</code>。<br />
-随后，<code>v7</code>移动到这个“获得”的数据所对应的地址上，即现在<code>v7</code>就是<code>0x405340</code>。</p>
-<p>不难发现这一部分的链表<del>还算比较友好</del>都是“连续”存放的，<strong>除了node5的地址指向了<code>0x405210</code></strong>，回滚后发现其就是node6，该node存放“下一个结点地址”是<code>0</code>（<code>NULL</code>,<del><code>nullptr</code></del>）。</p>
-<blockquote>
-<p>由于这个Part的前置条件就是<code>v16[6]</code>覆盖了1~6的所有数字，因此此处不应出现越界之类的意外情况。</p>
-</blockquote>
-<h3 id="part-3">Part 3</h3>
-<p>这一段的伪代码会让人看着非常摸不着头脑：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">v8 = v17;</span><br><span class="line"> v9 = v18;</span><br><span class="line"> *(_QWORD *)(v17 + 8) = v18;</span><br><span class="line"> v10 = v19;</span><br><span class="line"> *(_QWORD *)(v9 + 8) = v19;</span><br><span class="line"> v11 = v20;</span><br><span class="line"> *(_QWORD *)(v10 + 8) = v20;</span><br><span class="line"> v12 = v21;</span><br><span class="line"> *(_QWORD *)(v11 + 8) = v21;</span><br><span class="line"> v13 = v22;</span><br><span class="line"> *(_QWORD *)(v12 + 8) = v22;</span><br><span class="line"> *(_QWORD *)(v13 + 8) = 0LL;</span><br></pre></td></tr></table></figure>
-<p>其涉及了大量乱飞的变量名，而这些变量名看似“空穴来风”。其源代码大概率亦并非如此编写<del>日常甩锅给IDA/反编译</del>。</p>
-<blockquote>
-<p>推测这大概率是构建<code>struct</code>的某个函数被重复调用、内联展开后的结果，解析见下。</p>
-</blockquote>
-<p>破局之法有二：首先可以试着回到反汇编代码头，查看其定义的注释：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">__int64 v8; // rbx</span><br><span class="line">__int64 v9; // rax</span><br><span class="line">__int64 v10; // rdx</span><br><span class="line">__int64 v11; // rax</span><br><span class="line">__int64 v12; // rdx</span><br><span class="line">__int64 v13; // rax</span><br><span class="line">int v14; // ebp</span><br><span class="line">int v16[8]; // [rsp+0h] [rbp-88h] BYREF</span><br><span class="line">__int64 v17; // [rsp+20h] [rbp-68h]</span><br><span class="line">__int64 v18; // [rsp+28h] [rbp-60h]</span><br><span class="line">__int64 v19; // [rsp+30h] [rbp-58h]</span><br><span class="line">__int64 v20; // [rsp+38h] [rbp-50h]</span><br><span class="line">__int64 v21; // [rsp+40h] [rbp-48h]</span><br><span class="line">__int64 v22; // [rsp+48h] [rbp-40h]</span><br></pre></td></tr></table></figure>
-<p>或者直接看栈空间：<br />
-<img src="/img/post_pics/CSrev/4.png" alt="varstk" /></p>
-<p>可以发现两点：</p>
-<ul>
-<li><code>v8</code>-<code>v13</code>是“名义上”的变量，但它们实际并不存在于C源程序中，注释亦指明之——它们实际上是寄存器在伪C中的别名。
-&gt;
-这也是一些反编译代码“废话文学”的来源，寄存器实际上是作为部分变量/返回值间赋值的“中间人”。<br />
-</li>
-<li><code>v17</code>-<code>v22</code>并非互相独立的变量，实际上它们在内存空间中的位置是连续的（其类型视为<code>__int64</code>的情况下）。事实上可以认为存在一个数组<code>arr</code>，其中<code>v17</code>就是<code>arr[0]</code>，<code>v18</code>就是<code>arr[1]</code>，以此类推，<code>v22</code>就是<code>arr[5]</code>。</li>
-</ul>
-<p>还记得此前Part
-2中给<code>*(&amp;v17 + j)</code>赋值的语句吗？结合上文分析，按变量名的角度理解，Part2等价于在将<code>node0</code>的地址写入<code>v17</code>，<code>node1</code>的地址写入<code>v18</code>，等等。<br />
-那此处的一些赋值语句就不再让人完全发懵了：<br />
-<code>*(_QWORD *)(v17 + 8)</code>其实就是<code>node0</code>中存放下一结点地址的该部分内存，对之赋值<code>v18</code><del>说c话</del>就是：<br />
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">node0.next = &amp;node(???);</span><br></pre></td></tr></table></figure></p>
-<p>而这里的(???)就是之前<code>*&amp;(v17 + 1)</code>被重写时使用的<code>node</code>地址，追溯回去也就是<code>node(v16[j])</code>。</p>
-<p>至此分析结束。<br />
-这段代码(Part2 +
-Part3)的作用是实现了链表“重组”：先建立一个链表，然后把链表中的地址用一个数组存储起来，再根据另一个index式的数组将链表重新连接。写成C语言代码应该长这样：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Node</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    <span class="type">int</span> data;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">Node</span>* <span class="title">next</span>;</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Node</span>* <span class="title">head</span> =</span> <span class="comment">/**/</span>;</span><br><span class="line"><span class="type">int</span> index_ls[<span class="number">6</span>] = <span class="comment">/**/</span>;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Node</span>* <span class="title">arr</span>[6] =</span> &#123;&#125;;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Node</span>* <span class="title">cur</span> =</span> <span class="literal">NULL</span>,*tp = <span class="literal">NULL</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;<span class="number">6</span>;++i)</span><br><span class="line">&#123;</span><br><span class="line">    cur = head;</span><br><span class="line">    <span class="type">int</span> temp = index_ls[i];</span><br><span class="line">    <span class="keyword">if</span>(temp)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> j=<span class="number">0</span>;j&lt;temp;++j)</span><br><span class="line">        &#123;</span><br><span class="line">            cur = cur-&gt;next;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    arr[i] = cur;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&lt;<span class="number">6</span>;++i)</span><br><span class="line">&#123;</span><br><span class="line">    cur = arr[i];</span><br><span class="line">    tp = cur-&gt;next;</span><br><span class="line">    cur-&gt;next = </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="part-4">Part 4</h3>
-<p>现在<code>v8</code>定位到了<code>v17</code>处，而此处其比较的约束条件是<code>*(_DWORD *)v8 &lt;= **(_DWORD **)(v8 + 8)</code>。<br />
-此处<code>_DWORD *</code>的强制类型转换说明：比较时，将其按2字（4字节，32位）的方式解读。但<code>v8</code>本身具有<code>__int64</code>的属性（是一个地址），其+8的偏移量相当于从数据部分（一个<code>int</code>）“偏”到了地址部分，再进行二阶解引用，相当于解引用了“下一个结点”的<code>int</code>。<br />
-总而言之，翻译过来就是约束<strong>按链表的访问顺序，其对应数据区的<code>int</code>应是非递减的</strong>。<br />
-因此我们直接查看node0-node5对应的<code>int</code>数据区，将之按非递减序排列，对应的下标+1即为解。</p>
-<p>数据区的<code>DWORD</code>表示：</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">node编号</th>
-<th style="text-align: center;">内存数据</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;">1</td>
-<td style="text-align: center;"><code>ad 03 00 00</code></td>
-</tr>
-<tr>
-<td style="text-align: center;">2</td>
-<td style="text-align: center;"><code>e7 03 00 00</code></td>
-</tr>
-<tr>
-<td style="text-align: center;">3</td>
-<td style="text-align: center;"><code>1b 01 00 00</code></td>
-</tr>
-<tr>
-<td style="text-align: center;">4</td>
-<td style="text-align: center;"><code>1b 01 00 00</code></td>
-</tr>
-<tr>
-<td style="text-align: center;">5</td>
-<td style="text-align: center;"><code>8c 01 00 00</code></td>
-</tr>
-<tr>
-<td style="text-align: center;">6</td>
-<td style="text-align: center;"><code>db 00 00 00</code></td>
-</tr>
-</tbody>
-</table>
-<p>按小端序读取，不难得出一种非递减序为<code>6 3 4 5 1 2</code>。</p>
-<p>解为：<code>6 3 4 5 1 2</code>或<code>6 4 3 5 1 2</code></p>
-<h1 id="阶段七隐藏关">阶段七（“隐藏关”）</h1>
-<h2 id="何谓隐藏">何谓“隐藏”</h2>
-<p>其一，其函数名为<code>secret_phase</code>(bushi)<br />
-其二，该阶段的触发不是显式进行的，而是依赖了一个名为<code>phase_defused</code>的函数，其在每个阶段结束后被调用：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">unsigned</span> __int64 <span class="title function_">phase_defused</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">char</span> v1; <span class="comment">// [rsp+8h] [rbp-70h] BYREF</span></span><br><span class="line">  <span class="type">char</span> v2; <span class="comment">// [rsp+Ch] [rbp-6Ch] BYREF</span></span><br><span class="line">  <span class="type">char</span> v3[<span class="number">88</span>]; <span class="comment">// [rsp+10h] [rbp-68h] BYREF</span></span><br><span class="line">  <span class="type">unsigned</span> __int64 v4; <span class="comment">// [rsp+68h] [rbp-10h]</span></span><br><span class="line"></span><br><span class="line">  v4 = __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">  send_msg(<span class="number">1LL</span>);</span><br><span class="line">  <span class="keyword">if</span> ( num_input_strings == <span class="number">6</span> )</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">if</span> ( (<span class="type">unsigned</span> <span class="type">int</span>)__isoc99_sscanf(&amp;unk_405910, <span class="string">&quot;%d %d %s&quot;</span>, &amp;v1, &amp;v2, v3) == <span class="number">3</span></span><br><span class="line">      &amp;&amp; !(<span class="type">unsigned</span> <span class="type">int</span>)strings_not_equal(v3, <span class="string">&quot;DrEvil&quot;</span>) )</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="built_in">puts</span>(<span class="string">&quot;Curses, you&#x27;ve found the secret phase!&quot;</span>);</span><br><span class="line">      <span class="built_in">puts</span>(<span class="string">&quot;But finding it and solving it are quite different...&quot;</span>);</span><br><span class="line">      secret_phase();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;Congratulations! You&#x27;ve defused the bomb!&quot;</span>);</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;Your instructor has been notified and will verify your solution.&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> v4 - __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>注意到其前置的触发条件是<code>num_input_strings == 6</code>，而<code>num_input_strings</code>变量是在<code>read_line</code>函数（读取字符串）中被更改的。<br />
-故总结起来就是其<strong>必须在完成前六关后才能触发</strong>。</p>
-<p>里层<code>if</code>的约束条件为：</p>
-<ul>
-<li>先对一个奇怪的位置<code>0x405910</code>开始的字符串进行了<code>sscanf</code>，读取到<code>v1</code>、<code>v2</code>、<code>v3</code>中，其分别为整型、整型、字符串，要求<code>scanf</code>返回值为3；<br />
-</li>
-<li><code>strcmp(v3,"DrEvil") == 0</code>（等价）。</li>
-</ul>
-<p>回到栈空间及汇编代码中，可以看到以下片段：<br />
-<img src="/img/post_pics/CSrev/9.png" alt="stack_partition" /></p>
-<p>这个<code>0x405910</code>的位置特殊在于，其恰好在<code>char input_strings[240]</code>的隔壁。而<code>input_strings</code>只在<code>read_line</code>函数中有涉及过，查看其反编译代码：</p>
-<blockquote>
-<p>实践证明，不求甚解的可行性会随着时间、形势和目标等而不断转化。如最初我们认为对<code>read_line</code>函数不需要过于深究，但现在仍需回到其中才能探明“隐藏关”的启动方法。</p>
-</blockquote>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="type">char</span> *<span class="title function_">read_line</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">int</span> v0; <span class="comment">// ebp</span></span><br><span class="line">  <span class="type">const</span> <span class="type">char</span> *v1; <span class="comment">// rbx</span></span><br><span class="line">  <span class="type">int</span> v2; <span class="comment">// eax</span></span><br><span class="line">  <span class="type">int</span> v4; <span class="comment">// eax</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> ( !skip() )</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">if</span> ( infile == (FILE *)<span class="built_in">stdin</span> )</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="built_in">puts</span>(<span class="string">&quot;Error: Premature EOF on stdin&quot;</span>);</span><br><span class="line">      <span class="built_in">exit</span>(<span class="number">8</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> ( getenv(<span class="string">&quot;GRADE_BOMB&quot;</span>) )</span><br><span class="line">      <span class="built_in">exit</span>(<span class="number">0</span>);</span><br><span class="line">    infile = (FILE *)<span class="built_in">stdin</span>;</span><br><span class="line">    <span class="keyword">if</span> ( !skip() )</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="built_in">puts</span>(<span class="string">&quot;Error: Premature EOF on stdin&quot;</span>);</span><br><span class="line">      <span class="built_in">exit</span>(<span class="number">0</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  v0 = num_input_strings;</span><br><span class="line">  v1 = &amp;input_strings[<span class="number">80</span> * num_input_strings];</span><br><span class="line">  v2 = <span class="built_in">strlen</span>(v1);</span><br><span class="line">  <span class="keyword">if</span> ( v2 &gt; <span class="number">78</span> )</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;Error: Input line too long&quot;</span>);</span><br><span class="line">    v4 = num_input_strings++;</span><br><span class="line">    <span class="built_in">strcpy</span>(&amp;input_strings[<span class="number">80</span> * v4], <span class="string">&quot;***truncated***&quot;</span>);</span><br><span class="line">    explode_bomb();</span><br><span class="line">  &#125;</span><br><span class="line">  input_strings[<span class="number">80</span> * v0 - <span class="number">1</span> + v2] = <span class="number">0</span>;</span><br><span class="line">  num_input_strings = v0 + <span class="number">1</span>;</span><br><span class="line">  <span class="keyword">return</span> v1;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>不难推断，<code>input_strings</code>是一个存放了输入的<code>char[???]</code>，但显然<code>???</code>不应为<code>240</code>（因为每个字符串都预留了<code>80</code>的空间）；IDA将之标记为<code>char[240]</code>依然和编译-反编译过程等有关（<del>中途杀出来的变量搅混水</del>）。<br />
-但既然如此，鉴于<code>input_strings</code>的起始地址为<code>0x405820</code>，则对于下标为<code>i</code>的题目，存放输入字符串的地址就是<code>0x405820 + i*80</code>。<br />
-所以<code>0x405910</code>恰好就是下标为<code>3</code>，即阶段四时我们的输入。</p>
-<blockquote>
-<p>Surprise m***** f***er!(bushi)</p>
-</blockquote>
-<p>确定了<code>sscanf</code>的作用对象后，回到阶段四的答案（两个整数，以<code>66 2</code>为例），在其后再追加一个<code>DrEvil</code>即可触发隐藏关；隐藏关的输入则在第七行正常进行。</p>
-<h2 id="反编译代码-5">反编译代码</h2>
-<h3 id="secret_phase"><code>secret_phase</code></h3>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">__int64 <span class="title function_">secret_phase</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">const</span> <span class="type">char</span> *line; <span class="comment">// rdi</span></span><br><span class="line">  <span class="type">int</span> v1; <span class="comment">// ebx</span></span><br><span class="line"></span><br><span class="line">  line = (<span class="type">const</span> <span class="type">char</span> *)read_line();</span><br><span class="line">  v1 = strtol(line, <span class="number">0LL</span>, <span class="number">10</span>);</span><br><span class="line">  <span class="keyword">if</span> ( (<span class="type">unsigned</span> <span class="type">int</span>)(v1 - <span class="number">1</span>) &gt; <span class="number">0x3E8</span> )</span><br><span class="line">    explode_bomb();</span><br><span class="line">  <span class="keyword">if</span> ( (<span class="type">unsigned</span> <span class="type">int</span>)fun7((__int64)&amp;n1, v1) != <span class="number">5</span> )</span><br><span class="line">    explode_bomb();</span><br><span class="line">  <span class="built_in">puts</span>(<span class="string">&quot;Wow! You&#x27;ve defused the secret stage!&quot;</span>);</span><br><span class="line">  <span class="keyword">return</span> phase_defused();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="fun7"><code>fun7</code></h3>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">__int64 __fastcall <span class="title function_">fun7</span><span class="params">(__int64 a1, <span class="type">int</span> a2)</span></span><br><span class="line">&#123;</span><br><span class="line">  __int64 result; <span class="comment">// rax</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> ( !a1 )</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0xFFFFFFFF</span>LL;</span><br><span class="line">  <span class="keyword">if</span> ( *(_DWORD *)a1 &gt; a2 )</span><br><span class="line">    <span class="keyword">return</span> <span class="number">2</span> * (<span class="type">unsigned</span> <span class="type">int</span>)fun7(*(_QWORD *)(a1 + <span class="number">8</span>));</span><br><span class="line">  result = <span class="number">0LL</span>;</span><br><span class="line">  <span class="keyword">if</span> ( *(_DWORD *)a1 != a2 )</span><br><span class="line">    <span class="keyword">return</span> <span class="number">2</span> * (<span class="type">unsigned</span> <span class="type">int</span>)fun7(*(_QWORD *)(a1 + <span class="number">16</span>)) + <span class="number">1</span>;</span><br><span class="line">  <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h2 id="解析-6">解析</h2>
-<p>首先<code>secret_phase</code>部分还是读取了一个字符串，并将之用<code>strtol</code>函数转换为整型(<code>long</code>)。<br />
-第一个<code>if</code>的约束翻译为要求 <span class="math inline">\(v1 \in
-[1,1001]\)</span>；<br />
-第二个<code>if</code>则要求<code>fun7(&amp;n1,v1)</code>的返回值为5，因此顺势继续看向<code>fun7</code>的逻辑。</p>
-<p><code>fun7</code>接受的第一个参数是一个指针，返回值类型为<code>__int64</code>。</p>
-<blockquote>
-<p>这里可以发现<code>fun7</code>的递归调用中同样出现了“失踪”实参的情况，其原因也是<code>__fastcall</code>下寄存器<code>rsi</code>的数值没有发生改变。<br />
-理解作每次递归时<code>a2</code>的值不变即可（实现了其类似一个“静态”值的效果，如此亦能发挥<code>__fastcall</code>的优越性（复用寄存器，无需重复复制变量、进出栈，效率极高）。</p>
-</blockquote>
-<p>若<code>a1</code>为空(<code>NULL</code>,<del><code>nullptr</code></del>)，则返回
-<span class="math inline">\(2^{32} - 1\)</span>。</p>
-<blockquote>
-<p>显式指定<code>LL</code>后缀是避免默认字面量类型<code>int</code>截断（最大值
-<span class="math inline">\(2^{31} - 1\)</span>）。<br />
-趣话C/C++的字面量：C/C++对于输入的整型字面量(literals)会根据其大小“自适应”地匹配对应的数据类型，但可以通过指定后缀来覆写之。默认取在其范围内尽可能小的类型（<code>int</code>-<code>unsigned int</code>-<code>long long</code>-<code>unsigned long long</code>）；<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> a = <span class="number">1</span>; <span class="comment">//a is int(1 is of int type by default)</span></span><br><span class="line"><span class="keyword">auto</span> b = <span class="number">-3</span>; <span class="comment">//b is int(-3 is of int type by default)</span></span><br><span class="line"><span class="keyword">auto</span> c = <span class="number">1LL</span>; <span class="comment">//c is long long(default is overridden by explicit literal suffix)</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">auto</span> d = <span class="number">0xFFFFFFFF</span>; <span class="comment">//d is unsigned int(since `int` cannot contain such number as 0xFFFFFFFF)</span></span><br><span class="line"><span class="keyword">auto</span> e = <span class="number">0x7FFFFFFF</span>; <span class="comment">//e is int(actually maximum possible value of `int`)</span></span><br><span class="line"><span class="keyword">auto</span> f = <span class="number">0xFFFFFFFFFFFFFFFF</span>; <span class="comment">//f is unsigned long long</span></span><br><span class="line"><span class="keyword">auto</span> g = <span class="number">0x7FFFFFFFFFFFFFFF</span>; <span class="comment">//g is long long</span></span><br><span class="line"><span class="comment">//auto h = 0x10000000000000000; //Error: Integer constant is too big(exceeds 2^&#123;64&#125; - 1 limit of unsigned long long)</span></span><br></pre></td></tr></table></figure>
-需要注意的是C/C++中<strong>负号并不是字面量的一部分</strong>，字面量的类型仅取决于其整数部分，负号只是一个运算符。因此如<code>-0x80000000</code>并不会被视作一个取值最小的<code>int</code>，而会被视为取值最大的<code>unsigned int</code>取负<del>巧的是运算结果依然是<code>0x80000000</code></del>：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">static_assert</span>(<span class="number">-0x80000000</span> == <span class="number">0x80000000</span>); <span class="comment">//passes</span></span><br><span class="line"><span class="built_in">static_assert</span>(<span class="number">-0xFFFFFFFFFFFFFFFF</span> == <span class="number">1</span>); <span class="comment">//passes, no error in constant resolution</span></span><br></pre></td></tr></table></figure></p>
-</blockquote>
-<p>回归题解，在<code>a1</code>不为空时，判定<code>*(_DWORD *)a1</code>和<code>a2</code>的大小关系：</p>
-<ul>
-<li>大于，返回<code>2*fun7(*(_QWORD *)(a1 + 8))</code>；<br />
-</li>
-<li>小于，返回<code>2*fun7(*(_QWORD *)(a1 + 16)) + 1</code>；<br />
-</li>
-<li>等于，返回<code>0</code>。</li>
-</ul>
-<p>有了阶段六的链表解析经验，不难看出这也是一种链表访问的结构。</p>
-<blockquote>
-<p><code>DWORD</code>和<code>QWORD</code>互化还是因为内存解读方式的问题——这个链表结点的数据区类型是2字(32位)的<code>int</code>，指针类型则是4字。</p>
-</blockquote>
-<p>点进<code>n1</code>的栈内存区，可以发现以下内容：<br />
-<img src="/img/post_pics/CSrev/5.png" alt="n1_stack" /><br />
-由此不难发现，这是一个二叉树结构，<code>n1</code>就是该二叉树的根结点；<br />
-结合地址可以判断，比较结果为大于时，返回左结点的2倍，小于时返回右子结点的2倍加1，等于时返回零。<br />
-若待解引用的结点是空结点，返回 <span class="math inline">\(2^{32} -
-1\)</span>。</p>
-<p>由于栈内存区已确定，逐个地址构建二叉树结构，随后按该规则遍历即可，二叉树结构<del>及邪道速通法</del>见下。</p>
-<blockquote>
-<p>“抄近道”：由于节点数较多，逐个寻址较为繁琐。继续往下翻，可以发现结点名似乎有所蹊跷：<br />
-<img src="/img/post_pics/CSrev/6.png" alt="nname_1" /><br />
-注意到<code>n21</code>恰好是<code>n1</code>的左子结点，<code>n22</code>恰好是<code>n1</code>的右子结点。<br />
-再往下寻址+翻栈内存，可以找到<code>n31</code><sub><code>n34</code>、<code>n41</code></sub><code>n48</code>，其中<code>n41</code>~<code>n48</code>是叶结点。<br />
-不难验证，变量名末位是在二叉树结构中层序遍历的次序。由此结合数据区内容，整理得到二叉树结构如下：<br />
-<img src="/img/post_pics/CSrev/7.jpg" alt="bintree" /></p>
-</blockquote>
-<p>但仅完成双链表的整理尚不够。回顾最开始的<code>if</code>约束，要求<code>fun7(&amp;n1,v1) == 5</code>。<br />
-而因为其中返回值传递用的都是<code>__int64</code>，显然我们不希望其中的<code>0xFFFFFFFF</code>被加入计算（或者能在某一步计算被“截断”）。</p>
-<p>又因为<code>fun7</code>的返回值只能是以下四种之一：2倍左结点返回值、2倍右结点返回值+1、<code>0</code>、<code>0xFFFFFFFF</code>；<br />
-结合该二叉树只有4层，显然我们需要获得的返回值<code>5</code>只能由<code>4+1</code>，即<code>2*2+1</code>获得。</p>
-<p>继续推断，<code>2*2+1</code>应再解作<code>2*(2*1)+1</code>（展开一个隐式的因子<code>1</code>）。按递归的逆序分析形如：</p>
-<ul>
-<li>对于第四层的某个结点，若其访问子结点，结果必定为<code>0xFFFFFFFF</code>（因为其为空），而这个值不能被传递上去，因此该结点的数值只能等于<code>v2</code>来实现截断。由于这个条件具有充要条件的属性，因此反过来，<code>v2</code>的值也只能是四个叶结点所含有的<code>int</code>之一，此时第四层的返回值就是<code>0</code>；<br />
-</li>
-<li>对于第三层，因为第四层返回的一定是<code>0</code>，再将内层表达式<code>2*1</code>转写为<code>2*((2*0)+1)</code>，不难看出其要求第三层的结点数据<code>i</code>必须小于<code>v2</code>，方能实现返回<code>(2*0)+1</code>的效果；<br />
-</li>
-<li>对于第二层，往外看一层括号，显然需要让其结点数据大于<code>v2</code>；<br />
-</li>
-<li>对于第一层，同理可得其结点数据应小于<code>v2</code>。</li>
-</ul>
-<p>除结点数据要求外，还要求该访问顺序在二叉树中可以实现。<br />
-逐个尝试可得只有<code>v2 = 0x2f</code>满足要求，即<code>v2 = 47</code>。</p>
-<p>解为：（不考虑对阶段四答案的追加）<br />
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">47</span><br></pre></td></tr></table></figure></p>
-<h1 id="txt及结果"><code>.txt</code>及结果</h1>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">I can see Russia from my house!</span><br><span class="line">0 1 1 2 3 5</span><br><span class="line">0 104</span><br><span class="line">66 2 DrEvil</span><br><span class="line">IOAPEG</span><br><span class="line">6 3 4 5 1 2</span><br><span class="line">47</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p><img src="/img/post_pics/CSrev/8.png" /></p>
-<h1 id="彩蛋c代码还原">彩蛋：C代码“还原”</h1>
-<blockquote>
-<p>咕咕咕，曲项向天咕</p>
-</blockquote>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">phase_1</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">wp</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">C/C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/闲笔//" class="article-tag-list-link color3">闲笔</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/misc/bomblab_wp/">展开全文 >></a>
+          <a class="article-more-a" href="/crypto/aesatk/4-1/">展开全文 >></a>
         </p>
       
 
@@ -938,7 +796,7 @@ Part3)的作用是实现了链表“重组”：先建立一个链表，然后�
   
   
     <nav id="page-nav">
-      <a class="extend prev" rel="prev" href="/page/5/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/4/">4</a><a class="page-number" href="/page/5/">5</a><span class="page-number current">6</span><a class="page-number" href="/page/7/">7</a><a class="page-number" href="/page/8/">8</a><span class="space">&hellip;</span><a class="page-number" href="/page/15/">15</a><a class="extend next" rel="next" href="/page/7/">Next &raquo;</a>
+      <a class="extend prev" rel="prev" href="/page/5/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/4/">4</a><a class="page-number" href="/page/5/">5</a><span class="page-number current">6</span><a class="page-number" href="/page/7/">7</a><a class="page-number" href="/page/8/">8</a><span class="space">&hellip;</span><a class="page-number" href="/page/16/">16</a><a class="extend next" rel="next" href="/page/7/">Next &raquo;</a>
     </nav>
   
 
@@ -1125,6 +983,10 @@ MathJax.Hub.Queue(function() {
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color1">C/C++</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">C#</a>
               </li>
             
             <div class="clearfix"></div>

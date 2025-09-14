@@ -152,20 +152,20 @@
           <div id="js-content" class="content-ll">
             
   
-    <article id="post-cpp/foldexpr" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-crypto/ntru" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/cpp/foldexpr/">C++——折叠表达式</a>
+      <a class="article-title" href="/crypto/ntru/">NTRU</a>
     </h1>
   
 
         
-        <a href="/cpp/foldexpr/" class="archive-article-date">
-  	<time datetime="2025-04-09T08:14:03.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-04-09</time>
+        <a href="/crypto/ntru/" class="archive-article-date">
+  	<time datetime="2025-04-15T10:38:03.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-04-15</time>
 </a>
         
       </header>
@@ -173,128 +173,213 @@
     <div class="article-entry" itemprop="articleBody">
       
         <blockquote>
-<p>Collapse.</p>
+<p><del>格密码入坑到入土一条龙</del></p>
 </blockquote>
-<h1 id="a.k.a.-reduce">a.k.a. Reduce?</h1>
-<p><a
-target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/language/fold">cppreference</a>中对于
-<em>fold expression</em> 的介绍非常简洁明了：</p>
+<p>NTRU(Nth-degree TRunctuated polynomial
+Unit)，即“N次截断多项式单元”，是格密码中极为知名、应用较广的一种加密原理。</p>
+<h1 id="截断多项式">截断多项式？</h1>
+<h2 id="卷积多项式环">卷积多项式环</h2>
+<p>给定 <span class="math inline">\(N,q \in Z_{+}\)</span>，则模 <span
+class="math inline">\(q\)</span> 下的 <span class="math inline">\(N -
+1\)</span> 次卷积多项式环是一个商环(quotient ring)，记作 <span
+class="math inline">\(R_{q} = \frac{Z_{q}[x]}{x^{N} - 1}\)</span>。</p>
 <blockquote>
-<p>Reduces(folds) a pack over a binary operator.</p>
+<p>商环的定义为对环(Ring)上，<span class="math inline">\(\forall a \neq
+0 \in R, \exists a^{-1} \in R\)</span>，即除了加法单位元 <span
+class="math inline">\(0\)</span> 外所有元素均存在逆元。</p>
 </blockquote>
-<p>即，将一个参数包在一个二元运算符上<del>“约减”（笔者自创的翻译.cpp，以后还是先用"reduce"原名比较好）</del>。</p>
+<p><span class="math inline">\(R_{q}\)</span>
+下的卷积多项式乘法规则如下：假设 <span class="math inline">\(f \cdot g =
+h\)</span>，同样记 <span class="math inline">\(h =
+\sum_{i=0}^{n-1}h_{i}x^{i}\)</span>，存在<br />
+$h_{i} <em>{a+b i (N)} f</em>{a}g_{b} (q) $。</p>
 <blockquote>
-<p>参考“Lattice
-Reduction”的翻译“格基规约”，"reduce"译为“规约”庶几尚可。</p>
+<p>不难发现上述规则和普通的多项式乘法并无显著差异，只是对幂数和项数的计算分别放在了
+<span class="math inline">\(Z_{N}\)</span> 和 <span
+class="math inline">\(Z_{q}\)</span> 下进行。</p>
 </blockquote>
-<p><em>reduce</em>
-是一种处理序列元素的方法，其主要参数是元素序列<code>ls</code>和一个二元函数<code>f</code>，和一个（可选的）初始值<code>I</code>。<br />
-其伪代码可表示如下： <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">//reduce(ls,f)</span><br><span class="line">I = ls[0];</span><br><span class="line">for(i : ls[1:])</span><br><span class="line">&#123;</span><br><span class="line">    I = f(I,i);</span><br><span class="line">&#125;</span><br><span class="line">return I;</span><br><span class="line"></span><br><span class="line">//reduce(ls,f,I)</span><br><span class="line">for(i : ls)</span><br><span class="line">&#123;</span><br><span class="line">    I = f(I,i);</span><br><span class="line">&#125;</span><br><span class="line">return I;</span><br></pre></td></tr></table></figure></p>
-<p>可见没有初始值<code>I</code>时，其本质就是将<code>ls</code>的第一个元素取作初始值，并在剩余的元素上执行<code>reduce</code>操作。</p>
+<p>写作 <span class="math inline">\(Z_{q}\)</span> 下 <span
+class="math inline">\(n \times n\)</span> 矩阵乘法的形式，形如：</p>
+<p><span class="math inline">\(\begin{bmatrix} h_0 &amp; h_1 &amp;
+\cdots &amp; h_{n-2} &amp; h_{n-1} \end{bmatrix} ^ {T} = \begin{bmatrix}
+f_0 &amp; f_1 &amp; \cdots &amp; f_{n-2} &amp; f_{n-1} \\ f_1 &amp; f_2
+&amp; \cdots &amp; f_{n-1} &amp; f_0 \\ \vdots &amp; \vdots &amp;&amp;
+\vdots &amp; \vdots \\ f_{n-1} &amp; f_0 &amp; \cdots &amp; f_{n-3}
+&amp; f_{n-2} \end{bmatrix} \cdot \begin{bmatrix} g_0 &amp; g_1 &amp;
+\cdots &amp; g_{n-2} &amp; g_{n-1} \end{bmatrix} ^ {T}\)</span></p>
 <blockquote>
-<p><em>fold</em> 在操作上和 <em>reduce</em> 类似，但一般区分
-<em>fold</em> 和 <em>reduce</em>
-的标志就是初始值（前者默认必须有初值，后者默认可选）。</p>
+<p>若 <span class="math inline">\(q\)</span>
+比较大，考虑到可读性，一般展示时会将 <span
+class="math inline">\(f_{i}\)</span> 转化到 <span
+class="math inline">\((-\frac{q}{2},\frac{q}{2}]\)</span> 的区间内（当然
+<span class="math inline">\(Z_{q}\)</span> 下其是等价的）。</p>
 </blockquote>
+<p>如，<span class="math inline">\((N,q) = (3,5)\)</span> 下 <span
+class="math inline">\(f = 3x^{2} - x + 1\)</span>，<span
+class="math inline">\(g = x + 4\)</span>，计算 <span
+class="math inline">\(f \cdot g\)</span>：<br />
+先按普通的多项式计算，对 <span class="math inline">\(N\)</span>
+次以上的项进行“截断”，得到 <span class="math inline">\(12x^{2} - x^{2} -
+4x + x + 4\)</span>；<br />
+随后将系数映射至 <span class="math inline">\(Z_{5}\)</span>
+下，整理得到结果为 <span class="math inline">\(x^{2} - 3x + 4 = x^{2} +
+2x - 1\)</span>。</p>
+<p>而对于 <span class="math inline">\(R_{q}\)</span> 下的 <span
+class="math inline">\(N-1\)</span> 次多项式 <span
+class="math inline">\(f\)</span>，当且仅当 <span
+class="math inline">\(q\)</span> 为质数且 <span
+class="math inline">\(gcd(f,x^{N} - 1) = 1\)</span>（即，<span
+class="math inline">\(f\)</span> 是其本原多项式）时， <span
+class="math inline">\(f\)</span> 的乘法逆元 <span
+class="math inline">\(f^{-1} \in R_{q}\)</span>。</p>
 <blockquote>
-<p>语义上，可以认为 <em>reduce</em>
-涉及的二元操作符（函数）应满足交换律和结合律，而 <em>fold</em>
-没有这一要求。<br />
-C++23<del>给ranges
-algorithm添油加醋时</del>考虑到由于C++的<code>concept</code>只能约束语法而非语义，故为避免歧义，新加入的fold家族算法都采用了
-<em>fold</em>
-之名；又考虑到初始值的需求，故其中存在<code>fold_left_first</code>等变种，将在后续详述之。</p>
+<p><span class="math inline">\(f^{-1}\)</span>
+的计算同样可以通过拓展欧几里得算法(exgcd)进行，详细原理请自行检索<del>绝对不是因为小姜讲不明白</del>。</p>
 </blockquote>
-<h1 id="语法">语法</h1>
-<p>C++中 <em>fold expression</em> 主要针对的是可变模板参数包(variadic
-template parameter pack)。</p>
-<blockquote>
-<p>下述内容默认读者具有可变模板参数的基本知识，若不然，可移步<a
-href="/cpp/variadic/">C++——可变模板参数</a>作参考。</p>
-</blockquote>
-<p>其调用语法有四种：假设存在二元操作符 <em>op</em> ，参数包
-<em>pack</em> （和初始值 <em>init</em>）：</p>
-<ol type="1">
-<li>一元右折叠(unary right fold): <em>(pack op ...)</em><br />
-</li>
-<li>一元左折叠(unary left fold): <em>(... op pack)</em><br />
-</li>
-<li>二元右折叠(binary right fold): <em>(pack op ... op init)</em><br />
-</li>
-<li>二元左折叠(binary left fold): <em>(init op ... op pack)</em></li>
-</ol>
-<p>其中，<em>op</em>
-是C++的32个二元运算符之一；二元折叠中两个操作符必须一致。<br />
-<em>pack</em> 必须是一个未展开的参数包，<em>init</em>
-则不允许是一个未展开的参数包，同时二者都不能含有优先级高于 <em>op</em>
-的操作符（若有，则必须以括号<code>()</code>保护之）。</p>
-<p>假设 <em>pack</em> 中的参数分别为
-<em>(E1,E2,...,En)</em>，则上述展开的结果如下：</p>
+<p>多项式的逆元计算实际上较为繁琐，定义等操作亦然，故建议处理多项式时充分利用数学软件的内置支持，如
+<em>“sage magic”</em> 演示：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">q = <span class="number">17</span></span><br><span class="line">N = <span class="number">7</span></span><br><span class="line">Rq_ = PolynomialRing(Zmod(q),<span class="string">&#x27;xq&#x27;</span>) <span class="comment"># Defines a polynomial ring under Zmod(q) and names a variable &#x27;xq&#x27;</span></span><br><span class="line">Rq = Rq_.quotient(Rq_.gen() ^ N - <span class="number">1</span>,<span class="string">&#x27;yq&#x27;</span>) <span class="comment">#Defines a quotient ring under divisor of xq^N - 1, with variable namely &#x27;yq&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Now one&#x27;s possible to carry out such manuevers on Rq</span></span><br><span class="line">ls = [<span class="number">5</span>,<span class="number">0</span>,<span class="number">3</span>,<span class="number">2</span>,<span class="number">1</span>] <span class="comment">#x^4 + 2x^3 + 3x^2 + 5</span></span><br><span class="line">f = Rq(ls) <span class="comment">#lifts a list of integer to a polynomial on quotient ring Rq</span></span><br><span class="line"><span class="built_in">print</span>(f^-<span class="number">1</span>) <span class="comment">#calculates inverse of f under Rq</span></span><br><span class="line"></span><br><span class="line">p = <span class="number">3</span></span><br><span class="line">Rp_ = PolynomialRing(Zmod(p),<span class="string">&#x27;xp&#x27;</span>)</span><br><span class="line">Rp = Rp_.quotient(Rp_.gen() ^ N - <span class="number">1</span>,<span class="string">&#x27;yp&#x27;</span>)</span><br><span class="line">ff = Rp(<span class="built_in">list</span>(f)) <span class="comment">#equivalently changes the modulus of f; must be done by conversion shown in this line</span></span><br><span class="line"><span class="built_in">print</span>(ff)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h1 id="参数与密钥生成">参数与密钥生成</h1>
+<p>NTRU的关键参数为 <span
+class="math inline">\((N,p,q,d)\)</span>。其中，</p>
 <ul>
-<li><em>(pack op ...) = (((E1 op E2) op E3) ... op En)</em>；<br />
+<li><span class="math inline">\(N,q\)</span>
+越大则格攻击构造格的维度越高，密码系统越安全，但运算效率会大幅下降；一般选择
+<span class="math inline">\(N \in [250,2500]\)</span>。<br />
 </li>
-<li><em>(... op pack) = (())</em></li>
+<li><span class="math inline">\(p,d\)</span> 均为整数，要求 <span
+class="math inline">\(gcd(p,q) = 1\)</span> 且 <span
+class="math inline">\(gcd(q,N) = 1\)</span>，<span
+class="math inline">\(q &gt; (6d + 1)p\)</span>。</li>
 </ul>
+<p>NIST对NTRU的强度-推荐参数组合如下：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">强度</th>
+<th style="text-align: center;">N</th>
+<th style="text-align: center;">p</th>
+<th style="text-align: center;">q</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">标准</td>
+<td style="text-align: center;">251</td>
+<td style="text-align: center;">3</td>
+<td style="text-align: center;">128</td>
+</tr>
+<tr>
+<td style="text-align: center;">高</td>
+<td style="text-align: center;">347</td>
+<td style="text-align: center;">3</td>
+<td style="text-align: center;">128</td>
+</tr>
+<tr>
+<td style="text-align: center;">最高</td>
+<td style="text-align: center;">503</td>
+<td style="text-align: center;">3</td>
+<td style="text-align: center;">256</td>
+</tr>
+</tbody>
+</table>
+<p>参数 <span class="math inline">\(d\)</span> 可在满足 <span
+class="math inline">\(q &gt; (6d + 1)p\)</span> 下自行决定，一般选择
+<span class="math inline">\(d \approx \frac{N}{3}\)</span>
+来达到较好的安全性。</p>
+<hr />
 <blockquote>
-<p>对于一元左/右折叠，若参数包为空，则当且仅当操作符为[逻辑与<code>&amp;&amp;</code>，逻辑或<code>||</code>，逗号<code>,</code>之一]时程序才能通过编译，此时其值分别为<code>false</code>、<code>true</code>和<code>void</code>。否则将报编译错误。</p>
+<p>定义函数 <span class="math inline">\(T(d_{1},d_{2}) (d_{1} + d_{2}
+&lt; q)\)</span> 表示系数 <span class="math inline">\(\{1,-1\}\)</span>
+<strong>计数</strong>分别为 <span
+class="math inline">\(\{d_{1},d_{2}\}\)</span> 的多项式 <span
+class="math inline">\(f\)</span> 的集合。<br />
+如，<span class="math inline">\(f = x^{6} + x^{3} - x^{2} + x - 1 \in
+T(3,2)\)</span>。</p>
 </blockquote>
-<p>简单的应用实例：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="type">size_t</span>... Ns&gt;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">size_t</span> mul_result = (Ns * ...);</span><br><span class="line"></span><br><span class="line"><span class="built_in">static_assert</span>(mul_result&lt;<span class="number">3</span>,<span class="number">3</span>,<span class="number">5</span>&gt; == <span class="number">45</span>); <span class="comment">//passes</span></span><br><span class="line"><span class="built_in">static_assert</span>(mul_result&lt;<span class="number">256</span>,<span class="number">512</span>,<span class="number">0</span>&gt; == <span class="number">0</span>); <span class="comment">//passes</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="type">bool</span>... vals&gt;</span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">bool</span> disjunction_v = (vals &amp;&amp; ...);</span><br><span class="line"></span><br><span class="line"><span class="built_in">static_assert</span>(disjunction_v&lt;<span class="literal">true</span>,<span class="literal">true</span>,<span class="literal">false</span>&gt; == <span class="literal">false</span>); <span class="comment">//passes</span></span><br><span class="line"><span class="built_in">static_assert</span>(disjunction_v&lt;&gt; == <span class="literal">false</span>); <span class="comment">//passes</span></span><br><span class="line"><span class="comment">//static_assert(mul_result&lt;&gt; == 0); //Not compile: pack is empty for binary operator *</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="type">size_t</span>... Ns&gt;</span><br><span class="line"><span class="comment">//constexpr size_t add_init = (Ns + ... + 1*2); //Not Compile: precedence of * is higher than operator + in fold expression</span></span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">size_t</span> add_init = (Ns + ... + (<span class="number">1</span>*<span class="number">2</span>)); <span class="comment">//OK</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h1 id="应用场景">应用场景</h1>
-<p><em>fold expression</em>
-最大的应用场景在于让很多必须递归展开参数包的函数、结构体、变量等能够一次完成展开定义，保证可读性的同时最大限度减弱了模板膨胀带来的代码体积增大、效率下降等负面影响。</p>
-<p>如现在定义一个类似python的<code>print</code>函数<del>先当C++23的<code>std::print</code>不存在，反正人家也不支持括号一套直接输出.cpp</del>：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(Types&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    (std::cout &lt;&lt; ... &lt;&lt; args);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>); <span class="comment">//Output: 123</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;Hello C++&quot;</span>,<span class="number">23</span>,<span class="string">&#x27;!&#x27;</span>); <span class="comment">//Output: Hello C++23!</span></span><br></pre></td></tr></table></figure>
-<p>在没有 <em>fold expression</em>
-语言层面的支持时，其只能按照如下方式实现：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Type,<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(Type&amp;&amp; type,Types&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::cout &lt;&lt; type;</span><br><span class="line">    <span class="built_in">print</span>(std::forward&lt;Types&gt;(args)...);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Type&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(Type&amp;&amp; type)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::cout &lt;&lt; type;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>代码编写更加繁琐的同时，由于上述编译时每次调用都会产生<code>sizeof...(Types) + 1</code>个新的实例<del>忽略少得可怜的参数包组合恰好全等的概率</del>。<br />
-递归代码运行效率偏低的同时，产生可执行文件的体积会大幅增加。<br />
-相对地，对于 <em>fold expression</em>
-编写的参数包每次调用只会产生一个新的实例。</p>
-<p>进阶的应用除了<del>玩转各种<code>operator</code></del>，还有对参数包中的每个元素“处理”的玩法。如若希望上述的<code>print</code>函数能够像python一样自定义sep和end（当然都是编译期指定），可以如此：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="type">char</span> sep,<span class="type">char</span> end,<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(Types&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ((std::cout &lt;&lt; args &lt;&lt; sep),...);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(Types&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">print</span>&lt;<span class="string">&#x27; &#x27;</span>,<span class="string">&#x27;\n&#x27;</span>&gt;(std::forward&lt;Types&gt;(args)...);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>选择两个多项式 <span class="math inline">\(f = \sum_{i=0}^{N-1}
+f_{i}x^{i} \in T(d+1,d)\)</span>，<span class="math inline">\(g =
+\sum_{i=0}^{N-1} g_{i}x^{i} \in T(d,d)\)</span>。</p>
+<p>再计算 <span class="math inline">\(h \equiv f^{-1}g (\bmod
+q)\)</span>，随后将 <span class="math inline">\(g\)</span>
+的记录销毁。<br />
+公钥为 <span class="math inline">\(h\)</span>，私钥为 <span
+class="math inline">\(R_{p}\)</span> 和 <span
+class="math inline">\(R_{q}\)</span> 下的 <span
+class="math inline">\(f^{-1}\)</span>（由于 <span
+class="math inline">\(p,q\)</span> 是既定参数，可以认为私钥就是 <span
+class="math inline">\(f\)</span>）。</p>
 <blockquote>
-<p>由于折叠表达式的循环操作只能施加于元素上，因此此处只能退而求其次——利用<del>万能的</del><code>operator,</code>来完成输出。</p>
+<p><span class="math inline">\(g\)</span> 不是公钥或私钥，但知道 <span
+class="math inline">\(g\)</span> 就可以完全攻破NTRU，其地位类似于RSA中
+<span class="math inline">\(N\)</span> 的因数分解，故不应保留之。</p>
 </blockquote>
-<p>假设需对模板/函数参数包<code>args</code>中的每个元素，通过函数<code>f</code>处理<del>transform</del>后再用于折叠表达式，则应将<code>args</code>用<code>f</code>包裹（此时不要加<code>...</code>展开）后再根据需求应用折叠表达式的语法（相当于把<strong>可变模板的语法搬过来</strong>）。如：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(Types&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    (std::cout &lt;&lt; ... &lt;&lt; std::<span class="built_in">addressof</span>&lt;Types&gt;(args));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="加密">加密</h1>
+<p>先将明文编码为一个 <span class="math inline">\(n\)</span> 次多项式
+<span class="math inline">\(m \in \{-1,0,1\}^{N}\)</span>。<br />
+加密时另随机生成一个多项式 <span class="math inline">\(r \in
+\{-1,0,1\}^{N}\)</span>，计算 <span class="math inline">\(c \equiv ph
+\cdot r + m (\bmod q)\)</span>，输出密文 <span
+class="math inline">\(c\)</span>。</p>
+<h1 id="解密">解密</h1>
+<p>计算 <span class="math inline">\(m \equiv f^{-1} \cdot (f \cdot c
+(\bmod q)) (\bmod p)\)</span>，输出明文 <span
+class="math inline">\(m\)</span>。</p>
 <blockquote>
-<p>tips：保留左右值属性的目的是为了触发<code>std::addressof</code>对右值的“截胡”，避免输出无意义的变量临时地址（因为右值引用在函数体内是左值；参考<a
-href="/cpp/rrefs/">C++——右值引用与移动语义</a>。</p>
+<p>注意其中涉及到了“换环”，即现在 <span
+class="math inline">\(R_{q}\)</span> 下计算 <span
+class="math inline">\(f \cdot c\)</span>，将结果转到 <span
+class="math inline">\(R_{p}\)</span> 下后再与该环下的 <span
+class="math inline">\(f^{-1}\)</span> 相乘。</p>
 </blockquote>
-<h1 id="注意事项">注意事项</h1>
-<h2 id="固若金汤的concept">固若金汤的<code>concept</code></h2>
-<p>由于表达式的折叠展开不太直观<del>且又在模板的刀尖上乱舞</del>，
-<em>fold expression</em>
-出错时报错信息的可读性预期会很差。因此应用时，建议使用C++20的具名<code>concept</code>来前置约束之，结合折叠表达式在模板变量中的应用，不需大费周章即可防患于未然。如：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> correctly_outputable = <span class="built_in">requires</span>(Ty&amp;&amp; arg)</span><br><span class="line">&#123;</span><br><span class="line">    &#123;std::cout &lt;&lt; arg&#125; -&gt; std::same_as&lt;std::ostream&amp;&gt;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(Types&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    (std::cout &lt;&lt; ... &lt;&lt; args);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>假设现在有一个<del>手搓失败的</del>类，<del>不小心</del>忘记重载了<code>operator&lt;&lt;</code>，然后被打包进了<code>func</code>输出，约束和不约束的报错信息可读性大相径庭：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">ErrorOutput</span></span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ErrorOutput e&#123;&#125;;</span><br><span class="line">    <span class="built_in">func</span>(<span class="string">&quot;Object representation:\n&quot;</span>,e,<span class="number">7</span>,<span class="number">10.29</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>由于重载的“贪心”机制，若不加以约束，编译器会尝试将所有可能的左操作数为<code>std::ostream&amp;</code>的<code>operator&lt;&lt;</code>重载都尝试一遍：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">main.cpp: In instantiation of &#x27;void func(Types&amp;&amp; ...) [with Types = &#123;const char (&amp;)[24], ErrorOutput&amp;, int, double&#125;]&#x27;:</span><br><span class="line">main.cpp:24:9:   required from here</span><br><span class="line">   24 |     func(&quot;Object representation:\n&quot;,e,7,10.29);</span><br><span class="line">      |     ~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span><br><span class="line">main.cpp:13:16: error: no match for &#x27;operator&lt;&lt;&#x27; (operand types are &#x27;std::basic_ostream&lt;char&gt;&#x27; and &#x27;ErrorOutput&#x27;)</span><br><span class="line">   13 |     (std::cout &lt;&lt; ... &lt;&lt; args);</span><br><span class="line">      |     ~~~~~~~~~~~^~~~~~~~~~~~~~~</span><br><span class="line">(more than 400 lines omitted)</span><br><span class="line">/usr/local/include/c++/14.2.0/ostream:774:39: note: the expression &#x27;is_class_v&lt;_Tp&gt; [with _Tp = std::basic_ostream&lt;char, std::char_traits&lt;char&gt; &gt;&amp;]&#x27; evaluated to &#x27;false&#x27;</span><br><span class="line">  774 |     concept __derived_from_ios_base = is_class_v&lt;_Tp&gt;</span><br><span class="line">      |                                       ^~~~~~~~~~~~~~~</span><br></pre></td></tr></table></figure>
-<p>若以如下方法约束<code>func</code>，报错信息的可读性就会大幅提升：
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(Types&amp;&amp;... args)</span> <span class="title">requires</span> <span class="params">(correctly_outputable&lt;Types&gt; &amp;&amp; ...)</span> <span class="comment">/**/</span></span></span><br></pre></td></tr></table></figure></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">main.cpp: In function &#x27;int main()&#x27;:</span><br><span class="line">main.cpp:24:9: error: no matching function for call to &#x27;func(const char [24], ErrorOutput&amp;, int, double)&#x27;</span><br><span class="line">   24 |     func(&quot;Object representation:\n&quot;,e,7,10.29);</span><br><span class="line">      |     ~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span><br><span class="line">main.cpp:11:6: note: candidate: &#x27;template&lt;class ... Types&gt; void func(Types&amp;&amp; ...) requires (correctly_outputable&lt;Types&gt; &amp;&amp; ...)&#x27;</span><br><span class="line">   11 | void func(Types&amp;&amp;... args) requires( correctly_outputable&lt;Types&gt; &amp;&amp; ...)</span><br><span class="line">      |      ^~~~</span><br><span class="line">main.cpp:11:6: note:   template argument deduction/substitution failed:</span><br><span class="line">main.cpp:11:6: note: constraints not satisfied</span><br><span class="line">main.cpp: In substitution of &#x27;template&lt;class ... Types&gt; void func(Types&amp;&amp; ...) requires (correctly_outputable&lt;Types&gt; &amp;&amp; ...) [with Types = &#123;const char (&amp;)[24], ErrorOutput&amp;, int, double&#125;]&#x27;:</span><br><span class="line">main.cpp:24:9:   required from here</span><br><span class="line">   24 |     func(&quot;Object representation:\n&quot;,e,7,10.29);</span><br><span class="line">      |     ~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span><br><span class="line">main.cpp:11:6:   required by the constraints of &#x27;template&lt;class ... Types&gt; void func(Types&amp;&amp; ...) requires (correctly_outputable&lt;Types&gt; &amp;&amp; ...)&#x27;</span><br><span class="line">main.cpp:11:66: note: the expression &#x27;(correctly_outputable&lt;Types&gt; &amp;&amp; ...) [with Types = &#123;const char (&amp;)[24], ErrorOutput&amp;, int, double&#125;]&#x27; evaluated to &#x27;false&#x27;</span><br><span class="line">   11 | void func(Types&amp;&amp;... args) requires( correctly_outputable&lt;Types&gt; &amp;&amp; ...)</span><br><span class="line">      |           </span><br></pre></td></tr></table></figure>
-<p><del>虽然这已经扯到<code>concept</code>的优点上了，</del>归根结底还是<code>concept</code>在模板编程中应用的重要性，尤其是在
-<em>fold expression</em> 一类的复杂场景中；详见<a
-href="/cpp/concepts/">C++——Concepts</a>。</p>
-<h2 id="非模板的替代方案">非模板的替代方案</h2>
-<p>同时，尽管 <em>fold expression</em>
-是一个效率非常高的解决方案，但并不推荐滥用之。<br />
-由于其作用在参数包上，因此本质上依然是在进行模板编程——而模板编程受制于实例化的编译、运行开销及其必须在编译期执行的属性，部分问题仍然提倡用非模板的方式解决。如在参数类型可预测且相同的前提下，可以使用<code>std::initializer_list&lt;Ty&gt;</code>来进行参数打包，对编译期“打表”的要求可以通过<code>constexpr</code>或<code>consteval</code>约束之。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">constexpr</span> <span class="type">int</span> <span class="title">sum</span><span class="params">(std::initializer_list&lt;<span class="type">int</span>&gt; ls)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> std::<span class="built_in">accumulate</span>(ls.<span class="built_in">begin</span>(),ls.<span class="built_in">end</span>(),<span class="number">0</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">constexpr</span> <span class="type">int</span> <span class="title">prod</span><span class="params">(std::initializer_list&lt;<span class="type">int</span>&gt; ls)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> std::<span class="built_in">accumulate</span>(ls.<span class="built_in">begin</span>(),ls.<span class="built_in">end</span>(),<span class="number">1</span>,[](<span class="type">int</span> x,<span class="type">int</span> y)&#123;<span class="keyword">return</span> x*y;&#125;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="type">size_t</span> N,std::<span class="type">enable_if_t</span>&lt;N &gt;= <span class="number">2</span>,<span class="type">int</span>&gt; = <span class="number">0</span>&gt;</span><br><span class="line"><span class="keyword">constexpr</span> std::array&lt;<span class="type">int</span>,N&gt; <span class="built_in">fib_N</span>()</span><br><span class="line">&#123;</span><br><span class="line">    std::array&lt;<span class="type">int</span>,N&gt; res&#123;<span class="number">1</span>,<span class="number">1</span>&#125;;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;N<span class="number">-2</span>;++i)</span><br><span class="line">    &#123;</span><br><span class="line">        res[i<span class="number">+2</span>] = res[i] + res[i<span class="number">+1</span>];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> res;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="应用难度与注释">应用难度与注释</h2>
-<p>从应用经验看 <em>fold expression</em>
-的应用难度比较高，很多情况下其展开式并不那么直观，若编写/注释不当易对可读性产生较大影响（主要原因之一是<code>...</code>后置）。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Tys&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(Tys&amp;&amp;... args)</span> <span class="title">requires</span> <span class="params">(((<span class="keyword">sizeof</span>(Tys) &lt; <span class="number">7</span> &amp;&amp; std::is_trivially_copy_constructible_v&lt;Tys&gt;) &amp;&amp; ...) &amp;&amp; <span class="keyword">sizeof</span>...(Tys) &lt; <span class="number">7</span>)</span> </span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">/*...*/</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<hr />
+<h2 id="正确性证明">正确性证明</h2>
+<p>先在 <span class="math inline">\(R_{q}\)</span> 下计算， <span
+class="math inline">\(f \cdot c = pr \cdot hf + mf \Rightarrow f \cdot c
+= prg + mf\)</span><br />
+随后换环到 <span class="math inline">\(R_{p}\)</span> 上，显然 <span
+class="math inline">\(prg \equiv 0 (\bmod p)\)</span>，因此 <span
+class="math inline">\(R_{p}\)</span> 下 <span class="math inline">\((fc
+\bmod q) \equiv fm\)</span><br />
+进而 <span class="math inline">\(fmf^{-1} = m\)</span><br />
+解密正确性得证。</p>
+<h1 id="公钥攻击与数学难题">公钥攻击与数学难题</h1>
+<p>NTRU作为一种公钥密码体制，其依然依赖于数学难题来实现公钥与私钥间的“陷门”特征——即从公钥推导出私钥在理论上是可行的。<br />
+已知公钥时推导私钥的方法如下：<br />
+假设公钥为 <span class="math inline">\(f =
+\sum_{i=0}^{n}f_{i}x^{i}\)</span>，即 <span
+class="math inline">\(\{f_{i}\}\)</span> 是多项式 <span
+class="math inline">\(f\)</span> 各项的系数。</p>
 <blockquote>
-<p>当然从表达编译期约束之意上，上述形式已接近最优解。<br />
-缓解此问题的方法还是回归到前两点：使用具名<code>concept</code>分解约束（避免使用SFINAE等可读性较差的方法），并尽可能采用<code>ranges</code>等非模板的函数方案。</p>
+<p>有关格、格基规约(LLL)等相关的基础知识可以移步<a
+href="/crypto/lattice/">格</a>。</p>
 </blockquote>
-<h1 id="结语">结语</h1>
-<p><em>fold expression</em>
-在可变模板参数包的应用中，堪称一柄难以驾驭的利剑；初看其语法和约束或许有些绕人（且需要大量的预备知识以理解之），但只需在实践中多加运用体会，加以在注释、运用范围、<code>concept</code>辅助等要点处多加注意，定能在自身对现代C++的理解更为通透的同时，充分感受到游走于模板之间的惬意。</p>
+<h1 id="加解密攻击应用示例">加解密、攻击应用示例</h1>
+<p>假设Alice和Bob<del>怎么又是你们俩</del>需要利用NTRU进行通信，Alice为接收方，参数
+<span class="math inline">\((N,p,q,d) = (77,3,59,3)\)</span>。<br />
+<del>充分利用一番sage对多项式环的支持</del>，代码如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># sage</span></span><br><span class="line"><span class="keyword">from</span> random <span class="keyword">import</span> shuffle</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">NTRU</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="variable language_">self</span>.N = <span class="number">77</span></span><br><span class="line">        <span class="variable language_">self</span>.p = <span class="number">3</span></span><br><span class="line">        <span class="variable language_">self</span>.q = <span class="number">59</span></span><br><span class="line">        <span class="variable language_">self</span>.d = <span class="number">3</span></span><br><span class="line"></span><br><span class="line">        <span class="variable language_">self</span>.R_ = PolynomialRing(ZZ,<span class="string">&#x27;x&#x27;</span>)</span><br><span class="line">        <span class="variable language_">self</span>.Rp_ = PolynomialRing(Zmod(p),<span class="string">&#x27;xp&#x27;</span>)</span><br><span class="line">        <span class="variable language_">self</span>.Rq_ = PolynomialRing(Zmod(q),<span class="string">&#x27;xq&#x27;</span>)</span><br><span class="line"></span><br><span class="line">        <span class="variable language_">self</span>.R = <span class="variable language_">self</span>.R_.quotient(<span class="variable language_">self</span>.R_.gen() ^ N - <span class="number">1</span>,<span class="string">&#x27;y&#x27;</span>)</span><br><span class="line">        <span class="variable language_">self</span>.Rp = <span class="variable language_">self</span>.Rp_.quotient(<span class="variable language_">self</span>.Rp_.gen() ^ N - <span class="number">1</span>,<span class="string">&#x27;yp&#x27;</span>)</span><br><span class="line">        <span class="variable language_">self</span>.Rq = <span class="variable language_">self</span>.Rq_.quotient(<span class="variable language_">self</span>.Rq_.gen() ^ N - <span class="number">1</span>,<span class="string">&#x27;yq&#x27;</span>)</span><br><span class="line"></span><br><span class="line">        <span class="variable language_">self</span>.h,<span class="variable language_">self</span>.f = <span class="variable language_">self</span>.keygen()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">T</span>(<span class="params">self,d1,d2</span>):</span><br><span class="line">        <span class="keyword">assert</span> d1 + d2 &lt;= N</span><br><span class="line">        ls = [<span class="number">1</span>] * d1 + [-<span class="number">1</span>] * d2 + [<span class="number">0</span>] * (N-(d1+d2))</span><br><span class="line">        shuffle(ls)</span><br><span class="line">        <span class="keyword">return</span> <span class="variable language_">self</span>.R(ls)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">keygen</span>(<span class="params">self</span>):</span><br><span class="line">        f = <span class="variable language_">self</span>.T(d+<span class="number">1</span>,d)</span><br><span class="line">        g = <span class="variable language_">self</span>.T(d,d)</span><br><span class="line">        h = <span class="variable language_">self</span>.Rp(g) * <span class="variable language_">self</span>.Rp(f) ^ -<span class="number">1</span> </span><br><span class="line">        <span class="keyword">return</span> h,f</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">get_pubkey</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">list</span>(<span class="variable language_">self</span>.h)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__==<span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    ntru = NTRU()</span><br><span class="line">    <span class="built_in">print</span>(ntru.get_pubkey())</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>现在生成了一组公钥：<br />
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[0, 0, 2, 1, 1, 0, 2, 2, 1, 1, 1, 2, 2, 0, 1, 1, 1, 0, 2, 1, 2, 0, 1, 0, 2, 1, 0, 0, 2, 1, 2, 0, 0, 0, 2, 2, 0, 1, 1, 2, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 2, 0, 2, 2, 2, 0, 0, 2, 2, 1, 0, 1, 0, 0, 2, 0, 1]</span><br></pre></td></tr></table></figure> 其中该列表下标为<code>i</code>的数就是 <span
+class="math inline">\(h_{i}\)</span>，即 <span
+class="math inline">\(h\)</span> 中 <span
+class="math inline">\(i\)</span> 次项的系数。<br />
+Bob使用该公钥，对接下来通信使用的密钥进行加密，为<code>NTRU</code>类添加一个<code>encrypt</code>方法并运行之：<br />
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">encrypt</span>(<span class="params">self,m:<span class="built_in">list</span></span>):</span><br><span class="line">    <span class="keyword">assert</span> <span class="built_in">len</span>(m) == <span class="variable language_">self</span>.N</span><br><span class="line">    <span class="keyword">assert</span> <span class="built_in">all</span>(i <span class="keyword">in</span> (-<span class="number">1</span>,<span class="number">0</span>,<span class="number">1</span>) <span class="keyword">for</span> i <span class="keyword">in</span> m)</span><br><span class="line"></span><br><span class="line">    r = <span class="variable language_">self</span>.T(<span class="number">7</span>,<span class="number">7</span>)</span><br><span class="line">    c = <span class="variable language_">self</span>.p * <span class="variable language_">self</span>.h * <span class="variable language_">self</span>.Rp(<span class="built_in">list</span>(r)) + <span class="variable language_">self</span>.Rp(m)</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">list</span>(c)</span><br></pre></td></tr></table></figure></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># Key generated</span><br><span class="line">[-1, -1, -1, -1, 0, -1, -1, -1, 0, 0, 1, 0, 0, -1, -1, 0, 1, -1, -1, -1, 0, -1, 0, 1, -1, 1, 1, 1, -1, 1, 0, -1, -1, 0, 0, 1, -1, -1, 1, 0, 0, 0, 1, -1, 1, 1, -1, 1, 0, 1, 1, -1, -1, 1, -1, 1, 0, 1, 0, -1, 0, 1, 0, 1, -1, -1, 0, -1, -1, 0, 1, 0, -1, 1, 1, -1, 0]</span><br><span class="line"># Encryption result</span><br><span class="line">[2, 2, 2, 2, 0, 2, 2, 2, 0, 0, 1, 0, 0, 2, 2, 0, 1, 2, 2, 2, 0, 2, 0, 1, 2, 1, 1, 1, 2, 1, 0, 2, 2, 0, 0, 1, 2, 2, 1, 0, 0, 0, 1, 2, 1, 1, 2, 1, 0, 1, 1, 2, 2, 1, 2, 1, 0, 1, 0, 2, 0, 1, 0, 1, 2, 2, 0, 2, 2, 0, 1, 0, 2, 1, 1, 2, 0]</span><br></pre></td></tr></table></figure>
+<p>Alice接收之，并利用私钥进行解密，获得密钥：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">decrypt</span>(<span class="params">self,c:<span class="built_in">list</span></span>):</span><br><span class="line">    t = <span class="variable language_">self</span>.Rp(<span class="built_in">list</span>(<span class="variable language_">self</span>.Rq(<span class="variable language_">self</span>.f) * <span class="variable language_">self</span>.Rq(c)))</span><br><span class="line">    m = t * <span class="variable language_">self</span>.Rp(<span class="built_in">list</span>(<span class="variable language_">self</span>.f)) ^ -<span class="number">1</span></span><br><span class="line">    <span class="keyword">assert</span> <span class="built_in">all</span>(i <span class="keyword">in</span> (-<span class="number">1</span>,<span class="number">0</span>,<span class="number">1</span>) <span class="keyword">for</span> i <span class="keyword">in</span> m)</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">list</span>(m)</span><br><span class="line"> </span><br></pre></td></tr></table></figure>
+<p>结果正确。 但由于参数选择得比较小，若某人获得了他们的公钥 <span
+class="math inline">\(h\)</span>，即可实施格攻击来还原私钥，需要的参数仅为
+<span class="math inline">\((N,q)\)</span>。攻击过程：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> itertools <span class="keyword">import</span> product</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">attack</span>(<span class="params">h:<span class="built_in">list</span></span>):</span><br><span class="line">    N = <span class="number">77</span></span><br><span class="line">    q = <span class="number">59</span></span><br><span class="line">    coef = matrix(ZZ,[[h[-i:] + h[:-i]] <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(N)])</span><br><span class="line">    mt = matrix.Block([[matrix.diagonal(N),coef],[matrix.zero(N),q * matrix.diagonal(N)]])</span><br><span class="line">    mt = mt.LLL()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">assert</span> <span class="built_in">all</span>(i <span class="keyword">in</span> (-<span class="number">1</span>,<span class="number">0</span>,<span class="number">1</span>) <span class="keyword">for</span> i <span class="keyword">in</span> mt[<span class="number">0</span>])</span><br><span class="line">    </span><br><span class="line">    </span><br><span class="line">    f_ = Rq(<span class="built_in">list</span>(mt[<span class="number">0</span>][:N]))</span><br><span class="line">    g_ = Rq(<span class="built_in">list</span>(mt[<span class="number">0</span>][N:]))</span><br><span class="line">    h_ = Rq(h)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> xf,xg <span class="keyword">in</span> product([i <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(N)],repeat=<span class="number">2</span>):</span><br><span class="line">        ls_f = [<span class="number">0</span>] * N</span><br><span class="line">        ls_f[xf] = <span class="number">1</span></span><br><span class="line">        ls_g = [<span class="number">0</span>] * N</span><br><span class="line">        ls_g[xg] = <span class="number">1</span></span><br><span class="line"></span><br><span class="line">        f = Rq(ls_f) * f_</span><br><span class="line">        g = Rq(ls_g) * g_</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> g * f ^ -<span class="number">1</span> == h:</span><br><span class="line">            <span class="keyword">return</span> <span class="built_in">list</span>(f)</span><br><span class="line">        </span><br></pre></td></tr></table></figure>
+<h1 id="总结">总结</h1>
+<p>格密码是后量子密码学中极为重要的一环，而其中NTRU亦以其实现开销低等特性称为其中耀眼的新星。<br />
+学习NTRU算法的加密、解密原理时更应发挥离散数学的优雅之处——只定义“模板”，无论最终的实现是在
+<span class="math inline">\(Z_{q}\)</span>、<span
+class="math inline">\(P_{q}\)</span> 还是 <span
+class="math inline">\(R_{q}\)</span> 等等都能一通百通。<br />
+而对NTRU的格攻击则开启了基于分块矩阵的多变量、较复杂格构造的新大门。</p>
 
       
 
@@ -308,7 +393,7 @@ href="/cpp/concepts/">C++——Concepts</a>。</p>
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
         		</li>
       		
 		</ul>
@@ -320,7 +405,7 @@ href="/cpp/concepts/">C++——Concepts</a>。</p>
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
+        			<a href="/categories/闲笔//" class="article-tag-list-link color3">闲笔</a>
         		</li>
       		
 		</ul>
@@ -329,7 +414,7 @@ href="/cpp/concepts/">C++——Concepts</a>。</p>
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/cpp/foldexpr/">展开全文 >></a>
+          <a class="article-more-a" href="/crypto/ntru/">展开全文 >></a>
         </p>
       
 
@@ -361,193 +446,426 @@ href="/cpp/concepts/">C++——Concepts</a>。</p>
 
 
   
-    <article id="post-cpp/variadic" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-misc/bomblab_wp" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/cpp/variadic/">C++——可变参数模板</a>
+      <a class="article-title" href="/misc/bomblab_wp/">CSAPP-BOMBLAB Writeup</a>
     </h1>
   
 
         
-        <a href="/cpp/variadic/" class="archive-article-date">
-  	<time datetime="2025-04-07T02:26:39.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-04-07</time>
+        <a href="/misc/bomblab_wp/" class="archive-article-date">
+  	<time datetime="2025-04-13T07:55:10.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-04-13</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>可变参数模板(variadic
-templates)是C++11引入的重大特性之一，其对元编程(metaprogramming)产生了极为深远的影响。</p>
-<h1 id="section"><code>...</code></h1>
-<h2 id="可变参数函数">可变参数函数</h2>
-<p>对C语言有了解的读者一定对这个符号不陌生：其用于表示一个可变参数函数(variadic
-function)。<br />
-C语言中定义的<code>va_list</code>、<code>va_start</code>、<code>va_arg</code>和<code>va_end</code>几个宏都和可变参数的访问有关；出于兼容性<del>和可变参数模板的长期缺失</del>C++也支持了这种写法。<br />
-声明一个可变参数函数的语法为：在其最后一个形参后添加一个<code>,...</code>，最经典的莫过于<code>printf</code>的函数签名：<br />
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">printf</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* format,...)</span>;</span><br></pre></td></tr></table></figure></p>
-<blockquote>
-<p>实际上<code>...</code>前的<code>,</code>是可选的，但C++26起将不再接受这种写法。原因之一是若不加<code>,</code>以区分之，碰上现代C++的
-<em>variadic template</em> 会出现难以分辨二者的情况，如：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span>... Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(Ty...,...)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span>... Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">(Ty......)</span></span>; <span class="comment">//???</span></span><br></pre></td></tr></table></figure>
-（不要笑，这种写法确实在特定场景（如显式指定模板参数）还是有意义的，当然自动推导模板参数时，可变参数函数包会因优先级靠后而置空）</p>
+        <blockquote>
+<p><del>Crypto手勇闯Reverse新手村现状</del></p>
 </blockquote>
 <blockquote>
-<p>C/早期C++中的许多“陋习”在更新的C/C++版本中都逐渐被废弃，除可变函数参数声明外，其它的典例包括隐式返回值（早期C定义函数时可以不声明返回值，此时默认返回类型是<code>int</code>，C99后已不支持此写法）、指针类型的隐式转换（C中支持<code>void*</code>向任意指针类型的隐式转换，但C++要求必须显式指明之）等。</p>
+<p>前言：本wp不涉及任何x86-64汇编指令<del>（因为在写这份wp时笔者还没好好学汇编）</del></p>
 </blockquote>
-<p>正是因为可变参数函数的存在，我们方能向<code>printf</code>和其它函数<del>扔一大堆乱七八糟的东西</del>传递不同数目的参数。其使得即使在一门编译期语言中，我们亦无需为仅存在传参个数之差分的同个函数，编写不同的重载。</p>
-<p>但C语言的一些“包袱”实际上对C++，尤其是现代C++而言不够适用，推动着C++去不断发展推进，以新的语法/库特性解决这些诉求。</p>
-<h2 id="参数包大小问题">参数包大小问题</h2>
-<p>其一，其自身并不携带任何的大小信息（<del>某种意义上也算C语言的“通病”了，</del>包括C样式字符串、C样式数组（还有指针+长度的组合），虽然在效率和性能开销上确实做到了极致，但从开发和维护的角度来看过于极端），导致对可变参数的访问是不安全的（容易“漏掉”信息、越界或被栈溢出攻击<del>pwn警告</del>）。<br />
-事实上C语言对此从语言层面上几乎毫无办法，只能在实现中直接或间接地传递参数个数：间接的典例就是<code>printf</code>的格式串，每个<code>%</code>格式说明符（escape-character<code>%%</code>除外）代表了一个需要被访问的参数。</p>
+<h1 id="背景介绍">背景介绍</h1>
+<p>这不是CTF比赛，而是一次<del>平平无奇</del>的“拆弹”实验。</p>
+<p>实验要求：<br />
+给了一个可执行文件<del><code>./bomb</code></del>，要求解析其每一阶段逻辑，将答案存储在<code>./bomb.txt</code>中。</p>
+<p>本质上是一道逆向分析题。<br />
+本意这是想让人去用命令行的gdb等去磕汇编代码，但显然上千行的汇编还是稍微有些难顶，因而有必要让IDA这一逆向“外挂”助人一臂之力。<br />
+当然IDA此处利用的主要功能还是反编译协助生成伪C代码进行分析，虽然可读性依然极低（毕竟作为编译期语言，变量名和很多结构体之类的内存特征都被抹去，加上各种<del>乱七八糟的寄存器横跳</del>导致令人眼花缭乱的类型转换，以及各种调用协定+系统底层函数串门袭扰——<br />
+<strong>但总归是好过汇编吧！！！</strong></p>
+<h1 id="程序流程梳理">程序流程梳理</h1>
+<p>娴熟地IDA启动，bomb拖入，一通OK，找main函数，f5的结果形如：<br />
+<img src="/img/post_pics/CSrev/1.png" alt="mainfunc" /></p>
+<p>可以大致看出程序的主要流程（初始化以及六个衔接的阶段）。</p>
 <blockquote>
-<p>若<code>%</code>的个数和传递参数的个数不一致则会导致栈溢出（参数的访问混乱，以至越界）。</p>
-</blockquote>
-<h2 id="类型安全问题">类型安全问题</h2>
-<p>其二，除了越界访问的问题，可变参数访问时的类型安全性同样没有保障，参考下面一段代码：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">sum</span><span class="params">(<span class="type">int</span> count,...)</span></span><br><span class="line">&#123;</span><br><span class="line">    va_list ls;</span><br><span class="line">    <span class="type">int</span> total = <span class="number">0</span>;</span><br><span class="line">    va_start(ls,count);</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;count;++i)</span><br><span class="line">    &#123;</span><br><span class="line">        total += va_arg(ls,<span class="type">int</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    va_end(ls);</span><br><span class="line">    <span class="keyword">return</span> total;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>先解读一下<code>va_list</code>、<code>va_arg</code>、<code>va_start</code>和<code>va_end</code>的作用：<br />
-<code>va_list</code>本质上是一个指针类型，实现中多为<code>char*</code>或<code>void*</code>，以保证其能以1Byte的最小“分度”访问内存。<br />
-<code>va_start</code>接受两个参数，第一为<code>va_list</code>类型，第二为代表参数包大小的<code>int</code>，如<code>va_start(ls,count);</code>意为给<code>ls</code>赋值，使之可以<del>安全地</del>访问<code>count</code>个参数。因为可变参数<code>...</code>会通过函数栈进行传递，<code>va_start</code>时赋<code>ls</code>以栈的起始地址。<br />
-<code>va_arg(ls,int)</code>调用时，会将<code>ls</code>往后“移动”<code>sizeof(int)</code>，返回一个<code>int</code>型的值，底层来看就是以<code>int</code>型的方式读取了<code>va_arg</code>开始的一段内存。参考以下代码：<br />
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//Suppose that ls is of type char* and sizeof(char) == 1</span></span><br><span class="line"><span class="comment">//In this &quot;function&quot;, actually the parameter should be a secondary pointer(so that the value of &quot;ls&quot; can be modified externally)</span></span><br><span class="line"><span class="comment">//So a macro function(similar to templates) would be like:</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> va_arg(ls,t) </span></span><br><span class="line"></span><br><span class="line"><span class="comment">//va_arg(ls,int) is like:</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">fun</span><span class="params">(<span class="type">char</span>** ptr)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span> ret = *(<span class="type">int</span>*)(*ptr);</span><br><span class="line">    *ptr += <span class="keyword">sizeof</span>(<span class="type">int</span>);</span><br><span class="line">    <span class="keyword">return</span> ret;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-但如此的问题也很显然：要么存在某种方法传递给定参数的类型，要么就只能“希望”函数调用者能够正确地传递所有类型——C语言中如此已经算是一种奢求，更无论类型乱飞的C++了。</p>
+<p><del>题目的<code>.tar</code>中明明提供了<code>main</code>函数啊喂</del></p>
 </blockquote>
 <blockquote>
-<p>还是可以举<code>printf</code>的例子：如格式说明符中<code>%f</code>、<code>%lf</code>和<code>%sf</code>之区别极为重要，因为<code>va_list</code>不仅不知道该如何解读当前的这段内存（只能看格式说明符），还不知道两个相邻参数的
-分隔点在哪，只能靠<code>+sizeof(Current_type)</code>来“摸瞎”式地前进，一旦一个类型参数传递错误，其会直接导致后续内存读取全部出错（<del>传参界的OFB，失去同步警告</del>）</p>
+<p>IDA进行分析的经验法则：敢于“不求甚解”，即对于一些语义不太明确的函数/变量区域等，若能通过一些其它手段（调试、搜索、基础知识和盲猜等）确定其功能/含义，则应相信自身对含义的解析正确并继续分析。<del>有时候看不懂不是自身的锅</del></p>
 </blockquote>
-<h2 id="类与对象概念的举步维艰">类与对象概念的举步维艰</h2>
-<p>其三，不同于“同是内存，众生平等”的C语言，C++中类与对象的概念在其中变得非常棘手。<br />
-因为<code>...</code>毕竟是源于C的概念，其在栈参数传递时只会简单粗暴地将原对象的内存空间数据<code>memcpy</code>过来。但与类的动态内存管理必须使用<code>new</code>/<code>delete</code>而非<code>malloc</code>/<code>free</code>一样，对于类和对象如此操作亦会导致一系列的问题，如：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;print&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;cstdarg&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Bar</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">	<span class="built_in">Bar</span>()</span><br><span class="line">	&#123;</span><br><span class="line">		std::<span class="built_in">println</span>(<span class="string">&quot;ctor @ &#123;&#125;&quot;</span>,<span class="built_in">static_cast</span>&lt;<span class="type">void</span>*&gt;(<span class="keyword">this</span>));</span><br><span class="line">	&#125;</span><br><span class="line">	~<span class="built_in">Bar</span>()</span><br><span class="line">	&#123;</span><br><span class="line">		std::<span class="built_in">println</span>(<span class="string">&quot;dtor @ &#123;&#125;&quot;</span>,<span class="built_in">static_cast</span>&lt;<span class="type">void</span>*&gt;(<span class="keyword">this</span>));</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(<span class="type">int</span> x,...)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	va_list ls&#123;&#125;;</span><br><span class="line">	<span class="built_in">va_start</span>(ls, x);</span><br><span class="line">	<span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>;i &lt; x;++i)</span><br><span class="line">	&#123;</span><br><span class="line">		std::<span class="built_in">println</span>(<span class="string">&quot;addr = &#123;&#125;&quot;</span>, <span class="built_in">static_cast</span>&lt;<span class="type">void</span>*&gt;(std::<span class="built_in">addressof</span>(<span class="built_in">va_arg</span>(ls, Bar))));</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="built_in">va_end</span>(ls);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	Bar x&#123;&#125;;</span><br><span class="line">	<span class="built_in">fun</span>(<span class="number">3</span>, x, x, x);</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 输出示例：<br />
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">ctor @ 0x891b9ff714</span><br><span class="line">addr = 0x891b9ff6f8</span><br><span class="line">addr = 0x891b9ff700</span><br><span class="line">addr = 0x891b9ff708</span><br><span class="line">dtor @ 0x891b9ff714</span><br></pre></td></tr></table></figure> 发现什么问题了咩？<br />
-构造/析构函数只对在<code>0x891b9ff714</code>的<code>Bar</code>生效过：明明<code>va_arg</code>“像是”访问了三个<code>Bar</code>的内存空间，但它们根本没调用过构造/析构函数——以C++之理明之，即“尚不算一个对象”，因为它们是被<code>malloc</code>+<code>memcpy</code>的组合“构建”起来的（而非<code>operator new</code>）。</p>
+<p>不难推断出<code>read_line()</code>就是一个取一行字符串的函数。查看其反编译代码后，可发现其中还有一些过长字符串截断和已读字符串总数统计等小功能。<br />
+略去无关紧要的部分，直接开始逐个<code>phase</code>点进去反编译分析：</p>
 <blockquote>
-<p>严格地，此时访问这三个<code>Bar</code>的成员函数实际上是UB(Undefined
-Behavior)。</p>
+<p>由于每个人的题目数据不同，加之笔者并非专业Re手，因此题解和解析均仅供参考，欢迎读者交流、指正。</p>
 </blockquote>
-<h1
-id="还是...但是template">还是<code>...</code>，但是<code>template</code></h1>
-<p>C++11引入的可变参数模板正是对在可变参数需求下，满足访问安全、类和对象语义明确的“解药”。</p>
+<h1 id="阶段一">阶段一</h1>
 <blockquote>
-<p>与“可变参数函数”不同的是，可变参数模板更像一个静态/编译期的策略（因为<code>template</code>本身就是一个编译期概念），而可变参数函数更像动态/运行时的策略（函数寻址、传参等都是运行时的概念和行为，参考虚函数的实现）。</p>
+<p>最友好的一个阶段<del>签到题.sage</del></p>
 </blockquote>
-<h2 id="声明">声明</h2>
-<p>可变参数模板通过<code>...</code>声明，其必须是模板参数列表的最后一个参数，位置在<code>class</code>/<code>typename</code>后，标识符之前；函数、变量、类以及<code>concepts</code>都可以使用之。<br />
-使用时<code>Types</code>被称为模板参数包(Template paramter
-pack)，其大小可以是<strong>零</strong>或任意正数。类型为模板参数包的函数形参，称为函数参数包(Function
-parameter pack)：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(<span class="type">const</span> Types&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">fun</span>(<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>); <span class="comment">//Types = int,int,int; args = 1,2,3</span></span><br><span class="line"><span class="built_in">fun</span>(<span class="string">&quot;ni hao&quot;</span>); <span class="comment">//Types = const char*; args= &quot;ni hao&quot;</span></span><br><span class="line"><span class="built_in">fun</span>(); <span class="comment">//Types and args are empty</span></span><br></pre></td></tr></table></figure>
-<h2 id="大小">大小</h2>
-<p>对于一个参数包，C++11引入了<code>sizeof...</code>运算符。其特性和<code>sizeof</code>类似（作为编译期运算符），应用于一个模板参数包或者函数参数包以获取其长度，如：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(<span class="type">const</span> Types&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125; &#123;&#125;&quot;</span>,<span class="keyword">sizeof</span>...(Types),<span class="keyword">sizeof</span>...(args));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">fun</span>(<span class="number">1</span>); <span class="comment">//Output: 1 1</span></span><br><span class="line"><span class="built_in">fun</span>(<span class="string">&quot;&quot;</span>,std::string&#123;&#125;,<span class="number">6.24</span>); <span class="comment">//Output: 3 3</span></span><br><span class="line"><span class="built_in">fun</span>(); <span class="comment">//Output: 0 0</span></span><br></pre></td></tr></table></figure>
-<h2 id="扩展">扩展</h2>
-<p>上述例中的<code>Types</code>是<strong>模板参数包</strong>，需要将之扩展(expand)才能正常使用，类似于Python中对一个可迭代对象使用<del>解引用运算符</del><code>*</code>来将之展开。</p>
+<h2 id="反编译代码">反编译代码</h2>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">__int64 __fastcall <span class="title function_">phase_1</span><span class="params">(__int64 a1)</span></span><br><span class="line">&#123;</span><br><span class="line">  __int64 result; <span class="comment">// rax</span></span><br><span class="line"></span><br><span class="line">  result = strings_not_equal(a1, <span class="string">&quot;I can see Russia from my house!&quot;</span>);</span><br><span class="line">  <span class="keyword">if</span> ( (_DWORD)result )</span><br><span class="line">    explode_bomb();</span><br><span class="line">  <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="解析">解析</h2>
+<p>虽然逐行阅读后<del>可以发现一种废话文学的美</del>，但易看出只需要让<code>a1</code>字符串与后续字符串内容相同即可。</p>
 <blockquote>
-<p>作为一门强编译型语言，C++26前，对参数包只有<strong>获取大小</strong>和<strong>扩展</strong>两个合法操作，后者相当于临时“放弃”了其作为参数包的特性。</p>
+<p>“废话文学”是因为由汇编重组成C时，只能还原程序的（大体）执行流程而不能完全还原源代码。源代码完全可以形如：<br />
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">phase_1</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* x)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span>(!strings_not_equal(x,<span class="string">&quot;I can see Russia from my house!&quot;</span>))</span><br><span class="line">    &#123;</span><br><span class="line">        explode_bomb();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<del>什么？你问我为什么返回值我置而不顾？我也不知道，但反正不重要，孩子对调用协定也没什么研究，不要强求一个crypto手太多</del></p>
 </blockquote>
-<p>C++中，对一个参数包触发扩展的方式为在其标识符后跟上<code>...</code>；扩展同样也是编译期操作。如：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(Types... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(args...); <span class="comment">//Expand args</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">fun</span>(<span class="string">&quot;123&quot;</span>); <span class="comment">//Invokes printf(&quot;123&quot;)</span></span><br><span class="line"><span class="built_in">fun</span>(<span class="string">&quot;%.2f&quot;</span>,<span class="number">3</span>); <span class="comment">//Invokes printf(&quot;%.2f&quot;,3)</span></span><br><span class="line"><span class="comment">//fun(8); //Not compile: Invokes printf(8), which is an invalid call(cannot convert int to const char*)</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>最后一行无法编译的原因：不同于Python等解释型语言，C++在编译期必须确定将调用的表达式（此时为<code>printf(8)</code>），随后校验发现这条语句是非法的（很显然）。<br />
-拓展模板参数包的实例：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="keyword">auto</span> <span class="title">foo</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> std::<span class="built_in">make_tuple</span>&lt;Types...&gt;();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">foo</span>&lt;<span class="type">int</span>&gt;(); <span class="comment">//Gets std::tuple&lt;int&gt;</span></span><br><span class="line"><span class="built_in">foo</span>&lt;std::string,<span class="type">char</span>*&gt;(); <span class="comment">//Gets std::tuple&lt;std::string,char*&gt;</span></span><br><span class="line">foo&lt;&gt;(); <span class="comment">//Gets std::tuple&lt;&gt;</span></span><br></pre></td></tr></table></figure>
-<p>若我们希望同时拓展函数类型和函数参数（常见于函数“转发”中），则应将两个参数包“打包”后再写<code>...</code>，此时会将两者解包后再应用对应的函数。如最著名的<code>std::forward</code>：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(Types&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">fun</span>(std::forward&lt;Types&gt;(args)...); <span class="comment">//Expanded both Types and args</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="type">double</span> x&#123;&#125;;</span><br><span class="line"><span class="built_in">func</span>(<span class="number">1</span>); <span class="comment">//Invokes fun(std::forward&lt;int&amp;&amp;&gt;(1));</span></span><br><span class="line"><span class="built_in">func</span>(<span class="string">&quot;&quot;</span>,x); <span class="comment">//Invokes fun(std::forward&lt;const char*&amp;&gt;(&quot;&quot;),std::forward&lt;double&amp;&gt;(x));</span></span><br></pre></td></tr></table></figure></p>
+<p>解为：<code>I can see Russia from my house!</code></p>
+<h1 id="阶段二">阶段二</h1>
+<p>反编译代码：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">unsigned</span> __int64 __fastcall <span class="title function_">phase_2</span><span class="params">(__int64 a1)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">int</span> *v1; <span class="comment">// rbx</span></span><br><span class="line">  <span class="type">int</span> v3[<span class="number">4</span>]; <span class="comment">// [rsp+0h] [rbp-38h] BYREF</span></span><br><span class="line">  <span class="type">char</span> v4; <span class="comment">// [rsp+10h] [rbp-28h] BYREF</span></span><br><span class="line">  <span class="type">unsigned</span> __int64 v5; <span class="comment">// [rsp+18h] [rbp-20h]</span></span><br><span class="line"></span><br><span class="line">  v5 = __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">  read_six_numbers(a1, v3);</span><br><span class="line">  <span class="keyword">if</span> ( v3[<span class="number">0</span>] || v3[<span class="number">1</span>] != <span class="number">1</span> )</span><br><span class="line">    explode_bomb();</span><br><span class="line">  v1 = v3;</span><br><span class="line">  <span class="keyword">do</span></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">if</span> ( v1[<span class="number">2</span>] != *v1 + v1[<span class="number">1</span>] )</span><br><span class="line">      explode_bomb();</span><br><span class="line">    ++v1;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">while</span> ( v1 != (<span class="type">int</span> *)&amp;v4 );</span><br><span class="line">  <span class="keyword">return</span> v5 - __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="解析-1">解析</h2>
+<p>略去各种奇怪的变量和系统函数调用，核心有几点：</p>
+<ul>
+<li><p>调用<code>read_six_numbers</code>函数，这个函数会从<code>a1</code>中读取6个数字(<code>int</code>)并存储在<code>v3</code>开始的数组中，并且<code>scanf</code>的返回值不能小于5（否则GG）；<br />
+</p></li>
+<li><p>第一个<code>if</code>翻译一下，约束了<code>v3[0] == 0 &amp;&amp; v3[1] == 1</code>；<br />
+</p></li>
+<li><p><code>do_while</code>循环结合<code>if</code>应当翻译成这样：
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;<span class="number">4</span>;++i)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span>(v3[i+<span class="number">2</span>] != v3[i] + v3[i+<span class="number">1</span>])</span><br><span class="line">    &#123;</span><br><span class="line">        explode_bomb();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <blockquote>
-<p>关于<code>std::forward</code>、函数转发时的类型保持问题、<code>Types&amp;&amp;...</code>的来由等，可参见<a
-href="/cpp/rrefs/">C++——右值引用和移动语义</a>。<code>Types&amp;&amp;</code>亦有“万能参数包”之名。</p>
+<p>上述“转译”过程对逆向者的C语言功底要求还是极高的，尤其是涉及内存布局和指针的部分；可以自行体会和复现一下这部分“转译”是怎么进行的。</p>
+</blockquote></li>
+</ul>
+<p>转译完成后的逻辑就很简单了，即希望我们读取的6个数字能构成前2项为(0,1)的斐波那契数列。</p>
+<p>解为：<code>0 1 1 2 3 5</code></p>
+<h1 id="阶段三">阶段三</h1>
+<h2 id="反编译代码-1">反编译代码</h2>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">unsigned</span> __int64 __fastcall <span class="title function_">phase_3</span><span class="params">(__int64 a1)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">int</span> v1; <span class="comment">// eax</span></span><br><span class="line">  <span class="type">int</span> v3; <span class="comment">// [rsp+0h] [rbp-18h] BYREF</span></span><br><span class="line">  <span class="type">int</span> v4; <span class="comment">// [rsp+4h] [rbp-14h] BYREF</span></span><br><span class="line">  <span class="type">unsigned</span> __int64 v5; <span class="comment">// [rsp+8h] [rbp-10h]</span></span><br><span class="line"></span><br><span class="line">  v5 = __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">  <span class="keyword">if</span> ( (<span class="type">int</span>)__isoc99_sscanf(a1, <span class="string">&quot;%d %d&quot;</span>, &amp;v3, &amp;v4) &lt;= <span class="number">1</span> )</span><br><span class="line">    explode_bomb();</span><br><span class="line">  <span class="keyword">switch</span> ( v3 )</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">case</span> <span class="number">0</span>:</span><br><span class="line">      v1 = <span class="number">104</span>;</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> <span class="number">1</span>:</span><br><span class="line">      v1 = <span class="number">735</span>;</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> <span class="number">2</span>:</span><br><span class="line">      v1 = <span class="number">815</span>;</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> <span class="number">3</span>:</span><br><span class="line">      v1 = <span class="number">943</span>;</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> <span class="number">4</span>:</span><br><span class="line">      v1 = <span class="number">924</span>;</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> <span class="number">5</span>:</span><br><span class="line">      v1 = <span class="number">93</span>;</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> <span class="number">6</span>:</span><br><span class="line">      v1 = <span class="number">757</span>;</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> <span class="number">7</span>:</span><br><span class="line">      v1 = <span class="number">208</span>;</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">default</span>:</span><br><span class="line">      explode_bomb();</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> ( v4 != v1 )</span><br><span class="line">    explode_bomb();</span><br><span class="line">  <span class="keyword">return</span> v5 - __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="解析-2">解析</h2>
+<blockquote>
+<p><del>难得的第三关比第二关简单的一天</del></p>
+</blockquote>
+<p>没啥好说的，很容易就看出有七组可能解，随便选一组。</p>
+<p>解为： <code>0 104</code>（不唯一）</p>
+<h1 id="阶段四">阶段四</h1>
+<blockquote>
+<p>原来实验中“选做题”的出现不是师出无名……</p>
+</blockquote>
+<h2 id="反编译代码-2">反编译代码</h2>
+<p>和本题有关的函数有两个，除了<code>phase_4</code>外还有一个<code>func4</code>。</p>
+<h3 id="phase_4"><code>phase_4</code></h3>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">unsigned</span> __int64 __fastcall <span class="title function_">phase_4</span><span class="params">(__int64 a1)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">unsigned</span> <span class="type">int</span> v2; <span class="comment">// [rsp+0h] [rbp-18h] BYREF</span></span><br><span class="line">  <span class="type">int</span> v3; <span class="comment">// [rsp+4h] [rbp-14h] BYREF</span></span><br><span class="line">  <span class="type">unsigned</span> __int64 v4; <span class="comment">// [rsp+8h] [rbp-10h]</span></span><br><span class="line"></span><br><span class="line">  v4 = __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">  <span class="keyword">if</span> ( (<span class="type">unsigned</span> <span class="type">int</span>)__isoc99_sscanf(a1, <span class="string">&quot;%d %d&quot;</span>, &amp;v3, &amp;v2) != <span class="number">2</span> || v2 - <span class="number">2</span> &gt; <span class="number">2</span> )</span><br><span class="line">    explode_bomb();</span><br><span class="line">  <span class="keyword">if</span> ( v3 != (<span class="type">unsigned</span> <span class="type">int</span>)func4(<span class="number">7LL</span>, v2) )</span><br><span class="line">    explode_bomb();</span><br><span class="line">  <span class="keyword">return</span> v4 - __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="func4"><code>func4</code></h3>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">__int64 __fastcall <span class="title function_">func4</span><span class="params">(<span class="type">int</span> a1, __int64 a2)</span></span><br><span class="line">&#123;</span><br><span class="line">  __int64 result; <span class="comment">// rax</span></span><br><span class="line">  <span class="type">int</span> v3; <span class="comment">// r12d</span></span><br><span class="line"></span><br><span class="line">  result = <span class="number">0LL</span>;</span><br><span class="line">  <span class="keyword">if</span> ( a1 &gt; <span class="number">0</span> )</span><br><span class="line">  &#123;</span><br><span class="line">    result = (<span class="type">unsigned</span> <span class="type">int</span>)a2;</span><br><span class="line">    <span class="keyword">if</span> ( a1 != <span class="number">1</span> )</span><br><span class="line">    &#123;</span><br><span class="line">      v3 = func4((<span class="type">unsigned</span> <span class="type">int</span>)(a1 - <span class="number">1</span>), a2) + a2;</span><br><span class="line">      <span class="keyword">return</span> v3 + (<span class="type">unsigned</span> <span class="type">int</span>)func4((<span class="type">unsigned</span> <span class="type">int</span>)(a1 - <span class="number">2</span>), (<span class="type">unsigned</span> <span class="type">int</span>)a2);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="解析-3">解析</h2>
+<p>单论<code>phase_4</code>的逻辑实际上还是比较简单的，约束整理：</p>
+<ul>
+<li>读取两个整数<del>并且还必须是两个整数</del>，并且要求<code>v2 - 2 &lt;= 2</code>；<br />
+</li>
+<li><code>v3 == func4(7,v2)</code></li>
+</ul>
+<blockquote>
+<p><code>v2 - 2 &gt; 2</code>中，由于<code>v2</code>的变量类型是<code>unsigned int</code>，因此最终的约束是
+<code>v2 &lt;= 4 &amp;&amp; v2 &gt;= 2</code>。</p>
 </blockquote>
 <blockquote>
-<p>应通过多编写代码实践来理解“拓展”法的精髓，便于灵活运用的同时，也有助于学习C++17的
-<em>fold expression</em>。</p>
+<p>强制类型转换的处理应更为灵活：有些可以忽略，而有些则需认真考量之。<br />
+主要原因是这些转换多数并不是源代码中显式出现，或与变量的隐式转换有关（如返回值类型<code>int</code>但调用函数使用了一个<code>unsigned long long</code>来接收），或与编译过程中寄存器类型横跳有关<del>反正寄存器都在那，<code>ax</code>变<code>rax</code>/<code>eax</code>/<code>sax</code>等等就是编译器大手一挥的事(bushi)</del>，具体对逆向逻辑是否有影响无法一概而论。</p>
 </blockquote>
-<p>通过<code>()</code>把握“拓展”的时机非常重要，需根据编写代码的意图来判断：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function">std::string <span class="title">debug_rep</span><span class="params">(Ty&amp;&amp; arg)</span> </span>&#123;<span class="comment">/*...*/</span>&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(Types&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">//print_stuffs(debug_rep(args...)); //Error: didn&#x27;t expanded the args properly</span></span><br><span class="line">    <span class="built_in">print_stuffs</span>(<span class="built_in">debug_rep</span>(args)...); <span class="comment">//Correct</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>假设调用<code>print_stuffs(A,B,C)</code>，那么第一种（错误的）写法相当于扩展成了：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">print_stuffs</span>(<span class="built_in">debug_rep</span>(A,B,C));</span><br></pre></td></tr></table></figure>
-显然不是我们意图中的形式。第二种写法方能正确地扩展成：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">print_stuffs</span>(<span class="built_in">debug_rep</span>(A),<span class="built_in">debug_rep</span>(B),<span class="built_in">debug_rep</span>(C));</span><br></pre></td></tr></table></figure></p>
-<p>同时C++规定对于每个实例化的参数包，若其被使用（传递）则必须在其函数体/类体内被扩展(expanded)；但<code>sizeof...</code>恰好相反（不允许扩展解包，必须应用于整个参数包上）：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">(Types... args)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(Types... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">//foo(args); //Not compile: Parameter pack(disregarding template or function) must be expanded for passing</span></span><br><span class="line">    <span class="built_in">foo</span>(args...); <span class="comment">//OK</span></span><br><span class="line">    <span class="keyword">sizeof</span>...(args); <span class="comment">//OK: Use operator sizeof... on the intact parameter pack</span></span><br><span class="line">    <span class="comment">//sizeof...(args...); //Not compile: invalid syntax(operator sizeof... can only accept parameter pack as operand, not individual arguments)</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="递归调用">递归调用</h2>
-<p>当我们对一个包只能扩展之时，如何才能使用它呢？C++11给出的解法是使用参数个数差分+递归调用。<br />
-具体地，我们定义一个<code>print</code>函数：<del>（万能引用炫技警告）</del><br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty,<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(Ty&amp;&amp; arg,Types&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::cout &lt;&lt; std::forward&lt;Ty&gt;(arg) &lt;&lt; std::endl;</span><br><span class="line">    <span class="built_in">print</span>(std::forward&lt;Types&gt;(args)...);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(Ty&amp;&amp; arg)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::cout &lt;&lt; std::forward&lt;Ty&gt;(arg) &lt;&lt; std::endl;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 考虑如下的调用：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">print</span>(<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>);</span><br></pre></td></tr></table></figure>
-其存在以下的调用链：<code>print&lt;int,int,int&gt;(1,2,3)</code> -&gt;
-<code>print&lt;int,int&gt;(2,3)</code> -&gt;
-<code>print&lt;int,int&gt;(3)</code>。<br />
-其中，最后一次由于可变参数包为空，在进行模板重载决议时，编译器会选择非可变参数版本的<code>print</code>，进而终止递归。</p>
+<p>而<code>func4</code>不难看出是一个递归函数，其递归定义如下：对于<code>f(i)</code>(<code>i &gt;= 0</code>，此处忽略<code>v2</code>的不变传递)，</p>
+<ul>
+<li><code>f(0) == 0</code>；<br />
+</li>
+<li><code>f(1) == v2</code>；</li>
+<li><code>f(i) == f(i-1) + f(i-2) + v2 (i &gt;= 2)</code>。</li>
+</ul>
+<p>数学上应该也碰到过不少这种递归定义，由于<code>i == 7</code>，因此手动计算即可满足要求。<br />
+取合法的<code>v2 = 2</code>时：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">i</th>
+<th style="text-align: center;">0</th>
+<th style="text-align: center;">1</th>
+<th style="text-align: center;">2</th>
+<th style="text-align: center;">3</th>
+<th style="text-align: center;">4</th>
+<th style="text-align: center;">5</th>
+<th style="text-align: center;">6</th>
+<th style="text-align: center;">7</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">f(i)</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">2</td>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">8</td>
+<td style="text-align: center;">14</td>
+<td style="text-align: center;">24</td>
+<td style="text-align: center;">40</td>
+<td style="text-align: center;">66</td>
+</tr>
+</tbody>
+</table>
+<p>解为：<code>66 2</code>（不唯一）</p>
+<h1 id="阶段五">阶段五</h1>
 <blockquote>
-<p>如此调用时，非可变参数版本的<code>print</code>必须被声明在作用域中，否则其会递归至试图调用<code>print()</code>而不能通过编译（上述调用链也是在编译时即确定）。</p>
+<p>Crypto入门之古典密码？</p>
 </blockquote>
-<h2
-id="可变模板递归的应用以stdtuple为例">可变模板递归的应用：以<code>std::tuple</code>为例</h2>
+<h2 id="反编译代码-3">反编译代码</h2>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">unsigned</span> __int64 __fastcall <span class="title function_">phase_5</span><span class="params">(__int64 a1)</span></span><br><span class="line">&#123;</span><br><span class="line">  __int64 i; <span class="comment">// rax</span></span><br><span class="line">  <span class="type">char</span> v3[<span class="number">7</span>]; <span class="comment">// [rsp+1h] [rbp-17h] BYREF</span></span><br><span class="line">  <span class="type">unsigned</span> __int64 v4; <span class="comment">// [rsp+8h] [rbp-10h]</span></span><br><span class="line"></span><br><span class="line">  v4 = __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">  <span class="keyword">if</span> ( (<span class="type">unsigned</span> <span class="type">int</span>)string_length() != <span class="number">6</span> )</span><br><span class="line">    explode_bomb();</span><br><span class="line">  <span class="keyword">for</span> ( i = <span class="number">0LL</span>; i != <span class="number">6</span>; ++i )</span><br><span class="line">    v3[i] = array_0[*(_BYTE *)(a1 + i) &amp; <span class="number">0xF</span>];</span><br><span class="line">  v3[<span class="number">6</span>] = <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">if</span> ( (<span class="type">unsigned</span> <span class="type">int</span>)strings_not_equal(v3, <span class="string">&quot;flames&quot;</span>) )</span><br><span class="line">    explode_bomb();</span><br><span class="line">  <span class="keyword">return</span> v4 - __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="解析-4">解析</h2>
 <blockquote>
-<p>上善若水，水善利万物而不争。</p>
+<p>反编译代码在某些情况下还是可能让人发懵的——比如函数调用的传参问题<del>需要“自行体会”</del>。</p>
 </blockquote>
-<p>很多C++11引入的库特性都离不开 <em>variadic
-template</em>，对其深入了解亦有助于理解一些看似较为奇怪的语法规定。<br />
-最为经典的例子莫过于<code>std::tuple</code>。其就依靠了递归定义来实现<del>不然你怎么往里面塞远多于<code>std::pair</code>的两个类型</del>，下述为MSVC中<code>std::tuple</code>的实现节选：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;&gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">tuple</span>&lt;&gt; &#123; <span class="comment">// empty tuple</span></span><br><span class="line">    <span class="comment">/*Blogger&#x27;s note: ~90 lines omitted and there&#x27;re no data members in this class template*/</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">class</span> <span class="title class_">_This</span>, <span class="keyword">class</span>... _Rest&gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">tuple</span>&lt;_This, _Rest...&gt; : <span class="keyword">private</span> tuple&lt;_Rest...&gt; &#123; <span class="comment">// recursive tuple definition</span></span><br><span class="line">    <span class="comment">/*Blogger&#x27;s note: ~400 lines omitted*/</span></span><br><span class="line">    _Tuple_val&lt;_This&gt; _Myfirst; <span class="comment">// the stored element</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>其中<code>_Tuple_val</code>是一个用于储存单个元素的<code>struct</code>模板。显然其利用了空<code>tuple</code>终止递归的特性。<br />
-<code>tuple</code>的应用极为广泛，如需要返回多个返回值时，其是除了单独定义一个<code>struct</code>外的最佳选择；标准库中的大量函数返回值也应用到了<code>tuple</code>（尤其是C++20后的
-<em>ranges library</em>）。同时为了保证 <em>cvref</em>
-属性正确传递、接受多种可行的构造方式等，<del>结合 <em>ranges library
-</em> 的
-<code>zip</code>风波，</del>C++23中<code>std::tuple</code>的构造函数数量已经达到了恐怖的26个。</p>
-<p>至于应用上的缺点，除了递归模板定义导致的代码膨胀外，访问<code>std::tuple</code>中的元素也并非易事<del>毕竟这不是Python，不能直接<code>operator[]</code></del>。<br />
-C++11中一般采用<code>std::get</code>或<code>std::tie</code>来获取元素，前者需要指定一个编译期常量作为其第一模板参数，后者结合<code>std::ignore</code>可以实现对不同参数的选择性“打包”：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">std::tuple&lt;<span class="type">int</span>,<span class="type">int</span>,<span class="type">int</span>&gt; tp&#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> a&#123;&#125;,b&#123;&#125;;</span><br><span class="line">a = std::<span class="built_in">get</span>&lt;<span class="number">2</span>&gt;(tp); <span class="comment">//a = 3</span></span><br><span class="line">b = std::<span class="built_in">get</span>&lt;<span class="number">0</span>&gt;(tp); <span class="comment">//b = 1</span></span><br><span class="line"><span class="comment">//a = std::get&lt;b&gt;(tp); //Not Compile: the index must be a compile-time constant</span></span><br><span class="line"></span><br><span class="line">std::<span class="built_in">tie</span>(std::ignore,a,b) = tp; <span class="comment">//a,b = 2,3</span></span><br><span class="line">tp = std::<span class="built_in">tie</span>(a,b,a); <span class="comment">//OK: tp&#x27;s value has been modified to (2,3,2)</span></span><br></pre></td></tr></table></figure>
+<p>整理约束时起手就遇上了“意外”：出现了一个没有形参的<code>string_length()</code>，但点进看<code>string_length()</code>的反编译代码却是这样的：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">__int64 __fastcall <span class="title function_">string_length</span><span class="params">(_BYTE *a1)</span></span><br><span class="line">&#123;</span><br><span class="line">  __int64 result; <span class="comment">// rax</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> ( !*a1 )</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0LL</span>;</span><br><span class="line">  LODWORD(result) = <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">do</span></span><br><span class="line">  &#123;</span><br><span class="line">    ++a1;</span><br><span class="line">    result = (<span class="type">unsigned</span> <span class="type">int</span>)(result + <span class="number">1</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">while</span> ( *a1 );</span><br><span class="line">  <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>该函数本身就是一个非常正常的<code>strlen</code><del>高仿</del>实现，但反编译代码中调用方没有传递参数。<br />
+如上情景和函数调用协定有关。本次程序中所有函数的调用协定都采用了<code>__fastcall</code>，<code>__fastcall</code>调用的特点：</p>
+<ul>
+<li>前2个(x86)/前4个(x64)整型参数使用速度更快的寄存器*CX和*DX传递；x64的Linux更为复杂，最前2个整型参数通过<code>RDI</code>、<code>RSI</code>传递；</li>
+<li>其余参数从右至左压栈；<br />
+</li>
+<li>被调用者(x86)/调用者(x64)负责清理栈。</li>
+</ul>
+<p>回到<code>main</code>函数中，以<code>phase_5</code>的调用前后为例，可以发现有如下汇编代码片段：<del>关键时候还是得回去磕汇编</del></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">call    phase_defused</span><br><span class="line">lea     rdi, aSoYouGotThatOn ; &quot;So you got that one.  Try this one.&quot;</span><br><span class="line">call    _puts</span><br><span class="line">call    read_line</span><br><span class="line">mov     rdi, rax</span><br><span class="line">call    phase_5</span><br><span class="line">call    phase_defused</span><br><span class="line">lea     rdi, aGoodWorkOnToTh ; &quot;Good work!  On to the next...&quot;</span><br></pre></td></tr></table></figure>
+<p><code>read_line</code>会将返回值（一个<code>const char*</code>）放在<code>rax</code>中，随后<code>mov rdi,rax</code>将<code>rax</code>的值移入<code>rdi</code>中，再调用<code>phase_5</code>时<code>rdi</code>就是隐式的第一参数。</p>
+<p>虽然看上去<code>phase_5</code>“接受”了这个形参，但因为其并没有改变<code>rdi</code>的值，因此再去<code>call string_length</code>时<code>rdi</code>还是第一参数，因而上述调用其实就是<code>string_length(a1)</code>，亦即获取<code>a1</code>指向字符串的长度（<code>a1</code>的类型被标注为<code>__int64</code>，本质上就是x64系统下指针的数据类型，参考C++的<code>std::ptrdiff_t</code>）。</p>
+<p>需要注意的是，阶段六中还会出现一次相同的情况（“消失的第一参数”）。</p>
 <blockquote>
-<p><code>std::tuple</code>的最大魅力之一在于其可以储存引用类型，这也是上述<code>std::tie</code>能够实现“双向赋值”的原理之一，建议通过“手搓”一个<code>std::tie</code>来理解其底层实现。注意<code>std::tie</code>返回一个<code>std::tuple</code>，且其只能接受左值参数。</p>
+<p>各位无需担心编程的问题——毕竟作为<del>不那么高级的</del>高级语言，编程时函数的调用方式一定为<code>string_length(str)</code>（也就是只要<del>不像可变参数越界那样</del>乱搞，函数参数传递一定是正确的）。<br />
+此现象是因为IDA反汇编时，由于其“观测”到<code>phase_5</code>中没有对<code>rdi</code>进行操作，故会以为调用<code>string_length</code>时没有传参——毕竟IDA的反汇编的目标不是对函数语义进行检查，亦不是去完全重构原函数，而是为了将汇编语言的逻辑以尽可能“眼熟”的方式展现出来。同时不自动填充参数的另一个原因是<code>phase_5</code>自身并不知道谁在调用它，或给它传递的参数如何。</p>
 </blockquote>
-<p>C++17引入 <em>structured binding</em>
-后，对<code>tuple</code>内参数的获取无疑便捷了不少<del>有Python那味了</del>：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> [x,y,z] = tp; <span class="comment">//x,y,z = 1,2,3</span></span><br></pre></td></tr></table></figure>
 <blockquote>
-<p>注意此处<code>x</code>、<code>y</code>、<code>z</code>的类型实际上是<code>int&amp;&amp;</code>——其由
-<em>structured binding</em> 的特性所致。<br />
-详见<a
-href="/cpp/structured_binding/">C++——结构绑定</a><del>当然目前这个链接还打不开，因为还在咕</del></p>
+<p><del>当然即使不知道汇编语言和调用协定之类的逻辑，盲猜也能知道这个函数获取的就是传入字符串的长度</del></p>
 </blockquote>
-<h1 id="前行fold-expression-和-pack-indexing">前行：fold expression 和
-pack indexing</h1>
-<p>而上述递归调用的缺点也非常明显，即为模板膨胀(template
-inflation)导致的调用效率偏低和代码膨胀，同时模板重载的可读性也欠佳。</p>
+<p>解决这一小插曲后，对于一个目标字符串<code>char v3[7]</code>，其进行了一次单表映射加密，令<code>v3[i] = array_0[a1[i] &amp; 0xF]</code>（翻译后）；<br />
+需满足的目标约束是令字符串<code>v3</code>为<code>"flames"</code>。</p>
+<p>首先找到<code>array_0</code>，双击<code>array_0</code>可以在栈内存区中找到其定义：<br />
+<img src="/img/post_pics/CSrev/2.png" alt="Stack" /></p>
 <blockquote>
-<p>模板膨胀常发生在递归调用模板处。<br />
-以上述的<code>print</code>为例，由于编译器需要实例化每一个涉及到的模板函数，因此必须生成<code>print&lt;int,int,int&gt;</code>、<code>print&lt;int,int&gt;</code>和<code>print&lt;int&gt;</code>的代码。<br />
-对于较简单的函数调用实例尚且如此，一些递归定义的类模板等膨胀将更为严重（特别是涉及嵌套类、模板类内的模板函数等时）。</p>
+<p>实际上这片内存被称为“字符串常量区”，C/C++程序开始运行时会在栈中开辟一段只读内存区，存放所有的字符串常量，即<del>妇孺皆知</del>的<code>const char*</code>。<br />
+因此其中也能发现一些有趣的内容，<del>包括但不限于So you think you can
+stop the bomb with ctrl-c, do you?</del></p>
 </blockquote>
-<p>因此C++17中提出了 <em>fold expression</em>
-，让许多使用可变模板参数的递归实现都可改为“迭代”实现，在进一步提高可读性和维护性的同时，极大提高了可变参数模板的使用效率。<br />
-如，上述<code>print</code>函数使用 <em>fold expression</em>
-可以写作：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(Types&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    (std::cout &lt;&lt; ... &lt;&lt; std::forward&lt;Types&gt;(args));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-调用<code>print(1,2,3)</code>会展开作：<code>std::cout &lt;&lt; std::forward&lt;int&amp;&amp;&gt;(1) &lt;&lt; std::forward&lt;int&amp;&amp;&gt;(2) &lt;&lt; std::forward&lt;int&amp;&amp;&gt;(3)</code>。</p>
+<p>直接逐个目标字符搜索其下标，即为令<code>a1[i] &amp; 0xF</code>应达成的目标值；为令<code>a1[i]</code><del>在<code>string.printable</code>中</del>可以打印，给目标下标加上16的整数倍后转化成字符即可，解同样不唯一。</p>
 <blockquote>
-<p>有关 <em>fold expression</em> 的更多内容可移步：<a
-href="/cpp/foldexpr/">C++——折叠表达式</a><del>这个链接同样还在咕，遥遥无期的那种</del></p>
+<p>如果当作CTF-Crypto题的话，应试着尽可能高效地写出Python解题代码：<br />
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> string <span class="keyword">import</span> ascii_letters <span class="keyword">as</span> lts</span><br><span class="line"></span><br><span class="line">sec = <span class="string">&quot;maduiersnfotvbyl&quot;</span></span><br><span class="line">ls = [sec.index(i) <span class="keyword">for</span> i <span class="keyword">in</span> <span class="string">&quot;flames&quot;</span>]</span><br><span class="line">res = <span class="string">&#x27;&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> ls:</span><br><span class="line">    <span class="keyword">while</span> <span class="keyword">not</span> <span class="built_in">chr</span>(i) <span class="keyword">in</span> lts:</span><br><span class="line">        i += <span class="number">0x10</span></span><br><span class="line">    res += <span class="built_in">chr</span>(i)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(res)</span><br></pre></td></tr></table></figure></p>
 </blockquote>
-<p>当然 <em>fold expression</em>
-也并非万金油，也存在大量的不能用其简化调用的情况。<br />
-C++26在对参数包的访问上更进了一步，提出了 <em>pack indexing</em>
-的概念，允许了通过编译期的<code>size_t</code>对参数包进行寻址的方法，效果概览如下：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Tys&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(Tys&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">if</span> <span class="title">constexpr</span><span class="params">(<span class="keyword">sizeof</span>...(args))</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        std::<span class="built_in">println</span>(<span class="string">&quot;The last argument is: &#123;&#125;&quot;</span>,std::forward&lt;Tys...[<span class="keyword">sizeof</span>...(Tys)<span class="number">-1</span>]&gt;(args...[<span class="keyword">sizeof</span>...(Tys) - <span class="number">1</span>]));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        std::<span class="built_in">println</span>(<span class="string">&quot;The argument pack is empty!&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>); <span class="comment">//Output: The last argument is: 3</span></span><br><span class="line"><span class="built_in">print</span>(); <span class="comment">//Output: The argument pack is empty!</span></span><br></pre></td></tr></table></figure></p>
+<p>解为：<code>IOAPEG</code>（不唯一）</p>
+<h1 id="阶段六">阶段六</h1>
+<h2 id="反编译代码-4">反编译代码</h2>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">unsigned</span> __int64 __fastcall <span class="title function_">phase_6</span><span class="params">(__int64 a1)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">int</span> *v1; <span class="comment">// r13</span></span><br><span class="line">  __int64 i; <span class="comment">// r14</span></span><br><span class="line">  __int64 v3; <span class="comment">// rbx</span></span><br><span class="line">  __int64 j; <span class="comment">// rsi</span></span><br><span class="line">  <span class="type">int</span> v5; <span class="comment">// ecx</span></span><br><span class="line">  <span class="type">int</span> v6; <span class="comment">// eax</span></span><br><span class="line">  _QWORD *v7; <span class="comment">// rdx</span></span><br><span class="line">  __int64 v8; <span class="comment">// rbx</span></span><br><span class="line">  __int64 v9; <span class="comment">// rax</span></span><br><span class="line">  __int64 v10; <span class="comment">// rdx</span></span><br><span class="line">  __int64 v11; <span class="comment">// rax</span></span><br><span class="line">  __int64 v12; <span class="comment">// rdx</span></span><br><span class="line">  __int64 v13; <span class="comment">// rax</span></span><br><span class="line">  <span class="type">int</span> v14; <span class="comment">// ebp</span></span><br><span class="line">  <span class="type">int</span> v16[<span class="number">8</span>]; <span class="comment">// [rsp+0h] [rbp-88h] BYREF</span></span><br><span class="line">  __int64 v17; <span class="comment">// [rsp+20h] [rbp-68h]</span></span><br><span class="line">  __int64 v18; <span class="comment">// [rsp+28h] [rbp-60h]</span></span><br><span class="line">  __int64 v19; <span class="comment">// [rsp+30h] [rbp-58h]</span></span><br><span class="line">  __int64 v20; <span class="comment">// [rsp+38h] [rbp-50h]</span></span><br><span class="line">  __int64 v21; <span class="comment">// [rsp+40h] [rbp-48h]</span></span><br><span class="line">  __int64 v22; <span class="comment">// [rsp+48h] [rbp-40h]</span></span><br><span class="line">  <span class="type">unsigned</span> __int64 v23; <span class="comment">// [rsp+58h] [rbp-30h]</span></span><br><span class="line"></span><br><span class="line">  v23 = __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">  v1 = v16;</span><br><span class="line">  read_six_numbers(a1, v16);</span><br><span class="line">  <span class="keyword">for</span> ( i = <span class="number">1LL</span>; ; ++i )</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">if</span> ( (<span class="type">unsigned</span> <span class="type">int</span>)(*v1 - <span class="number">1</span>) &gt; <span class="number">5</span> )</span><br><span class="line">      explode_bomb();</span><br><span class="line">    <span class="keyword">if</span> ( (<span class="type">int</span>)i &gt; <span class="number">5</span> )</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    v3 = i;</span><br><span class="line">    <span class="keyword">do</span></span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">if</span> ( *v1 == v16[v3] )</span><br><span class="line">        explode_bomb();</span><br><span class="line">      ++v3;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">while</span> ( (<span class="type">int</span>)v3 &lt;= <span class="number">5</span> );</span><br><span class="line">    ++v1;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">for</span> ( j = <span class="number">0LL</span>; j != <span class="number">6</span>; ++j )</span><br><span class="line">  &#123;</span><br><span class="line">    v5 = v16[j];</span><br><span class="line">    v6 = <span class="number">1</span>;</span><br><span class="line">    v7 = &amp;node1;</span><br><span class="line">    <span class="keyword">if</span> ( v5 &gt; <span class="number">1</span> )</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">do</span></span><br><span class="line">      &#123;</span><br><span class="line">        v7 = (_QWORD *)v7[<span class="number">1</span>];</span><br><span class="line">        ++v6;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">while</span> ( v6 != v5 );</span><br><span class="line">    &#125;</span><br><span class="line">    *(&amp;v17 + j) = (__int64)v7;</span><br><span class="line">  &#125;</span><br><span class="line">  v8 = v17;</span><br><span class="line">  v9 = v18;</span><br><span class="line">  *(_QWORD *)(v17 + <span class="number">8</span>) = v18;</span><br><span class="line">  v10 = v19;</span><br><span class="line">  *(_QWORD *)(v9 + <span class="number">8</span>) = v19;</span><br><span class="line">  v11 = v20;</span><br><span class="line">  *(_QWORD *)(v10 + <span class="number">8</span>) = v20;</span><br><span class="line">  v12 = v21;</span><br><span class="line">  *(_QWORD *)(v11 + <span class="number">8</span>) = v21;</span><br><span class="line">  v13 = v22;</span><br><span class="line">  *(_QWORD *)(v12 + <span class="number">8</span>) = v22;</span><br><span class="line">  *(_QWORD *)(v13 + <span class="number">8</span>) = <span class="number">0LL</span>;</span><br><span class="line">  v14 = <span class="number">5</span>;</span><br><span class="line">  <span class="keyword">do</span></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">if</span> ( *(_DWORD *)v8 &gt; **(_DWORD **)(v8 + <span class="number">8</span>) )</span><br><span class="line">      explode_bomb();</span><br><span class="line">    v8 = *(_QWORD *)(v8 + <span class="number">8</span>);</span><br><span class="line">    --v14;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">while</span> ( v14 );</span><br><span class="line">  <span class="keyword">return</span> v23 - __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="解析-5">解析</h2>
+<p><code>phase_6</code>的代码逻辑就比较冗长了，当然一部分是因为其将全部流程均打包在了一个函数中。</p>
+<p>将程序的流程分为以下几部分：</p>
+<ol type="1">
+<li>读取六个整数存储于<code>v16</code>指向的数组中，用第一个<code>for</code>循环进行约束；<br />
+</li>
+<li>第二个<code>for</code>循环进行了链表转写的操作；<br />
+</li>
+<li>一系列非常奇怪的赋值语句；<br />
+</li>
+<li><code>do-while</code>循环再次进行约束。</li>
+</ol>
+<h3 id="part-1">Part 1</h3>
+<p>第一个<code>for</code>循环的约束逻辑：伪C部分形如<br />
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> ( i = <span class="number">1LL</span>; ; ++i )</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">if</span> ( (<span class="type">unsigned</span> <span class="type">int</span>)(*v1 - <span class="number">1</span>) &gt; <span class="number">5</span> )</span><br><span class="line">      explode_bomb();</span><br><span class="line">    <span class="keyword">if</span> ( (<span class="type">int</span>)i &gt; <span class="number">5</span> )</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    v3 = i;</span><br><span class="line">    <span class="keyword">do</span></span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">if</span> ( *v1 == v16[v3] )</span><br><span class="line">        explode_bomb();</span><br><span class="line">      ++v3;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">while</span> ( (<span class="type">int</span>)v3 &lt;= <span class="number">5</span> );</span><br><span class="line">    ++v1;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+依然还是编译-反编译带来的语义崩坏通病<del>有点类似于将语言A的句子翻译成语言B再翻译回来的感觉</del>。梳理其逻辑可以转写如下：</p>
+<ul>
+<li><code>*v1</code>访问过的所有元素（也就是<code>v16</code>的所有元素）数值必须在
+<span class="math inline">\([1,6]\)</span>；<br />
+</li>
+<li><code>v1</code>和<code>&amp;v16[v3]</code>都是指针，其中<code>v3</code>在<code>do-while</code>循环前的初始值必为<code>v1+1</code>，相当于其访问元素初始下标比<code>v1</code>大1。进而，<code>do-while</code>循环的约束拓展、简写后可写作“<code>v16</code>中的元素两两不同”。</li>
+</ul>
+<p>合并起来就是：<strong>v16[6]中唯一地存放了1~6这六个数字。</strong></p>
+<h3 id="part-2">Part 2</h3>
+<p>再把对应部分的伪代码搬过来： <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> ( j = <span class="number">0LL</span>; j != <span class="number">6</span>; ++j )</span><br><span class="line">&#123;</span><br><span class="line">  v5 = v16[j];</span><br><span class="line">  v6 = <span class="number">1</span>;</span><br><span class="line">  v7 = &amp;node1;</span><br><span class="line">  <span class="keyword">if</span> ( v5 &gt; <span class="number">1</span> )</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">do</span></span><br><span class="line">    &#123;</span><br><span class="line">      v7 = (_QWORD *)v7[<span class="number">1</span>];</span><br><span class="line">      ++v6;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">while</span> ( v6 != v5 );</span><br><span class="line">  &#125;</span><br><span class="line">  *(&amp;v17 + j) = (__int64)v7;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>首先又涉及到了一个栈变量<code>node1</code>，查看其内容：<br />
+<img src="/img/post_pics/CSrev/3.png" alt="node1" />
+可以发现其邻域还有<code>node2</code>，<code>node3</code>等，结合题目描述推测其与链表有关。但链表的<code>struct</code>在此处已无法还原，所以只能看循环体内对内存的操作：</p>
+<ul>
+<li>先令<code>v5 = v16[j]</code>(<del><code>j in range(6)</code></del>)，显然若<code>v5 &lt;= 1</code>，则直接令<code>v17[j] = &amp;node1</code>；<br />
+</li>
+<li>否则进入<code>do-while</code>循环，发现其寻址方式特别有趣——<code>v7 = (_QWORD *)v7[1]</code>，强制类型转换由于没有发生截断（原来是<code>__int64</code>，现在<code>QWORD</code>四字类型依然是64位，相当于将该位置开始的8Byte数据按指针的方式解读，参考C++的<code>reinterpret_cast</code>）故近似可忽略（但注意此时其已经具备了“指针”的属性，可以执行下标访问等操作）。
+随后结合<code>operator[]</code>，相当于<code>v7</code>移动到了根据<code>v7</code>后的下一个变量（即8Byte后）的“数据地址”。</li>
+</ul>
+<p>结合上图可能会更加直观：<br />
+如假设<code>v5 = 2</code>，相当于其只前进了一次，首先<code>v7 = 0x405330</code>，其获取<code>0x405338</code>开始8Byte的数据，由于x86-64架构小端序的特性，其得到的数据是<code>0x405340</code>。<br />
+随后，<code>v7</code>移动到这个“获得”的数据所对应的地址上，即现在<code>v7</code>就是<code>0x405340</code>。</p>
+<p>不难发现这一部分的链表<del>还算比较友好</del>都是“连续”存放的，<strong>除了node5的地址指向了<code>0x405210</code></strong>，回滚后发现其就是node6，该node存放“下一个结点地址”是<code>0</code>（<code>NULL</code>,<del><code>nullptr</code></del>）。</p>
 <blockquote>
-<p>事实上C++26前结合模板的<code>size_t</code>参数可以实现类似下标访问的效果（<del>不然你猜C++11就有的<code>std::get</code>是干啥的</del>），如：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="type">size_t</span> N,<span class="keyword">class</span> Type,<span class="keyword">class</span> ...Types&gt;</span></span><br><span class="line"><span class="function"><span class="keyword">auto</span>&amp;&amp; <span class="title">visit</span><span class="params">(Type&amp;&amp; arg,Types&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">if</span> <span class="title">constexpr</span><span class="params">(N == <span class="number">0</span>)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> std::forward&lt;Type&gt;(arg);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> <span class="built_in">constexpr</span>(N &lt; <span class="keyword">sizeof</span>...(args))</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">visit</span>&lt;N<span class="number">-1</span>&gt;(std::forward&lt;Types&gt;(args));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">static_assert</span>(<span class="literal">false</span>,<span class="string">&quot;Pack index out of range&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>由于这个Part的前置条件就是<code>v16[6]</code>覆盖了1~6的所有数字，因此此处不应出现越界之类的意外情况。</p>
 </blockquote>
-<h1 id="结语">结语</h1>
-<p>有言称C++可以分成不带模板的C++和带模板的C++两种语言；而可变参数模板无疑是后者中极重要的支柱之一。<br />
-熟能生巧、深入理解之能极大地提高自身的代码开发效率，并能面对繁杂的标准库和三方库时游刃有余。</p>
+<h3 id="part-3">Part 3</h3>
+<p>这一段的伪代码会让人看着非常摸不着头脑：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">v8 = v17;</span><br><span class="line"> v9 = v18;</span><br><span class="line"> *(_QWORD *)(v17 + 8) = v18;</span><br><span class="line"> v10 = v19;</span><br><span class="line"> *(_QWORD *)(v9 + 8) = v19;</span><br><span class="line"> v11 = v20;</span><br><span class="line"> *(_QWORD *)(v10 + 8) = v20;</span><br><span class="line"> v12 = v21;</span><br><span class="line"> *(_QWORD *)(v11 + 8) = v21;</span><br><span class="line"> v13 = v22;</span><br><span class="line"> *(_QWORD *)(v12 + 8) = v22;</span><br><span class="line"> *(_QWORD *)(v13 + 8) = 0LL;</span><br></pre></td></tr></table></figure>
+<p>其涉及了大量乱飞的变量名，而这些变量名看似“空穴来风”。其源代码大概率亦并非如此编写<del>日常甩锅给IDA/反编译</del>。</p>
+<blockquote>
+<p>推测这大概率是构建<code>struct</code>的某个函数被重复调用、内联展开后的结果，解析见下。</p>
+</blockquote>
+<p>破局之法有二：首先可以试着回到反汇编代码头，查看其定义的注释：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">__int64 v8; // rbx</span><br><span class="line">__int64 v9; // rax</span><br><span class="line">__int64 v10; // rdx</span><br><span class="line">__int64 v11; // rax</span><br><span class="line">__int64 v12; // rdx</span><br><span class="line">__int64 v13; // rax</span><br><span class="line">int v14; // ebp</span><br><span class="line">int v16[8]; // [rsp+0h] [rbp-88h] BYREF</span><br><span class="line">__int64 v17; // [rsp+20h] [rbp-68h]</span><br><span class="line">__int64 v18; // [rsp+28h] [rbp-60h]</span><br><span class="line">__int64 v19; // [rsp+30h] [rbp-58h]</span><br><span class="line">__int64 v20; // [rsp+38h] [rbp-50h]</span><br><span class="line">__int64 v21; // [rsp+40h] [rbp-48h]</span><br><span class="line">__int64 v22; // [rsp+48h] [rbp-40h]</span><br></pre></td></tr></table></figure>
+<p>或者直接看栈空间：<br />
+<img src="/img/post_pics/CSrev/4.png" alt="varstk" /></p>
+<p>可以发现两点：</p>
+<ul>
+<li><code>v8</code>-<code>v13</code>是“名义上”的变量，但它们实际并不存在于C源程序中，注释亦指明之——它们实际上是寄存器在伪C中的别名。
+&gt;
+这也是一些反编译代码“废话文学”的来源，寄存器实际上是作为部分变量/返回值间赋值的“中间人”。<br />
+</li>
+<li><code>v17</code>-<code>v22</code>并非互相独立的变量，实际上它们在内存空间中的位置是连续的（其类型视为<code>__int64</code>的情况下）。事实上可以认为存在一个数组<code>arr</code>，其中<code>v17</code>就是<code>arr[0]</code>，<code>v18</code>就是<code>arr[1]</code>，以此类推，<code>v22</code>就是<code>arr[5]</code>。</li>
+</ul>
+<p>还记得此前Part
+2中给<code>*(&amp;v17 + j)</code>赋值的语句吗？结合上文分析，按变量名的角度理解，Part2等价于在将<code>node0</code>的地址写入<code>v17</code>，<code>node1</code>的地址写入<code>v18</code>，等等。<br />
+那此处的一些赋值语句就不再让人完全发懵了：<br />
+<code>*(_QWORD *)(v17 + 8)</code>其实就是<code>node0</code>中存放下一结点地址的该部分内存，对之赋值<code>v18</code><del>说c话</del>就是：<br />
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">node0.next = &amp;node(???);</span><br></pre></td></tr></table></figure></p>
+<p>而这里的(???)就是之前<code>*&amp;(v17 + 1)</code>被重写时使用的<code>node</code>地址，追溯回去也就是<code>node(v16[j])</code>。</p>
+<p>至此分析结束。<br />
+这段代码(Part2 +
+Part3)的作用是实现了链表“重组”：先建立一个链表，然后把链表中的地址用一个数组存储起来，再根据另一个index式的数组将链表重新连接。写成C语言代码应该长这样：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Node</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    <span class="type">int</span> data;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">Node</span>* <span class="title">next</span>;</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Node</span>* <span class="title">head</span> =</span> <span class="comment">/**/</span>;</span><br><span class="line"><span class="type">int</span> index_ls[<span class="number">6</span>] = <span class="comment">/**/</span>;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Node</span>* <span class="title">arr</span>[6] =</span> &#123;&#125;;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Node</span>* <span class="title">cur</span> =</span> <span class="literal">NULL</span>,*tp = <span class="literal">NULL</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;<span class="number">6</span>;++i)</span><br><span class="line">&#123;</span><br><span class="line">    cur = head;</span><br><span class="line">    <span class="type">int</span> temp = index_ls[i];</span><br><span class="line">    <span class="keyword">if</span>(temp)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> j=<span class="number">0</span>;j&lt;temp;++j)</span><br><span class="line">        &#123;</span><br><span class="line">            cur = cur-&gt;next;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    arr[i] = cur;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&lt;<span class="number">6</span>;++i)</span><br><span class="line">&#123;</span><br><span class="line">    cur = arr[i];</span><br><span class="line">    tp = cur-&gt;next;</span><br><span class="line">    cur-&gt;next = </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="part-4">Part 4</h3>
+<p>现在<code>v8</code>定位到了<code>v17</code>处，而此处其比较的约束条件是<code>*(_DWORD *)v8 &lt;= **(_DWORD **)(v8 + 8)</code>。<br />
+此处<code>_DWORD *</code>的强制类型转换说明：比较时，将其按2字（4字节，32位）的方式解读。但<code>v8</code>本身具有<code>__int64</code>的属性（是一个地址），其+8的偏移量相当于从数据部分（一个<code>int</code>）“偏”到了地址部分，再进行二阶解引用，相当于解引用了“下一个结点”的<code>int</code>。<br />
+总而言之，翻译过来就是约束<strong>按链表的访问顺序，其对应数据区的<code>int</code>应是非递减的</strong>。<br />
+因此我们直接查看node0-node5对应的<code>int</code>数据区，将之按非递减序排列，对应的下标+1即为解。</p>
+<p>数据区的<code>DWORD</code>表示：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">node编号</th>
+<th style="text-align: center;">内存数据</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;"><code>ad 03 00 00</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">2</td>
+<td style="text-align: center;"><code>e7 03 00 00</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">3</td>
+<td style="text-align: center;"><code>1b 01 00 00</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;"><code>1b 01 00 00</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">5</td>
+<td style="text-align: center;"><code>8c 01 00 00</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">6</td>
+<td style="text-align: center;"><code>db 00 00 00</code></td>
+</tr>
+</tbody>
+</table>
+<p>按小端序读取，不难得出一种非递减序为<code>6 3 4 5 1 2</code>。</p>
+<p>解为：<code>6 3 4 5 1 2</code>或<code>6 4 3 5 1 2</code></p>
+<h1 id="阶段七隐藏关">阶段七（“隐藏关”）</h1>
+<h2 id="何谓隐藏">何谓“隐藏”</h2>
+<p>其一，其函数名为<code>secret_phase</code>(bushi)<br />
+其二，该阶段的触发不是显式进行的，而是依赖了一个名为<code>phase_defused</code>的函数，其在每个阶段结束后被调用：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">unsigned</span> __int64 <span class="title function_">phase_defused</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">char</span> v1; <span class="comment">// [rsp+8h] [rbp-70h] BYREF</span></span><br><span class="line">  <span class="type">char</span> v2; <span class="comment">// [rsp+Ch] [rbp-6Ch] BYREF</span></span><br><span class="line">  <span class="type">char</span> v3[<span class="number">88</span>]; <span class="comment">// [rsp+10h] [rbp-68h] BYREF</span></span><br><span class="line">  <span class="type">unsigned</span> __int64 v4; <span class="comment">// [rsp+68h] [rbp-10h]</span></span><br><span class="line"></span><br><span class="line">  v4 = __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">  send_msg(<span class="number">1LL</span>);</span><br><span class="line">  <span class="keyword">if</span> ( num_input_strings == <span class="number">6</span> )</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">if</span> ( (<span class="type">unsigned</span> <span class="type">int</span>)__isoc99_sscanf(&amp;unk_405910, <span class="string">&quot;%d %d %s&quot;</span>, &amp;v1, &amp;v2, v3) == <span class="number">3</span></span><br><span class="line">      &amp;&amp; !(<span class="type">unsigned</span> <span class="type">int</span>)strings_not_equal(v3, <span class="string">&quot;DrEvil&quot;</span>) )</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="built_in">puts</span>(<span class="string">&quot;Curses, you&#x27;ve found the secret phase!&quot;</span>);</span><br><span class="line">      <span class="built_in">puts</span>(<span class="string">&quot;But finding it and solving it are quite different...&quot;</span>);</span><br><span class="line">      secret_phase();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;Congratulations! You&#x27;ve defused the bomb!&quot;</span>);</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;Your instructor has been notified and will verify your solution.&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> v4 - __readfsqword(<span class="number">0x28</span>u);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注意到其前置的触发条件是<code>num_input_strings == 6</code>，而<code>num_input_strings</code>变量是在<code>read_line</code>函数（读取字符串）中被更改的。<br />
+故总结起来就是其<strong>必须在完成前六关后才能触发</strong>。</p>
+<p>里层<code>if</code>的约束条件为：</p>
+<ul>
+<li>先对一个奇怪的位置<code>0x405910</code>开始的字符串进行了<code>sscanf</code>，读取到<code>v1</code>、<code>v2</code>、<code>v3</code>中，其分别为整型、整型、字符串，要求<code>scanf</code>返回值为3；<br />
+</li>
+<li><code>strcmp(v3,"DrEvil") == 0</code>（等价）。</li>
+</ul>
+<p>回到栈空间及汇编代码中，可以看到以下片段：<br />
+<img src="/img/post_pics/CSrev/9.png" alt="stack_partition" /></p>
+<p>这个<code>0x405910</code>的位置特殊在于，其恰好在<code>char input_strings[240]</code>的隔壁。而<code>input_strings</code>只在<code>read_line</code>函数中有涉及过，查看其反编译代码：</p>
+<blockquote>
+<p>实践证明，不求甚解的可行性会随着时间、形势和目标等而不断转化。如最初我们认为对<code>read_line</code>函数不需要过于深究，但现在仍需回到其中才能探明“隐藏关”的启动方法。</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="type">char</span> *<span class="title function_">read_line</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">int</span> v0; <span class="comment">// ebp</span></span><br><span class="line">  <span class="type">const</span> <span class="type">char</span> *v1; <span class="comment">// rbx</span></span><br><span class="line">  <span class="type">int</span> v2; <span class="comment">// eax</span></span><br><span class="line">  <span class="type">int</span> v4; <span class="comment">// eax</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> ( !skip() )</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">if</span> ( infile == (FILE *)<span class="built_in">stdin</span> )</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="built_in">puts</span>(<span class="string">&quot;Error: Premature EOF on stdin&quot;</span>);</span><br><span class="line">      <span class="built_in">exit</span>(<span class="number">8</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> ( getenv(<span class="string">&quot;GRADE_BOMB&quot;</span>) )</span><br><span class="line">      <span class="built_in">exit</span>(<span class="number">0</span>);</span><br><span class="line">    infile = (FILE *)<span class="built_in">stdin</span>;</span><br><span class="line">    <span class="keyword">if</span> ( !skip() )</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="built_in">puts</span>(<span class="string">&quot;Error: Premature EOF on stdin&quot;</span>);</span><br><span class="line">      <span class="built_in">exit</span>(<span class="number">0</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  v0 = num_input_strings;</span><br><span class="line">  v1 = &amp;input_strings[<span class="number">80</span> * num_input_strings];</span><br><span class="line">  v2 = <span class="built_in">strlen</span>(v1);</span><br><span class="line">  <span class="keyword">if</span> ( v2 &gt; <span class="number">78</span> )</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;Error: Input line too long&quot;</span>);</span><br><span class="line">    v4 = num_input_strings++;</span><br><span class="line">    <span class="built_in">strcpy</span>(&amp;input_strings[<span class="number">80</span> * v4], <span class="string">&quot;***truncated***&quot;</span>);</span><br><span class="line">    explode_bomb();</span><br><span class="line">  &#125;</span><br><span class="line">  input_strings[<span class="number">80</span> * v0 - <span class="number">1</span> + v2] = <span class="number">0</span>;</span><br><span class="line">  num_input_strings = v0 + <span class="number">1</span>;</span><br><span class="line">  <span class="keyword">return</span> v1;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>不难推断，<code>input_strings</code>是一个存放了输入的<code>char[???]</code>，但显然<code>???</code>不应为<code>240</code>（因为每个字符串都预留了<code>80</code>的空间）；IDA将之标记为<code>char[240]</code>依然和编译-反编译过程等有关（<del>中途杀出来的变量搅混水</del>）。<br />
+但既然如此，鉴于<code>input_strings</code>的起始地址为<code>0x405820</code>，则对于下标为<code>i</code>的题目，存放输入字符串的地址就是<code>0x405820 + i*80</code>。<br />
+所以<code>0x405910</code>恰好就是下标为<code>3</code>，即阶段四时我们的输入。</p>
+<blockquote>
+<p>Surprise m***** f***er!(bushi)</p>
+</blockquote>
+<p>确定了<code>sscanf</code>的作用对象后，回到阶段四的答案（两个整数，以<code>66 2</code>为例），在其后再追加一个<code>DrEvil</code>即可触发隐藏关；隐藏关的输入则在第七行正常进行。</p>
+<h2 id="反编译代码-5">反编译代码</h2>
+<h3 id="secret_phase"><code>secret_phase</code></h3>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">__int64 <span class="title function_">secret_phase</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">const</span> <span class="type">char</span> *line; <span class="comment">// rdi</span></span><br><span class="line">  <span class="type">int</span> v1; <span class="comment">// ebx</span></span><br><span class="line"></span><br><span class="line">  line = (<span class="type">const</span> <span class="type">char</span> *)read_line();</span><br><span class="line">  v1 = strtol(line, <span class="number">0LL</span>, <span class="number">10</span>);</span><br><span class="line">  <span class="keyword">if</span> ( (<span class="type">unsigned</span> <span class="type">int</span>)(v1 - <span class="number">1</span>) &gt; <span class="number">0x3E8</span> )</span><br><span class="line">    explode_bomb();</span><br><span class="line">  <span class="keyword">if</span> ( (<span class="type">unsigned</span> <span class="type">int</span>)fun7((__int64)&amp;n1, v1) != <span class="number">5</span> )</span><br><span class="line">    explode_bomb();</span><br><span class="line">  <span class="built_in">puts</span>(<span class="string">&quot;Wow! You&#x27;ve defused the secret stage!&quot;</span>);</span><br><span class="line">  <span class="keyword">return</span> phase_defused();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="fun7"><code>fun7</code></h3>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">__int64 __fastcall <span class="title function_">fun7</span><span class="params">(__int64 a1, <span class="type">int</span> a2)</span></span><br><span class="line">&#123;</span><br><span class="line">  __int64 result; <span class="comment">// rax</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> ( !a1 )</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0xFFFFFFFF</span>LL;</span><br><span class="line">  <span class="keyword">if</span> ( *(_DWORD *)a1 &gt; a2 )</span><br><span class="line">    <span class="keyword">return</span> <span class="number">2</span> * (<span class="type">unsigned</span> <span class="type">int</span>)fun7(*(_QWORD *)(a1 + <span class="number">8</span>));</span><br><span class="line">  result = <span class="number">0LL</span>;</span><br><span class="line">  <span class="keyword">if</span> ( *(_DWORD *)a1 != a2 )</span><br><span class="line">    <span class="keyword">return</span> <span class="number">2</span> * (<span class="type">unsigned</span> <span class="type">int</span>)fun7(*(_QWORD *)(a1 + <span class="number">16</span>)) + <span class="number">1</span>;</span><br><span class="line">  <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="解析-6">解析</h2>
+<p>首先<code>secret_phase</code>部分还是读取了一个字符串，并将之用<code>strtol</code>函数转换为整型(<code>long</code>)。<br />
+第一个<code>if</code>的约束翻译为要求 <span class="math inline">\(v1 \in
+[1,1001]\)</span>；<br />
+第二个<code>if</code>则要求<code>fun7(&amp;n1,v1)</code>的返回值为5，因此顺势继续看向<code>fun7</code>的逻辑。</p>
+<p><code>fun7</code>接受的第一个参数是一个指针，返回值类型为<code>__int64</code>。</p>
+<blockquote>
+<p>这里可以发现<code>fun7</code>的递归调用中同样出现了“失踪”实参的情况，其原因也是<code>__fastcall</code>下寄存器<code>rsi</code>的数值没有发生改变。<br />
+理解作每次递归时<code>a2</code>的值不变即可（实现了其类似一个“静态”值的效果，如此亦能发挥<code>__fastcall</code>的优越性（复用寄存器，无需重复复制变量、进出栈，效率极高）。</p>
+</blockquote>
+<p>若<code>a1</code>为空(<code>NULL</code>,<del><code>nullptr</code></del>)，则返回
+<span class="math inline">\(2^{32} - 1\)</span>。</p>
+<blockquote>
+<p>显式指定<code>LL</code>后缀是避免默认字面量类型<code>int</code>截断（最大值
+<span class="math inline">\(2^{31} - 1\)</span>）。<br />
+趣话C/C++的字面量：C/C++对于输入的整型字面量(literals)会根据其大小“自适应”地匹配对应的数据类型，但可以通过指定后缀来覆写之。默认取在其范围内尽可能小的类型（<code>int</code>-<code>unsigned int</code>-<code>long long</code>-<code>unsigned long long</code>）；<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> a = <span class="number">1</span>; <span class="comment">//a is int(1 is of int type by default)</span></span><br><span class="line"><span class="keyword">auto</span> b = <span class="number">-3</span>; <span class="comment">//b is int(-3 is of int type by default)</span></span><br><span class="line"><span class="keyword">auto</span> c = <span class="number">1LL</span>; <span class="comment">//c is long long(default is overridden by explicit literal suffix)</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">auto</span> d = <span class="number">0xFFFFFFFF</span>; <span class="comment">//d is unsigned int(since `int` cannot contain such number as 0xFFFFFFFF)</span></span><br><span class="line"><span class="keyword">auto</span> e = <span class="number">0x7FFFFFFF</span>; <span class="comment">//e is int(actually maximum possible value of `int`)</span></span><br><span class="line"><span class="keyword">auto</span> f = <span class="number">0xFFFFFFFFFFFFFFFF</span>; <span class="comment">//f is unsigned long long</span></span><br><span class="line"><span class="keyword">auto</span> g = <span class="number">0x7FFFFFFFFFFFFFFF</span>; <span class="comment">//g is long long</span></span><br><span class="line"><span class="comment">//auto h = 0x10000000000000000; //Error: Integer constant is too big(exceeds 2^&#123;64&#125; - 1 limit of unsigned long long)</span></span><br></pre></td></tr></table></figure>
+需要注意的是C/C++中<strong>负号并不是字面量的一部分</strong>，字面量的类型仅取决于其整数部分，负号只是一个运算符。因此如<code>-0x80000000</code>并不会被视作一个取值最小的<code>int</code>，而会被视为取值最大的<code>unsigned int</code>取负<del>巧的是运算结果依然是<code>0x80000000</code></del>：<br />
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">static_assert</span>(<span class="number">-0x80000000</span> == <span class="number">0x80000000</span>); <span class="comment">//passes</span></span><br><span class="line"><span class="built_in">static_assert</span>(<span class="number">-0xFFFFFFFFFFFFFFFF</span> == <span class="number">1</span>); <span class="comment">//passes, no error in constant resolution</span></span><br></pre></td></tr></table></figure></p>
+</blockquote>
+<p>回归题解，在<code>a1</code>不为空时，判定<code>*(_DWORD *)a1</code>和<code>a2</code>的大小关系：</p>
+<ul>
+<li>大于，返回<code>2*fun7(*(_QWORD *)(a1 + 8))</code>；<br />
+</li>
+<li>小于，返回<code>2*fun7(*(_QWORD *)(a1 + 16)) + 1</code>；<br />
+</li>
+<li>等于，返回<code>0</code>。</li>
+</ul>
+<p>有了阶段六的链表解析经验，不难看出这也是一种链表访问的结构。</p>
+<blockquote>
+<p><code>DWORD</code>和<code>QWORD</code>互化还是因为内存解读方式的问题——这个链表结点的数据区类型是2字(32位)的<code>int</code>，指针类型则是4字。</p>
+</blockquote>
+<p>点进<code>n1</code>的栈内存区，可以发现以下内容：<br />
+<img src="/img/post_pics/CSrev/5.png" alt="n1_stack" /><br />
+由此不难发现，这是一个二叉树结构，<code>n1</code>就是该二叉树的根结点；<br />
+结合地址可以判断，比较结果为大于时，返回左结点的2倍，小于时返回右子结点的2倍加1，等于时返回零。<br />
+若待解引用的结点是空结点，返回 <span class="math inline">\(2^{32} -
+1\)</span>。</p>
+<p>由于栈内存区已确定，逐个地址构建二叉树结构，随后按该规则遍历即可，二叉树结构<del>及邪道速通法</del>见下。</p>
+<blockquote>
+<p>“抄近道”：由于节点数较多，逐个寻址较为繁琐。继续往下翻，可以发现结点名似乎有所蹊跷：<br />
+<img src="/img/post_pics/CSrev/6.png" alt="nname_1" /><br />
+注意到<code>n21</code>恰好是<code>n1</code>的左子结点，<code>n22</code>恰好是<code>n1</code>的右子结点。<br />
+再往下寻址+翻栈内存，可以找到<code>n31</code><sub><code>n34</code>、<code>n41</code></sub><code>n48</code>，其中<code>n41</code>~<code>n48</code>是叶结点。<br />
+不难验证，变量名末位是在二叉树结构中层序遍历的次序。由此结合数据区内容，整理得到二叉树结构如下：<br />
+<img src="/img/post_pics/CSrev/7.jpg" alt="bintree" /></p>
+</blockquote>
+<p>但仅完成双链表的整理尚不够。回顾最开始的<code>if</code>约束，要求<code>fun7(&amp;n1,v1) == 5</code>。<br />
+而因为其中返回值传递用的都是<code>__int64</code>，显然我们不希望其中的<code>0xFFFFFFFF</code>被加入计算（或者能在某一步计算被“截断”）。</p>
+<p>又因为<code>fun7</code>的返回值只能是以下四种之一：2倍左结点返回值、2倍右结点返回值+1、<code>0</code>、<code>0xFFFFFFFF</code>；<br />
+结合该二叉树只有4层，显然我们需要获得的返回值<code>5</code>只能由<code>4+1</code>，即<code>2*2+1</code>获得。</p>
+<p>继续推断，<code>2*2+1</code>应再解作<code>2*(2*1)+1</code>（展开一个隐式的因子<code>1</code>）。按递归的逆序分析形如：</p>
+<ul>
+<li>对于第四层的某个结点，若其访问子结点，结果必定为<code>0xFFFFFFFF</code>（因为其为空），而这个值不能被传递上去，因此该结点的数值只能等于<code>v2</code>来实现截断。由于这个条件具有充要条件的属性，因此反过来，<code>v2</code>的值也只能是四个叶结点所含有的<code>int</code>之一，此时第四层的返回值就是<code>0</code>；<br />
+</li>
+<li>对于第三层，因为第四层返回的一定是<code>0</code>，再将内层表达式<code>2*1</code>转写为<code>2*((2*0)+1)</code>，不难看出其要求第三层的结点数据<code>i</code>必须小于<code>v2</code>，方能实现返回<code>(2*0)+1</code>的效果；<br />
+</li>
+<li>对于第二层，往外看一层括号，显然需要让其结点数据大于<code>v2</code>；<br />
+</li>
+<li>对于第一层，同理可得其结点数据应小于<code>v2</code>。</li>
+</ul>
+<p>除结点数据要求外，还要求该访问顺序在二叉树中可以实现。<br />
+逐个尝试可得只有<code>v2 = 0x2f</code>满足要求，即<code>v2 = 47</code>。</p>
+<p>解为：（不考虑对阶段四答案的追加）<br />
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">47</span><br></pre></td></tr></table></figure></p>
+<h1 id="txt及结果"><code>.txt</code>及结果</h1>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">I can see Russia from my house!</span><br><span class="line">0 1 1 2 3 5</span><br><span class="line">0 104</span><br><span class="line">66 2 DrEvil</span><br><span class="line">IOAPEG</span><br><span class="line">6 3 4 5 1 2</span><br><span class="line">47</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p><img src="/img/post_pics/CSrev/8.png" /></p>
+<h1 id="彩蛋c代码还原">彩蛋：C代码“还原”</h1>
+<blockquote>
+<p>咕咕咕，曲项向天咕</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">phase_1</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
       
 
@@ -561,7 +879,11 @@ C++26在对参数包的访问上更进了一步，提出了 <em>pack indexing</e
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">wp</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">C/C++</a>
         		</li>
       		
 		</ul>
@@ -573,7 +895,7 @@ C++26在对参数包的访问上更进了一步，提出了 <em>pack indexing</e
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
+        			<a href="/categories/闲笔//" class="article-tag-list-link color3">闲笔</a>
         		</li>
       		
 		</ul>
@@ -582,7 +904,7 @@ C++26在对参数包的访问上更进了一步，提出了 <em>pack indexing</e
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/cpp/variadic/">展开全文 >></a>
+          <a class="article-more-a" href="/misc/bomblab_wp/">展开全文 >></a>
         </p>
       
 
@@ -616,7 +938,7 @@ C++26在对参数包的访问上更进了一步，提出了 <em>pack indexing</e
   
   
     <nav id="page-nav">
-      <a class="extend prev" rel="prev" href="/page/6/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/5/">5</a><a class="page-number" href="/page/6/">6</a><span class="page-number current">7</span><a class="page-number" href="/page/8/">8</a><a class="page-number" href="/page/9/">9</a><span class="space">&hellip;</span><a class="page-number" href="/page/15/">15</a><a class="extend next" rel="next" href="/page/8/">Next &raquo;</a>
+      <a class="extend prev" rel="prev" href="/page/6/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/5/">5</a><a class="page-number" href="/page/6/">6</a><span class="page-number current">7</span><a class="page-number" href="/page/8/">8</a><a class="page-number" href="/page/9/">9</a><span class="space">&hellip;</span><a class="page-number" href="/page/16/">16</a><a class="extend next" rel="next" href="/page/8/">Next &raquo;</a>
     </nav>
   
 
@@ -803,6 +1125,10 @@ MathJax.Hub.Queue(function() {
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color1">C/C++</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">C#</a>
               </li>
             
             <div class="clearfix"></div>

@@ -6,21 +6,24 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="https://crystaljiang232.github.io">
-  <title>C++——Structured Binding | 玲珑</title>
+  <title>OLYM小记：Cryptool2插件开发 | 玲珑</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="翩若惊鸿，矫若游龙。  Structured Binding，即“结构化绑定”，是C++17中引入的颇为强大的语法糖之一。 前言  阅读本章需要道友具备对右值引用、移动语义、基本模板编程的相关知识与较好理解基础。  由于C&#x2F;C++只允许单个返回值，因而C&#x2F;C++中需要从函数中“获取”多个值时，除了传递可变指针&#x2F;引用所谓OUT变量(bushi)，利用最多的方法无疑就是返回一个st">
+  <meta name="description" content="简介 在深圳奥联信息安全有限公司实习期间，开发Cryptool2插件的一些小记。 Cryptool2介绍 Cryptool2是一款开源软件，其内置了大量密码算法的“图形化编程”插件，通过不同输入&#x2F;输出相连接，可极为直观地展现密码算法内部&#x2F;密码应用中不同函数的调用流程。 其内置了极大量密码学算法插件(涵盖古典密码学的各种奇技淫巧，现代密码学中经典的对称加密、非对称加密、数字签名、哈希函数等)">
 <meta property="og:type" content="article">
-<meta property="og:title" content="C++——Structured Binding">
-<meta property="og:url" content="https://crystaljiang232.github.io/cpp/st-bind/index.html">
+<meta property="og:title" content="OLYM小记：Cryptool2插件开发">
+<meta property="og:url" content="https://crystaljiang232.github.io/misc/cryptool-dev/index.html">
 <meta property="og:site_name" content="玲珑">
-<meta property="og:description" content="翩若惊鸿，矫若游龙。  Structured Binding，即“结构化绑定”，是C++17中引入的颇为强大的语法糖之一。 前言  阅读本章需要道友具备对右值引用、移动语义、基本模板编程的相关知识与较好理解基础。  由于C&#x2F;C++只允许单个返回值，因而C&#x2F;C++中需要从函数中“获取”多个值时，除了传递可变指针&#x2F;引用所谓OUT变量(bushi)，利用最多的方法无疑就是返回一个st">
+<meta property="og:description" content="简介 在深圳奥联信息安全有限公司实习期间，开发Cryptool2插件的一些小记。 Cryptool2介绍 Cryptool2是一款开源软件，其内置了大量密码算法的“图形化编程”插件，通过不同输入&#x2F;输出相连接，可极为直观地展现密码算法内部&#x2F;密码应用中不同函数的调用流程。 其内置了极大量密码学算法插件(涵盖古典密码学的各种奇技淫巧，现代密码学中经典的对称加密、非对称加密、数字签名、哈希函数等)">
 <meta property="og:locale" content="en_US">
-<meta property="article:published_time" content="2025-08-12T23:07:49.000Z">
-<meta property="article:modified_time" content="2025-09-14T00:30:06.982Z">
+<meta property="og:image" content="https://crystaljiang232.github.io/img/post_pics/OLYM/2.png">
+<meta property="og:image" content="https://crystaljiang232.github.io/img/post_pics/OLYM/1.png">
+<meta property="og:image" content="https://crystaljiang232.github.io/img/">
+<meta property="article:published_time" content="2025-08-28T02:04:48.000Z">
+<meta property="article:modified_time" content="2025-09-14T00:25:09.986Z">
 <meta property="article:author" content="Hibiscus">
-<meta property="article:tag" content="Modern C++">
-<meta property="article:tag" content="长文精选">
+<meta property="article:tag" content="C#">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://crystaljiang232.github.io/img/post_pics/OLYM/2.png">
   
     <link rel="alternative" href="/atom.xml" title="玲珑" type="application/atom+xml">
   
@@ -156,182 +159,120 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            <article id="post-cpp/st-bind" class="article article-type-post " itemscope itemprop="blogPost">
+            <article id="post-misc/cryptool-dev" class="article article-type-post " itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 class="article-title" itemprop="name">
-      C++——Structured Binding
+      OLYM小记：Cryptool2插件开发
     </h1>
   
 
         
-        <a href="/cpp/st-bind/" class="archive-article-date">
-  	<time datetime="2025-08-12T23:07:49.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-08-13</time>
+        <a href="/misc/cryptool-dev/" class="archive-article-date">
+  	<time datetime="2025-08-28T02:04:48.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-08-28</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <blockquote>
-<p>翩若惊鸿，矫若游龙。</p>
-</blockquote>
-<p>Structured
-Binding，即“结构化绑定”，是C++17中引入的颇为强大的语法糖之一。</p>
-<h1 id="前言">前言</h1>
-<blockquote>
-<p>阅读本章需要道友具备对右值引用、移动语义、基本模板编程的相关知识与较好理解基础。</p>
-</blockquote>
-<p>由于C/C++只允许单个返回值，因而C/C++中需要从函数中“获取”多个值时，除了传递可变指针/引用<del>所谓<code>OUT</code>变量(bushi)</del>，利用最多的方法无疑就是返回一个<code>struct</code>或<code>std::pair</code>/<code>std::tuple</code>了：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">ret_info</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span> x;</span><br><span class="line">    std::string dt;</span><br><span class="line">    <span class="type">const</span> <span class="type">char</span>* c;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function">ret_info <span class="title">func</span><span class="params">()</span></span>;</span><br></pre></td></tr></table></figure>
-<p>如此做的最大缺点之一就是访问每个成员不够便利——一个成员还能通过<del>生命周期冲突百出的</del>临时子成员访问，但访问多个成员时就必须另起一个变量接收之：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> st = <span class="built_in">func</span>();</span><br><span class="line"><span class="type">int</span> y = st.x;</span><br><span class="line">std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,st.dt);</span><br></pre></td></tr></table></figure>
-<p>同时还可能涉及到 <em>cv</em> 修饰符差分、引用绑定等问题。<br />
-由此，C++17给出了 <em>Structured Binding</em>
-这个极为强大的语法糖用于处理此类情景。</p>
-<h1 id="正题">正题</h1>
-<p>首先明确 <em>Structured Binding</em> 的基本属性，一言具述之：</p>
-<p><em>Like a reference, a structured binding is an alias to an existing
-object; unlike a reference,a structured binding does not have to be of a
-reference type.</em></p>
-<p>即结构化绑定和引用相比，皆为<strong>既有对象</strong>的别名；但前者<strong>不一定是引用类型</strong>。</p>
-<h2 id="基本语法">基本语法</h2>
-<p>Structured Binding的语法如下：</p>
-<p><em>attr</em> <em>decl-specifier</em> <em>ref-qualifier</em>
-<em>[identifier-list]</em> <em>initializer</em> ;</p>
-<p>各部分解析：</p>
+        <h1 id="简介">简介</h1>
+<p>在深圳奥联信息安全有限公司实习期间，开发Cryptool2插件的一些小记。</p>
+<h2 id="cryptool2介绍">Cryptool2介绍</h2>
+<p>Cryptool2是一款开源软件，其内置了大量密码算法的“图形化编程”插件，通过不同输入/输出相连接，可极为直观地展现密码算法内部/密码应用中不同函数的调用流程。<br />
+其内置了极大量密码学算法插件(涵盖古典密码学的各种<del>奇技淫巧</del>，现代密码学中经典的对称加密、非对称加密、数字签名、哈希函数等)，同时用户也可自行开发插件并应用之。</p>
+<p>由于其插件封装后的图形化流程设计非常<del>生动形象</del>，故其最大的用武之地之一即为新标准的教学与演示用途：</p>
+<p><img src="/img/post_pics/OLYM/2.png" /></p>
+<h1 id="主要工作内容">主要工作内容</h1>
+<p>根据<a href="">GM/T
+0018-2023：密码设备应用接口规范</a>在Cryptool2中实现对应函数的插件，并基于新开发插件完成SM9密钥协商、加解密、签名与验证等的全流程demo。</p>
+<p>最终实现节选（SM9密钥协商）：</p>
+<p><img src="/img/post_pics/OLYM/1.png" /></p>
+<h1 id="浅析">浅析</h1>
+<p>Cryptool2是.NET架构下的软件，其插件的“特性”都可以在C#代码中找到：</p>
 <ul>
-<li><em>attr</em>：任意数目的属性(attributes)<br />
+<li>具有任意数目的输入/输出端接口供连接，数据类型可自定义<br />
 </li>
-<li><em>decl-specifier</em>：依下列顺序出现的修饰符（与变量声明规则一致）：<code>static</code>、<code>thread_local</code>、<code>const</code>、<code>volatile</code>、<code>auto</code>；其中<code>auto</code><strong>必须出现</strong><br />
+<li>通过<code>Settings</code>可以接收外部输入“设置”型参数，支持多种选择方式（如文本框<code>TextBox</code>、复选框<code>ComboBox</code>等）<br />
 </li>
-<li><em>ref-qualifier</em>：可选<code>&amp;</code>/<code>&amp;&amp;</code>或置空<br />
+<li>可以展示内部的运算流程（较高级）和计算进度<br />
 </li>
-<li><em>[identifier-list]</em>：变量名列表<br />
+<li>通过<code>OnPropertyChanged</code>可以让某个输入/输出参数发生变化时“知会”连接的关联端口，再发起一次计算</li>
+</ul>
+<h1 id="技术栈">技术栈</h1>
+<ul>
+<li>密码学基础及应用知识（加解密、签名与验签、密钥协商、散列函数应用、国密算法等）<br />
 </li>
-<li><em>initializer</em>：初始化表达式</li>
+<li>服务器密码机接口封装调用<br />
+</li>
+<li>C++和C#语言程序设计、C#中调用C++函数的逻辑<br />
+</li>
+<li>基于Visual Studio 2022进行大型项目开发</li>
+</ul>
+<h1 id="部分技术详解">部分技术详解</h1>
+<h2 id="dll调用">dll调用</h2>
+<p>DLL，全称Dynamic Link
+Library（动态链接库），表示程序在编译时只保留了某个“外部”函数的入口，运行时从另一个动态链接库文件(Win下的<code>.dll</code>，*ix下的<code>.so</code>)调用之。</p>
+<p>如此做的优点包括但不限于：</p>
+<ul>
+<li>允许跨语言调用（如C#调用C++代码）<br />
+</li>
+<li>减小主程序体积<br />
+</li>
+<li>通过DLL复用（多个线程/进程可以多次调用同一个DLL且互不冲突）来降低空间占用<br />
+</li>
+<li>拓展功能时不需要重新编译整个程序或变动既有基础架构</li>
+</ul>
+<p>如在CrypTool2插件的开发中，每个插件的子项目的编译结果都是.dll，如此在新建/变更组件时不需要重新<code>build</code>整个项目，只需（重新）编译该项目对应的dll即可。</p>
+<hr />
+<p>在密码学应用中，运行效率至上的原则决定了其底层密码算法最好用C/C++实现——故在编写好C++代码逻辑后，从C#中调用C++代码也就成了完成“夹心”的关键一步。</p>
+<p>C#中通过<code>DllImport</code>属性声明可以发起一次对外部dll的调用，如：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">DllImport(dllname, EntryPoint = <span class="string">&quot;SDF_GenerateAgreementDataWithSM9&quot;</span>, CallingConvention = CallingConvention.Cdecl)</span>]</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">extern</span> <span class="built_in">int</span> <span class="title">SDF_GenerateAgreementDataWithSM9</span>(<span class="params">IntPtr hSessionHandle,<span class="built_in">uint</span> uiMastKeyIndex,<span class="built_in">uint</span> uiISKIndex,<span class="built_in">uint</span> uiKeyBits,<span class="built_in">byte</span>[] pRespID,<span class="built_in">uint</span> uiRespIDLen,<span class="built_in">byte</span>[] pSponsorID, <span class="built_in">uint</span> uiSponsorIDLen,<span class="keyword">out</span> SM9EncMasterPublicKey pPubKey,<span class="keyword">out</span> SM9EncMasterPublicKey pSponsorTempPubKey,<span class="keyword">out</span> IntPtr hAgreeHandle</span>)</span>;</span><br></pre></td></tr></table></figure>
+<p>其中由于C#和C++堪称隔行如隔山<del>明明都是++，为什么C++和C的差别还没这么抽象</del>，因此调用中有诸多关键点：</p>
+<ul>
+<li>首先数据类型必须一致（基本数据类型外，结构体等还需要<code>MarshalAs</code>和<code>StructLayout</code>等显式明确其内存排列方式，否则出错几近于必然事件）；<br />
+</li>
+<li>由于C++和C#对底层数据的处理方式不同（如C#中除不安全代码外没有“指针”的概念，与C++指针和引用泾渭分明相对），因此在传参时应当进行一些“翻译”。</li>
+</ul>
+<p>如，根据GM/T
+0018-2023，上述<code>SDF_GenerateAgreementDataWithSM9</code>函数的C语言原型如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">SDF_GenerateAgreementDataWithSM9</span><span class="params">(</span></span><br><span class="line"><span class="params">HANDLE hSessionHandle,</span></span><br><span class="line"><span class="params">ULONG uiMasterKeyIndex,</span></span><br><span class="line"><span class="params">ULONG uiISKIndex,</span></span><br><span class="line"><span class="params">ULONG uiKeyBits,</span></span><br><span class="line"><span class="params">BYTE * pResponseID,</span></span><br><span class="line"><span class="params">ULONG ulResponseIDLen,</span></span><br><span class="line"><span class="params">BYTE * pSponsorID,</span></span><br><span class="line"><span class="params">ULONG ulSponsorIDLen,</span></span><br><span class="line"><span class="params">SM9EncMastPublicKey* pPublicKey,</span></span><br><span class="line"><span class="params">SM9EncMastPublicKey* pSponsorTempPublicKey,</span></span><br><span class="line"><span class="params">HANDLE * phAgreementHandle)</span>;</span><br></pre></td></tr></table></figure>
+<p>其中<code>HANDLE</code>是<code>void*</code>的<code>typedef</code>，<code>BYTE</code>为<code>unsigned char</code>，<code>ULONG</code>为<code>unsigned long</code>。</p>
+<p>将之“翻译”为C#的<code>extern</code>函数声明时的注意点有几点：</p>
+<ul>
+<li>基本类型（含指针，对应C#<del>传奇般的</del><code>IntPtr</code>）可以直接传参；<br />
+</li>
+<li>带有指针/引用性质的传参时，需留意其功能上的属性为输入还是输出量。解法有三种：<code>ref</code>，对应C/C++的一阶指针/引用（输入/输出）；<code>out</code>，用于输出变量（从C#的角度看可以内联变量声明，C/C++中依然是使用指针/引用传参）；做数组“提升一维”，形如C#的<code>int[]</code>对应C++的<code>int*</code>。</li>
 </ul>
 <blockquote>
-<p>显然其中重中之重的关键字无疑是<code>auto</code>——<em>Structured
-Binding</em>的类型<strong>不能手动指定</strong>，只允许使用<code>auto</code>并以一定的修饰符约束之。</p>
+<p>使用<code>out</code>进行传参时部分场景下容易出现运行错误，原因不明；其或与<code>out</code>内联变量的内存初始化时机有关（尽管<code>out</code>的“函数内初始化”更应偏向语义约束，栈内存应在进入函数前就已经分配完成），故使用<code>int[1]</code>类似的传参方式依然最为稳妥。</p>
 </blockquote>
-<h3 id="中间变量初始化">中间变量初始化</h3>
-<p><em>initializer</em>
-中的<code>expr</code>可为<strong>任意表达式</strong>，与普通变量的初始化类似（除未加括号的逗号表达式，即
-<em>unphrenthesized comma expressions</em> ）：</p>
-<ul>
-<li><code>= expr;</code><br />
-</li>
-<li><code>(expr);</code><br />
-</li>
-<li><code>&#123;expr&#125;;</code></li>
-</ul>
-<p>回顾结构化绑定的本质：其为一个既有对象的别名，初始化方式只有两种。首先引入一个隐式、不具名而唯一的变量<code>e</code>（参考
-<em>lambda</em>）：</p>
-<ul>
-<li><p>若 <em>initializer</em> 是一个数组类型且 <em>ref-qualifier</em>
-置空，记 <em>initializer</em> 的类型为
-<code>cv1 A</code>，则定义<code>e</code>为形如 <em>attr</em>
-<em>decl-specifier</em>（去除<code>auto</code>） <code>A e;</code>
-的新数组（即<em>decl-specifier</em>
-<code>std::remove_cvref_t&lt;decltype(initializer)&gt; e;</code>，此处不计属性）；随后将
-<em>[identifier-list]</em> 的各元素依 <em>initializer</em>
-中的各元素复制/直接初始化（若为<code>= expr</code>则为复制初始化，否则为直接初始化）；</p></li>
-<li><p>否则，定义<code>e</code>形如 <em>attr</em>
-<em>decl-specifier</em> <em>ref-qualifier</em> <code>e</code>
-<em>initializer</em>。</p></li>
-</ul>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="keyword">auto</span> [a,b,c] = &#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>&#125;;  <span class="comment">//the implicit `e` is `const std::initializer_list&lt;int&gt;`  </span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span>[] arr = &#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>&#125;;</span><br><span class="line"><span class="type">const</span> <span class="keyword">auto</span> [d,e,f] = arr; <span class="comment">//the implicit `e` is `const int[3]`, with each element in `e` copy-initialized from arr&#x27;s corresponding elements</span></span><br><span class="line"><span class="type">const</span> <span class="keyword">auto</span>&amp; [m,n,p] = arr; <span class="comment">//the implicit `e` is `const int(&amp;)[3]`(derived from `const auto&amp;`,i.e. a reference to an array)  </span></span><br><span class="line"></span><br><span class="line"><span class="type">char</span> ch&#123;&#125;;</span><br><span class="line">std::tuple&lt;<span class="type">int</span>&amp;,<span class="type">char</span>&amp;&amp;,std::string&gt; tp&#123;arr[<span class="number">0</span>],ch,<span class="string">&quot;&quot;</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">const</span> <span class="keyword">auto</span> [r,s,t] = tp; <span class="comment">//the implicit `e` is `const std::tuple&lt;int&amp;,char&amp;&amp;,std::string&gt;`(derived from `const auto`)</span></span><br><span class="line"><span class="comment">//Thus `r` is `int&amp;`,`s` is `char&amp;&amp;`,`t` is `const std::string`</span></span><br><span class="line"></span><br><span class="line"><span class="type">const</span> <span class="keyword">auto</span>&amp; [r2,s2,t2] = tp; <span class="comment">//the implicit `e` is `const std::tuple&lt;int&amp;,char&amp;&amp;,std::string&gt;&amp;`(derived from `const auto&amp;`)</span></span><br><span class="line"><span class="comment">//Thus `r2` is `int&amp;`,`s2` is `char&amp;&amp;`,`t2` is `const std::string&amp;`</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//const auto [y] = (2); //Error: the implicit `e` is `int`, which cannot be &#x27;binded&#x27;</span></span><br><span class="line"><span class="comment">//const auto [x,y] = (1,2); //Same as above</span></span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>理解消化上述类型推导的代码实例对于理解、通晓 <em>Structured
-Binding</em> 的类型逻辑至关重要——建议各位道友自行举例并多加推导之。</p>
-</blockquote>
-<h2 id="应用">应用</h2>
-<p><em>Structured Binding</em>
-中的变量有三种初始化方式，取决于右操作数的类型<code>E</code>（严格地，<code>std::remove_reference_t&lt;decltype((e))&gt;</code>）：</p>
-<ol type="1">
-<li><code>E</code>是数组类型；<br />
-</li>
-<li><code>E</code>是一个非<code>union</code>的<code>class</code>/<code>struct</code>，且<code>std::tuple_size&lt;E&gt;</code>是具备数据成员<code>value</code>的完整类型（<em>complete
-type</em>），无论<code>std::tuple_size&lt;E&gt;::value</code>的变量类型、可访问性(accessibility)如何；<br />
-</li>
-<li><code>E</code>是一个非<code>union</code>的<code>class</code>/<code>struct</code>，除情况2外的其它类型。</li>
-</ol>
-<p>称情况(2)采用的是类元组绑定法(<em>tuple-like
-binding</em>)；情况(3)则绑定至其<strong>可访问</strong>的数据成员上。</p>
-<h3 id="数组绑定法binding-to-an-array">数组绑定法(binding to an
-array)</h3>
-<p>此种情况比较简单，即 <em>Structured Binding</em>
-声明的每个变量名就是数组对应元素的别名(alias)。<br />
-<strong>由于这个数组是“虚拟”的中间数组，因此这些变量就是原始类型而非引用，但其底层存储的逻辑依然不变（连续存储，下同）：</strong></p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span>[] arr = &#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>&#125;;</span><br><span class="line"><span class="type">const</span> <span class="keyword">auto</span> [d,e,f] = arr;</span><br><span class="line"><span class="comment">//since the implicit `e` is `const int[3]`,thus `d`,`e`,`f` refers to the three elements of `e` respectively,</span></span><br><span class="line"><span class="comment">//with their type being `const int`,and address incrementing by 4</span></span><br><span class="line"><span class="type">const</span> <span class="keyword">auto</span>&amp; [m,n,p] = arr;</span><br><span class="line"><span class="comment">//since the implicit `e` is `const int(&amp;)[3]`, thus `d`,`e`,`f` refers to three elements of `arr` respectively</span></span><br><span class="line"><span class="comment">//with their type being `const int&amp;`</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//In both cases, the three variables&#x27; values are 1,2,3</span></span><br></pre></td></tr></table></figure>
-<h3 id="类元组绑定法tuple-like-binding">类元组绑定法(tuple-like
-binding)</h3>
-<p>类元组绑定法的基础是存在成员<code>std::tuple_size&lt;E&gt;::value</code>，所谓“实现了元组操作”(<em>implemented
-tuple operations</em>)。</p>
-<p>首先，<code>std::tuple_size&lt;E&gt;::value</code>必须是良构(well-formed)的<strong>整型常量表达式</strong>，此时
-<em>Structured Binding</em> 的大小与之一致。</p>
-<blockquote>
-<p>即使<code>std::tuple_size&lt;E&gt;::value</code>不符合上述条件，但只要存在此成员（无论类型、可访问性），则编译器均会采用此方式进行绑定——纵使如此会令程序非良构(ill-formed)而不能通过编译。</p>
-</blockquote>
-<p>对于 <em>Structured Binding</em>
-中的第<code>I</code>个数据成员，其类型为<code>std::tuple_element&lt;I,E&gt;::type &amp;&amp;</code>，即底层类型为左值则为左值引用，否则为右值引用（参考
-<em>引用折叠/reference collaspe</em>）。</p>
-<p>其初始化表达式如下：</p>
-<ul>
-<li>若类<code>E</code>存在名为<code>get</code>的成员模板函数，且首个参数是<strong>常量模板参数</strong>(<em>constant
-template parameter</em>)，则为<code>e.get&lt;I&gt;()</code>；<br />
-</li>
-<li>否则为<code>std::get&lt;I&gt;(e)</code>，其中<code>get</code>仅考虑ADL(Argument-Dependent
-Lookups)。</li>
-</ul>
-<blockquote>
-<p>变量的生命周期与<code>e</code>一致，配合 <em>lifetime extension</em>
-等保证了一般情况不会出现悬挂引用(dangaling reference)的情况。</p>
-</blockquote>
-<blockquote>
-<p>同样地，此处的重载决议不会考虑<code>get</code>如此是否会令程序非良构，即使<code>template&lt;char*&gt; void get();</code>亦会使编译器选择使用第一种“解读”方式<del>进而编译错误</del>。</p>
-</blockquote>
-<p>仔细观察下列实例，必以求甚解为通晓之策：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">char</span> ch&#123;&#125;;</span><br><span class="line">std::tuple&lt;<span class="type">int</span>&amp;,<span class="type">char</span>&amp;&amp;,std::string&gt; tp&#123;arr[<span class="number">0</span>],ch,<span class="string">&quot;&quot;</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">const</span> <span class="keyword">auto</span> [r,s,t] = tp;</span><br><span class="line"><span class="comment">//`E` is `const std::tuple&lt;int&amp;,char&amp;&amp;,std::string&gt;` (derived from `const auto`), initialized from tp</span></span><br><span class="line"><span class="comment">//Thus this derives to that, `r` is `int&amp;` ,`s` is `char&amp;&amp;`,`t` is `const std::string`</span></span><br><span class="line"><span class="comment">//With r referencing same variable as std::get&lt;0&gt;(tp),s to std::get&lt;1&gt;(tp), t being a separate constant std::string object</span></span><br><span class="line"></span><br><span class="line"><span class="type">const</span> <span class="keyword">auto</span>&amp; [r2,s2,t2] = tp; </span><br><span class="line"><span class="comment">//`E` is `const std::tuple&lt;int&amp;,char&amp;&amp;,std::string&gt;&amp;`(derived from `const auto&amp;`), initialized from tp</span></span><br><span class="line"><span class="comment">//Thus `r2` is `int&amp;`,`s2` is `char&amp;&amp;`,`t2` is `const std::string&amp;`</span></span><br><span class="line"><span class="comment">//With r still referencing to std::get&lt;0&gt;(tp), s to std::get&lt;1&gt;(tp), t is a const l-ref to std::get&lt;2&gt;(tp)</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">auto</span>&amp;&amp; [r3,s3,t3] = tp;</span><br><span class="line"><span class="comment">//`auto&amp;&amp;` introduces a universal reference, in this case `e` derives to `std::tuple&lt;int&amp;,char&amp;&amp;,std::string&gt;&amp;` </span></span><br><span class="line"><span class="comment">//Thus `r3` is `int&amp;`, `s3` is `char&amp;&amp;`, `t3` is `std::string&amp;`</span></span><br><span class="line"><span class="comment">//Referencing logic is identical to the case as above</span></span><br></pre></td></tr></table></figure>
-<p>可见<strong>隐式“中间变量”<code>e</code></strong>的存在是关键：前缀无论存在各种
-<em>attributes</em> 、<em>cvref</em>
-修饰符，作用对象都是这个中间变量<code>e</code>而非 <em>Structured
-Binding</em> 自身引入的标识符。<br />
-因而可以发现即使是<code>const auto</code>的结构化绑定，引入的变量亦可以是普通的引用类型。</p>
-<h3
-id="数据成员绑定法accessible-data-member-binding">数据成员绑定法(accessible
-data member binding)</h3>
-<p>此时 <em>Structured Binding</em>
-的对象是<code>e</code>的<strong>所有非静态数据成员</strong>，待绑定的变量数与其非静态数据成员的个数一致。</p>
-<blockquote>
-<p>在声明结构化绑定的上下文(context)中，<code>e.name</code>语句必须是良构的（即必须满足可访问性限制等，如不可为非友元的<code>private</code>）。</p>
-</blockquote>
-<p>绑定后，各结构化绑定成员（即新引入的变量）都是该中间变量<code>e</code>中各数据成员的别名（关于<code>e</code>的各成员初始化见上文），初始化顺序为<code>e</code>-&gt;各绑定成员（按声明顺序）。</p>
-<p>划重点：本质上，每个绑定成员都是<code>e</code>的各成员的<strong>左值别名</strong>，但这个别名<strong>不会呈现引用属性</strong>（虽然指代的是同一个对象）。考虑以下实例：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">F</span></span><br><span class="line">&#123;</span><br><span class="line">    std::ostream&amp; o;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    F f&#123;std::cout&#125;;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">auto</span> [a] = f; <span class="comment">//Type of `a` is `std::ostream`, NOT `std::ostream&amp;`</span></span><br><span class="line">    <span class="built_in">assert</span>(std::<span class="built_in">addressof</span>(a) == std::<span class="built_in">addressof</span>(std::cout)); <span class="comment">//passes</span></span><br><span class="line">    <span class="comment">//a is an alias of data member `e.o`(with `e` being an implicit variable), `e.o` initialized by `f.o`</span></span><br><span class="line">    <span class="comment">//Then `e.o` refers to `std::cout`, thus `a` itself IS `std::cout`</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//In other words, references are alias to existing object, yet so are structured bindings.</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h1 id="注释">注释</h1>
-<p><em>Structured Binding</em> 的类型必须被“自动”推导，不允许被
-<em>concepts</em> 约束(constrained)：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span>&gt;</span><br><span class="line"><span class="keyword">concept</span> C = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line">C <span class="keyword">auto</span> [x,y] = std::pair&#123;<span class="number">1</span>,<span class="number">2</span>&#125;; <span class="comment">//Error: Constrained  </span></span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>有趣的是这里面涉及到的类模板实例化写法，亦是C++17引入的——C++17起类模板满足条件时允许<strong>依构造函数实参推导模板参数</strong>，如上例就会推导为<code>std::pair&lt;int,int&gt;</code>。<br />
-C++17前，由于只有函数模板才可以自动推导参数，因此<del>历史遗留</del>下来的<code>std::make_pair</code>、<code>std::make_tuple</code>等就是适配彼时语言机制的产物：</p>
-</blockquote>
-<pre><code><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty1,<span class="keyword">class</span> Ty2&gt;</span></span><br><span class="line"><span class="function">std::pair&lt;Ty1,Ty2&gt; <span class="title">make_pair</span><span class="params">(Ty1 arg1,Ty2 arg2)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> std::<span class="built_in">pair</span>&lt;Ty1,Ty2&gt;(arg1,arg2);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></code></pre>
-<h1 id="前行">前行</h1>
-<h2 id="c20">C++20</h2>
-<p>C++17中<code>lambda</code>不能捕获 <em>Structured Binding</em>
-初始化的变量，C++20解除了此限制。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span>[] arr = &#123;<span class="number">1</span>,<span class="number">2</span>&#125;;</span><br><span class="line"><span class="keyword">auto</span> [x,y] = arr;</span><br><span class="line"><span class="keyword">auto</span> fn = [x,y]&#123;<span class="keyword">return</span> x+y;&#125;; <span class="comment">//OK Since C++20</span></span><br><span class="line"><span class="built_in">assert</span>(<span class="built_in">fn</span>() == <span class="number">3</span>);</span><br></pre></td></tr></table></figure>
-<h2 id="c26">C++26</h2>
-<p>C++26将新时代的“可变参数”概念进一步拓展，使 <em>structured
-binding</em> 也获得了“可变”绑定的能力。<br />
-此前所述，接收并初始化的变量数必须和待绑定对象数一致；但C++26起允许将最后一个变量名以前置<code>...</code>而变为一个可变参数包，其类型是一个<code>std::tuple</code>，类型参数同样在编译期即被决定，其大小最小为0：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span>[] arr = &#123;<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">auto</span> [...pack] = arr; <span class="comment">//pack is `std::tuple&lt;int,int,int&gt;`</span></span><br><span class="line"><span class="keyword">auto</span> [a,b,...pack2] = arr; <span class="comment">// a is `int`,b is `int`,pack2 is `std::tuple&lt;int&gt;`</span></span><br><span class="line"><span class="keyword">auto</span> [x,y,z,...pack3] = arr; <span class="comment">//OK: pack3 is `std::tuple&lt;&gt;`</span></span><br><span class="line"><span class="keyword">auto</span> [m1,m2,m3,m4,...pack4] = arr; <span class="comment">//Not compile: too few values to be unpacked</span></span><br></pre></td></tr></table></figure>
+<p>如存在C++函数：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">nihao</span><span class="params">(<span class="type">const</span> <span class="type">int</span>* read,<span class="type">int</span>* write)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>对应C#的外部调用方式可以形如：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">DllImport(dllname, EntryPoint = <span class="string">&quot;nihao&quot;</span>, CallingConvention = CallingConvention.Cdecl)</span>]</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">extern</span> <span class="built_in">int</span> <span class="title">nihao</span>(<span class="params"><span class="keyword">ref</span> <span class="built_in">int</span> read,<span class="built_in">int</span>[] write</span>)</span>;</span><br></pre></td></tr></table></figure>
+<p>调用时，由于C#要求关键字“二次确认”（即调用时、声明时需要同时声明关键字<code>out</code>/<code>ref</code>等），故上下文可能形如：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">func</span>()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">int</span> <span class="keyword">init</span> = <span class="number">0</span>;</span><br><span class="line">    <span class="built_in">int</span>[] buf = <span class="keyword">new</span> <span class="built_in">int</span>[<span class="number">1</span>];</span><br><span class="line"></span><br><span class="line">    nihao(<span class="keyword">ref</span> <span class="keyword">init</span>,buf);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="property相关">Property相关</h2>
+<p>输入/输出数据方面，只需要在类中声明一个Property并明确其属性，期望的数据类型即为Property自身的类型，<code>get</code>和<code>set</code>方法均为默认值。</p>
+<p>如这段代码：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">PropertyInfo(Direction.InputData,<span class="string">&quot;SessionHandle&quot;</span>,<span class="string">&quot;会话句柄&quot;</span>,true)</span>]</span><br><span class="line"><span class="keyword">public</span> IntPtr SessionHandle</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">get</span>;</span><br><span class="line">    <span class="keyword">set</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>效果形如：</p>
+<figure>
+<img src="/img/" alt="PropertyInfo" />
+<figcaption aria-hidden="true">PropertyInfo</figcaption>
+</figure>
+<p>其中最后一个参数仅在性质为<code>Direction.InputData</code>时有效，表示该输入是否为必须值（若未输入则该插件不运行，否则以缺省值运行）。</p>
+<p>这些Property在管理上的另一个显著特征为：改变其值后，应当调用<code>OnPropertyChanged</code>函数来“告知”与之相连的模块此Property更新了数值，达成宏观上“流水线”般工作的效果：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (iRet == XCipherEngine.SDR_OK)</span><br><span class="line">&#123;</span><br><span class="line">    Result = <span class="literal">true</span>; <span class="comment">//Result is `public bool` property</span></span><br><span class="line">    OnPropertyChanged(<span class="string">&quot;Result&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Settings同样也采用Property的方式表述，其和输入/输出数据的差分只在于<code>set</code>函数和私有变量的“另行”设置。参考：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="built_in">uint</span> iskIndex = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">[<span class="meta">TaskPane(<span class="string">&quot;ISKIndex&quot;</span>,<span class="string">&quot;私钥索引&quot;</span>,null,1,false,ControlType.TextBox)</span>]</span><br><span class="line"><span class="keyword">public</span> <span class="built_in">uint</span> ISKIndex</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">get</span> =&gt; iskIndex;</span><br><span class="line">    <span class="keyword">set</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">value</span> != iskIndex)</span><br><span class="line">        &#123;</span><br><span class="line">            iskIndex = <span class="keyword">value</span>;</span><br><span class="line">            OnPropertyChanged(<span class="string">&quot;ISKIndex&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其动机依然在于关键的<code>OnPropertyChanged</code>——识别新的设置项是否与以往的不同，若然，则触发新一轮计算。<br />
+显然这种<code>get</code>和原变量分离的方法也可用于其它逻辑的封装，如：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">region</span> Private Variables</span></span><br><span class="line"><span class="keyword">private</span> <span class="built_in">uint</span> opt = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">readonly</span> <span class="built_in">uint</span>[] keyLen_map = &#123; <span class="number">256</span> &#125;;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">endregion</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">region</span> TaskPane Settings</span></span><br><span class="line"></span><br><span class="line">[<span class="meta">TaskPane(<span class="string">&quot;KeyLen&quot;</span>, <span class="string">&quot;输出密钥长度&quot;</span>, null, 1, false, ControlType.ComboBox,new string[</span>] &#123;<span class="string">&quot;256&quot;</span>&#125;)]</span><br><span class="line"><span class="keyword">public</span> <span class="built_in">uint</span> KeyLen</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">get</span> =&gt; keyLen_map[opt];</span><br><span class="line">    <span class="keyword">set</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">value</span> != opt)</span><br><span class="line">        &#123;</span><br><span class="line">            opt = <span class="keyword">value</span>;</span><br><span class="line">            OnPropertyChanged(<span class="string">&quot;KeyLen&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
       
 
@@ -345,11 +286,7 @@ binding</em> 也获得了“可变”绑定的能力。<br />
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">长文精选</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">C#</a>
         		</li>
       		
 		</ul>
@@ -361,7 +298,7 @@ binding</em> 也获得了“可变”绑定的能力。<br />
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
+        			<a href="/categories/闲笔//" class="article-tag-list-link color3">闲笔</a>
         		</li>
       		
 		</ul>
@@ -416,7 +353,7 @@ binding</em> 也获得了“可变”绑定的能力。<br />
     <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
     <p>扫一扫，分享到微信</p>
     <div class="wx-qrcode">
-      <img src="//pan.baidu.com/share/qrcode?url=https://crystaljiang232.github.io/cpp/st-bind/" alt="微信分享二维码">
+      <img src="//pan.baidu.com/share/qrcode?url=https://crystaljiang232.github.io/misc/cryptool-dev/" alt="微信分享二维码">
     </div>
 </div>
 
@@ -432,18 +369,9 @@ binding</em> 也获得了“可变”绑定的能力。<br />
   
 <nav id="article-nav">
   
-    <a href="/cpp/aes-modern/" id="article-nav-newer" class="article-nav-link-wrap">
-      <i class="icon-circle-left"></i>
-      <div class="article-nav-title">
-        
-          C++——与AES-Integrals的双鹭翩舞
-        
-      </div>
-    </a>
   
-  
-    <a href="/cpp/idioms/" id="article-nav-older" class="article-nav-link-wrap">
-      <div class="article-nav-title">C++——俗语集锦</div>
+    <a href="/cpp/aes-modern/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">C++——与AES-Integrals的双鹭翩舞</div>
       <i class="icon-circle-right"></i>
     </a>
   
@@ -470,10 +398,7 @@ binding</em> 也获得了“可变”绑定的能力。<br />
                 </span>
                 <span class="tooltip-content">
                     <div class="toc-article">
-                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%AD%A3%E9%A2%98"><span class="toc-number">2.</span> <span class="toc-text">正题</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E8%AF%AD%E6%B3%95"><span class="toc-number">2.1.</span> <span class="toc-text">基本语法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%AD%E9%97%B4%E5%8F%98%E9%87%8F%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-number">2.1.1.</span> <span class="toc-text">中间变量初始化</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BA%94%E7%94%A8"><span class="toc-number">2.2.</span> <span class="toc-text">应用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%95%B0%E7%BB%84%E7%BB%91%E5%AE%9A%E6%B3%95binding-to-an-array"><span class="toc-number">2.2.1.</span> <span class="toc-text">数组绑定法(binding to an
-array)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B1%BB%E5%85%83%E7%BB%84%E7%BB%91%E5%AE%9A%E6%B3%95tuple-like-binding"><span class="toc-number">2.2.2.</span> <span class="toc-text">类元组绑定法(tuple-like
-binding)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E6%88%90%E5%91%98%E7%BB%91%E5%AE%9A%E6%B3%95accessible-data-member-binding"><span class="toc-number">2.2.3.</span> <span class="toc-text">数据成员绑定法(accessible
-data member binding)</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%B3%A8%E9%87%8A"><span class="toc-number">3.</span> <span class="toc-text">注释</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%89%8D%E8%A1%8C"><span class="toc-number">4.</span> <span class="toc-text">前行</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#c20"><span class="toc-number">4.1.</span> <span class="toc-text">C++20</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c26"><span class="toc-number">4.2.</span> <span class="toc-text">C++26</span></a></li></ol></li></ol>
+                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%AE%80%E4%BB%8B"><span class="toc-number">1.</span> <span class="toc-text">简介</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#cryptool2%E4%BB%8B%E7%BB%8D"><span class="toc-number">1.1.</span> <span class="toc-text">Cryptool2介绍</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E5%B7%A5%E4%BD%9C%E5%86%85%E5%AE%B9"><span class="toc-number">2.</span> <span class="toc-text">主要工作内容</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%B5%85%E6%9E%90"><span class="toc-number">3.</span> <span class="toc-text">浅析</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%8A%80%E6%9C%AF%E6%A0%88"><span class="toc-number">4.</span> <span class="toc-text">技术栈</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%83%A8%E5%88%86%E6%8A%80%E6%9C%AF%E8%AF%A6%E8%A7%A3"><span class="toc-number">5.</span> <span class="toc-text">部分技术详解</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#dll%E8%B0%83%E7%94%A8"><span class="toc-number">5.1.</span> <span class="toc-text">dll调用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#property%E7%9B%B8%E5%85%B3"><span class="toc-number">5.2.</span> <span class="toc-text">Property相关</span></a></li></ol></li></ol>
                     </div>
                 </span>
             </div>
