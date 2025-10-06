@@ -16,7 +16,7 @@
 <meta property="og:description" content="格的基本概念 离散数学中 格是一个满足每两个元素都有最大上界和最小下界的偏序关系(partial ordering)集。 线性代数中，我们将整数环上 \(Z_{q}\) 一组大小为 \(k\) (\(k \leq n\)) 且线性无关的向量，称为一组基。如果 \(k &#x3D; n\)，则称该组基是满秩的。 该组基整系数线性组合所有向量的集合（ \(v_{i} \in Z_{q} ，L &#x3D; \">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2025-01-04T23:20:37.000Z">
-<meta property="article:modified_time" content="2025-05-27T09:04:08.937Z">
+<meta property="article:modified_time" content="2025-09-17T03:36:22.821Z">
 <meta property="article:author" content="Hibiscus">
 <meta property="article:tag" content="Crypto">
 <meta property="article:tag" content="长文精选">
@@ -374,9 +374,9 @@ class="math inline">\(\delta = 0.99\)</span>
 <p><strong>规约能力</strong>：<br />
 假设 <span class="math inline">\(\{v_1,v_2,\cdots,v_n\}\)</span> 是格
 <span class="math inline">\(L\)</span> 的一组 <span
-class="math inline">\(\delta\)</span>-LLL 约化基，则 <span
-class="math inline">\(\|v_1\| \leq (\frac{2}{\sqrt{4\delta - 1}})^{n-1}
-\lambda_1(L)\)</span>。</p>
+class="math inline">\(\delta\)</span>-LLL 约化基，则存在：</p>
+<p><span class="math display">\[\|v_1\| \leq (\frac{2}{\sqrt{4\delta -
+1}})^{n-1} \lambda_1(L) \]</span></p>
 <p>显然LLL的输出向量长度和参数 <span
 class="math inline">\(\delta\)</span> 成负相关： <span
 class="math inline">\(\delta = 0.99\)</span> 时，<span
@@ -391,9 +391,9 @@ LLL算法会在 <span class="math inline">\(O(n^{6} \ln^{3} B)\)</span>
 <p>同时，由于规约目标是寻找“短向量”，故事先构造目标向量使之“变短”是规约的重要准备步骤。</p>
 <p><strong>Hermite定理</strong>则表明了一个格 <span
 class="math inline">\(L\)</span> 的最短基的模长：<br />
-<span class="math inline">\(\|v_1\| \leq \|v_2\| \leq \cdots \leq
-\|v_i\| \leq 2^{\frac{n(n-1)}{4(n+1-i)}}
-det(L)^{\frac{1}{n+1-i}}\)</span></p>
+<span class="math display">\[ \|v_1\| \leq \|v_2\| \leq \cdots \leq
+\|v_i\| \leq 2^{\frac{n(n-1)}{4(n+1-i)}} det(L)^{\frac{1}{n+1-i}}
+\]</span></p>
 <p>显然通过矩阵性质构造，大幅增大 <span
 class="math inline">\(\frac{det(L)}{\|v_t\|}\)</span>
 是一种可行方案。</p>
@@ -1198,7 +1198,23 @@ MathJax.Hub.Queue(function() {
           <ul class="article-tag-list" q-show="showTags">
              
               <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">玲珑</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color1">C/C++</a>
+              </li>
+             
+              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color2">Crypto</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">长文精选</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">C#</a>
               </li>
              
               <li class="article-tag-list-item">
@@ -1206,11 +1222,15 @@ MathJax.Hub.Queue(function() {
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">玲珑</a>
+                <a href="javascript:void(0)" class="js-tag color1">Modern C++</a>
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color1">Modern C++</a>
+                <a href="javascript:void(0)" class="js-tag color1">C++20</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">C++ Libraries</a>
               </li>
              
               <li class="article-tag-list-item">
@@ -1219,26 +1239,6 @@ MathJax.Hub.Queue(function() {
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color2">C Libraries</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color4">C++ Libraries</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">长文精选</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color1">C++20</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color1">C/C++</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">C#</a>
               </li>
             
             <div class="clearfix"></div>

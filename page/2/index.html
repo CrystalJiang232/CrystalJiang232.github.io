@@ -152,120 +152,394 @@
           <div id="js-content" class="content-ll">
             
   
-    <article id="post-misc/cryptool-dev" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-crypto/lattice2" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/misc/cryptool-dev/">OLYM小记：Cryptool2插件开发</a>
+      <a class="article-title" href="/crypto/lattice2/">翎</a>
     </h1>
   
 
         
-        <a href="/misc/cryptool-dev/" class="archive-article-date">
-  	<time datetime="2025-08-28T02:04:48.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-08-28</time>
+        <a href="/crypto/lattice2/" class="archive-article-date">
+  	<time datetime="2025-10-06T03:10:59.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-10-06</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h1 id="简介">简介</h1>
-<p>在深圳奥联信息安全有限公司实习期间，开发Cryptool2插件的一些小记。</p>
-<h2 id="cryptool2介绍">Cryptool2介绍</h2>
-<p>Cryptool2是一款开源软件，其内置了大量密码算法的“图形化编程”插件，通过不同输入/输出相连接，可极为直观地展现密码算法内部/密码应用中不同函数的调用流程。<br />
-其内置了极大量密码学算法插件(涵盖古典密码学的各种<del>奇技淫巧</del>，现代密码学中经典的对称加密、非对称加密、数字签名、哈希函数等)，同时用户也可自行开发插件并应用之。</p>
-<p>由于其插件封装后的图形化流程设计非常<del>生动形象</del>，故其最大的用武之地之一即为新标准的教学与演示用途：</p>
-<p><img src="/img/post_pics/OLYM/2.png" /></p>
-<h1 id="主要工作内容">主要工作内容</h1>
-<p>根据<a href="">GM/T
-0018-2023：密码设备应用接口规范</a>在Cryptool2中实现对应函数的插件，并基于新开发插件完成SM9密钥协商、加解密、签名与验证等的全流程demo。</p>
-<p>最终实现节选（SM9密钥协商）：</p>
-<p><img src="/img/post_pics/OLYM/1.png" /></p>
-<h1 id="浅析">浅析</h1>
-<p>Cryptool2是.NET架构下的软件，其插件的“特性”都可以在C#代码中找到：</p>
-<ul>
-<li>具有任意数目的输入/输出端接口供连接，数据类型可自定义<br />
-</li>
-<li>通过<code>Settings</code>可以接收外部输入“设置”型参数，支持多种选择方式（如文本框<code>TextBox</code>、复选框<code>ComboBox</code>等）<br />
-</li>
-<li>可以展示内部的运算流程（较高级）和计算进度<br />
-</li>
-<li>通过<code>OnPropertyChanged</code>可以让某个输入/输出参数发生变化时“知会”连接的关联端口，再发起一次计算</li>
-</ul>
-<h1 id="技术栈">技术栈</h1>
-<ul>
-<li>密码学基础及应用知识（加解密、签名与验签、密钥协商、散列函数应用、国密算法等）<br />
-</li>
-<li>服务器密码机接口封装调用<br />
-</li>
-<li>C++和C#语言程序设计、C#中调用C++函数的逻辑<br />
-</li>
-<li>基于Visual Studio 2022进行大型项目开发</li>
-</ul>
-<h1 id="部分技术详解">部分技术详解</h1>
-<h2 id="dll调用">dll调用</h2>
-<p>DLL，全称Dynamic Link
-Library（动态链接库），表示程序在编译时只保留了某个“外部”函数的入口，运行时从另一个动态链接库文件(Win下的<code>.dll</code>，*ix下的<code>.so</code>)调用之。</p>
-<p>如此做的优点包括但不限于：</p>
-<ul>
-<li>允许跨语言调用（如C#调用C++代码）<br />
-</li>
-<li>减小主程序体积<br />
-</li>
-<li>通过DLL复用（多个线程/进程可以多次调用同一个DLL且互不冲突）来降低空间占用<br />
-</li>
-<li>拓展功能时不需要重新编译整个程序或变动既有基础架构</li>
-</ul>
-<p>如在CrypTool2插件的开发中，每个插件的子项目的编译结果都是.dll，如此在新建/变更组件时不需要重新<code>build</code>整个项目，只需（重新）编译该项目对应的dll即可。</p>
-<hr />
-<p>在密码学应用中，运行效率至上的原则决定了其底层密码算法最好用C/C++实现——故在编写好C++代码逻辑后，从C#中调用C++代码也就成了完成“夹心”的关键一步。</p>
-<p>C#中通过<code>DllImport</code>属性声明可以发起一次对外部dll的调用，如：</p>
-<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">DllImport(dllname, EntryPoint = <span class="string">&quot;SDF_GenerateAgreementDataWithSM9&quot;</span>, CallingConvention = CallingConvention.Cdecl)</span>]</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">extern</span> <span class="built_in">int</span> <span class="title">SDF_GenerateAgreementDataWithSM9</span>(<span class="params">IntPtr hSessionHandle,<span class="built_in">uint</span> uiMastKeyIndex,<span class="built_in">uint</span> uiISKIndex,<span class="built_in">uint</span> uiKeyBits,<span class="built_in">byte</span>[] pRespID,<span class="built_in">uint</span> uiRespIDLen,<span class="built_in">byte</span>[] pSponsorID, <span class="built_in">uint</span> uiSponsorIDLen,<span class="keyword">out</span> SM9EncMasterPublicKey pPubKey,<span class="keyword">out</span> SM9EncMasterPublicKey pSponsorTempPubKey,<span class="keyword">out</span> IntPtr hAgreeHandle</span>)</span>;</span><br></pre></td></tr></table></figure>
-<p>其中由于C#和C++堪称隔行如隔山<del>明明都是++，为什么C++和C的差别还没这么抽象</del>，因此调用中有诸多关键点：</p>
-<ul>
-<li>首先数据类型必须一致（基本数据类型外，结构体等还需要<code>MarshalAs</code>和<code>StructLayout</code>等显式明确其内存排列方式，否则出错几近于必然事件）；<br />
-</li>
-<li>由于C++和C#对底层数据的处理方式不同（如C#中除不安全代码外没有“指针”的概念，与C++指针和引用泾渭分明相对），因此在传参时应当进行一些“翻译”。</li>
-</ul>
-<p>如，根据GM/T
-0018-2023，上述<code>SDF_GenerateAgreementDataWithSM9</code>函数的C语言原型如下：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">SDF_GenerateAgreementDataWithSM9</span><span class="params">(</span></span><br><span class="line"><span class="params">HANDLE hSessionHandle,</span></span><br><span class="line"><span class="params">ULONG uiMasterKeyIndex,</span></span><br><span class="line"><span class="params">ULONG uiISKIndex,</span></span><br><span class="line"><span class="params">ULONG uiKeyBits,</span></span><br><span class="line"><span class="params">BYTE * pResponseID,</span></span><br><span class="line"><span class="params">ULONG ulResponseIDLen,</span></span><br><span class="line"><span class="params">BYTE * pSponsorID,</span></span><br><span class="line"><span class="params">ULONG ulSponsorIDLen,</span></span><br><span class="line"><span class="params">SM9EncMastPublicKey* pPublicKey,</span></span><br><span class="line"><span class="params">SM9EncMastPublicKey* pSponsorTempPublicKey,</span></span><br><span class="line"><span class="params">HANDLE * phAgreementHandle)</span>;</span><br></pre></td></tr></table></figure>
-<p>其中<code>HANDLE</code>是<code>void*</code>的<code>typedef</code>，<code>BYTE</code>为<code>unsigned char</code>，<code>ULONG</code>为<code>unsigned long</code>。</p>
-<p>将之“翻译”为C#的<code>extern</code>函数声明时的注意点有几点：</p>
-<ul>
-<li>基本类型（含指针，对应C#<del>传奇般的</del><code>IntPtr</code>）可以直接传参；<br />
-</li>
-<li>带有指针/引用性质的传参时，需留意其功能上的属性为输入还是输出量。解法有三种：<code>ref</code>，对应C/C++的一阶指针/引用（输入/输出）；<code>out</code>，用于输出变量（从C#的角度看可以内联变量声明，C/C++中依然是使用指针/引用传参）；做数组“提升一维”，形如C#的<code>int[]</code>对应C++的<code>int*</code>。</li>
-</ul>
+        <h1 id="望舒">望舒</h1>
 <blockquote>
-<p>使用<code>out</code>进行传参时部分场景下容易出现运行错误，原因不明；其或与<code>out</code>内联变量的内存初始化时机有关（尽管<code>out</code>的“函数内初始化”更应偏向语义约束，栈内存应在进入函数前就已经分配完成），故使用<code>int[1]</code>类似的传参方式依然最为稳妥。</p>
+<p>构造更高维度的格？</p>
 </blockquote>
-<p>如存在C++函数：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">nihao</span><span class="params">(<span class="type">const</span> <span class="type">int</span>* read,<span class="type">int</span>* write)</span></span>;</span><br></pre></td></tr></table></figure>
-<p>对应C#的外部调用方式可以形如：</p>
-<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">DllImport(dllname, EntryPoint = <span class="string">&quot;nihao&quot;</span>, CallingConvention = CallingConvention.Cdecl)</span>]</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">extern</span> <span class="built_in">int</span> <span class="title">nihao</span>(<span class="params"><span class="keyword">ref</span> <span class="built_in">int</span> read,<span class="built_in">int</span>[] write</span>)</span>;</span><br></pre></td></tr></table></figure>
-<p>调用时，由于C#要求关键字“二次确认”（即调用时、声明时需要同时声明关键字<code>out</code>/<code>ref</code>等），故上下文可能形如：</p>
-<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">func</span>()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">int</span> <span class="keyword">init</span> = <span class="number">0</span>;</span><br><span class="line">    <span class="built_in">int</span>[] buf = <span class="keyword">new</span> <span class="built_in">int</span>[<span class="number">1</span>];</span><br><span class="line"></span><br><span class="line">    nihao(<span class="keyword">ref</span> <span class="keyword">init</span>,buf);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="property相关">Property相关</h2>
-<p>输入/输出数据方面，只需要在类中声明一个Property并明确其属性，期望的数据类型即为Property自身的类型，<code>get</code>和<code>set</code>方法均为默认值。</p>
-<p>如这段代码：</p>
-<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">PropertyInfo(Direction.InputData,<span class="string">&quot;SessionHandle&quot;</span>,<span class="string">&quot;会话句柄&quot;</span>,true)</span>]</span><br><span class="line"><span class="keyword">public</span> IntPtr SessionHandle</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">get</span>;</span><br><span class="line">    <span class="keyword">set</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>效果形如：</p>
-<figure>
-<img src="/img/" alt="PropertyInfo" />
-<figcaption aria-hidden="true">PropertyInfo</figcaption>
-</figure>
-<p>其中最后一个参数仅在性质为<code>Direction.InputData</code>时有效，表示该输入是否为必须值（若未输入则该插件不运行，否则以缺省值运行）。</p>
-<p>这些Property在管理上的另一个显著特征为：改变其值后，应当调用<code>OnPropertyChanged</code>函数来“告知”与之相连的模块此Property更新了数值，达成宏观上“流水线”般工作的效果：</p>
-<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (iRet == XCipherEngine.SDR_OK)</span><br><span class="line">&#123;</span><br><span class="line">    Result = <span class="literal">true</span>; <span class="comment">//Result is `public bool` property</span></span><br><span class="line">    OnPropertyChanged(<span class="string">&quot;Result&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>Settings同样也采用Property的方式表述，其和输入/输出数据的差分只在于<code>set</code>函数和私有变量的“另行”设置。参考：</p>
-<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="built_in">uint</span> iskIndex = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">[<span class="meta">TaskPane(<span class="string">&quot;ISKIndex&quot;</span>,<span class="string">&quot;私钥索引&quot;</span>,null,1,false,ControlType.TextBox)</span>]</span><br><span class="line"><span class="keyword">public</span> <span class="built_in">uint</span> ISKIndex</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">get</span> =&gt; iskIndex;</span><br><span class="line">    <span class="keyword">set</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">value</span> != iskIndex)</span><br><span class="line">        &#123;</span><br><span class="line">            iskIndex = <span class="keyword">value</span>;</span><br><span class="line">            OnPropertyChanged(<span class="string">&quot;ISKIndex&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>其动机依然在于关键的<code>OnPropertyChanged</code>——识别新的设置项是否与以往的不同，若然，则触发新一轮计算。<br />
-显然这种<code>get</code>和原变量分离的方法也可用于其它逻辑的封装，如：</p>
-<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">region</span> Private Variables</span></span><br><span class="line"><span class="keyword">private</span> <span class="built_in">uint</span> opt = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">readonly</span> <span class="built_in">uint</span>[] keyLen_map = &#123; <span class="number">256</span> &#125;;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">endregion</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">region</span> TaskPane Settings</span></span><br><span class="line"></span><br><span class="line">[<span class="meta">TaskPane(<span class="string">&quot;KeyLen&quot;</span>, <span class="string">&quot;输出密钥长度&quot;</span>, null, 1, false, ControlType.ComboBox,new string[</span>] &#123;<span class="string">&quot;256&quot;</span>&#125;)]</span><br><span class="line"><span class="keyword">public</span> <span class="built_in">uint</span> KeyLen</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">get</span> =&gt; keyLen_map[opt];</span><br><span class="line">    <span class="keyword">set</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">value</span> != opt)</span><br><span class="line">        &#123;</span><br><span class="line">            opt = <span class="keyword">value</span>;</span><br><span class="line">            OnPropertyChanged(<span class="string">&quot;KeyLen&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="寒芒">寒芒</h2>
+<p>相较较简单的“青天”的格构造，我们还需要将未知元素从单个元素<strong>提升(lift)</strong>为向量乃至矩阵。</p>
+<blockquote>
+<p>有关“青天”的格构造参见<a
+href="/crypto/lattice">格</a>，其中系统介绍了格、部分代数和离散数学中的重要概念，有助于快速入门格密码；本文均假定读者已经具备相关的基础知识<strong>并已理解之</strong>。</p>
+</blockquote>
+<p>"lift"的核心无外三点：</p>
+<ol type="1">
+<li>矩阵的构造（线性组合）必须符合目标环的运算规则；<br />
+</li>
+<li>已知量<strong>嵌入格矩阵<code>L</code>中</strong>，<strong>未知但已知是整数
+<span class="math inline">\(k_{i}\)</span>
+的量放在左侧，未知且已知是整数 <em>小量</em>
+的放在右侧（锚定向量）</strong>；<br />
+</li>
+<li>对格进行<strong>配平</strong>，令锚定向量的各维度尽可能近长。</li>
+</ol>
+<p>如在NTRU中，由于其元素的运算在卷积多项式环上运行，因此将 <span
+class="math inline">\(h\)</span> 应转化为 <span
+class="math inline">\(rot(h) = \begin{bmatrix} h_0 &amp; h_1 &amp;
+\cdots &amp; h_n \\ h_1 &amp; h_2 &amp; \cdots &amp; h_0 \\ \vdots &amp;
+\vdots &amp;&amp; \vdots \\ h_n &amp; h_0 &amp; \cdots &amp; h_n-1
+\end{bmatrix}\)</span>，使其在进行乘法时符合该环的运算规则。</p>
+<p>配平格的要点在于利用好LLL（或BKZ）的特性之一——模长“标定”。</p>
+<h2 id="炽羽">炽羽</h2>
+<p>对CVP问题的求解是此类格构造后利用的重点。<br />
+CVP问题常见的解法有二：将目标向量“嵌入”原格中，使之提升一个维度；或使用Babai's
+Nearest Plane Algorithm。</p>
+<h3 id="babai">Babai</h3>
+<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">Babai</span>(<span class="params">A,v</span>):</span><br><span class="line">    <span class="string">&#x27;&#x27;&#x27;</span></span><br><span class="line"><span class="string">    Babai&#x27;s Nearest Plane Algorithm.  </span></span><br><span class="line"><span class="string">    Finds the closest vector to `v` that&#x27;s on the lattice defined by `A`.  </span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Parameters:</span></span><br><span class="line"><span class="string">    - `A`: Lattice-defining matrix</span></span><br><span class="line"><span class="string">    - `v`: Target vector</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Note that both `A` and `V` has to be defined on Integer Ring.</span></span><br><span class="line"><span class="string">    &#x27;&#x27;&#x27;</span></span><br><span class="line"></span><br><span class="line">    M = A.LLL(delta=<span class="number">0.75</span>)</span><br><span class="line">    G = M.gram_schmidt()[<span class="number">0</span>]</span><br><span class="line"></span><br><span class="line">    t = v <span class="comment"># vector</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">reversed</span>(<span class="built_in">range</span>(A.nrows())):</span><br><span class="line">        c = ((t * G[i]) / (G[i] * G[i])).<span class="built_in">round</span>()</span><br><span class="line">        t -= A[i] * c</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> v - t</span><br></pre></td></tr></table></figure>
+<p>从上述实现中即可一窥Babai's Algorithm的核心：</p>
+<ul>
+<li>先对之进行格基规约（<strong>注意此方法仅适用于方阵，对于非方阵应使用<code>IntegerLattice</code>，具体原因似乎与
+<em>m&gt;n</em>
+时规约的“崩塌”有关（此时因为向量间必定线性相关的特性，会让规约的最终向量失去意义</strong>）；<br />
+</li>
+<li>取规约矩阵正交化后的向量基，在<strong>每个 <em>两两垂直</em>
+的投影方向上</strong>均<strong>减去这些基的
+<em>最近整数倍</em></strong>（因为格运算都在整数上进行，参见<code>.round()</code>）。</li>
+</ul>
+<h3 id="embedding">Embedding</h3>
+<p><em>Babai's Embedding Technique</em> 的核心思想非常简单：<br />
+假设存在向量 <span class="math inline">\(\mathbb{v}^{N}\)</span> 在
+<span class="math inline">\(\mathbb{L}^{M \times N}\)</span>
+所定义的格上，不妨构造<br />
+<span class="math display">\[\mathbb{L}^{&#39; M+1 \times N+1} =
+\begin{bmatrix} \mathbb{L} \\ \mathbb{v} &amp; -1
+\end{bmatrix}\]</span><br />
+则该格上一定存在一个向量 <span class="math inline">\(\begin{bmatrix}
+0^{N} &amp; -1 \end{bmatrix}\)</span>。</p>
+<blockquote>
+<p>上述推论比较显然——因为 <span class="math inline">\(v\)</span> 就是
+<span class="math inline">\(L\)</span> 的线性组合，其系数取 <span
+class="math inline">\(-1\)</span> 通过行变换就可以构造出这个向量。</p>
+</blockquote>
+<p>显然此时对 <span class="math inline">\(L^{&#39;}\)</span>
+进行规约就可以得到这个向量。<br />
+更进一步地，假设存在一个偏移<del>a.k.a.误差</del>向量 <span
+class="math inline">\(\mathbb{e}^{N}\)</span>，其近似地表征了 <span
+class="math inline">\(\mathbb{dist(v,L)}\)</span>（即该向量和格之间的距离）。</p>
+<p>令 <span class="math inline">\(\mathbb{b = v + e}\)</span>，将 <span
+class="math inline">\(\mathbb{b}\)</span> 嵌入该格中，则向量 <span
+class="math inline">\(\begin{bmatrix} e^{N} &amp; -1
+\end{bmatrix}\)</span> 也在格上。<br />
+此时若 <span class="math inline">\(e\)</span>
+足够短，同时对格进行配平，通过格基规约同样有很大概率找出该向量。</p>
+<p>得到 <span class="math inline">\(\mathbb{e}\)</span>
+后，易得CVP的解即为 <span class="math inline">\(\mathbb{b -
+e}\)</span>。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">L = <span class="comment">#...</span></span><br><span class="line">b = <span class="comment">#...</span></span><br><span class="line"></span><br><span class="line">C = <span class="number">2</span>**ebits</span><br><span class="line"></span><br><span class="line">mt = matrix.block(ZZ,[[L,<span class="number">0</span>],</span><br><span class="line">                      [b,C]])</span><br><span class="line"></span><br><span class="line">e = IntegerLattice(mt,lll_reduce = <span class="literal">True</span>).reduced_basis[<span class="number">0</span>]</span><br><span class="line"></span><br><span class="line">sol = b - e</span><br><span class="line"><span class="comment"># ...</span></span><br></pre></td></tr></table></figure>
+<h1 id="月舞">月舞</h1>
+<blockquote>
+<p>Delightful的“约减”背后，还有些什么若隐若现...</p>
+</blockquote>
+<h2 id="朝花夕拾">朝花夕拾</h2>
+<h2 id="section"></h2>
+<hr />
+<blockquote>
+<p>纸上得来终觉浅——实践中分析更复杂的密码系统方为正道。</p>
+</blockquote>
+<h1 id="lwe">LWE</h1>
+<h2 id="简述">简述</h2>
+<p>LWE(Learning With Errors)是机器学习领域的难题之一。<br />
+其数学表示形式为：已知 <span class="math inline">\(Z_{q}\)</span> 下
+<span class="math inline">\(A^{M \times N} \cdot s^{N \times 1} + e^{M
+\times 1} = b^{M \times 1}\)</span>，给定 <span
+class="math inline">\(A,b\)</span>，还原 <span
+class="math inline">\(s\)</span>。<br />
+其中 <span class="math inline">\(e\)</span> 是一个小向量。</p>
+<p>更形象地：<br />
+已知两个 <span class="math inline">\(N\)</span> 维向量 <span
+class="math inline">\(a_{i},s\)</span>，计算其<strong>带一定误差</strong>的点积
+<span class="math inline">\(b_{i} \equiv a_{i} \cdot s + e_{i} (\bmod
+q)\)</span>，重复 <span class="math inline">\(M\)</span> 次（<span
+class="math inline">\(M \geq N\)</span>），还原 <span
+class="math inline">\(s\)</span>。</p>
+<h2 id="绮链">绮链</h2>
+<p>若不考虑误差，上述问题显然只是普通的解 <span
+class="math inline">\(Z_{q}\)</span>
+下的线性方程组的问题，可以使用高斯消元法直接求解，或利用线性代数知识，进行行列变换或计算
+<span class="math inline">\(Z_{q}\)</span> 下的 <span
+class="math inline">\(b \cdot A^{-1}\)</span>
+即可（此处需要截断之为方阵）。</p>
+<p>但加入误差后，求解就变得极为困难了——按上述传统思路，必须逐个爆破误差
+<span class="math inline">\(e_{i}\)</span>
+后验证解，可行性极为受限。</p>
+<h2 id="新的方程组与格">新的方程组与格</h2>
+<p>LWE中，格的构造相较以往单元素的方程组更为“精巧”。<br />
+由于 <span class="math inline">\(A \cdot s\)</span> 结果的每个维度对
+<span class="math inline">\(q\)</span> 取模时都可能存在不同的 <span
+class="math inline">\(k_{i}\)</span>（参考上述等式： <span
+class="math inline">\(b_{i} = a_{i} \cdot s + e_{i} +
+k_{i}q\)</span>），因此构造时应当取一个 <span
+class="math inline">\(qI^{M}\)</span>
+的对角阵与之排列。换言之，我们的“理想”向量（在 <span
+class="math inline">\(e\)</span> 不存在时）应该在这个格上：</p>
+<p><span class="math display">\[\begin{bmatrix} qI^{M} \\ A^{T}
+\end{bmatrix}\]</span></p>
+<p>其中 <span class="math inline">\(A\)</span> 因为格矩阵运算（LWE中
+<span class="math inline">\(s\)</span>
+是被右乘的操作数，格的线性组合要求左乘系数）而被转置。</p>
+<p>由于 <span class="math inline">\(e\)</span>
+是小向量，因此其显然就是一个CVP问题，求解思路同样是Babai/Embedding<del>实际上这个Embedding的常用变种之一就是以Babai命名的</del>。<br />
+在使用Babai时，由于原矩阵不是方阵，因此需要使用IntegerLattice并<del>在其构造函数中规约之</del>：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">L = IntegerLattice(mt,lll_reduce = <span class="literal">True</span>)</span><br><span class="line">B = L.reduced_basis <span class="comment"># equivalent to LLL result</span></span><br><span class="line">G = B.gram_schmidt()[<span class="number">0</span>] </span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">reversed</span>(<span class="built_in">range</span>(B.nrows())):</span><br><span class="line">    <span class="comment"># ...</span></span><br></pre></td></tr></table></figure>
+<p>Babai's Embedding的构造矩阵形如：</p>
+<p><span class="math display">\[\begin{bmatrix} v_{k}^{M} &amp; s^{N}
+&amp; 1 \end{bmatrix} \cdot \begin{bmatrix} qI^{M}\\ A^{T}\\ b &amp;
+C_{0} \end{bmatrix} = \begin{bmatrix} e^{M} &amp;
+C_{0}\end{bmatrix}\]</span></p>
+<p>由目标向量可知配平系数 <span class="math inline">\(C_{0}\)</span>
+应与 <span class="math inline">\(e\)</span> 的大小接近，取 <span
+class="math inline">\(2^{ebits}\)</span> 即可。</p>
+<h1 id="ntru">NTRU</h1>
+<h2 id="卷积多项式环">卷积多项式环</h2>
+<p>给定 <span class="math inline">\(N,q \in Z_{+}\)</span>，则模 <span
+class="math inline">\(q\)</span> 下的 <span class="math inline">\(N -
+1\)</span> 次卷积多项式环是一个商环(quotient ring)，记作 <span
+class="math inline">\(R_{q} = \frac{Z_{q}[x]}{x^{N} - 1}\)</span>。</p>
+<blockquote>
+<p>商环的定义为对环(Ring)上，<span class="math inline">\(\forall a \neq
+0 \in R, \exists a^{-1} \in R\)</span>，即除了加法单位元 <span
+class="math inline">\(0\)</span> 外所有元素均存在逆元。</p>
+</blockquote>
+<p><span class="math inline">\(R_{q}\)</span> 下的 <span
+class="math inline">\(n\)</span> 次卷积多项式表示：</p>
+<p><span class="math display">\[z = z_{0}x^{0} + z_{1}x^{1} + \cdots +
+z_{n-1}x^{n-1} = \sum_{i=0}^{n-1} z_{i}x^{i} \in R^{n}_{q}\]</span></p>
+<p>设 <span class="math inline">\(f,g,h \in R^{n}_{q}\)</span>，<span
+class="math inline">\(f \cdot g = h\)</span>，乘法规则形如</p>
+<p><span class="math display">\[ h = \sum_{i=0}^{n-1} h_{i}x^{i} \\
+h_{i} \equiv \sum_{a,b}^{a+b \equiv i \bmod N} f_{a}g_{b} \bmod
+q\]</span></p>
+<blockquote>
+<p>显然其与普通的多项式乘法并无差分，只是对幂数和项数的计算分别放在了
+<span class="math inline">\(Z_{n}\)</span> 和 <span
+class="math inline">\(Z_{q}\)</span> 下进行。</p>
+</blockquote>
+<p>写作 <span class="math inline">\(Z_{q}\)</span> 下 <span
+class="math inline">\(n \times n\)</span> 矩阵乘法的形式，形如：</p>
+<p><span class="math inline">\(\begin{bmatrix} h_0 &amp; h_1 &amp;
+\cdots &amp; h_{n-2} &amp; h_{n-1} \end{bmatrix} ^ {T} = \begin{bmatrix}
+f_0 &amp; f_1 &amp; \cdots &amp; f_{n-2} &amp; f_{n-1} \\ f_1 &amp; f_2
+&amp; \cdots &amp; f_{n-1} &amp; f_0 \\ \vdots &amp; \vdots &amp;&amp;
+\vdots &amp; \vdots \\ f_{n-1} &amp; f_0 &amp; \cdots &amp; f_{n-3}
+&amp; f_{n-2} \end{bmatrix} \cdot \begin{bmatrix} g_0 &amp; g_1 &amp;
+\cdots &amp; g_{n-2} &amp; g_{n-1} \end{bmatrix} ^ {T}\)</span></p>
+<p>称其中表示 <span class="math inline">\(f\)</span>
+的系数矩阵为卷积矩阵(convolution matrix)，常记作 <span
+class="math inline">\(rot(f)\)</span>，其第 <span
+class="math inline">\(i\)</span> 行由 <span
+class="math inline">\(f\)</span> 的系数循环右移 <span
+class="math inline">\(i\)</span> 位排列而成。</p>
+<blockquote>
+<p>若 <span class="math inline">\(q\)</span>
+比较大，为提升可读性，部分实现会将 <span
+class="math inline">\(f_{i}\)</span> 转化到 <span
+class="math inline">\((-\frac{q}{2},\frac{q}{2}]\)</span>
+的区间内（<span class="math inline">\(Z_{q}\)</span> 下等价）。</p>
+</blockquote>
+<h2 id="参数与密钥生成">参数与密钥生成</h2>
+<p>NTRU的关键参数为 <span
+class="math inline">\((N,p,q,d)\)</span>。其中，</p>
+<ul>
+<li><span class="math inline">\(N,q\)</span>
+越大则格攻击构造格的维度越高，密码系统越安全，但运算效率会大幅下降；一般选择
+<span class="math inline">\(N \in [250,2500]\)</span>。<br />
+</li>
+<li><span class="math inline">\(p,d\)</span> 均为整数，要求 <span
+class="math inline">\(gcd(p,q) = 1\)</span> 且 <span
+class="math inline">\(gcd(q,N) = 1\)</span>，<span
+class="math inline">\(q &gt; (6d + 1)p\)</span>。</li>
+</ul>
+<p>NIST对NTRU的强度-推荐参数组合如下：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">强度</th>
+<th style="text-align: center;">N</th>
+<th style="text-align: center;">p</th>
+<th style="text-align: center;">q</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">标准</td>
+<td style="text-align: center;">251</td>
+<td style="text-align: center;">3</td>
+<td style="text-align: center;">128</td>
+</tr>
+<tr>
+<td style="text-align: center;">高</td>
+<td style="text-align: center;">347</td>
+<td style="text-align: center;">3</td>
+<td style="text-align: center;">128</td>
+</tr>
+<tr>
+<td style="text-align: center;">最高</td>
+<td style="text-align: center;">503</td>
+<td style="text-align: center;">3</td>
+<td style="text-align: center;">256</td>
+</tr>
+</tbody>
+</table>
+<p>参数 <span class="math inline">\(d\)</span> 可在满足 <span
+class="math inline">\(q &gt; (6d + 1)p\)</span> 下自行决定，一般选择
+<span class="math inline">\(d \approx \frac{N}{3}\)</span>
+来达到较好的安全性。</p>
+<hr />
+<blockquote>
+<p>定义函数 <span class="math inline">\(T(d_{1},d_{2}) (d_{1} + d_{2}
+&lt; q)\)</span> 表示系数 <span class="math inline">\(\{1,-1\}\)</span>
+<strong>计数</strong>分别为 <span
+class="math inline">\(\{d_{1},d_{2}\}\)</span> 的多项式 <span
+class="math inline">\(f\)</span> 的集合。<br />
+如，<span class="math inline">\(f = x^{6} + x^{3} - x^{2} + x - 1 \in
+T(3,2)\)</span>。</p>
+</blockquote>
+<p>选择两个多项式 <span class="math display">\[f = \sum_{i=0}^{N-1}
+f_{i}x^{i} \in T(d+1,d)，g = \sum_{i=0}^{N-1} g_{i}x^{i} \in
+T(d,d)\]</span></p>
+<p>再计算 <span class="math inline">\(h \equiv f^{-1}g (\bmod
+q)\)</span>，随后将 <span class="math inline">\(g\)</span>
+的记录销毁。<br />
+公钥为 <span class="math inline">\(h\)</span>，私钥为 <span
+class="math inline">\(R_{p}\)</span> 和 <span
+class="math inline">\(R_{q}\)</span> 下的 <span
+class="math inline">\(f^{-1}\)</span>（由于 <span
+class="math inline">\(p,q\)</span> 是既定参数，可以认为私钥就是 <span
+class="math inline">\(f\)</span>）。</p>
+<blockquote>
+<p><span class="math inline">\(g\)</span> 不是公钥或私钥，但知道 <span
+class="math inline">\(g\)</span> 就可以攻破NTRU，其地位类似于RSA中 <span
+class="math inline">\(N\)</span> 的因数分解，故不应保留之。</p>
+</blockquote>
+<h2 id="加解密与正确性证明">加/解密与正确性证明</h2>
+<p>先将明文编码为一个 <span class="math inline">\(n\)</span> 次多项式
+<span class="math inline">\(m \in \{-1,0,1\}^{N}\)</span>。</p>
+<p>加密时，另随机生成一个多项式 <span class="math inline">\(r \in
+\{-1,0,1\}^{N}\)</span>，计算 <span class="math inline">\(c \equiv ph
+\cdot r + m (\bmod q)\)</span>，输出密文 <span
+class="math inline">\(c\)</span>。</p>
+<p>解密时，计算 <span class="math inline">\(m \equiv f^{-1} \cdot (f
+\cdot c (\bmod q)) (\bmod p)\)</span>，输出明文 <span
+class="math inline">\(m\)</span>。</p>
+<blockquote>
+<p>注意其中涉及到了“换环”，即现在 <span
+class="math inline">\(R_{q}\)</span> 下计算 <span
+class="math inline">\(f \cdot c\)</span>，将结果转到 <span
+class="math inline">\(R_{p}\)</span> 下后再与该环下的 <span
+class="math inline">\(f^{-1}\)</span> 相乘。</p>
+</blockquote>
+<hr />
+<p>正确性证明：</p>
+<p>先在 <span class="math inline">\(R_{q}\)</span> 下计算， <span
+class="math inline">\(f \cdot c = pr \cdot hf + mf \Rightarrow f \cdot c
+= prg + mf\)</span><br />
+随后换环到 <span class="math inline">\(R_{p}\)</span> 上，显然 <span
+class="math inline">\(prg \equiv 0 (\bmod p)\)</span>，因此 <span
+class="math inline">\(R_{p}\)</span> 下 <span class="math inline">\((fc
+\bmod q) \equiv fm\)</span><br />
+进而 <span class="math inline">\(fm \cdot f^{-1} = m\)</span><br />
+解密正确性得证。</p>
+<h2 id="攻击">攻击</h2>
+<h3 id="从公钥推导私钥">从公钥推导私钥</h3>
+<p>作为公钥密码算法，NTRU所依赖的数学难题是格上的SVP问题。<br />
+给定公钥 <span class="math inline">\(h\)</span> ，若维度参数 <span
+class="math inline">\(N\)</span>
+选择过小，则通过格基规约获得SVP问题的近似解是可行的。</p>
+<p>以Sage梳理攻击过程：</p>
+<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">ntru</span>(<span class="params">h,n,q</span>):</span><br><span class="line">    rot_h = matrix(ZZ,[[(i+j)%n <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(n)] <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(n)])</span><br><span class="line">    In = matrix.identity(n)</span><br><span class="line"></span><br><span class="line">    mt = matrix.block(ZZ,[[In,rot_h],[<span class="number">0</span>,q*In]])</span><br><span class="line">    mt = mt.LLL()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> row <span class="keyword">in</span> mt:</span><br><span class="line">        <span class="keyword">if</span> <span class="built_in">all</span>(i <span class="keyword">in</span> (-<span class="number">1</span>,<span class="number">0</span>,<span class="number">1</span>) <span class="keyword">for</span> i <span class="keyword">in</span> row):</span><br><span class="line">            rf = vector(ZZ,row[:n])</span><br><span class="line">            <span class="comment"># rg = vector(ZZ,row[n:])</span></span><br><span class="line">            <span class="keyword">return</span> rf</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="literal">None</span></span><br></pre></td></tr></table></figure>
+<p>关键等式为 <span class="math inline">\(Z_{q}\)</span> 下， <span
+class="math inline">\(f \cdot h \equiv g\)</span>；将之抬升(lift)至
+<span class="math inline">\(Z\)</span> 下，则有 <span
+class="math inline">\(f \cdot h + q \cdot z = g\)</span>，其中 <span
+class="math inline">\(z\)</span> 是 <span
+class="math inline">\(Z^{N}\)</span> 下的某个“制衡”向量( <em>carry-on
+vector</em> )。</p>
+<p>矩阵运算如下：</p>
+<p><span class="math display">\[\begin{bmatrix} f &amp; z \end{bmatrix}
+\cdot \begin{bmatrix} I^{N} &amp; rot(h) \\ &amp; qI^{N} \end{bmatrix} =
+\begin{bmatrix} f &amp; g \end{bmatrix}\]</span></p>
+<p>对构造格进行规约，其预期最短向量就是 <span
+class="math inline">\(\begin{bmatrix} f &amp; g
+\end{bmatrix}\)</span>，注意 <span class="math inline">\(f\)</span> 和
+<span class="math inline">\(g\)</span> 都是 <span
+class="math inline">\(Z^{1 \times N}\)</span> 的向量。<br />
+由于 <span class="math inline">\(f,g\)</span> 每一维度的取值都在 <span
+class="math inline">\(\{-1,0,1\}\)</span> 中（等价地，<span
+class="math inline">\(p=3\)</span> 时的 <span
+class="math inline">\(Z_{p}）\)</span>，其模显然在格中是极短的。</p>
+<blockquote>
+<p>构造矩阵以分块矩阵的方式表述（实际上单个元素可被视为1*1的分块矩阵的“特例”），对矩阵的幺元操作在格中体现为单位矩阵，此时锚定向量实际上也是分块矩阵“拼凑”的结果。</p>
+</blockquote>
+<hr />
+<p>由上述分析，显然规约矩阵的最短向量的前 <span
+class="math inline">\(N\)</span>、后 <span
+class="math inline">\(N\)</span> 个维度即分别为 <span
+class="math inline">\(f^{&#39;}\)</span>、<span
+class="math inline">\(g^{&#39;}\)</span>。由于运算时的卷积操作，严格地，此处解出的私钥
+<span class="math inline">\(f^{&#39;}\)</span> 实际应为 <span
+class="math inline">\(x^{-i}f (i \in (-N,N))\)</span>，<span
+class="math inline">\(g^{&#39;}\)</span> 同理。<br />
+欲破译原私钥 <span class="math inline">\(f\)</span> ，则必须对 <span
+class="math inline">\(f,g\)</span> 的卷积系数分别进行爆破。<br />
+但若目标只是解密数据，参考上述NTRU的解密过程， <span
+class="math inline">\(f\)</span> 的卷积结果 <span
+class="math inline">\(f^{&#39;}\)</span>
+依然可以对密文进行解密（因为解密用到的 <span
+class="math inline">\(f^{&#39;-1} = x^{-i}f^{-1}\)</span> ）。</p>
+<h1 id="春滋">春滋</h1>
+<blockquote>
+<p>方程的潇潇暮雨。</p>
+</blockquote>
+<h2 id="短格的精华">“短格”的精华</h2>
+<p>先考虑整数环 <span class="math inline">\(Z\)</span>
+下一个较简单的方程：</p>
+<p><span class="math display">\[ax + by = c \]</span></p>
+<p>在给定 <span class="math inline">\(a,b,c\)</span>
+时其只是一个平凡的一元二次不定方程；若移去 <span
+class="math inline">\(c\)</span>，则一般而言无法得出 <span
+class="math inline">\(x,y\)</span> 的解。<br />
+但若已知 <span class="math inline">\(x,y,c\)</span>
+都是较小的整数，则可以使用格攻击来获得方程的解：</p>
+<p><span class="math display">\[\begin{bmatrix} x &amp; y \end{bmatrix}
+\cdot \begin{bmatrix} C &amp; a \\ &amp; b \end{bmatrix} =
+\begin{bmatrix} Cx &amp; c \end{bmatrix}\]</span></p>
+<p>其中若目标向量的模长足够小（已知 <span class="math inline">\(c
+&lt;&lt; a,b\)</span> 且配平系数 <span class="math inline">\(C\)</span>
+选择得当），则或可通过格基规约得到目标向量。</p>
+<p>上述放长还可以推广至多变量的情况<del>传说中的多元Coppersmith青春版，只看一次项</del>：</p>
+<p><span class="math display">\[a_1x_1 + a_2x_2 + \cdots + a_nx_n =
+c\]</span></p>
+<p><span class="math display">\[\begin{bmatrix} x_1 &amp; x_2 &amp;
+\cdots &amp; x_n \end{bmatrix} \begin{bmatrix} C_1 &amp;&amp;&amp; a_1
+\\ &amp;C_2 &amp;&amp; a_2 \\ &amp;&amp; \ddots &amp; \vdots \\
+&amp;&amp;&amp; a_n \end{bmatrix} = \begin{bmatrix} C_1x_1 &amp; C_2x_2
+&amp; \cdots &amp; c \end{bmatrix}\]</span></p>
+<p>可以注意到，这个“更一般的”方程在 <span
+class="math inline">\(c\)</span> 已知时就是HLCP(Hidden Linear
+Combination Problem，隐藏线性组合问题)。<br />
+<strong>实际上HLCP也可以“移进”至上述这个方程的形式，并且可以拓展到和<code>sum</code>含有一定误差的情况，即将
+<span class="math inline">\(c\)</span>
+移至等号左侧，右侧以一小量（不一定是0）代替。</strong></p>
 
       
 
@@ -279,28 +553,21 @@ Library（动态链接库），表示程序在编译时只保留了某个“外�
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">C#</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">长文精选</a>
         		</li>
       		
 		</ul>
 	</div>
 
       
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/闲笔//" class="article-tag-list-link color3">闲笔</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/misc/cryptool-dev/">展开全文 >></a>
+          <a class="article-more-a" href="/crypto/lattice2/">展开全文 >></a>
         </p>
       
 
@@ -332,20 +599,20 @@ Library（动态链接库），表示程序在编译时只保留了某个“外�
 
 
   
-    <article id="post-cpp/aes-modern" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-crypto/wp/wqb-plus" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/cpp/aes-modern/">C++——与AES-Integrals的双鹭翩舞</a>
+      <a class="article-title" href="/crypto/wp/wqb-plus/">2025湾区杯Writeup——再论“逐怨”</a>
     </h1>
   
 
         
-        <a href="/cpp/aes-modern/" class="archive-article-date">
-  	<time datetime="2025-08-20T00:12:27.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-08-20</time>
+        <a href="/crypto/wp/wqb-plus/" class="archive-article-date">
+  	<time datetime="2025-09-17T02:08:13.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-09-17</time>
 </a>
         
       </header>
@@ -353,104 +620,67 @@ Library（动态链接库），表示程序在编译时只保留了某个“外�
     <div class="article-entry" itemprop="articleBody">
       
         <blockquote>
-<p>书到用时方恨少，事非经过不知难。</p>
+<p><del>珠海端茶倒水一日游(bushi)</del></p>
 </blockquote>
-<p>本篇针对的是玲珑的第一个独立密码学/C++项目——<a
-target="_blank" rel="noopener" href="https://github.com/CrystalJiang232/AES-Integrals/">AES-Integrals</a>。<br />
-意在详解利用Modern
-C++相较传统C/C++对此密码学攻击实现中，代码质量（可读性、维护性与拓展性）及运行效率方面的优化。</p>
-<blockquote>
-<p>有关AES积分攻击的密码学分析，可移步<a
-href="https://crystaljiang232.github.io/aes/4-2/">AES积分攻击：霜天</a></p>
-</blockquote>
-<h1 id="aes.h"><code>aes.h</code></h1>
-<p><code>aes.h</code>中实现了对称密码学有关的基本函数和配套类、具备多种功能的AES类等，是被复用/拓展的根基。</p>
-<h2 id="struct-byte迷雾乱花"><code>struct byte</code>：迷雾乱花</h2>
-<p><code>struct byte</code>实现的<strong>部分节选如下</strong>：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">byte</span> </span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">explicit</span> <span class="keyword">constexpr</span> <span class="title">byte</span><span class="params">(<span class="type">unsigned</span> <span class="type">char</span> _val)</span> : value&#123;</span>_val&#125; &#123;&#125;</span><br><span class="line">    <span class="function"><span class="keyword">constexpr</span> <span class="title">byte</span><span class="params">()</span> : byte(<span class="number">0</span>) &#123;</span>&#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Default special member functions</span></span><br><span class="line">    <span class="function"><span class="keyword">constexpr</span> <span class="title">byte</span><span class="params">(<span class="type">const</span> byte&amp;)</span> </span>= <span class="keyword">default</span>;</span><br><span class="line">    <span class="function"><span class="keyword">constexpr</span> <span class="title">byte</span><span class="params">(byte&amp;&amp;)</span> <span class="keyword">noexcept</span> </span>= <span class="keyword">default</span>;</span><br><span class="line">    <span class="keyword">constexpr</span> byte&amp; <span class="keyword">operator</span>=(<span class="type">const</span> byte&amp;) = <span class="keyword">default</span>;</span><br><span class="line">    <span class="keyword">constexpr</span> byte&amp; <span class="keyword">operator</span>=(byte&amp;&amp;) <span class="keyword">noexcept</span> = <span class="keyword">default</span>;</span><br><span class="line">    <span class="keyword">constexpr</span> ~<span class="built_in">byte</span>() = <span class="keyword">default</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Conversion</span></span><br><span class="line">    <span class="function"><span class="keyword">constexpr</span> <span class="keyword">operator</span> <span class="type">unsigned</span> <span class="title">char</span><span class="params">()</span> <span class="type">const</span> <span class="keyword">noexcept</span> </span>&#123; <span class="keyword">return</span> value; &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Bitwise operators</span></span><br><span class="line">    <span class="keyword">friend</span> <span class="keyword">constexpr</span> byte <span class="keyword">operator</span>&amp;(byte x, byte y) <span class="keyword">noexcept</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> byte&#123; <span class="built_in">uc</span>(x.value &amp; y.value) &#125;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>略去者均为运算符重载等“重复性”内容。</p>
-</blockquote>
-<p><code>struct byte</code>的几个特点在于：</p>
-<ul>
-<li>该<code>struct</code>是 <em>trivial</em>
-的，即其只有一个公有数据成员<code>unsigned char value</code>，且其遵循基本类型的复制、移动及析构逻辑，因而该<code>struct</code>在程序中的额外开销相较<code>unsigned char</code>或其它<code>enum</code>类型几乎为零；<br />
-</li>
-<li>其构造函数和转换构造函数采用了<strong>单向<code>explicit</code></strong>的设计：由于认为<code>struct byte</code>是一个有限“域”，故其它的整数类型（无论初始值在不在<code>unsigned char</code>的范围内）向<code>byte</code>的转换都应当被显式声明；反之则不然（即允许<code>struct byte</code>向普通的整数类型隐式转换）。<br />
-</li>
-<li>仅重载了位运算符，所有运算符重载的运算对象的返回值都是<code>byte</code>，但移位运算符除外（第二操作数选择了<code>unsigned char</code>）。</li>
-</ul>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">byte a; <span class="comment">//OK</span></span><br><span class="line">byte b = a &amp; <span class="number">3</span>; <span class="comment">//Error: Ambiguious invocation</span></span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h2 id="block_fromhex万象霜天"><code>block_fromhex</code>：万象霜天</h2>
-<h3 id="简介">简介</h3>
-<p>本函数意在实现<code>std::string_view</code>（泛“字符串”）向<code>std::array&lt;byte,16&gt;</code>，即所谓“块”的转换。</p>
-<h3 id="定义及对比">定义及对比</h3>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">constexpr</span> std::expected&lt;block,std::string&gt; <span class="title">block_fromhex</span><span class="params">(std::string_view sv)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">auto</span> refloc = sv.<span class="built_in">data</span>();</span><br><span class="line">    block res&#123;&#125;;    </span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; bt : res)</span><br><span class="line">    &#123;</span><br><span class="line">        uc temp&#123;&#125;;</span><br><span class="line">        <span class="keyword">if</span> (sv.<span class="built_in">empty</span>())</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">return</span> std::unexpected&#123; <span class="string">&quot;Insufficient text to generate a block&quot;</span> &#125;;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">auto</span> val = std::<span class="built_in">from_chars</span>(sv.<span class="built_in">data</span>(), sv.<span class="built_in">data</span>() + <span class="number">2</span>, temp, <span class="number">16</span>);val.ptr != sv.<span class="built_in">data</span>() + <span class="number">2</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">return</span> std::unexpected&#123; std::format(<span class="string">&quot;Non-hex character at position &#123;&#125;&quot;</span>,val.ptr - refloc) &#125;;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        bt = byte&#123; temp &#125;;</span><br><span class="line">        <span class="keyword">auto</span> fn = [](<span class="type">char</span> ch) -&gt; <span class="type">bool</span> &#123;<span class="keyword">return</span> std::<span class="built_in">isblank</span>(ch);&#125;;</span><br><span class="line">        sv.<span class="built_in">remove_prefix</span>(<span class="number">2</span>);</span><br><span class="line">        sv = sv.<span class="built_in">substr</span>(std::ranges::<span class="built_in">find_if_not</span>(sv, fn) - sv.<span class="built_in">begin</span>());</span><br><span class="line">    &#125;    </span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> res;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>相比之下，一个传统C++的实现可能会形如：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">byte[<span class="number">16</span>] <span class="built_in">block_fromhex</span>(<span class="type">const</span> <span class="type">char</span>* ch,<span class="type">size_t</span> len)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(...)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">throw</span> std::<span class="built_in">exception</span>(<span class="string">&quot;...&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">block_fromhex</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* ch,<span class="type">size_t</span> len,<span class="type">unsigned</span> <span class="type">char</span>* out)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>逐行分析改进点：</p>
-<ul>
-<li>函数原型声明上，由于<code>block_fromhex</code>默认都会开辟新的栈内存空间来存放“转换”的结果<del>所谓csharp中的<code>out Block result</code></del>，故显然将结果放在返回值中“传出”是更好的选择。但又由于需要将异常信息传出，则只能依靠<code>throw</code>来解决此问题——潜在的栈回溯的副作用之一，即为极大限制了代码效率上限（编译器需为这个可能的“出口”进行额外分支判断等），起步即逊于能被声明为<code>noexcept</code>的现代C++实现。<br />
-若选择C语言类似的解法，依靠<code>int</code>作为返回值并将目标数组以
-<em>out</em>
-参数指针置于其中，且不论内存安全性，在调用代码中必须手动检查其返回值——极大增加疏漏风险的同时，使得调用逻辑变得更加繁琐。<br />
-相较之下，本实现（C++23版本）使用了<code>std::expected&lt;block,std::string&gt;</code>，在提高内存和执行效率的同时，调用逻辑也显得更为清晰<del>甚至没算上链式调用</del>：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span>(<span class="keyword">auto</span> bk = <span class="built_in">block_fromhex</span>(buf);bk)</span><br><span class="line">&#123;</span><br><span class="line">    val[i] = *bk;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">&#123;</span><br><span class="line">    std::<span class="built_in">println</span>(<span class="string">&quot;&#123;&#125;&quot;</span>,bk.<span class="built_in">error</span>());</span><br><span class="line">    <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
-<li>内部实现直接封装对C++标准库中<code>&lt;charconv&gt;</code>的<code>std::from_chars</code>的调用，保证正确性的同时（参考C++
-Core
-Guidelines之尽量避免“手搓”函数，优先级：标准库&gt;三方库&gt;手搓）。<code>from_chars</code>的返回值直接用
-<em>Structural Binding</em>
-捕获，通过看<code>ptr</code>是否为其起始位置+2即可快速判断解析是否正确。<br />
-</li>
-<li>循环用<code>auto&amp;</code>来遍历<code>res</code>(<code>std::array&lt;byte,16&gt;</code>)，保证每行只解析前16组有效的十六进制字符，<code>std::string_view</code>在提供对C样式字符串、<code>std::string</code>等较好的适配性的同时，性能比另开<code>std::string</code>/<code>const std::string&amp;</code>高且保证了内存安全<del>所谓view-type的魅力</del>。<br />
-</li>
-<li>“移进”扫描点时采取了跳过所有非空格字符的策略，此处封装了对<code>std::isblank</code>的调用（因原函数返回值是<code>int</code>，似乎可以用<code>std::invoke_r</code>更进一步改善？）</li>
-</ul>
-<p>该函数的进一步封装和拓展点应在“流”的phase，及对部分异常处理的差分策略。</p>
-<h2 id="gmul"><code>gmul</code></h2>
-<h3 id="创新的定义">创新的定义</h3>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">namespace</span> _gmul </span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">using</span> <span class="type">table_t</span> = std::array&lt;byte, <span class="number">2048</span>&gt;;</span><br><span class="line">    <span class="function"><span class="keyword">constexpr</span> byte <span class="title">gmul_fn</span><span class="params">(byte a, uc b)</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        byte p&#123;&#125;;</span><br><span class="line">        <span class="keyword">while</span> (b)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">if</span> (b &amp; <span class="number">1</span>)</span><br><span class="line">            &#123;</span><br><span class="line">                p ^= a;</span><br><span class="line">            &#125;</span><br><span class="line">            byte hi_bit&#123; a &amp; <span class="type">0x80_t</span> &#125;;</span><br><span class="line">            a &lt;&lt;= <span class="number">1</span>;</span><br><span class="line">            <span class="keyword">if</span> (hi_bit)</span><br><span class="line">            &#123;</span><br><span class="line">                a ^= <span class="type">0x1b_t</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            b &gt;&gt;= <span class="number">1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> p;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="type">static</span> <span class="keyword">constexpr</span> std::array&lt;<span class="type">int</span>, 8&gt; val_idxs = &#123; <span class="number">2</span>,<span class="number">3</span>,<span class="number">1</span>,<span class="number">1</span>,<span class="number">0x0e</span>,<span class="number">0x0b</span>,<span class="number">0x0d</span>,<span class="number">0x09</span> &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">consteval</span> <span class="type">table_t</span> <span class="title">table_gen</span><span class="params">()</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="type">table_t</span> res&#123;&#125;;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i : std::views::<span class="built_in">iota</span>(<span class="number">0</span>, <span class="number">2048</span>))</span><br><span class="line">        &#123;</span><br><span class="line">            res[i] = <span class="built_in">gmul_fn</span>(<span class="built_in">byte</span>(i % <span class="number">256</span>), <span class="built_in">byte</span>(val_idxs[i / <span class="number">256</span>]));</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> res;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="type">static</span> <span class="keyword">constexpr</span> <span class="type">table_t</span> table = <span class="built_in">table_gen</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">gmul_t</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="function"><span class="keyword">constexpr</span> byte <span class="title">operator</span><span class="params">()</span><span class="params">(byte a, <span class="type">int</span> b)</span> <span class="type">const</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function">        </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> table[b * <span class="number">256</span> + a];</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="type">static</span> <span class="keyword">constexpr</span> <span class="keyword">inline</span> <span class="type">gmul_t</span> gmul = &#123;&#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="解析">解析</h3>
-<p><code>gmul</code>（ <span class="math inline">\(GF(2^8)\)</span>
-下的乘法）的实现是AES加密的重要组成部分。既有C/C++对这一模块的实现基本分三种思路：</p>
-<ul>
-<li>只实现<code>gmul</code>的计算逻辑（如上述<code>gmul_fn</code>所述），所有数值全部在运行时计算；<br />
-</li>
-<li>利用AES类中乘法的<strong>第二操作数只有8个选项（2,3,1,1及其“逆元”）</strong>的特性，将待获取的乘法结果（256*8种组合）“打表”备用；具体实现或为静态字面量悉数枚举（即常量初始化之），或为程序运行开始时完成计算并置于静态存储区种。</li>
-</ul>
-<p>这几种实现思路各有优劣，综合来看第三种实现较好；但现代C++引入的<code>constexpr</code>、<code>consteval</code>和对编译期计算的全面支持，使另一种可能性浮出水面——将计算逻辑使用编译期函数表述之，并在编译期完成全部计算（形如上述的<code>consteval table_t table_gen();</code>，<code>consteval</code>约束其解析一定在编译期完成）。</p>
-<p>另外，<code>gmul</code>这个外部调用“接口”的函数采用了 <em>ranges
-algorithm</em> “同款”的函数对象实现。</p>
-<blockquote>
-<p>此处“函数”<code>gmul</code>的实现照顾了待在<code>AES</code>类中调用所需的乘数，使其调用逻辑更为简洁。</p>
-</blockquote>
-<h2 id="aes类"><code>AES</code>类</h2>
-<p>主要实现了AES类的加/解密公开接口及内部组件的私有函数。节选形如：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> block = std::array&lt;byte, <span class="number">16</span>&gt;;</span><br><span class="line"><span class="keyword">using</span> block_vw = std::span&lt;byte, <span class="number">16</span>&gt;;</span><br><span class="line"><span class="keyword">using</span> block_rvw = std::span&lt;<span class="type">const</span> byte, <span class="number">16</span>&gt;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="type">size_t</span> Rounds </span>= <span class="number">10</span>&gt; <span class="built_in">requires</span> (Rounds &gt;= <span class="number">1</span>)</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">AES</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="keyword">using</span> <span class="type">rnd_key_t</span> = std::array&lt;block, Rounds + <span class="number">1</span>&gt;;</span><br><span class="line">    <span class="function"><span class="keyword">constexpr</span> <span class="title">AES</span><span class="params">(block_rvw key)</span> :rnd_keys(key_expansion(key)) &#123;</span>&#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">constexpr</span> block <span class="title">encrypt</span><span class="params">(block_rvw plain)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        block state&#123;&#125;;</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i : std::views::<span class="built_in">iota</span>(<span class="number">0</span>, <span class="number">16</span>))</span><br><span class="line">        &#123;</span><br><span class="line">            state[i] = plain[i];</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="built_in">add_round_key</span>(state, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">auto</span> i : std::views::<span class="built_in">iota</span>(<span class="number">1ull</span>, Rounds))</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="built_in">sub_bytes</span>(state);</span><br><span class="line">            <span class="built_in">shift_rows</span>(state);</span><br><span class="line">            <span class="built_in">mix_columns</span>(state);</span><br><span class="line">            <span class="built_in">add_round_key</span>(state, i);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="built_in">sub_bytes</span>(state);</span><br><span class="line">        <span class="built_in">shift_rows</span>(state);</span><br><span class="line">        <span class="built_in">add_round_key</span>(state, Rounds);</span><br><span class="line">        <span class="keyword">return</span> state;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">constexpr</span> block <span class="title">decrypt</span><span class="params">(block_rvw cipher)</span> <span class="comment">/**/</span></span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function"><span class="keyword">private</span>:</span></span><br><span class="line"><span class="function">    static constexpr byte s_box[] =</span> <span class="comment">/*...*/</span>;</span><br><span class="line"></span><br><span class="line">    <span class="type">static</span> <span class="keyword">constexpr</span> byte inv_s_box[] = <span class="comment">/*...*/</span>;</span><br><span class="line"></span><br><span class="line">    <span class="type">static</span> <span class="keyword">constexpr</span> byte r_con[] = <span class="comment">/*...*/</span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">static</span> <span class="keyword">constexpr</span> <span class="type">rnd_key_t</span> <span class="title">key_expansion</span><span class="params">(block_rvw init)</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="type">rnd_key_t</span> rk&#123;&#125;;</span><br><span class="line">        std::ranges::<span class="built_in">copy</span>(init, rk[<span class="number">0</span>].<span class="built_in">begin</span>());</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">auto</span> i : std::views::<span class="built_in">iota</span>(<span class="number">1ull</span>, Rounds + <span class="number">1</span>))</span><br><span class="line">        &#123;</span><br><span class="line">            block_rvw prv = rk[i - <span class="number">1</span>];</span><br><span class="line">            block_vw cur = rk[i]; <span class="comment">//seperating to make read-only sematic more explicit</span></span><br><span class="line"></span><br><span class="line">            <span class="keyword">for</span> (<span class="type">int</span> j : iota_word)</span><br><span class="line">            &#123;</span><br><span class="line">                cur[j] = prv[j] ^ s_box[prv[<span class="number">12</span> + (j + <span class="number">1</span>) % <span class="number">4</span>]];</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            cur[<span class="number">0</span>] ^= r_con[i - <span class="number">1</span>];</span><br><span class="line"></span><br><span class="line">            <span class="keyword">for</span> (<span class="type">int</span> j : std::views::<span class="built_in">iota</span>(<span class="number">4</span>, <span class="number">16</span>))</span><br><span class="line">            &#123;</span><br><span class="line">                cur[j] = prv[j] ^ cur[j - <span class="number">4</span>];</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> rk;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">static</span> <span class="keyword">constexpr</span> <span class="type">void</span> <span class="title">sub_bytes</span><span class="params">(block_vw s)</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">for</span> (byte&amp; i : s)</span><br><span class="line">        &#123;</span><br><span class="line">            i = s_box[i];</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">static</span> <span class="keyword">constexpr</span> <span class="type">void</span> <span class="title">inv_sub_bytes</span><span class="params">(block_vw s)</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">for</span> (byte&amp; i : s)</span><br><span class="line">        &#123;</span><br><span class="line">            i = inv_s_box[i];</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">static</span> <span class="keyword">constexpr</span> <span class="type">void</span> <span class="title">shift_rows</span><span class="params">(block_vw s)</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        std::ranges::<span class="built_in">copy</span>(block&#123;</span><br><span class="line">           s[<span class="number">0</span>], s[<span class="number">5</span>], s[<span class="number">10</span>], s[<span class="number">15</span>],</span><br><span class="line">           s[<span class="number">4</span>], s[<span class="number">9</span>], s[<span class="number">14</span>], s[<span class="number">3</span>],</span><br><span class="line">           s[<span class="number">8</span>], s[<span class="number">13</span>], s[<span class="number">2</span>], s[<span class="number">7</span>],</span><br><span class="line">           s[<span class="number">12</span>], s[<span class="number">1</span>], s[<span class="number">6</span>], s[<span class="number">11</span>]</span><br><span class="line">            &#125;, s.<span class="built_in">begin</span>());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="type">static</span> <span class="keyword">constexpr</span> uc shift_rows_idx[] = &#123;</span><br><span class="line">        <span class="number">0</span>,<span class="number">5</span>,<span class="number">10</span>,<span class="number">15</span>,</span><br><span class="line">        <span class="number">4</span>,<span class="number">9</span>,<span class="number">14</span>,<span class="number">3</span>,</span><br><span class="line">        <span class="number">8</span>,<span class="number">13</span>,<span class="number">2</span>,<span class="number">7</span>,</span><br><span class="line">        <span class="number">12</span>,<span class="number">1</span>,<span class="number">6</span>,<span class="number">11</span></span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**/</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">static</span> <span class="keyword">constexpr</span> <span class="type">void</span> <span class="title">mix_columns</span><span class="params">(block_vw s)</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        block res&#123;&#125;;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i : std::views::<span class="built_in">iota</span>(<span class="number">0</span>, <span class="number">16</span>) | std::views::<span class="built_in">stride</span>(<span class="number">4</span>))</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">for</span> (<span class="type">int</span> x : iota_word)</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="keyword">for</span> (<span class="type">int</span> k : iota_word)</span><br><span class="line">                &#123;</span><br><span class="line">                    res[i + x] ^= <span class="built_in">gmul</span>(s[i + (x + k) % <span class="number">4</span>], k);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        std::ranges::<span class="built_in">copy</span>(res, s.<span class="built_in">begin</span>());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">static</span> <span class="keyword">constexpr</span> <span class="type">void</span> <span class="title">inv_mix_columns</span><span class="params">(block_vw s)</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        block res&#123;&#125;;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i : std::views::<span class="built_in">iota</span>(<span class="number">0</span>, <span class="number">16</span>) | std::views::<span class="built_in">stride</span>(<span class="number">4</span>))</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">for</span> (<span class="type">int</span> x : iota_word)</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="keyword">for</span> (<span class="type">int</span> k : iota_word)</span><br><span class="line">                &#123;</span><br><span class="line">                    res[i + x] ^= <span class="built_in">gmul</span>(s[i + (x + k) % <span class="number">4</span>], k + <span class="number">4</span>);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        std::ranges::<span class="built_in">copy</span>(res, s.<span class="built_in">begin</span>());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">static</span> <span class="keyword">constexpr</span> <span class="type">void</span> <span class="title">bytes_xor</span><span class="params">(block_vw to, block_rvw other)</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">auto</span>&amp;&amp; [x, y] : std::views::<span class="built_in">zip</span>(to, other))</span><br><span class="line">        &#123;</span><br><span class="line">            x ^= y;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">static</span> <span class="keyword">constexpr</span> block <span class="title">bytes_xor_ret</span><span class="params">(block_rvw x, block_rvw y)</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        block res&#123;&#125;;</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i : std::views::<span class="built_in">iota</span>(<span class="number">0</span>, <span class="number">16</span>))</span><br><span class="line">        &#123;</span><br><span class="line">            res[i] = x[i] ^ y[i];</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> res;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">constexpr</span> <span class="type">void</span> <span class="title">add_round_key</span><span class="params">(block_vw block, <span class="type">size_t</span> index)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="built_in">bytes_xor</span>(block, rnd_keys[index]);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="type">static</span> <span class="keyword">constexpr</span> <span class="keyword">auto</span> iota_word = std::views::<span class="built_in">iota</span>(<span class="number">0</span>, <span class="number">4</span>);</span><br><span class="line">    <span class="type">static</span> <span class="keyword">constexpr</span> <span class="keyword">auto</span> iota_byte = std::views::<span class="built_in">iota</span>(<span class="number">0</span>, <span class="number">256</span>) | std::views::<span class="built_in">transform</span>([](<span class="type">int</span> x) &#123;<span class="keyword">return</span> <span class="built_in">byte</span>(x);&#125;);</span><br><span class="line"></span><br><span class="line">    <span class="type">rnd_key_t</span> rnd_keys;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<h3 id="解析-1">解析</h3>
-<p>AES类通过<code>size_t</code>类型的模板参数提供了对不同轮数加/解密的支持（默认值为10轮），同时通过内联一个<code>concept</code>约束其轮数不小于1。</p>
-<blockquote>
-<p>由于轮密钥存储等环节中利用了大量<code>Rounds</code>有关的参数，从编译器优化、运行效率、潜在应用场景等角度出发，笔者没有将轮数作为运行时参数。</p>
-</blockquote>
+<p>2025年湾区杯糊出来几道题的Writeup，以及做prng题有感。</p>
 <hr />
-<p><code>encrypt</code>等函数需要进行“遍历”时，笔者在其中大量应用了<code>std::views::iota</code>及其封装变形（<code>iota_word</code>/<code>iota_byte</code>）。<br />
-其相较传统<code>for</code>循环的优势有：</p>
+<h1 id="writeup">Writeup</h1>
+<h2 id="prng">prng</h2>
+<h3 id="题目">题目</h3>
+<h3 id="解析">解析</h3>
+<p>题目实现了一个LCG变种的PRNG（伪随机数生成器），其状态间的关系如下：</p>
+<p>$ s_{i+1} s_{i}^{2}a + b ^{512} $</p>
+<p>难点有二：</p>
 <ul>
-<li>调用语义、逻辑简洁统一（“一目了然”的<code>iota_word</code>）；<br />
+<li>其只给出了PRNG的两个状态，要求逆向出seed；<br />
 </li>
-<li><code>std::views::iota</code>的循环是安全的（其类似不能被“打断”的迭代器，参考Python中<code>range(x)</code>的行为），从根源防止了循环体内临时修改变量等操作导致的bug；<br />
-</li>
-<li>由于该循环确定（必定执行16次），因而编译器可以有更大的优化空间（<code>const</code>变量和各类编译器常量的应用同理）。</li>
+<li>对于PRNG的每个状态，其都<strong>随机抹去</strong>了0.19倍总位数的信息（此处体现为
+<span class="math inline">\(s_{1}\)</span>、<span
+class="math inline">\(s_{2}\)</span>、<span
+class="math inline">\(a\)</span>、<span class="math inline">\(b\)</span>
+中各97个<code>?</code>。</li>
 </ul>
-<h2 id="stdformatter相关"><code>std::formatter</code>相关</h2>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;::byte&gt; <span class="comment">//F**king ADL...</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="title">parse</span><span class="params">(std::format_parse_context&amp; fpc)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> fpc.<span class="built_in">begin</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">auto</span> <span class="title">format</span><span class="params">(::byte b, std::format_context&amp; fc)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> std::format_to(fc.<span class="built_in">out</span>(), <span class="string">&quot;&#123;:02x&#125;&quot;</span>, b.value);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">std</span>::formatter&lt;block_rvw&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">constexpr</span> <span class="type">static</span> <span class="keyword">auto</span> hexify = [](::byte x) &#123;<span class="keyword">return</span> std::format(<span class="string">&quot;&#123;:02x&#125;&quot;</span>, x.value);&#125;;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">constexpr</span> <span class="keyword">auto</span> <span class="title">parse</span><span class="params">(std::format_parse_context&amp; fpc)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> fpc.<span class="built_in">begin</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">auto</span> <span class="title">format</span><span class="params">(block_rvw v, std::format_context&amp; fc)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> std::ranges::<span class="built_in">copy</span>(v | std::views::<span class="built_in">transform</span>(hexify) | std::views::join, fc.<span class="built_in">out</span>()).out;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>目前（截至这篇Blog）本<code>aes.h</code>实现中没有提供自定义的窗口，仅使用<code>format</code>函数的部分“快速”复用来提供<code>byte</code>和<code>block</code>及类似类的格式化。</p>
+<p>由于被抹去的位数分布不均，因而很难用传统的代数分析方法攻击之<del>包括第一反应的格攻击</del>。</p>
+<p>因此此处需要用到特技“逐怨”处理之——具况见下方exp和解析。<br />
+大致思路：逐未知位爆破，利用位运算的截断特性不断校验、排除“缓存”的可能性。</p>
+<h3 id="exp">exp</h3>
 <blockquote>
-<p>有趣的是ADL(Argument-Dependent
-Lookup)在<code>byte</code>的定义中“发威”了一番：由于全特化(Full
-Specialization)时使用了<code>std::formatter</code>声明之，此时填写其模板参数时会优先在<code>namespace std</code>（而非默认的全局空间）中查找<code>byte</code>，因而必须明确<code>::byte</code>方能正确特化之。<br />
-<del>小趣事2.0：<code>std::byte</code>似乎在标准库中还没有<code>std::formatter</code>特化，连个<code>unsigned char</code>的forwarding都懒得干</del></p>
+<p>赛时紧张，exp近乎于缝缝补补能跑就行，至于语言规范什么的看个乐呵就好awa</p>
 </blockquote>
+<p>一段（Python）：</p>
+<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#python3</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> itertools <span class="keyword">import</span> product</span><br><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> isPrime</span><br><span class="line"><span class="keyword">from</span> Crypto.Cipher <span class="keyword">import</span> AES</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">a = <span class="string">&quot;1100001101001?101111100?01110001010011?1???11???01000011100101010100101??011?01?00?0?000110000?01?01010?10101?1101010100010011?101010010000?10110??10100?000?1?11?10???0?1111?1000100100?1110111010?0?01?00?11?0011?0101101?100000?1??0101010?1?101?1001?0011110??0000000?00100?1010011100001111111001?10?001??0110001111?100110000110011011?111101?1??1010101101?01?0000011?1111001?000111??1??00010?10011001?000110000??10?10100000100?10?1101111?101?001??00?01111???01??1?10100??0101?011?1000?011101?110???0110111011?101?1&quot;</span></span><br><span class="line">b = <span class="string">&quot;1000?11?0111000?1001??11?1100?001?0?0111011011100?0?110?11111?1?0?111100?0111???01?001100?000?001??0110??0?001000000110?0100?01100?001000011?01001000011010100?01110000001??0000111???101101?0100?011??010011?0?100?0?111100?00110000111?10???0?01?100?1100?0111001?11?1110?011?100101101?10?0??00010011?101?111?110001100?0??0?10?11100100111?100100001?0?00000??1101001?010?110000110?0001101000010011001100?010?100000100001?10100101110010000?0111?0001??1?001100000010000?011000??0?10?1001000100???1100111?11?11011010100?&quot;</span></span><br><span class="line">c1 = <span class="string">&quot;1100101001100???1??101100?00101111?000001011?0??0?0?1??11?0001?1?01111?0?1100011101?01011??110011100001100100???000101?1011010100111110?11?010111101?0?0110?0100001?000?1011?111111111000001?100000001011?0110111?11010010100?10011110000?0101??1?00001111010110?00110001111011001?0010110101100011111?01?0000?0?0011?0?101??1111100?11?11100010???1?0?1?11?1100?1100010?1111111011?100100111?11?11?1101?1?1100111?01?01111?11?0??1111?001000?0000?1?010?100111101?01011?1?1?111?01???01?1111?01?????0?001011000111010010?111101&quot;</span></span><br><span class="line">c2 = <span class="string">&quot;00000000011?1000110011?001???10011010?0?01?11010011010??10010111?1111?1000?1??11?1111??111?1010001001111?10?0111001??101?10000000101111110111??11111?0?0??10?0101?111001101000101?00010?111?1100111?0?1110?1111?0110?11010110001100000111101?010010??0??101?1001000?010101?01110?01001010001?0?01?00?0110100100??10?00??1010111010010??1?100110?????01001?001110101111?1?00?0?00101?101?0?101?110011?1?00111100??1?1?00?1110?010?110?00?010011010001101?00110101?1??0010?101111000?11011101011?0010010110000000110110101??1?011?&quot;</span></span><br><span class="line"><span class="comment">#For each modulus</span></span><br><span class="line"></span><br><span class="line">a = a[::-<span class="number">1</span>]</span><br><span class="line">b = b[::-<span class="number">1</span>]</span><br><span class="line">c1 = c1[::-<span class="number">1</span>]</span><br><span class="line">c2 = c2[::-<span class="number">1</span>]</span><br><span class="line"></span><br><span class="line">als = [<span class="number">0</span>]</span><br><span class="line">bls = [<span class="number">0</span>]</span><br><span class="line">c1ls = [<span class="number">0</span>]</span><br><span class="line">c2ls = [<span class="number">0</span>]</span><br><span class="line"></span><br><span class="line">ls = []</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">512</span>):</span><br><span class="line">    tals = []</span><br><span class="line">    tbls = []</span><br><span class="line">    tc1ls = []</span><br><span class="line">    tc2ls = []</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> a_,b_,c1_,c2_ <span class="keyword">in</span> <span class="built_in">zip</span>(als,bls,c1ls,c2ls):</span><br><span class="line">        add_base = <span class="number">2</span>**i</span><br><span class="line">        qmark_idx = []</span><br><span class="line"></span><br><span class="line">        a_ += <span class="built_in">int</span>(a[i])*add_base <span class="keyword">if</span> a[i] <span class="keyword">in</span> (<span class="string">&#x27;0&#x27;</span>,<span class="string">&#x27;1&#x27;</span>) <span class="keyword">else</span> <span class="number">0</span></span><br><span class="line">        b_ += <span class="built_in">int</span>(b[i])*add_base <span class="keyword">if</span> b[i] <span class="keyword">in</span> (<span class="string">&#x27;0&#x27;</span>,<span class="string">&#x27;1&#x27;</span>) <span class="keyword">else</span> <span class="number">0</span></span><br><span class="line">        c1_ += <span class="built_in">int</span>(c1[i])*add_base <span class="keyword">if</span> c1[i] <span class="keyword">in</span> (<span class="string">&#x27;0&#x27;</span>,<span class="string">&#x27;1&#x27;</span>) <span class="keyword">else</span> <span class="number">0</span></span><br><span class="line">        c2_ += <span class="built_in">int</span>(c2[i])*add_base <span class="keyword">if</span> c2[i] <span class="keyword">in</span> (<span class="string">&#x27;0&#x27;</span>,<span class="string">&#x27;1&#x27;</span>) <span class="keyword">else</span> <span class="number">0</span></span><br><span class="line"></span><br><span class="line">        <span class="comment"># Process question marks</span></span><br><span class="line">        <span class="keyword">if</span>(a[i] == <span class="string">&#x27;?&#x27;</span>):</span><br><span class="line">            qmark_idx.append(<span class="number">0</span>)</span><br><span class="line">        <span class="keyword">if</span>(b[i] == <span class="string">&#x27;?&#x27;</span>):</span><br><span class="line">            qmark_idx.append(<span class="number">1</span>)</span><br><span class="line">        <span class="keyword">if</span>(c1[i] == <span class="string">&#x27;?&#x27;</span>):</span><br><span class="line">            qmark_idx.append(<span class="number">2</span>)</span><br><span class="line">        <span class="keyword">if</span>(c2[i] == <span class="string">&#x27;?&#x27;</span>):</span><br><span class="line">            qmark_idx.append(<span class="number">3</span>)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># test equation</span></span><br><span class="line">        <span class="keyword">for</span> tp <span class="keyword">in</span> product([<span class="number">0</span>,<span class="number">1</span>],repeat=<span class="built_in">len</span>(qmark_idx)):</span><br><span class="line">            temp_a = a_</span><br><span class="line">            temp_b = b_</span><br><span class="line">            temp_c1 = c1_</span><br><span class="line">            temp_c2 = c2_</span><br><span class="line"></span><br><span class="line">            mapper = &#123;<span class="number">0</span>:temp_a,<span class="number">1</span>:temp_b,<span class="number">2</span>:temp_c1,<span class="number">3</span>:temp_c2&#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">for</span> t <span class="keyword">in</span> <span class="built_in">range</span>(<span class="built_in">len</span>(qmark_idx)):</span><br><span class="line">                ss = add_base * tp[t]</span><br><span class="line"></span><br><span class="line">                <span class="keyword">if</span> qmark_idx[t] == <span class="number">0</span>:</span><br><span class="line">                    temp_a += ss</span><br><span class="line">                <span class="keyword">elif</span> qmark_idx[t] == <span class="number">1</span>:</span><br><span class="line">                    temp_b += ss</span><br><span class="line">                <span class="keyword">elif</span> qmark_idx[t] == <span class="number">2</span>:</span><br><span class="line">                    temp_c1 += ss</span><br><span class="line">                <span class="keyword">else</span>:</span><br><span class="line">                    temp_c2 += ss</span><br><span class="line"></span><br><span class="line">                <span class="comment"># mapper[qmark_idx[t]] += add_base*tp[t]</span></span><br><span class="line"></span><br><span class="line">            <span class="comment"># breakpoint()</span></span><br><span class="line">            <span class="keyword">if</span> (temp_c1**<span class="number">2</span> * temp_a + temp_b - temp_c2) % <span class="number">2</span>**(i+<span class="number">1</span>) == <span class="number">0</span>:</span><br><span class="line">                tals.append(temp_a)</span><br><span class="line">                tbls.append(temp_b)</span><br><span class="line">                tc1ls.append(temp_c1)</span><br><span class="line">                tc2ls.append(temp_c2)</span><br><span class="line"></span><br><span class="line">    als = tals</span><br><span class="line">    bls = tbls</span><br><span class="line">    c1ls = tc1ls</span><br><span class="line">    c2ls = tc2ls</span><br><span class="line"></span><br><span class="line">res = []</span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="built_in">len</span>(als)): <span class="comment">#256</span></span><br><span class="line">    <span class="keyword">if</span> isPrime(als[i]) <span class="keyword">and</span> isPrime(bls[i]):</span><br><span class="line">        res.append((als[i],bls[i],c1ls[i],c2ls[i]))</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">ssq = []</span><br><span class="line"><span class="keyword">for</span> _a,_b,_c1,_c2 <span class="keyword">in</span> res:</span><br><span class="line">    <span class="keyword">assert</span> (_c2-_b)*<span class="built_in">pow</span>(_a,-<span class="number">1</span>,<span class="number">2</span>**<span class="number">512</span>) % <span class="number">2</span>**<span class="number">512</span> == _c1**<span class="number">2</span> % <span class="number">2</span>**<span class="number">512</span></span><br><span class="line">    ssq.append((_c1-_b)*<span class="built_in">pow</span>(_a,-<span class="number">1</span>,<span class="number">2</span>**<span class="number">512</span>) % <span class="number">2</span>**<span class="number">512</span>)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(ssq)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>二段：</p>
+<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line"><span class="keyword">from</span> Crypto.Cipher <span class="keyword">import</span> AES</span><br><span class="line"><span class="keyword">from</span> hashlib <span class="keyword">import</span> md5</span><br><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line">ls = [<span class="number">23647629859804785244560293652892470724172934807090102727098380892501016027619179662322113914924661220146486108557056592028992097519447371973456440412256195080359251744384181846271425283969058481217011834363510239520880027721434747003304892242351979646514804231247826229510446250261365973495593321908885217092</span>,<span class="number">23647629859804783842807550785248410559147385398160690428443115878862931233560349908609941584951625196188685672556855690842825267539431410518674933270351636038481968317300246435143772977768212518512034769139930128250279198401207154864696876591321300269180310179591686461840167037631726571572294965838719180612</span>, <span class="number">23647629859804785244560293652894960737838541327372270519613976463801490406983616708628525990102165025836193330627109595096298277075465850886971949679968278179590332381415060678735815957255177524540432453452578280204146818578219638369163804925440068630123439555721020512123587273432848386181743393346039799620</span>]</span><br><span class="line"></span><br><span class="line">ff2 = []</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> ls:</span><br><span class="line">    a = Zmod(<span class="number">2</span>^<span class="number">512</span>)(i)</span><br><span class="line">    ff2.extend(a.nth_root(<span class="number">2</span>,<span class="built_in">all</span>=<span class="literal">True</span>))</span><br><span class="line"></span><br><span class="line">enc = <span class="string">b&#x27;\xcb\xe0wY\xe3\\\xf7\xc8\x89/\x1c\xdb^P\xc09\xca\xcf\xe7\xa7\xa4\xb5\xaeQ\xc8K\xabg_\x8e\xfa?\xdc\xce9\xd7\x0en&quot;?\xc0\n\xe0hT+\xc0\x81&#x27;</span></span><br><span class="line">nonce = <span class="string">b&#x27;n\x13\xd1\xdf\xb6]\xb5\xf7&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> ff2:</span><br><span class="line">    key = md5(long_to_bytes(<span class="built_in">int</span>(i))).digest()</span><br><span class="line">    aes = AES.new(key,AES.MODE_CTR,nonce=nonce)</span><br><span class="line"></span><br><span class="line">    <span class="built_in">print</span>(aes.decrypt(enc))</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h1 id="闲谈逐怨">闲谈“逐怨”</h1>
+<h2 id="数学基础">数学基础</h2>
+<p>狭义上（即部分题目的“实例”），若 <span
+class="math inline">\(Z_{2^{p}}\)</span> 下 <span
+class="math inline">\(f(x_{1},x_{2},\cdots,x_{n}) = 0\)</span> 成立，则
+<span class="math inline">\(Z_{2^{q}}\)</span> 下 <span
+class="math inline">\(f(x^{&#39;}_{1},x^{&#39;}_{2},\cdots,x^{&#39;}_{n})
+= 0\)</span> 亦成立，其中 <span class="math inline">\(q &lt;
+p\)</span>，<span class="math inline">\(x^{&#39;}_{1} \equiv x_{1} \bmod
+2^{q}\)</span>。</p>
+<p>广义上，对阶为 <span class="math inline">\(p\)</span> 的群 <span
+class="math inline">\(G\)</span> 下的元素 <span
+class="math inline">\(x_{i} (i \in \[1,n\])\)</span>，考虑将 <span
+class="math inline">\(x_{i} \rightarrow x^{&#39;}_{i}\)</span>
+，即将之映射至另一个群 <span class="math inline">\(G^{&#39;}\)</span>
+上，且 <span class="math inline">\(G^{&#39;}\)</span> 的阶 <span
+class="math inline">\(p^{&#39;} | p\)</span>，使得 <span
+class="math inline">\(ord(x^{&#39;}_{i}) \equiv ord(x_{i}) \bmod
+p^{&#39;}\)</span>。<br />
+假设 <span class="math inline">\(G\)</span> 和 <span
+class="math inline">\(G^{&#39;}\)</span> <strong>对群上运算 <span
+class="math inline">\(f\)</span> 是同构的</strong>，则存在 <span
+class="math inline">\(ord(f(x_{1},x_{2},\cdots,x_{n})) \equiv
+ord(f(x^{&#39;}_{1},x^{&#39;}_{2},\cdots,x^{&#39;}_{n})) \bmod
+p^{&#39;}\)</span>。</p>
+<blockquote>
+<p>虽然推广的结论<del>非常不讲人话</del>，但其为这一攻击的拓展运用提供了理论基础。</p>
+</blockquote>
+<h2 id="算法实践">算法实践</h2>
+<p>“逐怨”的数学基础各异，但其算法流程上是大同小异的。此处以上述情景为例：</p>
 
       
 
@@ -468,7 +698,7 @@ Specialization)时使用了<code>std::formatter</code>声明之，此时填写�
         		</li>
       		 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">wp</a>
         		</li>
       		
 		</ul>
@@ -480,7 +710,7 @@ Specialization)时使用了<code>std::formatter</code>声明之，此时填写�
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
+        			<a href="/categories/CTF-Writeups//" class="article-tag-list-link color3">CTF-Writeups</a>
         		</li>
       		
 		</ul>
@@ -489,7 +719,7 @@ Specialization)时使用了<code>std::formatter</code>声明之，此时填写�
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/cpp/aes-modern/">展开全文 >></a>
+          <a class="article-more-a" href="/crypto/wp/wqb-plus/">展开全文 >></a>
         </p>
       
 
@@ -523,7 +753,7 @@ Specialization)时使用了<code>std::formatter</code>声明之，此时填写�
   
   
     <nav id="page-nav">
-      <a class="extend prev" rel="prev" href="/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><span class="space">&hellip;</span><a class="page-number" href="/page/16/">16</a><a class="extend next" rel="next" href="/page/3/">Next &raquo;</a>
+      <a class="extend prev" rel="prev" href="/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><span class="space">&hellip;</span><a class="page-number" href="/page/17/">17</a><a class="extend next" rel="next" href="/page/3/">Next &raquo;</a>
     </nav>
   
 
@@ -673,7 +903,23 @@ MathJax.Hub.Queue(function() {
           <ul class="article-tag-list" q-show="showTags">
              
               <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">玲珑</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color1">C/C++</a>
+              </li>
+             
+              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color2">Crypto</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">长文精选</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">C#</a>
               </li>
              
               <li class="article-tag-list-item">
@@ -681,11 +927,15 @@ MathJax.Hub.Queue(function() {
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">玲珑</a>
+                <a href="javascript:void(0)" class="js-tag color1">Modern C++</a>
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color1">Modern C++</a>
+                <a href="javascript:void(0)" class="js-tag color1">C++20</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">C++ Libraries</a>
               </li>
              
               <li class="article-tag-list-item">
@@ -694,26 +944,6 @@ MathJax.Hub.Queue(function() {
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color2">C Libraries</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color4">C++ Libraries</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">长文精选</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color1">C++20</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color1">C/C++</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">C#</a>
               </li>
             
             <div class="clearfix"></div>

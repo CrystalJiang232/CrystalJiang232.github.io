@@ -152,6 +152,145 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-crypto/wp/cryptohack" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/crypto/wp/cryptohack/">Cryptohack打本手记（持续咕咕ing）</a>
+    </h1>
+  
+
+        
+        <a href="/crypto/wp/cryptohack/" class="archive-article-date">
+  	<time datetime="2024-12-18T02:13:02.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-18</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="ecb-orcale">ECB Orcale</h1>
+<p>ECB
+Orcale属于<strong>选择明文攻击</strong>，需要拥有对明文的一定加密权限。<br />
+其利用了ECB加密模式不能抵抗 <em>Replay
+Attacks</em>（重放攻击）的特点。</p>
+<h2 id="攻击原理">攻击原理</h2>
+<p>目标Orcale常形如<strong>固定后缀</strong>，对于攻击者传递的字符串m，该Orcale会将(m+flag)填充后加密之。<br />
+此时，攻击者可以先爆破出flag的长度，随后通过控制m，将待加密的明文（填充后的）制备为形如“控制域+填充域+待解域”的形式。
+以block大小为16为例，各个域的说明如下：</p>
+<blockquote>
+<p>控制域：大小为16，每次爆破控制域中的第i位，使之遍历 <span
+class="math inline">\((0,255)\)</span>。该位其前的内容应为已解密内容，其后的内容应与“待解域”的填充部分全等。</p>
+<p>填充域：大小为16*k(<span class="math inline">\(k \in
+Z_+\)</span>)，通过调整m，该域内容应为任意内容 +
+flag的待解密其它部分。</p>
+<p>待解域：大小为16，该域内容中应为待解密的一位c + 已解密的flag +
+填充部分。</p>
+</blockquote>
+<p>核心是利用ECB加密<strong>各部分相独立</strong>的特性，让控制域和待解域的内容进行碰撞；一旦加密得到的密文相同，说明明文也一定相同，此时就碰撞得到了flag的一位。</p>
+<h2 id="攻击实现">攻击实现</h2>
+<p>假设加密orcale形如下文：<br />
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> Crypto.Cipher <span class="keyword">import</span> AES</span><br><span class="line"><span class="keyword">from</span> Crypto.Util.Padding <span class="keyword">import</span> pad</span><br><span class="line"><span class="keyword">from</span> secret <span class="keyword">import</span> flag,key</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">encrypt</span>(<span class="params">msg:<span class="built_in">bytes</span></span>):</span><br><span class="line">    aes = AES.new(key,AES.MODE_ECB)</span><br><span class="line">    plain = pad(msg+flag,<span class="number">16</span>)</span><br><span class="line">    <span class="keyword">return</span> aes.encrypt(plain).<span class="built_in">hex</span>()</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__==<span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        ipt = <span class="built_in">bytes</span>.fromhex(<span class="built_in">input</span>(<span class="string">&#x27;encrypt :&#x27;</span>))</span><br><span class="line">        cipher = encrypt(ipt)</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&#x27;result : <span class="subst">&#123;cipher&#125;</span>&#x27;</span>)</span><br></pre></td></tr></table></figure></p>
+<p>我们的攻击思路：<br />
+1.
+爆破出flag的长度（或，构造临界点，即让我们知道初始状态下应如何做才能控制“待解域”的填充部分已知）。<br />
+2. 对于第i位，构造明文（控制域+填充域+待解域的非填充部分），传递之<br />
+3.
+若加密结果第一组和最后一组相同，说明得到碰撞，即获得了flag的一位。如此重复，直至明文全部解密完成</p>
+<blockquote>
+<p>“临界点”：当添加一个<code>byte</code>的明文后，发现得到cipher的长度增加了16(<code>BLOCK_SIZE</code>)，这是因为<code>pad</code>的规则要求填充位数不能为0。</p>
+<p>因此，此时实际被加密的明文恰好就是(<code>msg + flag + b'\x10' * 16</code>)。</p>
+<p>如果再给msg添加1位，就可以把flag的一位“挤”到后面（当然，相应的填充内容也会变成<code>b'\x0f'</code>）。（为了保证控制域的内容完全可控，msg应当从16位开始，或者在临界点后再向msg添加17位开始爆破）</p>
+</blockquote>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">getcipher</span>():</span><br><span class="line">    io.recvuntil(<span class="string">b&#x27;:&#x27;</span>)</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">bytes</span>.fromhex(io.recvline().strip().decode())</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__==<span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    io = process([<span class="string">&#x27;python&#x27;</span>,<span class="string">&#x27;task.py&#x27;</span>])</span><br><span class="line"></span><br><span class="line">    <span class="comment">#第一步</span></span><br><span class="line"></span><br><span class="line">    teststr = <span class="string">&#x27;&#x27;</span></span><br><span class="line">    lastlen = <span class="number">0</span></span><br><span class="line">    io.sendlineafter(<span class="string">b&#x27;:&#x27;</span>,teststr.encode())</span><br><span class="line">    start = <span class="built_in">len</span>(getcipher())</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">16</span>):</span><br><span class="line">        teststr += <span class="string">&#x27;0f&#x27;</span> <span class="comment">#内容随意，此处0f为考虑到后续碰撞需要提前准备</span></span><br><span class="line">        io.sendlineafter(<span class="string">b&#x27;:&#x27;</span>,teststr.encode())</span><br><span class="line">        <span class="keyword">if</span> <span class="built_in">len</span>(getcipher()) != start: </span><br><span class="line">            teststr += <span class="string">&#x27;0f&#x27;</span> * <span class="number">17</span></span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">    bt = <span class="built_in">bytearray</span>.fromhex(teststr)</span><br><span class="line">    decrypted = <span class="string">b&#x27;&#x27;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">#理论上可以不断assert len(decrypted) == i</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">16</span>):</span><br><span class="line">        padval = <span class="number">15</span> - i</span><br><span class="line">        bt = <span class="built_in">bytearray</span>(decrypted + [<span class="number">0</span>] + [padval] * padval + bt[<span class="number">16</span>:])</span><br><span class="line">        <span class="keyword">for</span> t <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">255</span>):</span><br><span class="line">            bt[i] = t</span><br><span class="line">            io.sendlineafter(<span class="string">b&#x27;:&#x27;</span>,bt.<span class="built_in">hex</span>().encode())</span><br><span class="line">            dealer = getcipher()</span><br><span class="line">            <span class="keyword">if</span> dealer[-<span class="number">16</span>:] == dealer[:<span class="number">16</span>]: <span class="comment">#碰撞成功，说明获得了一位密文</span></span><br><span class="line">                decrypted += t</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">raise</span> Exception(<span class="string">&quot;Something Wrong?&quot;</span>) <span class="comment">#Error</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">print</span>(decrypted)</span><br></pre></td></tr></table></figure>
+<h1 id="symmetry">Symmetry</h1>
+<p><del>游戏链接：</del><br />
+<a target="_blank" rel="noopener" href="https://aes.cryptohack.org/symmetry/">Cryptohack</a>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> Crypto.Cipher <span class="keyword">import</span> AES</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">KEY = ?</span><br><span class="line">FLAG = ?</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">@chal.route(<span class="params"><span class="string">&#x27;/symmetry/encrypt/&lt;plaintext&gt;/&lt;iv&gt;/&#x27;</span></span>)</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">encrypt</span>(<span class="params">plaintext, iv</span>):</span><br><span class="line">    plaintext = <span class="built_in">bytes</span>.fromhex(plaintext)</span><br><span class="line">    iv = <span class="built_in">bytes</span>.fromhex(iv)</span><br><span class="line">    <span class="keyword">if</span> <span class="built_in">len</span>(iv) != <span class="number">16</span>:</span><br><span class="line">        <span class="keyword">return</span> &#123;<span class="string">&quot;error&quot;</span>: <span class="string">&quot;IV length must be 16&quot;</span>&#125;</span><br><span class="line"></span><br><span class="line">    cipher = AES.new(KEY, AES.MODE_OFB, iv)</span><br><span class="line">    encrypted = cipher.encrypt(plaintext)</span><br><span class="line">    ciphertext = encrypted.<span class="built_in">hex</span>()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="string">&quot;ciphertext&quot;</span>: ciphertext&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">@chal.route(<span class="params"><span class="string">&#x27;/symmetry/encrypt_flag/&#x27;</span></span>)</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">encrypt_flag</span>():</span><br><span class="line">    iv = os.urandom(<span class="number">16</span>)</span><br><span class="line"></span><br><span class="line">    cipher = AES.new(KEY, AES.MODE_OFB, iv)</span><br><span class="line">    encrypted = cipher.encrypt(FLAG.encode())</span><br><span class="line">    ciphertext = iv.<span class="built_in">hex</span>() + encrypted.<span class="built_in">hex</span>()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="string">&quot;ciphertext&quot;</span>: ciphertext&#125;</span><br></pre></td></tr></table></figure></p>
+<p>本题的核心点在于OFB这个模式的“对称性”：OFB中并没有所谓“解密”操作（虽然很多流密码其实都没有解密操作，“加密”只是生成密钥流的过程，最终将该流和明文异或而得）。<br />
+考虑OFB的加密过程如图：<br />
+<img src="/img/post_pics/OFB.png"
+title="Output Feedback Mode Encryption" alt="OFB" /><br />
+显然，只要攻击者获得了前一组密文并拥有加密权限，则其传递该组密文作为"iv"，即可解密后一组密文。<br />
+进一步地，若攻击者拥有全部的密文和iv，则其可以解密全部明文（将iv和密文再走一遍加密流程即可）。<br />
+exp即为获得(iv+密文)后直接传回交互式窗口，decode即可。</p>
+<blockquote>
+<p>flag: crypto{0fb_15_5ymm37r1c4l_!!!11!}</p>
+</blockquote>
+<h1 id="bean-counter">Bean Counter</h1>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">wp</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/闲笔//" class="article-tag-list-link color3">闲笔</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/crypto/wp/cryptohack/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+  <div>
+</article>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-cpp/return" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -366,690 +505,9 @@ it for granted"的思维。<br />
 
 
   
-    <article id="post-cpp/rrefs" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/cpp/rrefs/">C++——右值引用和移动语义</a>
-    </h1>
-  
-
-        
-        <a href="/cpp/rrefs/" class="archive-article-date">
-  	<time datetime="2024-12-11T02:37:23.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-11</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <blockquote>
-<p>右值(rvalues)和右值引用(rvalue references)是支撑<em>Modern
-C++</em>的中流砥柱、构筑C++效率极限的基石之一。</p>
-</blockquote>
-<h1 id="右值右值引用简介">右值、右值引用简介</h1>
-<h2 id="值和变量类型基础知识">值和变量类型基础知识</h2>
-<p>在开始探索这片“天柱城”前，需要先明确C++中值和变量的类型。<br />
-<strong>值和变量的类型和定义等不要混淆！</strong><br />
-每个C++表达式（一个操作符(operator)和若干操作符(operands)、一个字面量、一个变量名等等）都可以视为一个值。<br />
-值依照其是否named/can be <em>moved-from</em> 只有
-<em>左值、将亡值、纯右值</em> 类型(types)之分；<br />
-变量(variables)
-只有各种类型(categories)之分；变量一定是具名的，值可能不具名。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> x = <span class="number">3</span>; <span class="comment">//声明了一个变量x，使用数字常量值3初始化之，3是纯右值</span></span><br><span class="line"><span class="type">int</span> y = x; <span class="comment">//声明了一个变量y，将变量x作值并初始化之，x是左值</span></span><br><span class="line">x = std::<span class="built_in">move</span>(y); <span class="comment">//此时std::move(y)是将亡值</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">fun</span><span class="params">()</span></span>&#123;<span class="keyword">return</span> <span class="number">1</span>;&#125; <span class="comment">//1是纯右值，但fun()的返回值是将亡值（传统意义上的“右值”）</span></span><br><span class="line"><span class="function"><span class="type">int</span>&amp; <span class="title">bar</span><span class="params">(<span class="type">int</span>&amp; ref,<span class="type">int</span> add)</span></span>&#123;ref += add;<span class="keyword">return</span> ref;&#125; <span class="comment">//bar()的返回值是左值</span></span><br></pre></td></tr></table></figure>
-<p>变量(variables)可以分为<em>fundamental types</em>和<em>compound
-types</em>二大类。</p>
-<ul>
-<li><p>第一种是内置/基本数据类型，简而言之其包括<em>integral
-types</em>、<em>floating point
-types</em>、<code>void</code>和<code>std::nullptr_t</code>(C++11)。<br />
-其中<em>integral
-types</em>主要包括<code>int</code>、<code>char</code>及它们的<code>unsigned</code>、<code>long</code>(<code>long long</code>)、<code>short</code>版本（部分平台上还有<code>uint_8</code>一类的实现，但都属于“<em>integral</em>”之类，下同）、<code>bool</code>。<br />
-<em>floating point
-types</em>主要包括<code>float</code>、<code>double</code>及它们的<code>long</code>版本。<br />
-<strong><em>integral types</em> 和 <em>floating point types</em> 又统称
-<em>arthimetic types</em>（算术类型）。</strong></p></li>
-<li><p>第二种包括reference、pointer、pointer-to-member、array、function、enumeration和class。其中，reference不占有独立的内存空间。</p></li>
-</ul>
-<h2 id="c98前尘往事">C++98——前尘往事</h2>
-<p>C++中引用是一种特殊的变量，和多数语言一样，其相当于是一个其它变量的别名(alias)，指向的对象使用的是既有的内存空间。<br />
-C++允许对所有的 <em>complete types</em> （完备类型）对象建立引用：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> x = <span class="number">1</span>;</span><br><span class="line"><span class="type">int</span>&amp; r1 = x; <span class="comment">//对基本变量的引用</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">fun</span><span class="params">()</span></span>&#123;&#125;</span><br><span class="line"><span class="built_in">int</span> (&amp;r2)() = fun; <span class="comment">//对函数的引用</span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> arr[<span class="number">5</span>]=&#123;&#125;;</span><br><span class="line"><span class="built_in">int</span> (&amp;r3)[] = arr; <span class="comment">//对数组的引用</span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span>* ptr = <span class="literal">nullptr</span>;</span><br><span class="line"><span class="type">int</span>*&amp; r4 = ptr; <span class="comment">//对指针的引用</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">T</span>&#123;<span class="type">int</span> x;&#125; a;</span><br><span class="line">T&amp; r5 = a; <span class="comment">//对结构体/类的引用</span></span><br><span class="line"><span class="type">int</span> T::*&amp;&amp; r6 = &amp;T::x; <span class="comment">//对pointer-to-member的引用</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">enum class</span> <span class="title class_">U</span>&#123;a,b&#125;;</span><br><span class="line">U c&#123;&#125;;</span><br><span class="line">U&amp; r7 = c; <span class="comment">//对enum的引用</span></span><br></pre></td></tr></table></figure>
-<p>与Java、Python等语言中的“引用”稍显不同的是：</p>
-<ul>
-<li>C++的引用变量必须建立时就被初始化且绑定到一个对象上，不存在空引用(Null
-reference)。相比之下Java等允许初始化一个空的引用变量<del>NullPointerException警告</del><br />
-</li>
-<li>C++的引用变量一旦初始化，则不能再指向其它对象（作为一个compile-time
-language，<del>好像你也没办法让它指向其它对象，</del>毕竟<code>operator=</code>接下来都直接作用在对象本身身上了），相比之下Python等就支持<del>引用乱窜</del></li>
-</ul>
-<blockquote>
-<p>引用的可变性也是Python等语言中初学者常容易感到困惑的地方，尤其是python弱类型的特性导致难以判断到底是创建了一个新的对象，还是只是引用改指向另一个对象等等。</p>
-<p>C++中，虽然没有<em>null
-references</em>，但其存在<strong>极大量的</strong>悬挂引用(<em>dangaling
-references</em>)，且悬挂引用的处理时至今日依然是C++
-Languages的一个核心议题之一。</p>
-</blockquote>
-<p>C++中引用和指针的小比较：</p>
-<ul>
-<li>C++中引用必须被初始化，而指针可以不被初始化<del>野指针</del>；引用必须指向一个对象，指针可以指向NULL(C++11请改用<code>nullptr</code>)；引用不能更改指向，指针不被底层const约束者可以更改指向。<br />
-</li>
-<li>C++中引用不是对象（<em>References are not
-objects</em>），所以不存在“引用的数组”、“指向引用的指针”和“指向引用的引用”(<em>There
-are no arrays of references, no pointeres to references and no
-references of
-references</em>)；<strong>（注意指向引用的指针不要和指向指针的引用混淆，指向引用的引用不要和右值引用混淆，引用符号永远后置）</strong></li>
-</ul>
-<blockquote>
-<p>其实C++引用在编译阶段（底层）的实现原理依然是指针，引用宏观上可以视为一个被自动解引用的、被底层<code>const</code>约束的指针(形如<code>int* const</code>)，毕竟建立即必须初始化等特性与之同样相衬。</p>
-</blockquote>
-<p>C/C++11前，表达式的变量类型被分为左值(lvalue)、非左值对象(non-lvalue
-object)和函数调用者(function
-designator)。<strong>非左值对象就是常说的“右值”(rvalues)。</strong><br />
-其中左值都会具备 <em>object identity</em>
-（即其具备存储空间等等），右值相反。<br />
-基本上C/传统C++的表达式左右值都不难辨别，“考古”部分也不多赘述，<del>毕竟真的要用的时候cppreference随时都可以翻。</del><br />
-同时，C语言中由于并没有函数/运算符重载的概念，因此<em>modifiable
-lvalues</em> 就是<em>lvalues</em>
-的一个真子集，即能放在（复合）赋值运算符左侧的一定是左值。</p>
-<p>C++11前的引用只有<em>lref</em>和<em>const
-lref</em>两种，后者亦被简称为“常引用”。其中，左值引用只能绑定至左值上，<strong>常引用可以被绑定至左值或右值上</strong>。<br />
-二者的不同在于能否通过这个引用去修改指向对象的值，相当于是否有顶层<code>const</code>对指针的约束。</p>
-<h2 id="c11风起云涌">C++11——风起云涌</h2>
-<p>右值引用之所以被冠以如此重要的地位，在于其远不仅是提供了增加了一个语法点/编程方式，而是彻底地改变了C++11以来程序设计的逻辑，尤其对<em>template
-programming</em>影响极为深远。</p>
-<p>先来简单介绍下右值引用(<em>rvalue reference</em>)的概念：<br />
-创建一个右值引用的方式是在变量后缀加'&amp;&amp;'，形如<code>int&amp;&amp;</code>，注意两个&amp;中间不能加空格<del>（不然就成引用的引用了）</del><br />
-右值引用也是引用的一种，自身不占据内存空间，亦不是对象，遵循引用的相关规则（必须初始化等）。<br />
-区别是，在初始化时，右值引用<strong>只能被绑定至右值</strong>上；但不同于常引用，其绑定后可以通过它修改指向对象的值。</p>
-<blockquote>
-<p>此处不讨论<em>const
-rvalues</em>(形如<code>const int&amp;&amp;</code>)，原因另起炉灶再讲；此外，相信你对移动语义理解足够深刻时，对<em>const
-rvalues</em>这一问题的理解也能水到渠成。</p>
-</blockquote>
-<p>在右值引用配套建设上，C++11让<code>static_cast</code>新增<strong>从左值向右值</strong>转换的功能。如<code>static_cast&lt;int&amp;&amp;&gt;(x);</code>可以让一个<code>int</code>的左值<code>x</code>“变成”一个右值。<br />
-同时新增了一个函数std::move，其有一重载提供了编译期的更加直观的代码转换（“套皮”）：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="keyword">constexpr</span> std::<span class="type">remove_reference_t</span>&lt;Ty&gt;&amp;&amp; <span class="title">std::move</span><span class="params">(Ty&amp; arg)</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">static_cast</span>&lt;std::<span class="type">remove_reference_t</span>&lt;Ty&gt;&amp;&amp;&gt;(arg);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>（哈，一不小心又挖到了C++11的两个新坑：<code>constexpr</code>和<code>noexcept</code>！<del>等等，是不是还踩了万能引用和引用折叠的坑？不，你什么都没看到</del>）<br />
-关于左值引用、常引用和右值引用的常见绑定规则：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> x=<span class="number">1</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">//lvalues can be used to initialize l-ref and c-ref</span></span><br><span class="line">    <span class="type">int</span>&amp; r1_1 = x; <span class="comment">//OK</span></span><br><span class="line">    <span class="type">const</span> <span class="type">int</span>&amp; r1_2 =x; <span class="comment">//OK</span></span><br><span class="line">    <span class="comment">//int&amp;&amp; r1_3 = x; //Not compile: invalid binding</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//rvalues can be used to initialize r-ref and c-ref</span></span><br><span class="line">    <span class="comment">//int&amp; r2_1 = 1; //Not compile: invalid binding</span></span><br><span class="line">    <span class="type">const</span> <span class="type">int</span>&amp; r2_2 = <span class="number">1</span>; <span class="comment">//OK</span></span><br><span class="line">    <span class="type">int</span>&amp;&amp; r2_3 = <span class="number">1</span>; <span class="comment">//OK</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//std::move can be used to &quot;move&quot; a lvalue to a rvalue</span></span><br><span class="line">    <span class="type">int</span>&amp;&amp; r3_3 = std::<span class="built_in">move</span>(x); <span class="comment">//OK</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<h2 id="c17惊鸿照影">C++17——惊鸿照影</h2>
-<p>C++17中对左右值进行了进一步细分、归类。具体来说，</p>
-<ul>
-<li>每一个值一定是 {左值(lvalue)、将亡值(xvalue)、纯右值(prvalue)}
-中的一种；<br />
-</li>
-<li>lvalue和xvalue并称为“泛左值”(glvalue)，xvalue和prvalue并称为“右值”(rvalue)。</li>
-</ul>
-<blockquote>
-<p>冰知识：lvalue的全称应为 <em>locator
-value</em>（而非"left-value"）。</p>
-</blockquote>
-<p>辨别一个值属于哪个类型，<a
-href="">cppreference</a>上有一段非常简明扼要的分类原则：</p>
-<blockquote>
-<p>Values that are named and can be <em>moved-from</em> are xvalues;</p>
-<p>Values that are named and cannot be <em>moved-from</em> are
-lvalues;</p>
-<p>Values that are unnamed and can be <em>moved-from</em> are
-prvalues;</p>
-<p>Values that are unnamed and cannot be <em>moved-from</em> are not
-used.</p>
-</blockquote>
-<p><del>预告：下面“悉数言之”信息量极大</del></p>
-<h3 id="左值">左值</h3>
-<p>下述表达式是左值(lvalues)：</p>
-<ul>
-<li>所有的具名变量<strong>本体</strong>、函数名、模板参数对象(template
-parameter
-object)和类内的数据成员；引用类型的变量<strong>无视其引用类型，均为左值</strong>（点名"rvalue
-references are lvalues"）；<br />
-</li>
-<li>返回左值引用的函数/重载运算符的返回值；<br />
-</li>
-<li>所有<strong>内置的</strong>赋值运算符和复合赋值、前置自增/减、解引用、取下标、取成员、解引用成员、取成员/解引用成员指针(<code>.*</code>、<code>-&gt;*</code>)运算符；<br />
-</li>
-<li><strong>字符串字面量(string literal)</strong>；<br />
-</li>
-<li>向左值引用的类型转换（<code>cast</code>）；</li>
-<li>左值引用作为模板参数(non-type template parameter of lvalue reference
-type)；<br />
-</li>
-<li>对函数的右值引用(???)；<br />
-</li>
-<li>特定条件下的内置逗号(<code>,</code>)、三元条件运算符(<code>a ? b : c</code>)（一般要求运算符右侧的一个/两个参数都是左值）；</li>
-</ul>
-<p>下面代码中出现了大量左值： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> a = <span class="number">0</span>; <span class="comment">//a是左值</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">b</span><span class="params">()</span> <span class="comment">//b是左值</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    a += <span class="number">1</span>; <span class="comment">//表达式是左值</span></span><br><span class="line">    ++a; <span class="comment">//左值</span></span><br><span class="line">    <span class="type">int</span> c[<span class="number">5</span>]&#123;&#125;; <span class="comment">//左值</span></span><br><span class="line">    c[<span class="number">3</span>]; <span class="comment">//左值</span></span><br><span class="line">    a = <span class="number">5</span>; <span class="comment">//左值（表达式整体）</span></span><br><span class="line">    <span class="string">&quot;Hello, World!&quot;</span> <span class="comment">//左值</span></span><br><span class="line">    <span class="type">int</span>* ptr = &amp;a;</span><br><span class="line">    *ptr; <span class="comment">//左值</span></span><br><span class="line">    *ptr ? a : c[<span class="number">2</span>]; <span class="comment">//左值</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">T</span>&#123;<span class="type">int</span> x;&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    T a;</span><br><span class="line">    T* b = &amp;a;</span><br><span class="line">    a.x; <span class="comment">//左值</span></span><br><span class="line">    b-&gt;x; <span class="comment">//左值</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>分类的作用自然是帮助我们更好地辨别其性质。左值的<strong>独有</strong>性质如下（充分必要条件）：</p>
-<ul>
-<li>左值（未重载<code>operator&amp;()</code>）可以被内置取地址运算符获得其地址。如<code>&amp;std::endl;</code>、<code>&amp;++i;</code>、<code>&amp;"Hello, World!"</code>均为合法的表达式。<br />
-</li>
-<li>可更改的左值（含引用）可以被内置的（复合）赋值运算符赋值。<br />
-</li>
-<li>左值可用于初始化一个左值引用(lvalue reference)（const
-lvalue约束另计）。</li>
-</ul>
-<blockquote>
-<p>划重点：</p>
-<ul>
-<li>唯一一个“永远”正确的区分左右值的标志是能否被<strong>取其地址</strong>。</li>
-<li>作为（复合）赋值运算符的左操作数 是 其为左值
-的<strong>既不充分也不必要条件</strong>，因为常左值不能被赋值，且<code>operator=</code>可以提供面向右值的重载。</li>
-</ul>
-</blockquote>
-<h3 id="纯右值">纯右值</h3>
-<p>纯右值(pure rvalue,简称prvalue)是一种更偏向“传统”观念上的右值。<br />
-下述表达式是纯右值：</p>
-<ul>
-<li>除字符串字面量外的字面量（常量），含枚举类型；<br />
-</li>
-<li>返回非引用类型的函数/重载运算符的返回值；<br />
-</li>
-<li>内置的后缀自增/减、算术、逻辑、比较、取地址运算符；</li>
-<li><code>this</code>指针；<br />
-</li>
-<li>向非引用类型的类型转换（<code>cast</code>）；<br />
-</li>
-<li>lambda表达式；<br />
-</li>
-<li>概念(concepts)；<br />
-</li>
-<li>模板参数列表中的非类型的、<em>scalar-type</em> 的参数；
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="type">size_t</span> v&gt;</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">fun</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    &amp;v; <span class="comment">//Not compile: cannot take address of prvalue &quot;v&quot;(template non-type scalar parameter)</span></span><br><span class="line">    &amp;<span class="number">1</span>; <span class="comment">//Not compile: cannot take address of prvalue 1(numeric constant/literal)</span></span><br><span class="line"></span><br><span class="line">    v = <span class="number">1</span>; <span class="comment">//ill-formed: lvalue required as left operand of builtin assignment operator</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">fun</span>&lt;<span class="number">1</span>&gt;() = <span class="number">2</span>; <span class="comment">//Not compile</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
-</ul>
-<blockquote>
-<p>C++17提出了复制省略(copy elision)（又名 <em>prvalue
-sematics</em>），<strong>要求</strong>编译器对纯右值进行复制省略优化，史称"URVO"(Unnamed
-Return Value Optimization)。</p>
-</blockquote>
-<h3 id="将亡值">将亡值</h3>
-<p>将亡值(eXpiring
-value,简称xvalue)的概念在C++17中从“右值”的混沌中区分开来（不过二者仍有诸多共性）。
-下述表达式是将亡值：</p>
-<ul>
-<li>返回右值引用类型的函数/重载运算符的返回值；<br />
-</li>
-<li>向右值引用类型的类型转换（<code>cast</code>）；<br />
-</li>
-<li><strong>涉及到临时构造一个对象的表达式</strong>；<br />
-</li>
-<li>可移动（<em>move-eligible</em>）的表达式；</li>
-</ul>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">T</span>&#123;<span class="type">int</span> x;&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function">T <span class="title">func</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> a&#123;&#125;;</span><br><span class="line">    <span class="type">int</span> b&#123;std::<span class="built_in">move</span>(a)&#125;; <span class="comment">//std::move(a)产生了一个xvalue表达式</span></span><br><span class="line"></span><br><span class="line">    a = T&#123;&#125;.x; <span class="comment">//T&#123;&#125;.x这个表达式整体应视为一个xvalue</span></span><br><span class="line">    <span class="built_in">static_cast</span>&lt;<span class="type">int</span>&amp;&amp;&gt;(a); <span class="comment">//其实和std::move(a)互为等效</span></span><br><span class="line"></span><br><span class="line">    T b&#123;a&#125;;</span><br><span class="line">    <span class="keyword">return</span> b; <span class="comment">//b是move-eligible的，因而这个表达式中b也是xvalue（C++23起）</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="混合类型">混合类型</h3>
-<p>“泛左值”和“右值”是两个混合类型（定义见上）。<br />
-泛左值(glvalue)的性质有：<del>纯右值性质取反</del></p>
-<ul>
-<li>泛左值都可以被转化为纯右值（通过cast等实现）；<br />
-</li>
-<li>泛左值可以有不完全类型(<em>incomplete
-type</em>)，并且可以是多态(<em>polymorphic</em>)的；</li>
-</ul>
-<blockquote>
-<p>不完全类：<code>void</code>以及任何未完全定义的类（给出声明但未定义的<code>class</code>、<code>enum (class)</code>、未知长度的数组等）；详见<a
-target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/language/type#Incomplete_type">cppreference</a></p>
-<p>多态对象：定义虚函数的类/继承上述类的类
-的实例，其特点是会保有一个虚指针(vptr)来实现动态多态性（虚函数调用）以及RTII（运行时类型数据）来辨别其构造时的类型。</p>
-</blockquote>
-<p>“右值”(rvalue)的性质有：<del>左值性质取反</del></p>
-<ul>
-<li>右值都不能被取地址（与左值对立，也是判定的充分必要条件）；<br />
-</li>
-<li>右值都不能被<strong>内置的</strong>（复合）赋值运算符赋值；（同样地，只看赋值运算符的话既不充分也不必要）<br />
-</li>
-<li>右值可以用于初始化一个常左值引用/右值引用，此时其生命周期将被延长至与该引用的scope一致(<em>lifetime
-extension</em>)；<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span>* ptr = &amp;<span class="number">1</span>; <span class="comment">//Not compile: cannot take address of rvalues</span></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;&quot;</span>) = <span class="number">3</span>; <span class="comment">//Not compile: cannot use rvalues as left operand of builtin assignment operators</span></span><br><span class="line"></span><br><span class="line">    <span class="type">int</span>&amp;&amp; rref = <span class="built_in">scanf</span>(<span class="string">&quot;&quot;</span>); <span class="comment">//OK, rvalue initializes rvalue references</span></span><br><span class="line">    rref = <span class="number">5</span>; <span class="comment">//OK, lifetime of the return value of scanf() is extended    </span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
-<li>回顾：右值作为函数参数时，面对rvalue reference和const lvalue
-reference的重载会优先选择前者（移动语义的实现基础）。</li>
-</ul>
-<blockquote>
-<p>类似地，非const的左值作为函数参数时，面对lvalue reference和const
-lvalue reference的重载依然会优先选择前者。</p>
-</blockquote>
-<blockquote>
-<p>const lvalue
-reference由此也被称为“万金油”，因其可以绑定至任何类型的值上，故可用于实现一层通用的语义（但效率和自由度显然不高）。</p>
-</blockquote>
-<h1 id="右值引用应用之移动语义">右值引用应用之移动语义</h1>
-<h2 id="何为何以移动语义">何为，何以“移动语义”</h2>
-<p>移动语义(<em>move sematics</em>)其实不难理解：<br />
-类比于现实世界中，我们在搬家时，会希望将自己的很多大件家具都搬到新家，而非在新家购置完全相同的家具并将原家的家具悉数丢弃。<br />
-对于C++的对象来说，很多对象都会在创建/运行过程中拥有一些资源（堆内存、文件句柄、线程等等）。<br />
-有些时候这些资源的“所有权”可以被直接从一个对象被“转移”至另一个对象，或者用于另一个对象的初始化。而在程序设计中，显然我们会希望区分“允许转移”和“需要复制”这两种情况。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">MyVector</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span>* data;</span><br><span class="line">    <span class="type">size_t</span> size;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">//转移数据（相当于转移了堆内存的所有权）</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">transfer</span><span class="params">(MyVector&amp; prev,MyVector&amp; cur)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    cur.data = prev.data;</span><br><span class="line">    cur.size = prev.size;</span><br><span class="line">    prev.data = <span class="literal">nullptr</span>;</span><br><span class="line">    prev.size = <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//复制数据</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">copy</span><span class="params">(MyVector&amp; prev,MyVector&amp; cur)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    cur.size = prev.size;</span><br><span class="line">    cur.data = <span class="keyword">new</span> <span class="type">int</span>&#123;prev.size&#125;;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">size_t</span> i=<span class="number">0</span>;i&lt;prev.size;++i)</span><br><span class="line">    &#123;</span><br><span class="line">        cur.data[i] = prev.data[i];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>在大型程序设计中，我们期望有一个统一的“接口”或“规范”来描述这种语义，即帮助程序设计者解决以下的问题：</p>
-<ul>
-<li>什么时候一个对象的资源<strong>允许被转移</strong>？（也就是所谓的<em>can
-be
-moved-from</em>，正常情况下一个对象的资源肯定不能被转移，故需要一种统一的“标记”）<br />
-</li>
-<li>让一个对象被另一个同类对象初始化时，或一个对象被另一个同类对象赋值时（对应的就是特殊的构造函数/赋值运算符），如何决策采取更高效的执行策略（能移动就不要复制一份销毁一份）？<br />
-</li>
-<li>有些具备“独占性”的对象能否从编译层面来禁止其复制/移动（其占有的资源并不能被复制，如线程或一些大整数/内存的管理类）？</li>
-</ul>
-<blockquote>
-<p>上述问题在C++11前并非无解：比如(3)，C++11前禁止一个对象的复制/移动，可以通过定义一个<code>private</code>的<code>operator=(const Ty&amp;)</code>并不给出实现，在类访问权限/链接设两道“哨兵”。</p>
-<p>但显然这种实现方法既不稳妥（如友元类+误定义等等），也有悖于<code>private</code>和不给定义的初衷，且语义不够明确。</p>
-<p>移动语义亦然，需要明确的是移动语义只是一个概念，右值及右值引用等为之提供支持（通过重载优先级等帮助在统一的interface下实现），但C++11前并不是无法实现，对于较有限的场景无非是手搓一个函数而已。</p>
-<p>C++多用于大型程序编写，开发阶段的要点之一在于保证较高的易读性、可维护性与语义的明确性，这就是右值及右值引用对于移动语义实现的意义。</p>
-</blockquote>
-<h2
-id="c11对左右值概念的强化右值引用的加入">C++11对左右值概念的强化+右值引用的加入</h2>
-<p>回到正题，语言层面上规定了对于不同的值，三种不同引用的重载优先级（及可行性）不同。</p>
-<blockquote>
-<p>在任何变量的初始化/赋值操作/函数调用等等中，被传递的永远是<strong>值(values)</strong>，被操作数（赋值符号左侧、待初始化的变量等等）永远是<strong>变量(variables)</strong>。</p>
-</blockquote>
-<p>对于 <em>lvalue/rvalue/const
-lvalue</em>作为值，初始化<em>lref/rref/cref</em>的重载优先级如下：</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;"></th>
-<th style="text-align: center;">lref</th>
-<th style="text-align: center;">rref</th>
-<th style="text-align: center;">cref</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;">lvalue</td>
-<td style="text-align: center;">1</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;">2</td>
-</tr>
-<tr>
-<td style="text-align: center;">rvalue</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;">1</td>
-<td style="text-align: center;">2</td>
-</tr>
-<tr>
-<td style="text-align: center;">const lvalue</td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;"></td>
-<td style="text-align: center;">1</td>
-</tr>
-</tbody>
-</table>
-<ul>
-<li>数字越低，优先级越高；若数字不存在，则重载失败。</li>
-<li>右值引用的核心在于 <strong><em>rvalue</em> 和 <em>rref</em>
-的结合优先级高于 <em>cref</em></strong>
-，即在遇到接受<code>const Ty&amp;</code>和<code>Ty&amp;&amp;</code>的函数重载时，优先选择后者（即“能移动就不复制”）。</li>
-<li>同时，<em>rref</em> 胜过 <em>cref</em>
-的一点在于前者可以通过引用更改指向对象的状态，而后者不能（需要遵守<code>const</code>语义）</li>
-</ul>
-<p>在类的成员函数中，移动语义的实践载体就是函数重载——常见于<strong>构造函数</strong>和<strong>赋值运算符</strong>的重载。<br />
-传统C++中，对于自定义类<code>Ty</code>，编译器会默认给它加上4个特殊成员函数：（默认）构造<code>Ty::Ty()</code>、复制构造<code>Ty::Ty(const Ty&amp;)</code>、复制赋值<code>Ty::Ty&amp; operator=(const Ty&amp;)</code>、析构<code>Ty::~Ty()</code>。<br />
-C++11起特殊成员函数新增了2个，分别为移动构造<code>Ty::Ty(Ty&amp;&amp;)</code>/移动赋值<code>Ty::Ty&amp; operator=(Ty&amp;&amp;)</code>：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">CR</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">CR</span>()&#123;&#125;</span><br><span class="line">    <span class="built_in">CR</span>(<span class="type">const</span> CR&amp;)&#123;&#125; <span class="comment">//#1</span></span><br><span class="line">    <span class="built_in">CR</span>(CR&amp;&amp;)&#123;&#125; <span class="comment">//#2</span></span><br><span class="line">    ~<span class="built_in">CR</span>()&#123;&#125;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">modify</span><span class="params">()</span></span>&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    CR c&#123;&#125;;</span><br><span class="line">    CR d&#123;c&#125;; <span class="comment">//Invokes overload #1</span></span><br><span class="line">    CR e&#123;std::<span class="built_in">move</span>(c)&#125;; <span class="comment">//Invokes overload #2</span></span><br><span class="line">    </span><br><span class="line">    <span class="type">const</span> CR&amp; ref1 = std::<span class="built_in">move</span>(d); <span class="comment">//binding rvalue to cref</span></span><br><span class="line">    <span class="comment">//ref1.modify(); //Not Compile: const</span></span><br><span class="line"></span><br><span class="line">    CR&amp;&amp; ref2 = std::<span class="built_in">move</span>(e); <span class="comment">//binding rvalue to rref</span></span><br><span class="line">    ref<span class="number">2.</span><span class="built_in">modify</span>(); <span class="comment">//OK: non-const</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="善后之被移动对象的处理">“善后”之被移动对象的处理</h2>
-<p>“移动”相较传统的“复制-销毁”模式，提出的一个新课题就是如何处理被移动的对象。<br />
-C++标准要求被移动的对象应当进入一个<em>valid but unspecified
-state（有效但未指定状态）</em>，具体来说，C++对象在“被移动”后的语义要求分为三层：</p>
-<ul>
-<li>基本要求：该对象被移动后，调用该对象的析构函数不会抛出异常。<strong>在C++这一涉及大量普通变量自动析构的编译期语言中，这点尤为重要。</strong><br />
-一般来说，需要特别明确移动语义的对象都会占有一些资源，为践行
-<em>RAII</em>
-之原则，其应在析构函数中将获得的资源释放，以防止资源泄露。<br />
-但这时就可能出现资源重复释放的问题，因此基本要求是一个对象被移动后，会将自身的资源标记为“已释放”，从而不会在该对象的生命周期结束时再释放一次，造成异常。<br />
-比如，<code>std::vector&lt;int&gt;</code>
-在被移动后会将自己的指针<code>data</code>置为<code>nullptr</code>，如此，在析构函数中执行<code>delete[] nullptr;</code>时就不会发生异常。</li>
-</ul>
-<blockquote>
-<p>热知识：<code>delete</code>/<code>delete[]</code>
-一个空指针是合法的语句（什么也不会发生）。</p>
-</blockquote>
-<ul>
-<li><p>标准要求：该对象被移动后，可以被赋值重新使用。<strong>C++标准库的容器、对象等均满足这一条件，且标准库对自定义类的封装操作也基于这一假设。</strong></p></li>
-<li><p>更高要求：该对象被移动后，其状态恢复至默认值（犹如被默认构造过一样）。比如<code>std::string</code>被移动后，其将变为一个空字符串；<code>std::thread</code>被移动后将不管理任何线程，与其默认构造后的结果相同。</p></li>
-</ul>
-<blockquote>
-<p>其实上述要求对于复制构造/复制赋值/移动赋值函数亦然。在传统C++的学习中应当也有涉及到关于编写恰当的复制构造函数，以避免重复释放的相关内容。</p>
-</blockquote>
-<h2
-id="不可复制资源的移动语义归一化">不可复制资源的移动——语义归一化</h2>
-<p><strong>并不是所有的资源/对象都可以被移动/复制。</strong></p>
-<p>例如一个<code>thread</code>，线程就不应被移动/复制，一旦开始后只能要么<code>.join()</code>，要么<code>.detach()</code>。<br />
-再比如智能指针中的<code>unique_ptr</code>，一个独占型指针的所有权显然不能复制，只能转移。</p>
-<blockquote>
-<p>C++11中，函数的主体可以被声明为<code>= delete;</code>，部分函数（主要是类的6个特殊成员函数，即(默认/复制/移动)构造+(复制/移动)赋值+析构）主体可以被声明为<code>= default;</code>。</p>
-<p>若一个函数被声明为<code>= delete;</code>，则该函数不能被调用，否则不能通过编译。一般用于<strong>特定参数的函数重载</strong>来阻止一些特定参数对函数的调用（一般涉及到隐式转换和重载决议的问题）。</p>
-<p>若一个函数被声明为<code>= default;</code>，则编译器将为之生成一个默认的函数。</p>
-<blockquote>
-<p>类的特殊成员函数的默认形式为：</p>
-<ul>
-<li>默认构造函数，默认构造(<em>default-initialize</em>)每一个数据成员；</li>
-<li>复制构造函数，复制构造(<em>copy-initialize</em>)每一个数据成员；</li>
-<li>移动构造函数，移动构造(<em>move-initialize</em>)每一个数据成员；</li>
-<li>复制赋值运算符，为每一个数据成员进行复制赋值(<em>copy-assignment</em>);</li>
-<li>移动赋值运算符，为每一个数据成员进行移动赋值(<em>move-assignment</em>);</li>
-<li>析构函数，析构每一个数据成员。</li>
-</ul>
-</blockquote>
-</blockquote>
-<p>利用C++11中的语法特性，现在我们可以显式地声明禁用一些默认生成的函数，以此来约束一个类，使之不能被复制/移动/默认构造。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">MoveOnly</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">MoveOnly</span>() &#123;&#125;</span><br><span class="line">    ~<span class="built_in">MoveOnly</span>() &#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">MoveOnly</span>(<span class="type">const</span> MoveOnly&amp;) = <span class="keyword">delete</span>;</span><br><span class="line">    <span class="built_in">MoveOnly</span>(MoveOnly&amp;&amp;) <span class="keyword">noexcept</span> &#123;&#125;</span><br><span class="line"></span><br><span class="line">    MoveOnly&amp; <span class="keyword">operator</span>=(<span class="type">const</span> MoveOnly&amp;) = <span class="keyword">delete</span>;</span><br><span class="line">    MoveOnly&amp; <span class="keyword">operator</span>=(MoveOnly&amp;&amp;) <span class="keyword">noexcept</span> &#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    MoveOnly a&#123;&#125;;</span><br><span class="line">    <span class="comment">//MoveOnly b&#123;a&#125;; //Not Compile</span></span><br><span class="line">    MoveOnly c&#123;std::<span class="built_in">move</span>(a)&#125;; <span class="comment">//OK</span></span><br><span class="line"></span><br><span class="line">    MoveOnly d&#123;&#125;;</span><br><span class="line">    <span class="comment">//d = c; //Not Compile</span></span><br><span class="line">    d = std::<span class="built_in">move</span>(c); <span class="comment">//OK</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>C++的名言之一：<em>Rule of Zero/Three/Five</em>
-就和默认生成的类的特殊成员函数有关。</p>
-<p>其作用对象是
-类的<strong>默认构造、复制构造、复制赋值、移动构造、移动赋值</strong>五个函数。</p>
-<ul>
-<li><em>Rule of Zero</em>:
-若一个类没有定义上述五个函数中的任何一个，那么编译器会为之生成这五个函数的默认形式（见上），亦为我们自定义类时的优先之选。<br />
-</li>
-<li><em>Rule of
-Three</em>：若一个类定义了至少一个构造函数，则应该一鼓作气给出全部三个构造函数的定义（所谓的"It
-almost certainly requires all of three"）。<br />
-</li>
-<li><em>Rule of
-Five</em>：若一个类定义了至少一个构造函数和至少一个赋值运算符，则应当一鼓作气给出全部五个函数的定义。</li>
-</ul>
-<blockquote>
-<p>从编译器的角度出发，考虑(<em>三个构造函数</em>/<em>两个赋值运算符</em>)，只要一个类定义了这3(2)个中的一个，该类就不会自动生成剩下2个(1个)构造函数(运算符)。</p>
-<p>例外是，若<strong>只声明了</strong>构造函数（不需是默认构造函数），那么编译器不会再生成默认（无参）构造函数，但依然会生成默认的复制/移动构造函数。</p>
-<p>参考以下的代码： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">A</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">A</span>(<span class="type">int</span>)&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun1</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">//A a; //Not Compile: not default constructible</span></span><br><span class="line">    A a&#123;<span class="number">1</span>&#125;;</span><br><span class="line">    A b&#123;a&#125;; <span class="comment">//OK, copy ctor still available(default generated)</span></span><br><span class="line">    A c&#123;std::<span class="built_in">move</span>(a)&#125;; <span class="comment">//Same with move ctor</span></span><br><span class="line">    b = c; <span class="comment">//Same with copy assignment operator</span></span><br><span class="line">    b = std::<span class="built_in">move</span>(c);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">B</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">B</span>(<span class="type">const</span> B&amp;) = <span class="keyword">default</span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun2</span><span class="params">(B&amp; l,B&amp; r)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">//B b; //Not Compile(Surprise!)</span></span><br><span class="line">    <span class="comment">//Upon definition of move/copy ctor, even if the main body is declared as =default, </span></span><br><span class="line">    <span class="comment">//Default ctor/move ctor is still disabled.</span></span><br><span class="line">    <span class="comment">//However, assignment operators are still available.</span></span><br><span class="line">    l = r; <span class="comment">//OK</span></span><br><span class="line">    r = std::<span class="built_in">move</span>(l); <span class="comment">//OK</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">C</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">C</span>(C&amp;&amp;) = <span class="keyword">delete</span>;</span><br><span class="line">    C&amp; <span class="keyword">operator</span>=(<span class="type">const</span> C&amp;) = <span class="keyword">delete</span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">//Now C is a wasted class that is not constructible nor assignable in any means.</span></span><br><span class="line"><span class="comment">//This deprecates the need of defining a fun3():)</span></span><br></pre></td></tr></table></figure></p>
-</blockquote>
-</blockquote>
-<h1
-id="移动语义配套语法引用折叠与完美转发">移动语义配套语法——引用折叠与完美转发</h1>
-<blockquote>
-<p>还是回到那句话：移动语义自身只是一个概念，最终实现在编译期进行，依赖的是函数重载决议。</p>
-</blockquote>
-<h2 id="引用折叠">引用折叠</h2>
-<p>C++引入右值引用后，template programming中就很可能出现template
-parameter也是左/右值引用的情况，但C++中又不允许出现引用的引用。<br />
-为了保证编程习惯和语义一致，并为后续的移动转发/完美转发做铺垫，提出了<strong>引用折叠(reference-collasping)</strong>的概念。<br />
-具体规则很简单：<br />
-考虑一个template参数<code>Ty</code>，其带引用的使用方式可能为左值<code>Ty&amp;</code>及右值<code>Ty&amp;&amp;</code>。<br />
-<strong>当且仅当<code>Ty</code>是右值引用，且其引用方式也是右值引用<code>Ty&amp;&amp;</code>时，解析结果是右值引用，否则是左值引用。</strong></p>
-<blockquote>
-<p>注意此规则仅在template
-parameter/using代换中生效，直接写出<code>int&amp;&amp; &amp;&amp;</code>一类的语句仍为非法。</p>
-</blockquote>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> x = <span class="number">1</span>;</span><br><span class="line"><span class="keyword">using</span> lref = <span class="type">int</span>&amp;;</span><br><span class="line"><span class="keyword">using</span> rref = <span class="type">int</span>&amp;&amp;;</span><br><span class="line"></span><br><span class="line">lref&amp; a = x; <span class="comment">//a is l-ref</span></span><br><span class="line">lref&amp;&amp; b = x; <span class="comment">//b is l-ref</span></span><br><span class="line">rref&amp; c = x; <span class="comment">//c is l-ref</span></span><br><span class="line">rref&amp;&amp; d = std::<span class="built_in">move</span>(x); <span class="comment">//d is r-ref</span></span><br></pre></td></tr></table></figure>
-<h2 id="通用引用和完美转发">通用引用和完美转发</h2>
-<p>既然提到移动语义的实践载体是函数重载，template语境下如何正确地传递（上一个函数携带的参数的）类型信息就显得非常重要。<br />
-强化左/右值概念后，为了保证模板实例化代码中依然可以正确地重载左/右值函数，需要对参数的传递做一些额外处理。</p>
-<blockquote>
-<p>C++中，需要注意的是原始形态的<em>具名变量(named
-variables)</em>一定是左值，无论其属于 <em>lref</em> 还是 <em>rref</em>
-。</p>
-<p>引用cppreference：Named rvalue references are lvalues; Unnamed rvalue
-references are rvalues.</p>
-</blockquote>
-<p>如下调用的实例：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Data</span>&#123;&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(Data&amp;)</span></span>; <span class="comment">//#1</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(Data&amp;&amp;)</span></span>; <span class="comment">//#2</span></span><br><span class="line"></span><br><span class="line"><span class="function">Data <span class="title">foo</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line">Data data&#123;&#125;;</span><br><span class="line">Data&amp;&amp; rref = std::<span class="built_in">move</span>(data);</span><br><span class="line"></span><br><span class="line"><span class="built_in">fun</span>(data); <span class="comment">//Calls overload #1</span></span><br><span class="line"><span class="built_in">fun</span>(rref); <span class="comment">//Calls overload #1: Named rvalue references are lvalues</span></span><br><span class="line"><span class="built_in">fun</span>(Data&#123;&#125;); <span class="comment">//Calls overload #2</span></span><br><span class="line"><span class="built_in">fun</span>(<span class="built_in">foo</span>()); <span class="comment">//Calls overload #2</span></span><br><span class="line"><span class="built_in">fun</span>(std::<span class="built_in">move</span>(data)); <span class="comment">//Calls overload #2: Unnamed rvalue references are rvalues</span></span><br></pre></td></tr></table></figure></p>
-<p>假设没有通用引用(<em>Universal reference</em>)和完美转发(<em>Perfect
-Forwarding</em>)的概念，对于一个可能传入左值/右值引用的“中转”函数，至少需要如下两个重载（来保证后续调用语义传递正确）：
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//左值</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(Ty&amp; arg)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">foo</span>(arg);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//右值</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(Ty&amp;&amp; arg)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">foo</span>(std::<span class="built_in">move</span>(arg)); <span class="comment">//因为arg虽然是右值引用，但在fun内具名而为左值，必须将之转化回右值</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>同时显然我们也不能“一刀切”地都用<code>std::move</code>传参（不能乱改语义）。<br />
-一个参数的情况尚好，但多个参数的重载量将指数级上升；<br />
-同时C++11引入了 <em>变长参数模板(variadic templates)</em>
-的概念，如果传入的参数中既有左值又有右值，那么<code>Ty&amp;...</code>和<code>Ty&amp;&amp;...</code>两个函数都无法匹配该模板（语法和语义上皆然）。</p>
-<hr />
-<p>插播一条C++的模板自动实例化规则：</p>
-<blockquote>
-<p>以参数为<code>int</code>为例，调用<code>fun()</code>时，结合引用折叠的应用——传参为左值时，<code>Ty</code>自动取<code>int&amp;</code>进行实例化；传参为右值时，<code>Ty</code>则取<code>int</code>。</p>
-<p>显然叠加右值引用后，二者的参数列表分别为<code>int&amp;</code>和<code>int&amp;&amp;</code>。</p>
-</blockquote>
-<p>如上，这套规则引出了“通用引用”(<em>universal
-reference</em>)的概念，亦即看到<code>&amp;&amp;</code>不一定就代表右值引用<del>或者逻辑与</del>。<br />
-“通用引用”的判定标准为涉及<code>&amp;&amp;</code>+<strong>左右值类型推导</strong>时，如模板参数中<code>裸露</code>的<code>Ty&amp;&amp;</code>，或函数调用/变量初始化时的<code>auto&amp;&amp;</code>。<br />
-通用引用的实现基础依然是引用折叠：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//rref: no type deduction</span></span><br><span class="line"><span class="type">int</span>&amp;&amp; a = <span class="number">1</span>; <span class="comment">//explicit as it is</span></span><br><span class="line">Widget&amp;&amp; wgt = Widget&#123;&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">bar</span><span class="params">(std::vector&lt;Ty&gt;&amp;&amp; vec)</span></span>; <span class="comment">//不涉及左右值推导，右值</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//universal ref: type deduction</span></span><br><span class="line"><span class="keyword">auto</span>&amp;&amp; b = a; <span class="comment">//b的类型由初始化参数决定，此处由于a是左值，故b的类型为int&amp;</span></span><br><span class="line"><span class="keyword">auto</span>&amp;&amp; c = <span class="number">1</span>; <span class="comment">//c是int&amp;&amp;</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">baz</span><span class="params">(Ty&amp;&amp; param)</span></span>; <span class="comment">//baz同时接受左/右值进行实例化</span></span><br></pre></td></tr></table></figure>
-<p>由此，借助于引用折叠和万能引用，<code>std::forward</code>作为另一个华<del>而不实</del>的"wrapper"来协助实现函数参数左/右值信息的保留。<br />
-在需要传递形参作为下一个函数实参的位置，调用<code>std::forward</code>并指定模板实例化参数为<code>Ty</code>，变长参数模板同理：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(Ty&amp;&amp; arg)</span> <span class="comment">// arg可以是左值，也可以是右值，fun会按需实例化</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">foo</span>(std::forward&lt;Ty&gt;(arg)); <span class="comment">//std::forward会将类型信息（含左右值）全部保留</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> x = <span class="number">1</span>;</span><br><span class="line"><span class="built_in">fun</span>(x); <span class="comment">//Instinates fun(int&amp;) with Ty = int&amp;</span></span><br><span class="line"><span class="built_in">fun</span>(<span class="number">1</span>); <span class="comment">//Instinates fun(int&amp;&amp;) with Ty = int</span></span><br></pre></td></tr></table></figure>
-<p>与<code>std::move</code>相同，<code>std::forward</code>所执行的依然是编译期的转换，其实现如下。</p>
-<blockquote>
-<p>约定，<code>std::remove_reference_t&lt;Ty&gt;</code>
-移除给定类参数<code>Ty</code>的引用信息（左右值皆然），如<code>std::remove_reference_t&lt;int&amp;&gt;</code>即为<code>int</code>。</p>
-<p>约定，<code>std::is_lvalue_reference_t&lt;Ty&gt;</code>
-测试给定类参数<code>Ty</code>是否为左值引用，如<code>std::is_lvalue_reference_t&lt;int&amp;&gt;</code>为<code>true</code>。</p>
-<p>（有关<code>type_traits</code>和<em>SFINAE</em>的坑<del>改天再填.sage</del>）</p>
-</blockquote>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="keyword">constexpr</span> std::<span class="type">remove_reference_t</span>&lt;Ty&gt;&amp; <span class="title">forward</span><span class="params">(std::<span class="type">remove_reference_t</span>&lt;Ty&gt;&amp; arg)</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> arg;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="keyword">constexpr</span> std::<span class="type">remove_reference_t</span>&lt;Ty&gt;&amp;&amp; <span class="title">forward</span><span class="params">(std::<span class="type">remove_reference_t</span>&lt;Ty&gt;&amp;&amp; arg)</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">static_assert</span>(!std::<span class="type">is_lvalue_reference_t</span>&lt;Ty&gt;,<span class="string">&quot;Bad forward call&quot;</span>); <span class="comment">//Cannot forward lvalue as rvalue</span></span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">static_cast</span>&lt;Ty&amp;&amp;&gt;(arg);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>此处即可看到，<code>std::forward</code>利用了<strong>类型信息（所谓<code>Ty</code>）于函数签名中被保留</strong>的特点，实现了针对不同左/右值参数的转发——<strong>完美转发</strong>。</p>
-<p>同样地，如果希望实现其它的语义约束，也可以利用引用折叠的规则进行；结合<code>&lt;type_traits&gt;</code>里的各种小组件，搭配自由度更高。<br />
-如，C++标准库内置了<code>addressof</code>函数，用于稳定地获取一个对象的地址（即使该类重载了<code>operator&amp;()</code>）。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="keyword">constexpr</span> Ty* <span class="title">addressof</span><span class="params">(Ty&amp; arg)</span> <span class="keyword">noexcept</span></span>;</span><br></pre></td></tr></table></figure>
-<p>通过将参数设置为<code>Ty&amp;</code>，无论Ty取原始类、左值引用还是右值引用，Ty&amp;均会解析为左值引用，使之只能接受左值引用的参数。</p>
-<blockquote>
-<p>实际上这个函数并不完美，标准库实现中还有如下声明以确保不会获取到常右值(<em>const
-rvalues</em>)的地址： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Ty&gt;</span></span><br><span class="line"><span class="function"><span class="keyword">constexpr</span> Ty* <span class="title">addressof</span><span class="params">(<span class="type">const</span> Ty&amp;&amp;)</span> </span>= <span class="keyword">delete</span>;</span><br></pre></td></tr></table></figure> 同时，这也是极为少见的 <em>const
-rvalues/const rrefs</em>
-真正地有用武之地的地方（特定场景下的语义/语法约束）。</p>
-<p>有关<em>const rvalues</em> 更多探讨可以参考<a
-target="_blank" rel="noopener" href="https://codesynthesis.com/~boris/blog/2012/07/24/const-rvalue-references/">"What
-are const rvalue references good for?"</a></p>
-</blockquote>
-<p>类似地可以实现移动转发（将收入的所有参数全部用右值转发出去）：
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> ...Tys&gt;</span></span><br><span class="line"><span class="function"><span class="keyword">constexpr</span> <span class="type">void</span> <span class="title">mov</span><span class="params">(Tys&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">func</span>(std::forward&lt;Tys&gt;(args)...); <span class="comment">//完美转发，保留左/右值属性</span></span><br><span class="line">    <span class="built_in">func</span>(std::<span class="built_in">move</span>&lt;Tys&gt;(args)...); <span class="comment">//移动转发，全部转化为右值</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<h2 id="萍水过客之trivial-types">萍水过客之trivial-types</h2>
-<p>C++11提出并规范的移动语义，针对的是<code>class</code>/<code>struct</code>的对象。
-在此乱世之外，所有的基本数据类型( <em>fundamental types</em> )都是
-<em>trivial</em>
-(“平凡”)的；所有的<strong>仅存在平凡数据成员的<code>struct</code>/<code>class</code></strong>也是平凡的。</p>
-<blockquote>
-<p>C++中，<code>&lt;type_traits&gt;</code>中提供了<code>std::is_trivial</code>家族的大量traits用于检验一个类到底有多“平凡”。</p>
-<p>定义一个后缀集合 $S = $
-{<code>default_constructible</code>,<code>copy_constructible</code>,<code>move_constructible</code>,<code>copy_assignable</code>,<code>move_assignable</code>,<code>destructible</code>}；</p>
-<p><code>std::is_trivially</code> + <span class="math inline">\(i \in
-S\)</span>
-的traits用于测试一个类是否可以平凡地(默认/复制/移动)构造/(复制/移动)赋值/析构。</p>
-</blockquote>
-<p><em>trivial</em> 类的特征：</p>
-<ul>
-<li>其移动语义和复制相同，即移动一个变量后不会改变原对象的数值/状态。<br />
-</li>
-<li>其构造函数除了初始化数据成员外什么都不做，且其数据成员的初始化也是
-<em>trivial</em>
-的（递归定义，直至基本数据类型）；复制/移动构造函数同理（只根据原值初始化，不改变其状态）。<br />
-</li>
-<li>其析构函数除了析构自身数据成员外什么都不做，且其数据成员的初始化也是
-<em>trivial</em> 的（同样可以递归定义）。</li>
-</ul>
-<p>基本数据类型显然符合这些特点，比如一个<code>int</code>，<code>int</code>的复制/移动只是将自身的值赋予另一个变量，不会影响自身的值；析构一个<code>int</code>什么也不会发生，等等。<br />
-显然平凡类的运算是极为高效的（只需要非常“简单”地<code>memset</code>即可完成一切操作，<del>远离移动语义的浮尘喧嚣</del>）。<br />
-其引出的问题就是程序的参数设计中<strong>传值和传引用之争</strong><del>(挖坑+1)</del>。</p>
-<h1 id="移动语义实践中的易错点">移动语义实践中的易错点</h1>
-<h2
-id="手搓了不恰当的移动构造函数赋值运算符">“手搓”了不恰当的移动构造函数/赋值运算符</h2>
-<blockquote>
-<ul>
-<li>If you can avoid defining any default operations, do<br />
-</li>
-<li>Use <code>= default</code> if you want to be explicit on using the
-default sematics<br />
-</li>
-<li>Make move operations <code>noexcept</code>.</li>
-</ul>
-</blockquote>
-<ul>
-<li>实践中，对于<strong>不直接管理资源</strong>的类，尽量避免定义四项默认函数（遵循<em>rule
-of zero</em>）。<br />
-</li>
-<li>需要部分地自定义函数时，如需强调使用默认语义/禁止操作，明确写出<code>= default</code>/<code>= delete</code>。<br />
-</li>
-<li>同时，“手搓”移动构造函数/移动赋值运算符时，尽量声明为
-<code>noexcept</code>，否则不能最高效地使用标准库和语言工具。</li>
-</ul>
-<blockquote>
-<p><code>noexcept</code>也是C++11的新关键字之一（C++11不愧为现代C++之初，全是影响深远的特性），其彻底重塑了C++的异常规范体系（传统C++的<code>throw()</code>异常规范在C++11起被<em>deprecated</em>，并从C++17起彻底移除）。</p>
-<p>该关键字既是一个一元<strong>编译期运算符</strong>(类似<code>sizeof</code>,<code>alignas</code>)，也是一个函数修饰符。</p>
-<p>作为编译期运算符时，其接收一个函数作为参数，返回该函数是否可能抛出异常(<code>true</code>/<code>false</code>)，如<code>noexcept(main)</code>即为<code>false</code>（默认状态下）。</p>
-<p>作为函数修饰符时，其<strong>是函数签名的一部分，并应当追加于其它修饰符之后</strong>。如<code>void fun() const noexcept;</code></p>
-<p>修饰方式可以是<code>noexcept(...)</code>其中括号内放编译期可转化为<code>bool</code>的表达式，也可以是<code>noexcept</code>（等价于<code>noexcept(true)</code>）。</p>
-<p>对于声明解析为<code>noexcept(true)</code>的函数，其不会向外抛出异常（即不会有任何异常超出该函数的scpoe）。若确有异常超出了其scope，则程序将调用<code>std::terminate</code>。</p>
-<p>C++中绝大多数函数默认并没有<code>noexcept(true)</code>，不过<strong>析构函数</strong>会自动加上<code>noexcept(true)</code>（除非用户主动声明了<code>noexcept(false)</code>）。</p>
-<p>但移动构造函数/赋值运算符相对就奇葩些：编译器自动生成（含用户主动声明<code>= default;</code>）的这两个函数会“尽可能地”加上<code>noexcept(true)</code>，但若其某个数据成员的两项函数不是<code>noexcept(true)</code>则不会加上。</p>
-<p>如果用户主动定义这两个函数，那么用户需要手动给它加上<code>noexcept(true)</code>的声明。</p>
-<blockquote>
-<p>Every function in C++ is either <em>potentially-throwing</em> or
-<em>non-throwing</em>.</p>
-<p>更多说明可参见<a
-target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/language/noexcept_spec">cppreference</a></p>
-</blockquote>
-</blockquote>
-<p>例如，<code>std::vector</code>在扩容时，会涉及分配新内存和转移已有元素的过程。而C++标准库容器及其方法（成员函数）均满足<em>strong
-exception guarantee</em>(强异常保证)。</p>
-<blockquote>
-<p>C++函数的异常保证分为四级，降序叙之：</p>
-<p><em>noexcept guarantee</em> &gt; <em>strong exception guarantee</em>
-&gt; <em>basic exception guarantee</em> &gt; <em>no exception
-guarantee</em>。</p>
-<p>其中，<em>strong exception
-guarantee</em>的内涵为：调用一个函数时，如果抛出了异常，则所有变量的状态将不发生任何改变（亦即，对变量已经造成的更改可以撤销）。</p>
-<p>下面这段代码是对一个递增队列追加元素的函数，要求以'0'结束队列，若序列不是递增的，则抛出异常并遵守<em>strong
-exception guarantee</em>： <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">append_increment</span><span class="params">(std::vector&lt;<span class="type">int</span>&gt;&amp; vc)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> temp = <span class="number">0</span>,count = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">while</span>(<span class="literal">true</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        std::cin &gt;&gt; temp;</span><br><span class="line">        <span class="keyword">if</span>(!vc.<span class="built_in">empty</span>() &amp;&amp; temp &lt;= vc.<span class="built_in">back</span>()) <span class="comment">//前一个先保证vc不空，卡逻辑短路</span></span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">if</span>(temp == <span class="number">0</span>)</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">else</span></span><br><span class="line">            &#123;</span><br><span class="line">                vc.<span class="built_in">push_back</span>(temp);</span><br><span class="line">                count += <span class="number">1</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">//先执行回滚，擦除所有已写入的数据，再抛异常</span></span><br><span class="line">            vc.<span class="built_in">erase</span>(vc.<span class="built_in">end</span>() - count,vc.<span class="built_in">end</span>());</span><br><span class="line">            <span class="keyword">throw</span> std::runtime_error&#123;<span class="string">&quot;Invalid increment sequence&quot;</span>&#125;;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> count;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-</blockquote>
-<p>为了使元素转移的过程满足这个保证，<code>std::vector</code>会使用<code>std::move_if_noexcept</code>检验元素的移动构造函数，<strong>在保证转移过程不抛出异常</strong>的前提下，效率尽可能地高。<br />
-由此，其决策判据及优先级如下：</p>
-<ul>
-<li>若函数的移动构造函数被声明为<code>noexcept</code>，则使用之（高效；不抛出异常）<br />
-</li>
-<li>若函数的移动构造函数不可用/未被声明为<code>noexcept</code>，则尝试使用函数的复制构造函数（低效；<strong>若复制操作失败（抛出异常），可以回滚</strong>）<br />
-</li>
-<li>若函数的复制构造函数不可用，且移动构造函数未被声明为<code>noexcept</code>，则<strong>强异常保证失效</strong>（高效；若失败，<strong>无法回滚操作</strong>）<br />
-</li>
-<li>若函数的复制/移动构造函数均不可用，则编译失败</li>
-</ul>
-<p>故若自定义类的移动构造函数没有被声明为<code>noexcept</code>，则容易导致<code>std::vector</code>在扩容时执行了无用的复制操作，不易发现。</p>
-<hr />
-<p>同时，<strong>移动语义终究只是一个概念</strong>（百听不厌的<strong>基本哲学</strong>）；最终实现上，依然依靠编写右值引用为参数的代码。<br />
-作为反例，我们完全可以实现一个不遵守移动语义的<code>vector</code>，其移动构造函数执行了复制语义：<br />
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>&gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">bad_vec</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">//其它构造函数等省略</span></span><br><span class="line">    <span class="built_in">bad_vec</span>(bad_vec&amp;&amp; from):data&#123;<span class="keyword">new</span> Ty[from.size]&#125;,size&#123;from.size&#125;</span><br><span class="line">    &#123;</span><br><span class="line">        std::<span class="built_in">copy</span>(from.data,from.data+from.size,<span class="keyword">this</span>-&gt;data);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    bad_vec&amp; <span class="keyword">operator</span>=(bad_vec&amp;&amp; from)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">this</span>-&gt;data = <span class="keyword">new</span> Ty[from-&gt;size];</span><br><span class="line">        <span class="keyword">this</span>-&gt;size = from.size;</span><br><span class="line">        std::<span class="built_in">copy</span>(from.data,from.data+from.size,<span class="keyword">this</span>-&gt;data);</span><br><span class="line">    &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    Ty* data;</span><br><span class="line">    <span class="type">size_t</span> size;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
-<p>虽然代码可以如此写，编译也没有问题；但如此做进行了复制操作，违背了移动语义的初衷。</p>
-<h2
-id="从函数return前误移动了局部变量">从函数<code>return</code>前误移动了局部变量</h2>
-<p>有时候函数的部分执行分支中，会将某些变量<code>std::move</code>传参到其它函数中，导致了该变量进入了<em>unspecified
-state</em>。</p>
-<blockquote>
-<p>不能忘记<code>std::move</code>、移动语义、右值引用的初衷：其本质的本质，还是只是一个"tag"，将一个<em>lvalue</em>转化为<em>xvalue</em>。</p>
-<p>至于其如何发落，悉数依赖于<em>通过函数签名（形参）重载决策、接受或约束</em>
-这些参数的<strong>函数</strong>。</p>
-<p>因此，一行上单纯的<code>std::move(val);</code>语句没有任何意义，不会对val产生任何影响。</p>
-</blockquote>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">log</span><span class="params">(std::vector&lt;<span class="type">int</span>&gt;&amp;&amp; vec)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i : vec)</span><br><span class="line">    &#123;</span><br><span class="line">        std::clog &lt;&lt; i;</span><br><span class="line">    &#125;</span><br><span class="line">    vec.<span class="built_in">clear</span>();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::vector&lt;<span class="type">int</span>&gt; status&#123;&#125;;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(status.<span class="built_in">size</span>() &gt; <span class="number">10</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">log</span>(std::<span class="built_in">move</span>(status));</span><br><span class="line">    &#125; </span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; status.<span class="built_in">back</span>() &lt;&lt; std::endl; <span class="comment">//status may be moved-from</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>上述代码中，<code>log()</code>出于语义约束等考虑选择了只接受右值引用的<code>vector</code>，其在执行后会将<code>vector</code>的内容清空（此操作符合移动语义对被移动对象处理的“更高要求”）。<br />
-但<code>func()</code>中，如果不慎进入了<code>if</code>分支，则<code>status</code>将被清空，直接导致其后输出<code>status.back()</code>时抛出异常。<br />
-此类调用者的设计“失误”颇为常见（有时是无意为之，有时频繁的<code>move</code>和再赋值/再初始化操作又不可避免）；我们希望避免的是“误移动”而在再初始化前不慎复用之。</p>
-<p>防御措施：</p>
-<ul>
-<li>编译阶段，利用<code>clang-format</code>等静态检查器来标记<code>moved-from</code>变量，对变量潜在的“移动后使用”做好标记；</li>
-<li>运行阶段，遵循<em>move
-sematics</em>，每次接受右值引用后将变量的值标记为无效值（比如<code>string</code>的<code>length</code>置零，<code>unique_ptr</code>管理指针赋<code>nullptr</code>），且每次使用一个（潜在的）<em>moved-from</em>变量前检查有效性，
-如“官方”教材（摘自<a
-target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/utility/move">cppreference</a>）：
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::vector&lt;std::string&gt; v;</span><br><span class="line">    std::string str = <span class="string">&quot;example&quot;</span>;</span><br><span class="line">    v.<span class="built_in">push_back</span>(std::<span class="built_in">move</span>(str)); <span class="comment">// str is now valid but unspecified</span></span><br><span class="line">    str.<span class="built_in">back</span>(); <span class="comment">// undefined behavior if size() == 0: back() has a precondition !empty()</span></span><br><span class="line">    <span class="keyword">if</span> (!str.<span class="built_in">empty</span>())</span><br><span class="line">        str.<span class="built_in">back</span>(); <span class="comment">// OK, empty() has no precondition and back() precondition is met</span></span><br><span class="line">    str.<span class="built_in">clear</span>(); <span class="comment">// OK, clear() has no preconditions</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
-</ul>
-<p>其操作原理也非常简单，亦为鲁棒性较好的程序的必备之物：不断地检查<em>preconditions</em>（前置条件）。</p>
-<h2
-id="return时对返回值是否该stdmove辨别失误"><code>return</code>时对返回值是否该<code>std::move</code>辨别失误</h2>
-<blockquote>
-<p>一个简单的<code>return</code>语句是整个C++中出现频率最高的语句之一。</p>
-<p>为了将其效率发挥到极致，<code>return</code>之争也持续了将近30年，最终在C++23中才勉强画上分号<del>（surprise！连句号都算不上！）</del>。</p>
-</blockquote>
-<p><strong>以下法则仅适用于C++23：</strong></p>
-<p>返回<em>move-eligible（可移动）</em>都不应该主动调用<code>std::move</code>，因为这些返回值会被自动视为<em>xvalue</em>（世称<em>implicit
-move</em>）。<br />
-调用<code>std::move</code>将阻碍<strong>NRVO(Named return value
-optimization)</strong>。<br />
-简而言之，除非已经深得其道，否则可以认为C++23中返回值不需要（也不应该）<code>std::move(local_variable)</code>。</p>
-<blockquote>
-<p>简单来说，具有自动存储周期(automatic storage
-duration)的非<code>volatile</code>、非左值引用变量都是<em>move-eligible</em>
-的。除了<code>static</code>,<code>thread_local</code>以外常用的变量皆然（<strong>含右值引用变量</strong>）。</p>
-</blockquote>
-<p>如下函数在C++23前返回<em>悬挂引用(dangaling
-reference)</em>，C++23起其非良构(<em>ill-formed</em>)而不能通过编译。<del>当然你如果把返回值改成rref那还是可以返回悬挂引用的</del>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span>&amp; <span class="title">ret</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> x = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">return</span> x; <span class="comment">//Not compile: invalid binding(x is a xvalue in this context)</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>即使是返回move-only的对象，同样可以直接<code>return</code>，不加任何修饰：（在C++20必须写作<code>std::move(ref)</code>，C++20起将右值引用划归<em>move-eligible</em>
-因而可以通过） <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">std::unique_ptr&lt;<span class="type">int</span>&gt; <span class="title">fun</span><span class="params">(std::unique_ptr&amp;&amp; ref)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">    <span class="keyword">return</span> ref; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<h1 id="结语">结语</h1>
-<p>C++11作为现代C++的开山之作，其带来的极大量新语法、新关键字、新概念等极为庞大，移动语义即为其间数“巨头”之一。<br />
-学习移动语义，理论学习的吸收难度已然颇大；但更难、同时也让学习之变得更有意义的是在现代C++的编程实践中积极运用，使自身程序设计的质量、效率更高。<br />
-同时，尝试理解、融会贯通其间涉及C++的诸多设计哲学，亦会对学习、生活、工作受益匪浅。</p>
-<p>望能与各位道友在求道之路上共勉。</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Modern C++</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">长文精选</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/C-C//" class="article-tag-list-link color1">C/C++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/cpp/rrefs/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-  <div>
-</article>
-
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
   
     <nav id="page-nav">
-      <a class="extend prev" rel="prev" href="/page/13/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/12/">12</a><a class="page-number" href="/page/13/">13</a><span class="page-number current">14</span><a class="page-number" href="/page/15/">15</a><a class="page-number" href="/page/16/">16</a><a class="extend next" rel="next" href="/page/15/">Next &raquo;</a>
+      <a class="extend prev" rel="prev" href="/page/13/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/12/">12</a><a class="page-number" href="/page/13/">13</a><span class="page-number current">14</span><a class="page-number" href="/page/15/">15</a><a class="page-number" href="/page/16/">16</a><a class="page-number" href="/page/17/">17</a><a class="extend next" rel="next" href="/page/15/">Next &raquo;</a>
     </nav>
   
 
@@ -1199,7 +657,23 @@ MathJax.Hub.Queue(function() {
           <ul class="article-tag-list" q-show="showTags">
              
               <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">玲珑</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color1">C/C++</a>
+              </li>
+             
+              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color2">Crypto</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">长文精选</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">C#</a>
               </li>
              
               <li class="article-tag-list-item">
@@ -1207,11 +681,15 @@ MathJax.Hub.Queue(function() {
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">玲珑</a>
+                <a href="javascript:void(0)" class="js-tag color1">Modern C++</a>
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color1">Modern C++</a>
+                <a href="javascript:void(0)" class="js-tag color1">C++20</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">C++ Libraries</a>
               </li>
              
               <li class="article-tag-list-item">
@@ -1220,26 +698,6 @@ MathJax.Hub.Queue(function() {
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color2">C Libraries</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color4">C++ Libraries</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">长文精选</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color1">C++20</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color1">C/C++</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">C#</a>
               </li>
             
             <div class="clearfix"></div>

@@ -6,19 +6,14 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="https://crystaljiang232.github.io">
-  <title>NTRU | 玲珑</title>
+  <title>Archives: 2025/9 | 玲珑</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="格密码入坑到入土一条龙  NTRU(Nth-degree TRunctuated polynomial Unit)，即“N次截断多项式单元”，是格密码中极为知名、应用较广的一种加密原理。 截断多项式？ 卷积多项式环 给定 \(N,q \in Z_{+}\)，则模 \(q\) 下的 \(N - 1\) 次卷积多项式环是一个商环(quotient ring)，记作 \(R_{q} &#x3D;">
-<meta property="og:type" content="article">
-<meta property="og:title" content="NTRU">
-<meta property="og:url" content="https://crystaljiang232.github.io/crypto/ntru/index.html">
+  <meta property="og:type" content="website">
+<meta property="og:title" content="玲珑">
+<meta property="og:url" content="https://crystaljiang232.github.io/archives/2025/09/index.html">
 <meta property="og:site_name" content="玲珑">
-<meta property="og:description" content="格密码入坑到入土一条龙  NTRU(Nth-degree TRunctuated polynomial Unit)，即“N次截断多项式单元”，是格密码中极为知名、应用较广的一种加密原理。 截断多项式？ 卷积多项式环 给定 \(N,q \in Z_{+}\)，则模 \(q\) 下的 \(N - 1\) 次卷积多项式环是一个商环(quotient ring)，记作 \(R_{q} &#x3D;">
 <meta property="og:locale" content="en_US">
-<meta property="article:published_time" content="2025-04-15T10:38:03.000Z">
-<meta property="article:modified_time" content="2025-04-17T22:01:54.455Z">
 <meta property="article:author" content="Hibiscus">
-<meta property="article:tag" content="Crypto">
 <meta name="twitter:card" content="summary">
   
     <link rel="alternative" href="/atom.xml" title="玲珑" type="application/atom+xml">
@@ -155,242 +150,36 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            <article id="post-crypto/ntru" class="article article-type-post " itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
+            
   
-    <h1 class="article-title" itemprop="name">
-      NTRU
+  
+    
+    
+      
+      
+      <section class="archives-wrap">
+        <div class="archive-year-wrap">
+          <a href="/archives/2025" class="archive-year">2025</a>
+        </div>
+        <div class="archives">
+    
+    <article class="archive-article archive-type-post">
+  <div class="archive-article-inner">
+    <header class="archive-article-header">
+      	<div class="article-meta">
+	      	<a href="/crypto/wp/wqb-plus/" class="archive-article-date">
+  	<time datetime="2025-09-17T02:08:13.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-09-17</time>
+</a>
+        </div>
+    	 
+  
+    <h1 itemprop="name">
+      <a class="archive-article-title" href="/crypto/wp/wqb-plus/">2025湾区杯Writeup——再论“逐怨”</a>
     </h1>
   
 
-        
-        <a href="/crypto/ntru/" class="archive-article-date">
-  	<time datetime="2025-04-15T10:38:03.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-04-15</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <blockquote>
-<p><del>格密码入坑到入土一条龙</del></p>
-</blockquote>
-<p>NTRU(Nth-degree TRunctuated polynomial
-Unit)，即“N次截断多项式单元”，是格密码中极为知名、应用较广的一种加密原理。</p>
-<h1 id="截断多项式">截断多项式？</h1>
-<h2 id="卷积多项式环">卷积多项式环</h2>
-<p>给定 <span class="math inline">\(N,q \in Z_{+}\)</span>，则模 <span
-class="math inline">\(q\)</span> 下的 <span class="math inline">\(N -
-1\)</span> 次卷积多项式环是一个商环(quotient ring)，记作 <span
-class="math inline">\(R_{q} = \frac{Z_{q}[x]}{x^{N} - 1}\)</span>。</p>
-<blockquote>
-<p>商环的定义为对环(Ring)上，<span class="math inline">\(\forall a \neq
-0 \in R, \exists a^{-1} \in R\)</span>，即除了加法单位元 <span
-class="math inline">\(0\)</span> 外所有元素均存在逆元。</p>
-</blockquote>
-<p><span class="math inline">\(R_{q}\)</span>
-下的卷积多项式乘法规则如下：假设 <span class="math inline">\(f \cdot g =
-h\)</span>，同样记 <span class="math inline">\(h =
-\sum_{i=0}^{n-1}h_{i}x^{i}\)</span>，存在<br />
-$h_{i} <em>{a+b i (N)} f</em>{a}g_{b} (q) $。</p>
-<blockquote>
-<p>不难发现上述规则和普通的多项式乘法并无显著差异，只是对幂数和项数的计算分别放在了
-<span class="math inline">\(Z_{N}\)</span> 和 <span
-class="math inline">\(Z_{q}\)</span> 下进行。</p>
-</blockquote>
-<p>写作 <span class="math inline">\(Z_{q}\)</span> 下 <span
-class="math inline">\(n \times n\)</span> 矩阵乘法的形式，形如：</p>
-<p><span class="math inline">\(\begin{bmatrix} h_0 &amp; h_1 &amp;
-\cdots &amp; h_{n-2} &amp; h_{n-1} \end{bmatrix} ^ {T} = \begin{bmatrix}
-f_0 &amp; f_1 &amp; \cdots &amp; f_{n-2} &amp; f_{n-1} \\ f_1 &amp; f_2
-&amp; \cdots &amp; f_{n-1} &amp; f_0 \\ \vdots &amp; \vdots &amp;&amp;
-\vdots &amp; \vdots \\ f_{n-1} &amp; f_0 &amp; \cdots &amp; f_{n-3}
-&amp; f_{n-2} \end{bmatrix} \cdot \begin{bmatrix} g_0 &amp; g_1 &amp;
-\cdots &amp; g_{n-2} &amp; g_{n-1} \end{bmatrix} ^ {T}\)</span></p>
-<blockquote>
-<p>若 <span class="math inline">\(q\)</span>
-比较大，考虑到可读性，一般展示时会将 <span
-class="math inline">\(f_{i}\)</span> 转化到 <span
-class="math inline">\((-\frac{q}{2},\frac{q}{2}]\)</span> 的区间内（当然
-<span class="math inline">\(Z_{q}\)</span> 下其是等价的）。</p>
-</blockquote>
-<p>如，<span class="math inline">\((N,q) = (3,5)\)</span> 下 <span
-class="math inline">\(f = 3x^{2} - x + 1\)</span>，<span
-class="math inline">\(g = x + 4\)</span>，计算 <span
-class="math inline">\(f \cdot g\)</span>：<br />
-先按普通的多项式计算，对 <span class="math inline">\(N\)</span>
-次以上的项进行“截断”，得到 <span class="math inline">\(12x^{2} - x^{2} -
-4x + x + 4\)</span>；<br />
-随后将系数映射至 <span class="math inline">\(Z_{5}\)</span>
-下，整理得到结果为 <span class="math inline">\(x^{2} - 3x + 4 = x^{2} +
-2x - 1\)</span>。</p>
-<p>而对于 <span class="math inline">\(R_{q}\)</span> 下的 <span
-class="math inline">\(N-1\)</span> 次多项式 <span
-class="math inline">\(f\)</span>，当且仅当 <span
-class="math inline">\(q\)</span> 为质数且 <span
-class="math inline">\(gcd(f,x^{N} - 1) = 1\)</span>（即，<span
-class="math inline">\(f\)</span> 是其本原多项式）时， <span
-class="math inline">\(f\)</span> 的乘法逆元 <span
-class="math inline">\(f^{-1} \in R_{q}\)</span>。</p>
-<blockquote>
-<p><span class="math inline">\(f^{-1}\)</span>
-的计算同样可以通过拓展欧几里得算法(exgcd)进行，详细原理请自行检索<del>绝对不是因为小姜讲不明白</del>。</p>
-</blockquote>
-<p>多项式的逆元计算实际上较为繁琐，定义等操作亦然，故建议处理多项式时充分利用数学软件的内置支持，如
-<em>“sage magic”</em> 演示：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">q = <span class="number">17</span></span><br><span class="line">N = <span class="number">7</span></span><br><span class="line">Rq_ = PolynomialRing(Zmod(q),<span class="string">&#x27;xq&#x27;</span>) <span class="comment"># Defines a polynomial ring under Zmod(q) and names a variable &#x27;xq&#x27;</span></span><br><span class="line">Rq = Rq_.quotient(Rq_.gen() ^ N - <span class="number">1</span>,<span class="string">&#x27;yq&#x27;</span>) <span class="comment">#Defines a quotient ring under divisor of xq^N - 1, with variable namely &#x27;yq&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Now one&#x27;s possible to carry out such manuevers on Rq</span></span><br><span class="line">ls = [<span class="number">5</span>,<span class="number">0</span>,<span class="number">3</span>,<span class="number">2</span>,<span class="number">1</span>] <span class="comment">#x^4 + 2x^3 + 3x^2 + 5</span></span><br><span class="line">f = Rq(ls) <span class="comment">#lifts a list of integer to a polynomial on quotient ring Rq</span></span><br><span class="line"><span class="built_in">print</span>(f^-<span class="number">1</span>) <span class="comment">#calculates inverse of f under Rq</span></span><br><span class="line"></span><br><span class="line">p = <span class="number">3</span></span><br><span class="line">Rp_ = PolynomialRing(Zmod(p),<span class="string">&#x27;xp&#x27;</span>)</span><br><span class="line">Rp = Rp_.quotient(Rp_.gen() ^ N - <span class="number">1</span>,<span class="string">&#x27;yp&#x27;</span>)</span><br><span class="line">ff = Rp(<span class="built_in">list</span>(f)) <span class="comment">#equivalently changes the modulus of f; must be done by conversion shown in this line</span></span><br><span class="line"><span class="built_in">print</span>(ff)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h1 id="参数与密钥生成">参数与密钥生成</h1>
-<p>NTRU的关键参数为 <span
-class="math inline">\((N,p,q,d)\)</span>。其中，</p>
-<ul>
-<li><span class="math inline">\(N,q\)</span>
-越大则格攻击构造格的维度越高，密码系统越安全，但运算效率会大幅下降；一般选择
-<span class="math inline">\(N \in [250,2500]\)</span>。<br />
-</li>
-<li><span class="math inline">\(p,d\)</span> 均为整数，要求 <span
-class="math inline">\(gcd(p,q) = 1\)</span> 且 <span
-class="math inline">\(gcd(q,N) = 1\)</span>，<span
-class="math inline">\(q &gt; (6d + 1)p\)</span>。</li>
-</ul>
-<p>NIST对NTRU的强度-推荐参数组合如下：</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">强度</th>
-<th style="text-align: center;">N</th>
-<th style="text-align: center;">p</th>
-<th style="text-align: center;">q</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;">标准</td>
-<td style="text-align: center;">251</td>
-<td style="text-align: center;">3</td>
-<td style="text-align: center;">128</td>
-</tr>
-<tr>
-<td style="text-align: center;">高</td>
-<td style="text-align: center;">347</td>
-<td style="text-align: center;">3</td>
-<td style="text-align: center;">128</td>
-</tr>
-<tr>
-<td style="text-align: center;">最高</td>
-<td style="text-align: center;">503</td>
-<td style="text-align: center;">3</td>
-<td style="text-align: center;">256</td>
-</tr>
-</tbody>
-</table>
-<p>参数 <span class="math inline">\(d\)</span> 可在满足 <span
-class="math inline">\(q &gt; (6d + 1)p\)</span> 下自行决定，一般选择
-<span class="math inline">\(d \approx \frac{N}{3}\)</span>
-来达到较好的安全性。</p>
-<hr />
-<blockquote>
-<p>定义函数 <span class="math inline">\(T(d_{1},d_{2}) (d_{1} + d_{2}
-&lt; q)\)</span> 表示系数 <span class="math inline">\(\{1,-1\}\)</span>
-<strong>计数</strong>分别为 <span
-class="math inline">\(\{d_{1},d_{2}\}\)</span> 的多项式 <span
-class="math inline">\(f\)</span> 的集合。<br />
-如，<span class="math inline">\(f = x^{6} + x^{3} - x^{2} + x - 1 \in
-T(3,2)\)</span>。</p>
-</blockquote>
-<p>选择两个多项式 <span class="math inline">\(f = \sum_{i=0}^{N-1}
-f_{i}x^{i} \in T(d+1,d)\)</span>，<span class="math inline">\(g =
-\sum_{i=0}^{N-1} g_{i}x^{i} \in T(d,d)\)</span>。</p>
-<p>再计算 <span class="math inline">\(h \equiv f^{-1}g (\bmod
-q)\)</span>，随后将 <span class="math inline">\(g\)</span>
-的记录销毁。<br />
-公钥为 <span class="math inline">\(h\)</span>，私钥为 <span
-class="math inline">\(R_{p}\)</span> 和 <span
-class="math inline">\(R_{q}\)</span> 下的 <span
-class="math inline">\(f^{-1}\)</span>（由于 <span
-class="math inline">\(p,q\)</span> 是既定参数，可以认为私钥就是 <span
-class="math inline">\(f\)</span>）。</p>
-<blockquote>
-<p><span class="math inline">\(g\)</span> 不是公钥或私钥，但知道 <span
-class="math inline">\(g\)</span> 就可以完全攻破NTRU，其地位类似于RSA中
-<span class="math inline">\(N\)</span> 的因数分解，故不应保留之。</p>
-</blockquote>
-<h1 id="加密">加密</h1>
-<p>先将明文编码为一个 <span class="math inline">\(n\)</span> 次多项式
-<span class="math inline">\(m \in \{-1,0,1\}^{N}\)</span>。<br />
-加密时另随机生成一个多项式 <span class="math inline">\(r \in
-\{-1,0,1\}^{N}\)</span>，计算 <span class="math inline">\(c \equiv ph
-\cdot r + m (\bmod q)\)</span>，输出密文 <span
-class="math inline">\(c\)</span>。</p>
-<h1 id="解密">解密</h1>
-<p>计算 <span class="math inline">\(m \equiv f^{-1} \cdot (f \cdot c
-(\bmod q)) (\bmod p)\)</span>，输出明文 <span
-class="math inline">\(m\)</span>。</p>
-<blockquote>
-<p>注意其中涉及到了“换环”，即现在 <span
-class="math inline">\(R_{q}\)</span> 下计算 <span
-class="math inline">\(f \cdot c\)</span>，将结果转到 <span
-class="math inline">\(R_{p}\)</span> 下后再与该环下的 <span
-class="math inline">\(f^{-1}\)</span> 相乘。</p>
-</blockquote>
-<hr />
-<h2 id="正确性证明">正确性证明</h2>
-<p>先在 <span class="math inline">\(R_{q}\)</span> 下计算， <span
-class="math inline">\(f \cdot c = pr \cdot hf + mf \Rightarrow f \cdot c
-= prg + mf\)</span><br />
-随后换环到 <span class="math inline">\(R_{p}\)</span> 上，显然 <span
-class="math inline">\(prg \equiv 0 (\bmod p)\)</span>，因此 <span
-class="math inline">\(R_{p}\)</span> 下 <span class="math inline">\((fc
-\bmod q) \equiv fm\)</span><br />
-进而 <span class="math inline">\(fmf^{-1} = m\)</span><br />
-解密正确性得证。</p>
-<h1 id="公钥攻击与数学难题">公钥攻击与数学难题</h1>
-<p>NTRU作为一种公钥密码体制，其依然依赖于数学难题来实现公钥与私钥间的“陷门”特征——即从公钥推导出私钥在理论上是可行的。<br />
-已知公钥时推导私钥的方法如下：<br />
-假设公钥为 <span class="math inline">\(f =
-\sum_{i=0}^{n}f_{i}x^{i}\)</span>，即 <span
-class="math inline">\(\{f_{i}\}\)</span> 是多项式 <span
-class="math inline">\(f\)</span> 各项的系数。</p>
-<blockquote>
-<p>有关格、格基规约(LLL)等相关的基础知识可以移步<a
-href="/crypto/lattice/">格</a>。</p>
-</blockquote>
-<h1 id="加解密攻击应用示例">加解密、攻击应用示例</h1>
-<p>假设Alice和Bob<del>怎么又是你们俩</del>需要利用NTRU进行通信，Alice为接收方，参数
-<span class="math inline">\((N,p,q,d) = (77,3,59,3)\)</span>。<br />
-<del>充分利用一番sage对多项式环的支持</del>，代码如下：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># sage</span></span><br><span class="line"><span class="keyword">from</span> random <span class="keyword">import</span> shuffle</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">NTRU</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="variable language_">self</span>.N = <span class="number">77</span></span><br><span class="line">        <span class="variable language_">self</span>.p = <span class="number">3</span></span><br><span class="line">        <span class="variable language_">self</span>.q = <span class="number">59</span></span><br><span class="line">        <span class="variable language_">self</span>.d = <span class="number">3</span></span><br><span class="line"></span><br><span class="line">        <span class="variable language_">self</span>.R_ = PolynomialRing(ZZ,<span class="string">&#x27;x&#x27;</span>)</span><br><span class="line">        <span class="variable language_">self</span>.Rp_ = PolynomialRing(Zmod(p),<span class="string">&#x27;xp&#x27;</span>)</span><br><span class="line">        <span class="variable language_">self</span>.Rq_ = PolynomialRing(Zmod(q),<span class="string">&#x27;xq&#x27;</span>)</span><br><span class="line"></span><br><span class="line">        <span class="variable language_">self</span>.R = <span class="variable language_">self</span>.R_.quotient(<span class="variable language_">self</span>.R_.gen() ^ N - <span class="number">1</span>,<span class="string">&#x27;y&#x27;</span>)</span><br><span class="line">        <span class="variable language_">self</span>.Rp = <span class="variable language_">self</span>.Rp_.quotient(<span class="variable language_">self</span>.Rp_.gen() ^ N - <span class="number">1</span>,<span class="string">&#x27;yp&#x27;</span>)</span><br><span class="line">        <span class="variable language_">self</span>.Rq = <span class="variable language_">self</span>.Rq_.quotient(<span class="variable language_">self</span>.Rq_.gen() ^ N - <span class="number">1</span>,<span class="string">&#x27;yq&#x27;</span>)</span><br><span class="line"></span><br><span class="line">        <span class="variable language_">self</span>.h,<span class="variable language_">self</span>.f = <span class="variable language_">self</span>.keygen()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">T</span>(<span class="params">self,d1,d2</span>):</span><br><span class="line">        <span class="keyword">assert</span> d1 + d2 &lt;= N</span><br><span class="line">        ls = [<span class="number">1</span>] * d1 + [-<span class="number">1</span>] * d2 + [<span class="number">0</span>] * (N-(d1+d2))</span><br><span class="line">        shuffle(ls)</span><br><span class="line">        <span class="keyword">return</span> <span class="variable language_">self</span>.R(ls)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">keygen</span>(<span class="params">self</span>):</span><br><span class="line">        f = <span class="variable language_">self</span>.T(d+<span class="number">1</span>,d)</span><br><span class="line">        g = <span class="variable language_">self</span>.T(d,d)</span><br><span class="line">        h = <span class="variable language_">self</span>.Rp(g) * <span class="variable language_">self</span>.Rp(f) ^ -<span class="number">1</span> </span><br><span class="line">        <span class="keyword">return</span> h,f</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">get_pubkey</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">list</span>(<span class="variable language_">self</span>.h)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__==<span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    ntru = NTRU()</span><br><span class="line">    <span class="built_in">print</span>(ntru.get_pubkey())</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>现在生成了一组公钥：<br />
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[0, 0, 2, 1, 1, 0, 2, 2, 1, 1, 1, 2, 2, 0, 1, 1, 1, 0, 2, 1, 2, 0, 1, 0, 2, 1, 0, 0, 2, 1, 2, 0, 0, 0, 2, 2, 0, 1, 1, 2, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 2, 0, 2, 2, 2, 0, 0, 2, 2, 1, 0, 1, 0, 0, 2, 0, 1]</span><br></pre></td></tr></table></figure> 其中该列表下标为<code>i</code>的数就是 <span
-class="math inline">\(h_{i}\)</span>，即 <span
-class="math inline">\(h\)</span> 中 <span
-class="math inline">\(i\)</span> 次项的系数。<br />
-Bob使用该公钥，对接下来通信使用的密钥进行加密，为<code>NTRU</code>类添加一个<code>encrypt</code>方法并运行之：<br />
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">encrypt</span>(<span class="params">self,m:<span class="built_in">list</span></span>):</span><br><span class="line">    <span class="keyword">assert</span> <span class="built_in">len</span>(m) == <span class="variable language_">self</span>.N</span><br><span class="line">    <span class="keyword">assert</span> <span class="built_in">all</span>(i <span class="keyword">in</span> (-<span class="number">1</span>,<span class="number">0</span>,<span class="number">1</span>) <span class="keyword">for</span> i <span class="keyword">in</span> m)</span><br><span class="line"></span><br><span class="line">    r = <span class="variable language_">self</span>.T(<span class="number">7</span>,<span class="number">7</span>)</span><br><span class="line">    c = <span class="variable language_">self</span>.p * <span class="variable language_">self</span>.h * <span class="variable language_">self</span>.Rp(<span class="built_in">list</span>(r)) + <span class="variable language_">self</span>.Rp(m)</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">list</span>(c)</span><br></pre></td></tr></table></figure></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># Key generated</span><br><span class="line">[-1, -1, -1, -1, 0, -1, -1, -1, 0, 0, 1, 0, 0, -1, -1, 0, 1, -1, -1, -1, 0, -1, 0, 1, -1, 1, 1, 1, -1, 1, 0, -1, -1, 0, 0, 1, -1, -1, 1, 0, 0, 0, 1, -1, 1, 1, -1, 1, 0, 1, 1, -1, -1, 1, -1, 1, 0, 1, 0, -1, 0, 1, 0, 1, -1, -1, 0, -1, -1, 0, 1, 0, -1, 1, 1, -1, 0]</span><br><span class="line"># Encryption result</span><br><span class="line">[2, 2, 2, 2, 0, 2, 2, 2, 0, 0, 1, 0, 0, 2, 2, 0, 1, 2, 2, 2, 0, 2, 0, 1, 2, 1, 1, 1, 2, 1, 0, 2, 2, 0, 0, 1, 2, 2, 1, 0, 0, 0, 1, 2, 1, 1, 2, 1, 0, 1, 1, 2, 2, 1, 2, 1, 0, 1, 0, 2, 0, 1, 0, 1, 2, 2, 0, 2, 2, 0, 1, 0, 2, 1, 1, 2, 0]</span><br></pre></td></tr></table></figure>
-<p>Alice接收之，并利用私钥进行解密，获得密钥：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">decrypt</span>(<span class="params">self,c:<span class="built_in">list</span></span>):</span><br><span class="line">    t = <span class="variable language_">self</span>.Rp(<span class="built_in">list</span>(<span class="variable language_">self</span>.Rq(<span class="variable language_">self</span>.f) * <span class="variable language_">self</span>.Rq(c)))</span><br><span class="line">    m = t * <span class="variable language_">self</span>.Rp(<span class="built_in">list</span>(<span class="variable language_">self</span>.f)) ^ -<span class="number">1</span></span><br><span class="line">    <span class="keyword">assert</span> <span class="built_in">all</span>(i <span class="keyword">in</span> (-<span class="number">1</span>,<span class="number">0</span>,<span class="number">1</span>) <span class="keyword">for</span> i <span class="keyword">in</span> m)</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">list</span>(m)</span><br><span class="line"> </span><br></pre></td></tr></table></figure>
-<p>结果正确。 但由于参数选择得比较小，若某人获得了他们的公钥 <span
-class="math inline">\(h\)</span>，即可实施格攻击来还原私钥，需要的参数仅为
-<span class="math inline">\((N,q)\)</span>。攻击过程：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> itertools <span class="keyword">import</span> product</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">attack</span>(<span class="params">h:<span class="built_in">list</span></span>):</span><br><span class="line">    N = <span class="number">77</span></span><br><span class="line">    q = <span class="number">59</span></span><br><span class="line">    coef = matrix(ZZ,[[h[-i:] + h[:-i]] <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(N)])</span><br><span class="line">    mt = matrix.Block([[matrix.diagonal(N),coef],[matrix.zero(N),q * matrix.diagonal(N)]])</span><br><span class="line">    mt = mt.LLL()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">assert</span> <span class="built_in">all</span>(i <span class="keyword">in</span> (-<span class="number">1</span>,<span class="number">0</span>,<span class="number">1</span>) <span class="keyword">for</span> i <span class="keyword">in</span> mt[<span class="number">0</span>])</span><br><span class="line">    </span><br><span class="line">    </span><br><span class="line">    f_ = Rq(<span class="built_in">list</span>(mt[<span class="number">0</span>][:N]))</span><br><span class="line">    g_ = Rq(<span class="built_in">list</span>(mt[<span class="number">0</span>][N:]))</span><br><span class="line">    h_ = Rq(h)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> xf,xg <span class="keyword">in</span> product([i <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(N)],repeat=<span class="number">2</span>):</span><br><span class="line">        ls_f = [<span class="number">0</span>] * N</span><br><span class="line">        ls_f[xf] = <span class="number">1</span></span><br><span class="line">        ls_g = [<span class="number">0</span>] * N</span><br><span class="line">        ls_g[xg] = <span class="number">1</span></span><br><span class="line"></span><br><span class="line">        f = Rq(ls_f) * f_</span><br><span class="line">        g = Rq(ls_g) * g_</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> g * f ^ -<span class="number">1</span> == h:</span><br><span class="line">            <span class="keyword">return</span> <span class="built_in">list</span>(f)</span><br><span class="line">        </span><br></pre></td></tr></table></figure>
-<h1 id="总结">总结</h1>
-<p>格密码是后量子密码学中极为重要的一环，而其中NTRU亦以其实现开销低等特性称为其中耀眼的新星。<br />
-学习NTRU算法的加密、解密原理时更应发挥离散数学的优雅之处——只定义“模板”，无论最终的实现是在
-<span class="math inline">\(Z_{q}\)</span>、<span
-class="math inline">\(P_{q}\)</span> 还是 <span
-class="math inline">\(R_{q}\)</span> 等等都能一通百通。<br />
-而对NTRU的格攻击则开启了基于分块矩阵的多变量、较复杂格构造的新大门。</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
+        <div class="article-info info-on-right">
+          
 	<div class="article-tag tagcloud">
 		<i class="icon-price-tags icon"></i>
 		<ul class="article-tag-list">
@@ -398,147 +187,38 @@ class="math inline">\(R_{q}\)</span> 等等都能一通百通。<br />
         		<li class="article-tag-list-item">
         			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
         		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">wp</a>
+        		</li>
       		
 		</ul>
 	</div>
 
-      
+          
 	<div class="article-category tagcloud">
 		<i class="icon-book icon"></i>
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="/categories/闲笔//" class="article-tag-list-link color3">闲笔</a>
+        			<a href="/categories/CTF-Writeups//" class="article-tag-list-link color3">CTF-Writeups</a>
         		</li>
       		
 		</ul>
 	</div>
 
 
-      
-
-      
-        
-<div class="share-btn share-icons tooltip-left">
-  <div class="tooltip tooltip-east">
-    <span class="tooltip-item">
-      <a href="javascript:;" class="share-sns share-outer">
-        <i class="icon icon-share"></i>
-      </a>
-    </span>
-    <span class="tooltip-content">
-      <div class="share-wrap">
-        <div class="share-icons">
-          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
-            <i class="icon icon-weibo"></i>
-          </a>
-          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
-            <i class="icon icon-weixin"></i>
-          </a>
-          <a class="qq share-sns" href="javascript:;" data-type="qq">
-            <i class="icon icon-qq"></i>
-          </a>
-          <a class="douban share-sns" href="javascript:;" data-type="douban">
-            <i class="icon icon-douban"></i>
-          </a>
-          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
-            <i class="icon icon-qzone"></i>
-          </a>
-          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
-            <i class="icon icon-facebook"></i>
-          </a>
-          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
-            <i class="icon icon-twitter"></i>
-          </a>
-          <a class="google share-sns" href="javascript:;" data-type="google">
-            <i class="icon icon-google"></i>
-          </a>
         </div>
-      </div>
-    </span>
+        <div class="clearfix"></div>
+    </header>
   </div>
-</div>
-
-<div class="page-modal wx-share js-wx-box">
-    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
-    <p>扫一扫，分享到微信</p>
-    <div class="wx-qrcode">
-      <img src="//pan.baidu.com/share/qrcode?url=https://crystaljiang232.github.io/crypto/ntru/" alt="微信分享二维码">
-    </div>
-</div>
-
-<div class="mask js-mask"></div>
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-  <div>
 </article>
-
-
-  
-<nav id="article-nav">
-  
-    <a href="/crypto/aesatk/4-1/" id="article-nav-newer" class="article-nav-link-wrap">
-      <i class="icon-circle-left"></i>
-      <div class="article-nav-title">
-        
-          AES积分攻击——云帆
-        
-      </div>
-    </a>
   
   
-    <a href="/misc/bomblab_wp/" id="article-nav-older" class="article-nav-link-wrap">
-      <div class="article-nav-title">CSAPP-BOMBLAB Writeup</div>
-      <i class="icon-circle-right"></i>
-    </a>
-  
-</nav>
-
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-        <div class="toc-container tooltip-left">
-            <i class="icon-font icon-category"></i>
-            <div class="tooltip tooltip-east">
-                <span class="tooltip-item">
-                </span>
-                <span class="tooltip-content">
-                    <div class="toc-article">
-                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%88%AA%E6%96%AD%E5%A4%9A%E9%A1%B9%E5%BC%8F"><span class="toc-number">1.</span> <span class="toc-text">截断多项式？</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%B7%E7%A7%AF%E5%A4%9A%E9%A1%B9%E5%BC%8F%E7%8E%AF"><span class="toc-number">1.1.</span> <span class="toc-text">卷积多项式环</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E6%95%B0%E4%B8%8E%E5%AF%86%E9%92%A5%E7%94%9F%E6%88%90"><span class="toc-number">2.</span> <span class="toc-text">参数与密钥生成</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8A%A0%E5%AF%86"><span class="toc-number">3.</span> <span class="toc-text">加密</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%A7%A3%E5%AF%86"><span class="toc-number">4.</span> <span class="toc-text">解密</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%AD%A3%E7%A1%AE%E6%80%A7%E8%AF%81%E6%98%8E"><span class="toc-number">4.1.</span> <span class="toc-text">正确性证明</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%AC%E9%92%A5%E6%94%BB%E5%87%BB%E4%B8%8E%E6%95%B0%E5%AD%A6%E9%9A%BE%E9%A2%98"><span class="toc-number">5.</span> <span class="toc-text">公钥攻击与数学难题</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8A%A0%E8%A7%A3%E5%AF%86%E6%94%BB%E5%87%BB%E5%BA%94%E7%94%A8%E7%A4%BA%E4%BE%8B"><span class="toc-number">6.</span> <span class="toc-text">加解密、攻击应用示例</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">7.</span> <span class="toc-text">总结</span></a></li></ol>
-                    </div>
-                </span>
-            </div>
-        </div>
-        
-    </div>
-</aside>
-
-
-
-  
-  
+    </div></section>
   
 
     
-
-  
-
-  
-
-  
 
 
           </div>
@@ -599,8 +279,8 @@ class="math inline">\(R_{q}\)</span> 等等都能一通百通。<br />
 	var yiliaConfig = {
 		mathjax: true,
 		isHome: false,
-		isPost: true,
-		isArchive: false,
+		isPost: false,
+		isArchive: true,
 		isTag: false,
 		isCategory: false,
 		open_in_new: true,
@@ -686,7 +366,23 @@ MathJax.Hub.Queue(function() {
           <ul class="article-tag-list" q-show="showTags">
              
               <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">玲珑</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color1">C/C++</a>
+              </li>
+             
+              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color2">Crypto</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">长文精选</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">C#</a>
               </li>
              
               <li class="article-tag-list-item">
@@ -694,11 +390,15 @@ MathJax.Hub.Queue(function() {
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">玲珑</a>
+                <a href="javascript:void(0)" class="js-tag color1">Modern C++</a>
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color1">Modern C++</a>
+                <a href="javascript:void(0)" class="js-tag color1">C++20</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">C++ Libraries</a>
               </li>
              
               <li class="article-tag-list-item">
@@ -707,26 +407,6 @@ MathJax.Hub.Queue(function() {
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color2">C Libraries</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color4">C++ Libraries</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">长文精选</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color1">C++20</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color1">C/C++</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">C#</a>
               </li>
             
             <div class="clearfix"></div>

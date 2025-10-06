@@ -6,20 +6,20 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="https://crystaljiang232.github.io">
-  <title>国城杯CTF Crypto Writeup | 玲珑</title>
+  <title>翎 | 玲珑</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="Curve 题目代码 123456789101112131415161718192021222324252627282930313233343536373839#sagefrom Crypto.Util.number import *def add(P, Q):    (x1, y1) &#x3D; P    (x2, y2) &#x3D; Q    x3 &#x3D; (x1*y2 + y1*x2) * inverse(">
+  <meta name="description" content="望舒  构造更高维度的格？  寒芒 相较较简单的“青天”的格构造，我们还需要将未知元素从单个元素提升(lift)为向量乃至矩阵。  有关“青天”的格构造参见格，其中系统介绍了格、部分代数和离散数学中的重要概念，有助于快速入门格密码；本文均假定读者已经具备相关的基础知识并已理解之。  &quot;lift&quot;的核心无外三点：  矩阵的构造（线性组合）必须符合目标环的运算规则；  已知量">
 <meta property="og:type" content="article">
-<meta property="og:title" content="国城杯CTF Crypto Writeup">
-<meta property="og:url" content="https://crystaljiang232.github.io/crypto/wp/gcbctf-wp/index.html">
+<meta property="og:title" content="翎">
+<meta property="og:url" content="https://crystaljiang232.github.io/crypto/lattice2/index.html">
 <meta property="og:site_name" content="玲珑">
-<meta property="og:description" content="Curve 题目代码 123456789101112131415161718192021222324252627282930313233343536373839#sagefrom Crypto.Util.number import *def add(P, Q):    (x1, y1) &#x3D; P    (x2, y2) &#x3D; Q    x3 &#x3D; (x1*y2 + y1*x2) * inverse(">
+<meta property="og:description" content="望舒  构造更高维度的格？  寒芒 相较较简单的“青天”的格构造，我们还需要将未知元素从单个元素提升(lift)为向量乃至矩阵。  有关“青天”的格构造参见格，其中系统介绍了格、部分代数和离散数学中的重要概念，有助于快速入门格密码；本文均假定读者已经具备相关的基础知识并已理解之。  &quot;lift&quot;的核心无外三点：  矩阵的构造（线性组合）必须符合目标环的运算规则；  已知量">
 <meta property="og:locale" content="en_US">
-<meta property="article:published_time" content="2024-12-08T07:37:48.000Z">
-<meta property="article:modified_time" content="2024-12-12T15:30:09.874Z">
+<meta property="article:published_time" content="2025-10-06T03:10:59.000Z">
+<meta property="article:modified_time" content="2025-10-06T06:02:20.279Z">
 <meta property="article:author" content="Hibiscus">
 <meta property="article:tag" content="Crypto">
-<meta property="article:tag" content="wp">
+<meta property="article:tag" content="长文精选">
 <meta name="twitter:card" content="summary">
   
     <link rel="alternative" href="/atom.xml" title="玲珑" type="application/atom+xml">
@@ -156,91 +156,394 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            <article id="post-crypto/wp/gcbctf-wp" class="article article-type-post " itemscope itemprop="blogPost">
+            <article id="post-crypto/lattice2" class="article article-type-post " itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 class="article-title" itemprop="name">
-      国城杯CTF Crypto Writeup
+      翎
     </h1>
   
 
         
-        <a href="/crypto/wp/gcbctf-wp/" class="archive-article-date">
-  	<time datetime="2024-12-08T07:37:48.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-12-08</time>
+        <a href="/crypto/lattice2/" class="archive-article-date">
+  	<time datetime="2025-10-06T03:10:59.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-10-06</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h1 id="curve">Curve</h1>
-<h2 id="题目代码">题目代码</h2>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">add</span>(<span class="params">P, Q</span>):</span><br><span class="line">    (x1, y1) = P</span><br><span class="line">    (x2, y2) = Q</span><br><span class="line"></span><br><span class="line">    x3 = (x1*y2 + y1*x2) * inverse(<span class="number">1</span> + d*x1*x2*y1*y2, p) % p</span><br><span class="line">    y3 = (y1*y2 - a*x1*x2) * inverse(<span class="number">1</span> - d*x1*x2*y1*y2, p) % p</span><br><span class="line">    <span class="keyword">return</span> (x3, y3)</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">mul</span>(<span class="params">x, P</span>):</span><br><span class="line">    Q = (<span class="number">0</span>, <span class="number">1</span>)</span><br><span class="line">    <span class="keyword">while</span> x &gt; <span class="number">0</span>:</span><br><span class="line">        <span class="keyword">if</span> x % <span class="number">2</span> == <span class="number">1</span>:</span><br><span class="line">            Q = add(Q, P)</span><br><span class="line">        P = add(P, P)</span><br><span class="line">        x = x &gt;&gt; <span class="number">1</span></span><br><span class="line">    <span class="keyword">return</span> Q</span><br><span class="line"></span><br><span class="line">p = <span class="number">64141017538026690847507665744072764126523219720088055136531450296140542176327</span></span><br><span class="line">a = <span class="number">362</span></span><br><span class="line">d = <span class="number">7</span></span><br><span class="line">e=<span class="number">0x10001</span></span><br><span class="line"></span><br><span class="line">gx=bytes_to_long(<span class="string">b&#x27;D0g3xGC&#123;*****************&#125;&#x27;</span>)</span><br><span class="line"></span><br><span class="line">PR.&lt;y&gt;=PolynomialRing(Zmod(p))</span><br><span class="line">f=(d*gx^<span class="number">2</span>-<span class="number">1</span>)*y^<span class="number">2</span>+(<span class="number">1</span>-a*gx^<span class="number">2</span>)</span><br><span class="line">gy=<span class="built_in">int</span>(f.roots()[<span class="number">0</span>][<span class="number">0</span>])</span><br><span class="line"></span><br><span class="line"><span class="keyword">assert</span> (a*gx^<span class="number">2</span>+gy^<span class="number">2</span>)%p==(<span class="number">1</span>+d*gx^<span class="number">2</span>*gy^<span class="number">2</span>)%p</span><br><span class="line"></span><br><span class="line">G=(gx,gy)</span><br><span class="line"></span><br><span class="line">eG = mul(e, G)</span><br><span class="line"><span class="built_in">print</span>(eG)</span><br><span class="line"></span><br><span class="line"><span class="comment">#eG = (34120664973166619886120801966861368419497948422807175421202190709822232354059, 11301243831592615312624457443883283529467532390028216735072818875052648928463)</span></span><br></pre></td></tr></table></figure>
-<p>题目实现了一个<strong>Twisted
-Edwards</strong>曲线的加法/乘法运算脚本。</p>
+        <h1 id="望舒">望舒</h1>
 <blockquote>
-<p>方程可由assert语句推出： <span class="math inline">\(ax^2+y^2\equiv
-dx^2y^2+1 (mod p)\)</span>.</p>
+<p>构造更高维度的格？</p>
 </blockquote>
-<p>椭圆曲线具有多种表示形式，可以将Twisted
-Edwards的方程作变量代换，变为熟悉的Weierstrass方程，对其求系数后构建EllipticCurve，<br />
-利用Sagemath求其阶后，遵循阿贝尔群的加法法则，乘以e在其阶下的模逆即可。</p>
-<h2 id="exp">exp</h2>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line">p = <span class="number">64141017538026690847507665744072764126523219720088055136531450296140542176327</span></span><br><span class="line">a = <span class="number">362</span></span><br><span class="line">d = <span class="number">7</span></span><br><span class="line">e = <span class="number">0x10001</span></span><br><span class="line"></span><br><span class="line">x2,y2 =  (<span class="number">34120664973166619886120801966861368419497948422807175421202190709822232354059</span>, <span class="number">11301243831592615312624457443883283529467532390028216735072818875052648928463</span>)</span><br><span class="line"><span class="keyword">assert</span> (a*x2^<span class="number">2</span>+y2^<span class="number">2</span>)%p==(<span class="number">1</span>+d*x2^<span class="number">2</span>*y2^<span class="number">2</span>)%p</span><br><span class="line"></span><br><span class="line"><span class="comment">#一阶段，Edwards转Montgomery</span></span><br><span class="line">A = <span class="number">2</span>*(a+d)/(a-d)</span><br><span class="line">B = <span class="number">4</span>/(a-d)</span><br><span class="line"></span><br><span class="line"><span class="comment">#二阶段，Montgomery转Weierstrass</span></span><br><span class="line">aa = (<span class="number">3</span>-A^<span class="number">2</span>)/(<span class="number">3</span>*B^<span class="number">2</span>)</span><br><span class="line">bb = (<span class="number">2</span>*A^<span class="number">3</span>-<span class="number">9</span>*A) / (<span class="number">27</span>*B^<span class="number">3</span>)</span><br><span class="line"></span><br><span class="line">E = EllipticCurve(Zmod(p),[<span class="number">0</span>,<span class="number">0</span>,<span class="number">0</span>,aa,bb])</span><br><span class="line">d = <span class="built_in">int</span>(<span class="built_in">pow</span>(e,-<span class="number">1</span>,E.order()))</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">add</span>(<span class="params">P, Q</span>):</span><br><span class="line">    (x1, y1) = P</span><br><span class="line">    (x2, y2) = Q</span><br><span class="line"></span><br><span class="line">    x3 = (x1*y2 + y1*x2) * inverse(<span class="number">1</span> + d*x1*x2*y1*y2, p) % p</span><br><span class="line">    y3 = (y1*y2 - a*x1*x2) * inverse(<span class="number">1</span> - d*x1*x2*y1*y2, p) % p</span><br><span class="line">    <span class="keyword">return</span> (x3, y3)</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">mul</span>(<span class="params">x, P</span>):</span><br><span class="line">    Q = (<span class="number">0</span>, <span class="number">1</span>)</span><br><span class="line">    <span class="keyword">while</span> x &gt; <span class="number">0</span>:</span><br><span class="line">        <span class="keyword">if</span> x % <span class="number">2</span> == <span class="number">1</span>:</span><br><span class="line">            Q = add(Q, P)</span><br><span class="line">        P = add(P, P)</span><br><span class="line">        x = x &gt;&gt; <span class="number">1</span></span><br><span class="line">    <span class="keyword">return</span> Q</span><br><span class="line"></span><br><span class="line">eG = (<span class="number">34120664973166619886120801966861368419497948422807175421202190709822232354059</span>, <span class="number">11301243831592615312624457443883283529467532390028216735072818875052648928463</span>)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(long_to_bytes(<span class="built_in">int</span>(mul(d,eG)[<span class="number">0</span>])))</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="寒芒">寒芒</h2>
+<p>相较较简单的“青天”的格构造，我们还需要将未知元素从单个元素<strong>提升(lift)</strong>为向量乃至矩阵。</p>
 <blockquote>
-<p>Flag：D0g3xGC{SOlvE_The_Edcurv3}</p>
+<p>有关“青天”的格构造参见<a
+href="/crypto/lattice">格</a>，其中系统介绍了格、部分代数和离散数学中的重要概念，有助于快速入门格密码；本文均假定读者已经具备相关的基础知识<strong>并已理解之</strong>。</p>
+</blockquote>
+<p>"lift"的核心无外三点：</p>
+<ol type="1">
+<li>矩阵的构造（线性组合）必须符合目标环的运算规则；<br />
+</li>
+<li>已知量<strong>嵌入格矩阵<code>L</code>中</strong>，<strong>未知但已知是整数
+<span class="math inline">\(k_{i}\)</span>
+的量放在左侧，未知且已知是整数 <em>小量</em>
+的放在右侧（锚定向量）</strong>；<br />
+</li>
+<li>对格进行<strong>配平</strong>，令锚定向量的各维度尽可能近长。</li>
+</ol>
+<p>如在NTRU中，由于其元素的运算在卷积多项式环上运行，因此将 <span
+class="math inline">\(h\)</span> 应转化为 <span
+class="math inline">\(rot(h) = \begin{bmatrix} h_0 &amp; h_1 &amp;
+\cdots &amp; h_n \\ h_1 &amp; h_2 &amp; \cdots &amp; h_0 \\ \vdots &amp;
+\vdots &amp;&amp; \vdots \\ h_n &amp; h_0 &amp; \cdots &amp; h_n-1
+\end{bmatrix}\)</span>，使其在进行乘法时符合该环的运算规则。</p>
+<p>配平格的要点在于利用好LLL（或BKZ）的特性之一——模长“标定”。</p>
+<h2 id="炽羽">炽羽</h2>
+<p>对CVP问题的求解是此类格构造后利用的重点。<br />
+CVP问题常见的解法有二：将目标向量“嵌入”原格中，使之提升一个维度；或使用Babai's
+Nearest Plane Algorithm。</p>
+<h3 id="babai">Babai</h3>
+<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">Babai</span>(<span class="params">A,v</span>):</span><br><span class="line">    <span class="string">&#x27;&#x27;&#x27;</span></span><br><span class="line"><span class="string">    Babai&#x27;s Nearest Plane Algorithm.  </span></span><br><span class="line"><span class="string">    Finds the closest vector to `v` that&#x27;s on the lattice defined by `A`.  </span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Parameters:</span></span><br><span class="line"><span class="string">    - `A`: Lattice-defining matrix</span></span><br><span class="line"><span class="string">    - `v`: Target vector</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Note that both `A` and `V` has to be defined on Integer Ring.</span></span><br><span class="line"><span class="string">    &#x27;&#x27;&#x27;</span></span><br><span class="line"></span><br><span class="line">    M = A.LLL(delta=<span class="number">0.75</span>)</span><br><span class="line">    G = M.gram_schmidt()[<span class="number">0</span>]</span><br><span class="line"></span><br><span class="line">    t = v <span class="comment"># vector</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">reversed</span>(<span class="built_in">range</span>(A.nrows())):</span><br><span class="line">        c = ((t * G[i]) / (G[i] * G[i])).<span class="built_in">round</span>()</span><br><span class="line">        t -= A[i] * c</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> v - t</span><br></pre></td></tr></table></figure>
+<p>从上述实现中即可一窥Babai's Algorithm的核心：</p>
+<ul>
+<li>先对之进行格基规约（<strong>注意此方法仅适用于方阵，对于非方阵应使用<code>IntegerLattice</code>，具体原因似乎与
+<em>m&gt;n</em>
+时规约的“崩塌”有关（此时因为向量间必定线性相关的特性，会让规约的最终向量失去意义</strong>）；<br />
+</li>
+<li>取规约矩阵正交化后的向量基，在<strong>每个 <em>两两垂直</em>
+的投影方向上</strong>均<strong>减去这些基的
+<em>最近整数倍</em></strong>（因为格运算都在整数上进行，参见<code>.round()</code>）。</li>
+</ul>
+<h3 id="embedding">Embedding</h3>
+<p><em>Babai's Embedding Technique</em> 的核心思想非常简单：<br />
+假设存在向量 <span class="math inline">\(\mathbb{v}^{N}\)</span> 在
+<span class="math inline">\(\mathbb{L}^{M \times N}\)</span>
+所定义的格上，不妨构造<br />
+<span class="math display">\[\mathbb{L}^{&#39; M+1 \times N+1} =
+\begin{bmatrix} \mathbb{L} \\ \mathbb{v} &amp; -1
+\end{bmatrix}\]</span><br />
+则该格上一定存在一个向量 <span class="math inline">\(\begin{bmatrix}
+0^{N} &amp; -1 \end{bmatrix}\)</span>。</p>
+<blockquote>
+<p>上述推论比较显然——因为 <span class="math inline">\(v\)</span> 就是
+<span class="math inline">\(L\)</span> 的线性组合，其系数取 <span
+class="math inline">\(-1\)</span> 通过行变换就可以构造出这个向量。</p>
+</blockquote>
+<p>显然此时对 <span class="math inline">\(L^{&#39;}\)</span>
+进行规约就可以得到这个向量。<br />
+更进一步地，假设存在一个偏移<del>a.k.a.误差</del>向量 <span
+class="math inline">\(\mathbb{e}^{N}\)</span>，其近似地表征了 <span
+class="math inline">\(\mathbb{dist(v,L)}\)</span>（即该向量和格之间的距离）。</p>
+<p>令 <span class="math inline">\(\mathbb{b = v + e}\)</span>，将 <span
+class="math inline">\(\mathbb{b}\)</span> 嵌入该格中，则向量 <span
+class="math inline">\(\begin{bmatrix} e^{N} &amp; -1
+\end{bmatrix}\)</span> 也在格上。<br />
+此时若 <span class="math inline">\(e\)</span>
+足够短，同时对格进行配平，通过格基规约同样有很大概率找出该向量。</p>
+<p>得到 <span class="math inline">\(\mathbb{e}\)</span>
+后，易得CVP的解即为 <span class="math inline">\(\mathbb{b -
+e}\)</span>。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">L = <span class="comment">#...</span></span><br><span class="line">b = <span class="comment">#...</span></span><br><span class="line"></span><br><span class="line">C = <span class="number">2</span>**ebits</span><br><span class="line"></span><br><span class="line">mt = matrix.block(ZZ,[[L,<span class="number">0</span>],</span><br><span class="line">                      [b,C]])</span><br><span class="line"></span><br><span class="line">e = IntegerLattice(mt,lll_reduce = <span class="literal">True</span>).reduced_basis[<span class="number">0</span>]</span><br><span class="line"></span><br><span class="line">sol = b - e</span><br><span class="line"><span class="comment"># ...</span></span><br></pre></td></tr></table></figure>
+<h1 id="月舞">月舞</h1>
+<blockquote>
+<p>Delightful的“约减”背后，还有些什么若隐若现...</p>
+</blockquote>
+<h2 id="朝花夕拾">朝花夕拾</h2>
+<h2 id="section"></h2>
+<hr />
+<blockquote>
+<p>纸上得来终觉浅——实践中分析更复杂的密码系统方为正道。</p>
+</blockquote>
+<h1 id="lwe">LWE</h1>
+<h2 id="简述">简述</h2>
+<p>LWE(Learning With Errors)是机器学习领域的难题之一。<br />
+其数学表示形式为：已知 <span class="math inline">\(Z_{q}\)</span> 下
+<span class="math inline">\(A^{M \times N} \cdot s^{N \times 1} + e^{M
+\times 1} = b^{M \times 1}\)</span>，给定 <span
+class="math inline">\(A,b\)</span>，还原 <span
+class="math inline">\(s\)</span>。<br />
+其中 <span class="math inline">\(e\)</span> 是一个小向量。</p>
+<p>更形象地：<br />
+已知两个 <span class="math inline">\(N\)</span> 维向量 <span
+class="math inline">\(a_{i},s\)</span>，计算其<strong>带一定误差</strong>的点积
+<span class="math inline">\(b_{i} \equiv a_{i} \cdot s + e_{i} (\bmod
+q)\)</span>，重复 <span class="math inline">\(M\)</span> 次（<span
+class="math inline">\(M \geq N\)</span>），还原 <span
+class="math inline">\(s\)</span>。</p>
+<h2 id="绮链">绮链</h2>
+<p>若不考虑误差，上述问题显然只是普通的解 <span
+class="math inline">\(Z_{q}\)</span>
+下的线性方程组的问题，可以使用高斯消元法直接求解，或利用线性代数知识，进行行列变换或计算
+<span class="math inline">\(Z_{q}\)</span> 下的 <span
+class="math inline">\(b \cdot A^{-1}\)</span>
+即可（此处需要截断之为方阵）。</p>
+<p>但加入误差后，求解就变得极为困难了——按上述传统思路，必须逐个爆破误差
+<span class="math inline">\(e_{i}\)</span>
+后验证解，可行性极为受限。</p>
+<h2 id="新的方程组与格">新的方程组与格</h2>
+<p>LWE中，格的构造相较以往单元素的方程组更为“精巧”。<br />
+由于 <span class="math inline">\(A \cdot s\)</span> 结果的每个维度对
+<span class="math inline">\(q\)</span> 取模时都可能存在不同的 <span
+class="math inline">\(k_{i}\)</span>（参考上述等式： <span
+class="math inline">\(b_{i} = a_{i} \cdot s + e_{i} +
+k_{i}q\)</span>），因此构造时应当取一个 <span
+class="math inline">\(qI^{M}\)</span>
+的对角阵与之排列。换言之，我们的“理想”向量（在 <span
+class="math inline">\(e\)</span> 不存在时）应该在这个格上：</p>
+<p><span class="math display">\[\begin{bmatrix} qI^{M} \\ A^{T}
+\end{bmatrix}\]</span></p>
+<p>其中 <span class="math inline">\(A\)</span> 因为格矩阵运算（LWE中
+<span class="math inline">\(s\)</span>
+是被右乘的操作数，格的线性组合要求左乘系数）而被转置。</p>
+<p>由于 <span class="math inline">\(e\)</span>
+是小向量，因此其显然就是一个CVP问题，求解思路同样是Babai/Embedding<del>实际上这个Embedding的常用变种之一就是以Babai命名的</del>。<br />
+在使用Babai时，由于原矩阵不是方阵，因此需要使用IntegerLattice并<del>在其构造函数中规约之</del>：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">L = IntegerLattice(mt,lll_reduce = <span class="literal">True</span>)</span><br><span class="line">B = L.reduced_basis <span class="comment"># equivalent to LLL result</span></span><br><span class="line">G = B.gram_schmidt()[<span class="number">0</span>] </span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">reversed</span>(<span class="built_in">range</span>(B.nrows())):</span><br><span class="line">    <span class="comment"># ...</span></span><br></pre></td></tr></table></figure>
+<p>Babai's Embedding的构造矩阵形如：</p>
+<p><span class="math display">\[\begin{bmatrix} v_{k}^{M} &amp; s^{N}
+&amp; 1 \end{bmatrix} \cdot \begin{bmatrix} qI^{M}\\ A^{T}\\ b &amp;
+C_{0} \end{bmatrix} = \begin{bmatrix} e^{M} &amp;
+C_{0}\end{bmatrix}\]</span></p>
+<p>由目标向量可知配平系数 <span class="math inline">\(C_{0}\)</span>
+应与 <span class="math inline">\(e\)</span> 的大小接近，取 <span
+class="math inline">\(2^{ebits}\)</span> 即可。</p>
+<h1 id="ntru">NTRU</h1>
+<h2 id="卷积多项式环">卷积多项式环</h2>
+<p>给定 <span class="math inline">\(N,q \in Z_{+}\)</span>，则模 <span
+class="math inline">\(q\)</span> 下的 <span class="math inline">\(N -
+1\)</span> 次卷积多项式环是一个商环(quotient ring)，记作 <span
+class="math inline">\(R_{q} = \frac{Z_{q}[x]}{x^{N} - 1}\)</span>。</p>
+<blockquote>
+<p>商环的定义为对环(Ring)上，<span class="math inline">\(\forall a \neq
+0 \in R, \exists a^{-1} \in R\)</span>，即除了加法单位元 <span
+class="math inline">\(0\)</span> 外所有元素均存在逆元。</p>
+</blockquote>
+<p><span class="math inline">\(R_{q}\)</span> 下的 <span
+class="math inline">\(n\)</span> 次卷积多项式表示：</p>
+<p><span class="math display">\[z = z_{0}x^{0} + z_{1}x^{1} + \cdots +
+z_{n-1}x^{n-1} = \sum_{i=0}^{n-1} z_{i}x^{i} \in R^{n}_{q}\]</span></p>
+<p>设 <span class="math inline">\(f,g,h \in R^{n}_{q}\)</span>，<span
+class="math inline">\(f \cdot g = h\)</span>，乘法规则形如</p>
+<p><span class="math display">\[ h = \sum_{i=0}^{n-1} h_{i}x^{i} \\
+h_{i} \equiv \sum_{a,b}^{a+b \equiv i \bmod N} f_{a}g_{b} \bmod
+q\]</span></p>
+<blockquote>
+<p>显然其与普通的多项式乘法并无差分，只是对幂数和项数的计算分别放在了
+<span class="math inline">\(Z_{n}\)</span> 和 <span
+class="math inline">\(Z_{q}\)</span> 下进行。</p>
+</blockquote>
+<p>写作 <span class="math inline">\(Z_{q}\)</span> 下 <span
+class="math inline">\(n \times n\)</span> 矩阵乘法的形式，形如：</p>
+<p><span class="math inline">\(\begin{bmatrix} h_0 &amp; h_1 &amp;
+\cdots &amp; h_{n-2} &amp; h_{n-1} \end{bmatrix} ^ {T} = \begin{bmatrix}
+f_0 &amp; f_1 &amp; \cdots &amp; f_{n-2} &amp; f_{n-1} \\ f_1 &amp; f_2
+&amp; \cdots &amp; f_{n-1} &amp; f_0 \\ \vdots &amp; \vdots &amp;&amp;
+\vdots &amp; \vdots \\ f_{n-1} &amp; f_0 &amp; \cdots &amp; f_{n-3}
+&amp; f_{n-2} \end{bmatrix} \cdot \begin{bmatrix} g_0 &amp; g_1 &amp;
+\cdots &amp; g_{n-2} &amp; g_{n-1} \end{bmatrix} ^ {T}\)</span></p>
+<p>称其中表示 <span class="math inline">\(f\)</span>
+的系数矩阵为卷积矩阵(convolution matrix)，常记作 <span
+class="math inline">\(rot(f)\)</span>，其第 <span
+class="math inline">\(i\)</span> 行由 <span
+class="math inline">\(f\)</span> 的系数循环右移 <span
+class="math inline">\(i\)</span> 位排列而成。</p>
+<blockquote>
+<p>若 <span class="math inline">\(q\)</span>
+比较大，为提升可读性，部分实现会将 <span
+class="math inline">\(f_{i}\)</span> 转化到 <span
+class="math inline">\((-\frac{q}{2},\frac{q}{2}]\)</span>
+的区间内（<span class="math inline">\(Z_{q}\)</span> 下等价）。</p>
+</blockquote>
+<h2 id="参数与密钥生成">参数与密钥生成</h2>
+<p>NTRU的关键参数为 <span
+class="math inline">\((N,p,q,d)\)</span>。其中，</p>
+<ul>
+<li><span class="math inline">\(N,q\)</span>
+越大则格攻击构造格的维度越高，密码系统越安全，但运算效率会大幅下降；一般选择
+<span class="math inline">\(N \in [250,2500]\)</span>。<br />
+</li>
+<li><span class="math inline">\(p,d\)</span> 均为整数，要求 <span
+class="math inline">\(gcd(p,q) = 1\)</span> 且 <span
+class="math inline">\(gcd(q,N) = 1\)</span>，<span
+class="math inline">\(q &gt; (6d + 1)p\)</span>。</li>
+</ul>
+<p>NIST对NTRU的强度-推荐参数组合如下：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">强度</th>
+<th style="text-align: center;">N</th>
+<th style="text-align: center;">p</th>
+<th style="text-align: center;">q</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">标准</td>
+<td style="text-align: center;">251</td>
+<td style="text-align: center;">3</td>
+<td style="text-align: center;">128</td>
+</tr>
+<tr>
+<td style="text-align: center;">高</td>
+<td style="text-align: center;">347</td>
+<td style="text-align: center;">3</td>
+<td style="text-align: center;">128</td>
+</tr>
+<tr>
+<td style="text-align: center;">最高</td>
+<td style="text-align: center;">503</td>
+<td style="text-align: center;">3</td>
+<td style="text-align: center;">256</td>
+</tr>
+</tbody>
+</table>
+<p>参数 <span class="math inline">\(d\)</span> 可在满足 <span
+class="math inline">\(q &gt; (6d + 1)p\)</span> 下自行决定，一般选择
+<span class="math inline">\(d \approx \frac{N}{3}\)</span>
+来达到较好的安全性。</p>
+<hr />
+<blockquote>
+<p>定义函数 <span class="math inline">\(T(d_{1},d_{2}) (d_{1} + d_{2}
+&lt; q)\)</span> 表示系数 <span class="math inline">\(\{1,-1\}\)</span>
+<strong>计数</strong>分别为 <span
+class="math inline">\(\{d_{1},d_{2}\}\)</span> 的多项式 <span
+class="math inline">\(f\)</span> 的集合。<br />
+如，<span class="math inline">\(f = x^{6} + x^{3} - x^{2} + x - 1 \in
+T(3,2)\)</span>。</p>
+</blockquote>
+<p>选择两个多项式 <span class="math display">\[f = \sum_{i=0}^{N-1}
+f_{i}x^{i} \in T(d+1,d)，g = \sum_{i=0}^{N-1} g_{i}x^{i} \in
+T(d,d)\]</span></p>
+<p>再计算 <span class="math inline">\(h \equiv f^{-1}g (\bmod
+q)\)</span>，随后将 <span class="math inline">\(g\)</span>
+的记录销毁。<br />
+公钥为 <span class="math inline">\(h\)</span>，私钥为 <span
+class="math inline">\(R_{p}\)</span> 和 <span
+class="math inline">\(R_{q}\)</span> 下的 <span
+class="math inline">\(f^{-1}\)</span>（由于 <span
+class="math inline">\(p,q\)</span> 是既定参数，可以认为私钥就是 <span
+class="math inline">\(f\)</span>）。</p>
+<blockquote>
+<p><span class="math inline">\(g\)</span> 不是公钥或私钥，但知道 <span
+class="math inline">\(g\)</span> 就可以攻破NTRU，其地位类似于RSA中 <span
+class="math inline">\(N\)</span> 的因数分解，故不应保留之。</p>
+</blockquote>
+<h2 id="加解密与正确性证明">加/解密与正确性证明</h2>
+<p>先将明文编码为一个 <span class="math inline">\(n\)</span> 次多项式
+<span class="math inline">\(m \in \{-1,0,1\}^{N}\)</span>。</p>
+<p>加密时，另随机生成一个多项式 <span class="math inline">\(r \in
+\{-1,0,1\}^{N}\)</span>，计算 <span class="math inline">\(c \equiv ph
+\cdot r + m (\bmod q)\)</span>，输出密文 <span
+class="math inline">\(c\)</span>。</p>
+<p>解密时，计算 <span class="math inline">\(m \equiv f^{-1} \cdot (f
+\cdot c (\bmod q)) (\bmod p)\)</span>，输出明文 <span
+class="math inline">\(m\)</span>。</p>
+<blockquote>
+<p>注意其中涉及到了“换环”，即现在 <span
+class="math inline">\(R_{q}\)</span> 下计算 <span
+class="math inline">\(f \cdot c\)</span>，将结果转到 <span
+class="math inline">\(R_{p}\)</span> 下后再与该环下的 <span
+class="math inline">\(f^{-1}\)</span> 相乘。</p>
 </blockquote>
 <hr />
-<h1 id="ez_sign">Ez_sign</h1>
-<h2 id="题目代码-1">题目代码</h2>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> gmpy2 <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> hashlib <span class="keyword">import</span>*</span><br><span class="line"><span class="keyword">import</span> random,os</span><br><span class="line"></span><br><span class="line">flag = <span class="string">b&#x27;D0g3xGA&#123;***************&#125;&#x27;</span></span><br><span class="line">msg = <span class="string">b&#x27;e = ?&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">sign</span>(<span class="params">pub, pri, k</span>):</span><br><span class="line">    (p,q,g,y) = pub</span><br><span class="line">    x = pri</span><br><span class="line">    r = <span class="built_in">int</span>(powmod(g, k, p) % q)</span><br><span class="line">    H = bytes_to_long(sha1(os.urandom(<span class="number">20</span>)).digest())</span><br><span class="line">    s = <span class="built_in">int</span>((H + r * x) * invert(k, q) % q)</span><br><span class="line">    <span class="keyword">return</span> (H,r,s)</span><br><span class="line"></span><br><span class="line">k1 = getPrime(<span class="number">64</span>)</span><br><span class="line">k2 = k1 ** <span class="number">2</span></span><br><span class="line">pri = bytes_to_long(msg)</span><br><span class="line">a = <span class="number">149328490045436942604988875802116489621328828898285420947715311349436861817490291824444921097051302371708542907256342876547658101870212721747647670430302669064864905380294108258544172347364992433926644937979367545128905469215614628012983692577094048505556341118385280805187867314256525730071844236934151633203</span></span><br><span class="line">b = <span class="number">829396411171540475587755762866203184101195238207</span></span><br><span class="line">g = <span class="number">87036604306839610565326489540582721363203007549199721259441400754982765368067012246281187432501490614633302696667034188357108387643921907247964850741525797183732941221335215366182266284004953589251764575162228404140768536534167491117433689878845912406615227673100755350290475167413701005196853054828541680397</span></span><br><span class="line">y = <span class="number">97644672217092534422903769459190836176879315123054001151977789291649564201120414036287557280431608390741595834467632108397663276781265601024889217654490419259208919898180195586714790127650244788782155032615116944102113736041131315531765220891253274685646444667344472175149252120261958868249193192444916098238</span></span><br><span class="line"></span><br><span class="line">pub = (a, b, g, y)</span><br><span class="line"></span><br><span class="line">H1, r1, s1 = sign(pub, pri, k1)</span><br><span class="line"></span><br><span class="line">H2, r2, s2 = sign(pub, pri, k2)</span><br><span class="line"></span><br><span class="line">p = getPrime(<span class="number">128</span>)</span><br><span class="line">q = getPrime(<span class="number">128</span>)</span><br><span class="line">n = p * q</span><br><span class="line">c = powmod(bytes_to_long(flag), e, n)</span><br><span class="line"></span><br><span class="line">C = p**<span class="number">2</span> + q**<span class="number">2</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&#x27;(H1, r1, s1) = <span class="subst">&#123;H1&#125;</span>, <span class="subst">&#123;r1&#125;</span>, <span class="subst">&#123;s1&#125;</span>&#x27;</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&#x27;(H2, r2, s2) = <span class="subst">&#123;H2&#125;</span>, <span class="subst">&#123;r2&#125;</span>, <span class="subst">&#123;s2&#125;</span>&#x27;</span>)</span><br><span class="line"><span class="built_in">print</span>(c)</span><br><span class="line"><span class="built_in">print</span>(C)</span><br><span class="line"></span><br><span class="line"><span class="string">&#x27;&#x27;&#x27;</span></span><br><span class="line"><span class="string">(H1, r1, s1) = 659787401883545685817457221852854226644541324571, 334878452864978819061930997065061937449464345411, 282119793273156214497433603026823910474682900640</span></span><br><span class="line"><span class="string">(H2, r2, s2) = 156467414524100313878421798396433081456201599833, 584114556699509111695337565541829205336940360354, 827371522240921066790477048569787834877112159142</span></span><br><span class="line"><span class="string">c = 18947793008364154366082991046877977562448549186943043756326365751169362247521</span></span><br><span class="line"><span class="string">C = 179093209181929149953346613617854206675976823277412565868079070299728290913658</span></span><br><span class="line"><span class="string">&#x27;&#x27;&#x27;</span></span><br></pre></td></tr></table></figure>
-<p>本题分为两部分，第一部分将含有e的信息作为DSA的私钥进行加密，涉及<del>基于蛇皮随机数复用的</del>数学分析<br />
-第二部分将p,q的值放进了一个平方和问题</p>
-<p>先看第一部分，<del>本来想直接上手写草稿图的</del><br />
-<span class="math inline">\(k_1 \equiv H_1s_1^{-1}+r_1s_1^{-1}x (mod
-q)\)</span> <span class="math inline">\(k_1^2 \equiv
-H_2s_2^{-1}+r_2s_2^{-1}x (mod q)\)</span><br />
-记 <span class="math inline">\(r_is_i = A_i\)</span>，<span
-class="math inline">\(H_iS_i = B_i\)</span><br />
-整理后可以得到 <span class="math inline">\(A_1x^2 + (2A_1B_1 - A_2)x +
-(B_1^2-B_2) \equiv 0 (mod q)\)</span><br />
-利用sage解该同余式方程即可。<br />
-第二部分平方和的divisors解法参考了<a
-target="_blank" rel="noopener" href="https://ask.sagemath.org/question/76636/sum-of-2-squares/">asksage</a>上的一行代码，非常简明精炼。</p>
-<h2 id="exp-1">exp</h2>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> *</span><br><span class="line">(H1, r1, s1) = <span class="number">659787401883545685817457221852854226644541324571</span>, <span class="number">334878452864978819061930997065061937449464345411</span>, <span class="number">282119793273156214497433603026823910474682900640</span></span><br><span class="line">(H2, r2, s2) = <span class="number">156467414524100313878421798396433081456201599833</span>, <span class="number">584114556699509111695337565541829205336940360354</span>, <span class="number">827371522240921066790477048569787834877112159142</span></span><br><span class="line">q = <span class="number">829396411171540475587755762866203184101195238207</span></span><br><span class="line"></span><br><span class="line">ss1 = <span class="built_in">int</span>(<span class="built_in">pow</span>(s1,-<span class="number">1</span>,q))</span><br><span class="line">ss2 = <span class="built_in">int</span>(<span class="built_in">pow</span>(s2,-<span class="number">1</span>,q))</span><br><span class="line"></span><br><span class="line">A1 = r1 * ss1</span><br><span class="line">A2 = r2 * ss2</span><br><span class="line">B1 = H1 * ss1</span><br><span class="line">B2 = H2 * ss2</span><br><span class="line"></span><br><span class="line">P.&lt;x&gt;=Zmod(q)[]</span><br><span class="line">eq = A1^<span class="number">2</span>*x^<span class="number">2</span> + (<span class="number">2</span>*A1*B1-A2)*x + (B1^<span class="number">2</span>-B2)</span><br><span class="line"><span class="built_in">print</span>(eq.roots())</span><br><span class="line"><span class="comment">#[(91973915966463187834053272623425597244095846333, 1), (1865444199836044046649, 1)]</span></span><br><span class="line"><span class="comment">#第二个数to_bytes可以得到b&#x27;e = 44519&#x27;</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">all_two_squares</span>(<span class="params">n</span>):</span><br><span class="line">    <span class="keyword">return</span> [(<span class="built_in">abs</span>(d[<span class="number">0</span>]),<span class="built_in">abs</span>(d[<span class="number">1</span>])) <span class="keyword">for</span> d <span class="keyword">in</span> divisors(GaussianIntegers()(n)) <span class="keyword">if</span> norm(d)==n]</span><br><span class="line"></span><br><span class="line">probs = all_two_squares(C)</span><br><span class="line"><span class="keyword">for</span> p,q <span class="keyword">in</span> probs:</span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">not</span> isPrime(<span class="built_in">int</span>(p)) <span class="keyword">or</span> <span class="keyword">not</span> isPrime(<span class="built_in">int</span>(q)):</span><br><span class="line">        <span class="keyword">continue</span></span><br><span class="line">    e = <span class="number">44519</span></span><br><span class="line">    c = <span class="number">18947793008364154366082991046877977562448549186943043756326365751169362247521</span></span><br><span class="line">    n = p * q</span><br><span class="line">    d = <span class="built_in">pow</span>(e,-<span class="number">1</span>,(p-<span class="number">1</span>)*(q-<span class="number">1</span>))</span><br><span class="line">    <span class="built_in">print</span>(long_to_bytes(<span class="built_in">int</span>(<span class="built_in">pow</span>(c,d,n))))</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>不得不说"sage
-magic"还是挺好用的（毕竟免去了手搓/import乱七八糟东西的麻烦）</p>
+<p>正确性证明：</p>
+<p>先在 <span class="math inline">\(R_{q}\)</span> 下计算， <span
+class="math inline">\(f \cdot c = pr \cdot hf + mf \Rightarrow f \cdot c
+= prg + mf\)</span><br />
+随后换环到 <span class="math inline">\(R_{p}\)</span> 上，显然 <span
+class="math inline">\(prg \equiv 0 (\bmod p)\)</span>，因此 <span
+class="math inline">\(R_{p}\)</span> 下 <span class="math inline">\((fc
+\bmod q) \equiv fm\)</span><br />
+进而 <span class="math inline">\(fm \cdot f^{-1} = m\)</span><br />
+解密正确性得证。</p>
+<h2 id="攻击">攻击</h2>
+<h3 id="从公钥推导私钥">从公钥推导私钥</h3>
+<p>作为公钥密码算法，NTRU所依赖的数学难题是格上的SVP问题。<br />
+给定公钥 <span class="math inline">\(h\)</span> ，若维度参数 <span
+class="math inline">\(N\)</span>
+选择过小，则通过格基规约获得SVP问题的近似解是可行的。</p>
+<p>以Sage梳理攻击过程：</p>
+<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">ntru</span>(<span class="params">h,n,q</span>):</span><br><span class="line">    rot_h = matrix(ZZ,[[(i+j)%n <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(n)] <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(n)])</span><br><span class="line">    In = matrix.identity(n)</span><br><span class="line"></span><br><span class="line">    mt = matrix.block(ZZ,[[In,rot_h],[<span class="number">0</span>,q*In]])</span><br><span class="line">    mt = mt.LLL()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> row <span class="keyword">in</span> mt:</span><br><span class="line">        <span class="keyword">if</span> <span class="built_in">all</span>(i <span class="keyword">in</span> (-<span class="number">1</span>,<span class="number">0</span>,<span class="number">1</span>) <span class="keyword">for</span> i <span class="keyword">in</span> row):</span><br><span class="line">            rf = vector(ZZ,row[:n])</span><br><span class="line">            <span class="comment"># rg = vector(ZZ,row[n:])</span></span><br><span class="line">            <span class="keyword">return</span> rf</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="literal">None</span></span><br></pre></td></tr></table></figure>
+<p>关键等式为 <span class="math inline">\(Z_{q}\)</span> 下， <span
+class="math inline">\(f \cdot h \equiv g\)</span>；将之抬升(lift)至
+<span class="math inline">\(Z\)</span> 下，则有 <span
+class="math inline">\(f \cdot h + q \cdot z = g\)</span>，其中 <span
+class="math inline">\(z\)</span> 是 <span
+class="math inline">\(Z^{N}\)</span> 下的某个“制衡”向量( <em>carry-on
+vector</em> )。</p>
+<p>矩阵运算如下：</p>
+<p><span class="math display">\[\begin{bmatrix} f &amp; z \end{bmatrix}
+\cdot \begin{bmatrix} I^{N} &amp; rot(h) \\ &amp; qI^{N} \end{bmatrix} =
+\begin{bmatrix} f &amp; g \end{bmatrix}\]</span></p>
+<p>对构造格进行规约，其预期最短向量就是 <span
+class="math inline">\(\begin{bmatrix} f &amp; g
+\end{bmatrix}\)</span>，注意 <span class="math inline">\(f\)</span> 和
+<span class="math inline">\(g\)</span> 都是 <span
+class="math inline">\(Z^{1 \times N}\)</span> 的向量。<br />
+由于 <span class="math inline">\(f,g\)</span> 每一维度的取值都在 <span
+class="math inline">\(\{-1,0,1\}\)</span> 中（等价地，<span
+class="math inline">\(p=3\)</span> 时的 <span
+class="math inline">\(Z_{p}）\)</span>，其模显然在格中是极短的。</p>
 <blockquote>
-<p>flag: D0g3xGC{EZ_DSA_<span class="citation"
-data-cites="nd_C0mplex_QAQ">@nd_C0mplex_QAQ</span>}</p>
+<p>构造矩阵以分块矩阵的方式表述（实际上单个元素可被视为1*1的分块矩阵的“特例”），对矩阵的幺元操作在格中体现为单位矩阵，此时锚定向量实际上也是分块矩阵“拼凑”的结果。</p>
 </blockquote>
 <hr />
-<h1 id="ezrsa">EzRSA</h1>
-<h2 id="题目代码-2">题目代码</h2>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> secret <span class="keyword">import</span> flag</span><br><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span>*</span><br><span class="line"><span class="keyword">from</span> gmpy2 <span class="keyword">import</span>*</span><br><span class="line"></span><br><span class="line">flag = <span class="string">b&#x27;D0g3xGC&#123;****************&#125;&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">gen_key</span>(<span class="params">p, q</span>):</span><br><span class="line">    public_key = p*p*q</span><br><span class="line">    e = public_key</span><br><span class="line">    n = p*q</span><br><span class="line">    phi_n = (p-<span class="number">1</span>)*(q-<span class="number">1</span>)</span><br><span class="line">    private_key = inverse(e,phi_n)</span><br><span class="line">    <span class="keyword">return</span> public_key,private_key,e</span><br><span class="line"></span><br><span class="line">p = getPrime(<span class="number">512</span>)</span><br><span class="line">q = getPrime(<span class="number">512</span>)</span><br><span class="line"></span><br><span class="line">N,d,e = gen_key(p,q)</span><br><span class="line"></span><br><span class="line">c = gmpy2.powmod(bytes_to_long(flag),e,N)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(N)</span><br><span class="line"><span class="built_in">print</span>(d)</span><br><span class="line"><span class="built_in">print</span>(c)</span><br><span class="line"></span><br><span class="line"><span class="string">&#x27;&#x27;&#x27;</span></span><br><span class="line"><span class="string">n = 539403894871945779827202174061302970341082455928364137444962844359039924160163196863639732747261316352083923762760392277536591121706270680734175544093484423564223679628430671167864783270170316881238613070741410367403388936640139281272357761773388084534717028640788227350254140821128908338938211038299089224967666902522698905762169859839320277939509727532793553875254243396522340305880944219886874086251872580220405893975158782585205038779055706441633392356197489</span></span><br><span class="line"><span class="string">d = 58169755386408729394668831947856757060407423126014928705447058468355548861569452522734305188388017764321018770435192767746145932739423507387500606563617116764196418533748380893094448060562081543927295828007016873588530479985728135015510171217414380395169021607415979109815455365309760152218352878885075237009</span></span><br><span class="line"><span class="string">c = 82363935080688828403687816407414245190197520763274791336321809938555352729292372511750720874636733170318783864904860402219217916275532026726988967173244517058861515301795651235356589935260088896862597321759820481288634232602161279508285376396160040216717452399727353343286840178630019331762024227868572613111538565515895048015318352044475799556833174329418774012639769680007774968870455333386419199820213165698948819857171366903857477182306178673924861370469175</span></span><br><span class="line"><span class="string">&#x27;&#x27;&#x27;</span></span><br></pre></td></tr></table></figure>
-<p>就是一个Schmidt-Samoa密码系统，<del>起名叫EzRSA还是有些喧宾夺主的感觉</del><br />
-简单的数论，一把梭。</p>
+<p>由上述分析，显然规约矩阵的最短向量的前 <span
+class="math inline">\(N\)</span>、后 <span
+class="math inline">\(N\)</span> 个维度即分别为 <span
+class="math inline">\(f^{&#39;}\)</span>、<span
+class="math inline">\(g^{&#39;}\)</span>。由于运算时的卷积操作，严格地，此处解出的私钥
+<span class="math inline">\(f^{&#39;}\)</span> 实际应为 <span
+class="math inline">\(x^{-i}f (i \in (-N,N))\)</span>，<span
+class="math inline">\(g^{&#39;}\)</span> 同理。<br />
+欲破译原私钥 <span class="math inline">\(f\)</span> ，则必须对 <span
+class="math inline">\(f,g\)</span> 的卷积系数分别进行爆破。<br />
+但若目标只是解密数据，参考上述NTRU的解密过程， <span
+class="math inline">\(f\)</span> 的卷积结果 <span
+class="math inline">\(f^{&#39;}\)</span>
+依然可以对密文进行解密（因为解密用到的 <span
+class="math inline">\(f^{&#39;-1} = x^{-i}f^{-1}\)</span> ）。</p>
+<h1 id="春滋">春滋</h1>
 <blockquote>
-<p>由欧拉定理可得：<span class="math inline">\(a^{(p-1)(q-1)} \equiv 1
-(mod pq)\)</span></p>
-<p>又有 <span class="math inline">\(Nd \equiv 1 (mod
-(p-1)(q-1))\)</span></p>
-<p>故存在 <span class="math inline">\(a^{Nd} \equiv a^{1+k(p-1)(q-1)}
-\equiv a (mod pq)\)</span></p>
-<p>故求解 <span class="math inline">\(gcd(a^{Nd},N)\)</span>
-即有极大概率得到pq，此处a可取任意的较小数（如2）</p>
-<p>最后执行解密过程即可： <span class="math inline">\(m \equiv c^{d}
-(mod pq)\)</span></p>
+<p>方程的潇潇暮雨。</p>
 </blockquote>
-<h2 id="exp-2">exp</h2>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> gmpy2 <span class="keyword">import</span> gcd</span><br><span class="line"></span><br><span class="line">n = <span class="number">539403894871945779827202174061302970341082455928364137444962844359039924160163196863639732747261316352083923762760392277536591121706270680734175544093484423564223679628430671167864783270170316881238613070741410367403388936640139281272357761773388084534717028640788227350254140821128908338938211038299089224967666902522698905762169859839320277939509727532793553875254243396522340305880944219886874086251872580220405893975158782585205038779055706441633392356197489</span></span><br><span class="line">d = <span class="number">58169755386408729394668831947856757060407423126014928705447058468355548861569452522734305188388017764321018770435192767746145932739423507387500606563617116764196418533748380893094448060562081543927295828007016873588530479985728135015510171217414380395169021607415979109815455365309760152218352878885075237009</span></span><br><span class="line">c = <span class="number">82363935080688828403687816407414245190197520763274791336321809938555352729292372511750720874636733170318783864904860402219217916275532026726988967173244517058861515301795651235356589935260088896862597321759820481288634232602161279508285376396160040216717452399727353343286840178630019331762024227868572613111538565515895048015318352044475799556833174329418774012639769680007774968870455333386419199820213165698948819857171366903857477182306178673924861370469175</span></span><br><span class="line"></span><br><span class="line">pq = gcd(<span class="built_in">pow</span>(<span class="number">2</span>,n*d,n)-<span class="number">2</span>,n)</span><br><span class="line"><span class="built_in">print</span>(long_to_bytes(<span class="built_in">pow</span>(c,d,pq)))</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>flag: D0g3xGC{W1sh_Y0u_Go0d_L@ucK-111}</p>
-</blockquote>
+<h2 id="短格的精华">“短格”的精华</h2>
+<p>先考虑整数环 <span class="math inline">\(Z\)</span>
+下一个较简单的方程：</p>
+<p><span class="math display">\[ax + by = c \]</span></p>
+<p>在给定 <span class="math inline">\(a,b,c\)</span>
+时其只是一个平凡的一元二次不定方程；若移去 <span
+class="math inline">\(c\)</span>，则一般而言无法得出 <span
+class="math inline">\(x,y\)</span> 的解。<br />
+但若已知 <span class="math inline">\(x,y,c\)</span>
+都是较小的整数，则可以使用格攻击来获得方程的解：</p>
+<p><span class="math display">\[\begin{bmatrix} x &amp; y \end{bmatrix}
+\cdot \begin{bmatrix} C &amp; a \\ &amp; b \end{bmatrix} =
+\begin{bmatrix} Cx &amp; c \end{bmatrix}\]</span></p>
+<p>其中若目标向量的模长足够小（已知 <span class="math inline">\(c
+&lt;&lt; a,b\)</span> 且配平系数 <span class="math inline">\(C\)</span>
+选择得当），则或可通过格基规约得到目标向量。</p>
+<p>上述放长还可以推广至多变量的情况<del>传说中的多元Coppersmith青春版，只看一次项</del>：</p>
+<p><span class="math display">\[a_1x_1 + a_2x_2 + \cdots + a_nx_n =
+c\]</span></p>
+<p><span class="math display">\[\begin{bmatrix} x_1 &amp; x_2 &amp;
+\cdots &amp; x_n \end{bmatrix} \begin{bmatrix} C_1 &amp;&amp;&amp; a_1
+\\ &amp;C_2 &amp;&amp; a_2 \\ &amp;&amp; \ddots &amp; \vdots \\
+&amp;&amp;&amp; a_n \end{bmatrix} = \begin{bmatrix} C_1x_1 &amp; C_2x_2
+&amp; \cdots &amp; c \end{bmatrix}\]</span></p>
+<p>可以注意到，这个“更一般的”方程在 <span
+class="math inline">\(c\)</span> 已知时就是HLCP(Hidden Linear
+Combination Problem，隐藏线性组合问题)。<br />
+<strong>实际上HLCP也可以“移进”至上述这个方程的形式，并且可以拓展到和<code>sum</code>含有一定误差的情况，即将
+<span class="math inline">\(c\)</span>
+移至等号左侧，右侧以一小量（不一定是0）代替。</strong></p>
 
       
 
@@ -258,24 +561,13 @@ data-cites="nd_C0mplex_QAQ">@nd_C0mplex_QAQ</span>}</p>
         		</li>
       		 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">wp</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">长文精选</a>
         		</li>
       		
 		</ul>
 	</div>
 
       
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/CTF-Writeups//" class="article-tag-list-link color3">CTF Writeups</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
 
       
 
@@ -325,7 +617,7 @@ data-cites="nd_C0mplex_QAQ">@nd_C0mplex_QAQ</span>}</p>
     <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
     <p>扫一扫，分享到微信</p>
     <div class="wx-qrcode">
-      <img src="//pan.baidu.com/share/qrcode?url=https://crystaljiang232.github.io/crypto/wp/gcbctf-wp/" alt="微信分享二维码">
+      <img src="//pan.baidu.com/share/qrcode?url=https://crystaljiang232.github.io/crypto/lattice2/" alt="微信分享二维码">
     </div>
 </div>
 
@@ -341,15 +633,11 @@ data-cites="nd_C0mplex_QAQ">@nd_C0mplex_QAQ</span>}</p>
   
 <nav id="article-nav">
   
-    <a href="/cpp/scanf/" id="article-nav-newer" class="article-nav-link-wrap">
-      <i class="icon-circle-left"></i>
-      <div class="article-nav-title">
-        
-          C——细究scanf
-        
-      </div>
-    </a>
   
+    <a href="/crypto/wp/wqb-plus/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">2025湾区杯Writeup——再论“逐怨”</div>
+      <i class="icon-circle-right"></i>
+    </a>
   
 </nav>
 
@@ -374,7 +662,7 @@ data-cites="nd_C0mplex_QAQ">@nd_C0mplex_QAQ</span>}</p>
                 </span>
                 <span class="tooltip-content">
                     <div class="toc-article">
-                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#curve"><span class="toc-number">1.</span> <span class="toc-text">Curve</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%A2%98%E7%9B%AE%E4%BB%A3%E7%A0%81"><span class="toc-number">1.1.</span> <span class="toc-text">题目代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#exp"><span class="toc-number">1.2.</span> <span class="toc-text">exp</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#ez_sign"><span class="toc-number">2.</span> <span class="toc-text">Ez_sign</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%A2%98%E7%9B%AE%E4%BB%A3%E7%A0%81-1"><span class="toc-number">2.1.</span> <span class="toc-text">题目代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#exp-1"><span class="toc-number">2.2.</span> <span class="toc-text">exp</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#ezrsa"><span class="toc-number">3.</span> <span class="toc-text">EzRSA</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%A2%98%E7%9B%AE%E4%BB%A3%E7%A0%81-2"><span class="toc-number">3.1.</span> <span class="toc-text">题目代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#exp-2"><span class="toc-number">3.2.</span> <span class="toc-text">exp</span></a></li></ol></li></ol>
+                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%9C%9B%E8%88%92"><span class="toc-number">1.</span> <span class="toc-text">望舒</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AF%92%E8%8A%92"><span class="toc-number">1.1.</span> <span class="toc-text">寒芒</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%82%BD%E7%BE%BD"><span class="toc-number">1.2.</span> <span class="toc-text">炽羽</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#babai"><span class="toc-number">1.2.1.</span> <span class="toc-text">Babai</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#embedding"><span class="toc-number">1.2.2.</span> <span class="toc-text">Embedding</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%9C%88%E8%88%9E"><span class="toc-number">2.</span> <span class="toc-text">月舞</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%9D%E8%8A%B1%E5%A4%95%E6%8B%BE"><span class="toc-number">2.1.</span> <span class="toc-text">朝花夕拾</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#section"><span class="toc-number">2.2.</span> <span class="toc-text"></span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#lwe"><span class="toc-number">3.</span> <span class="toc-text">LWE</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E8%BF%B0"><span class="toc-number">3.1.</span> <span class="toc-text">简述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%AE%E9%93%BE"><span class="toc-number">3.2.</span> <span class="toc-text">绮链</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B0%E7%9A%84%E6%96%B9%E7%A8%8B%E7%BB%84%E4%B8%8E%E6%A0%BC"><span class="toc-number">3.3.</span> <span class="toc-text">新的方程组与格</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#ntru"><span class="toc-number">4.</span> <span class="toc-text">NTRU</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%B7%E7%A7%AF%E5%A4%9A%E9%A1%B9%E5%BC%8F%E7%8E%AF"><span class="toc-number">4.1.</span> <span class="toc-text">卷积多项式环</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E6%95%B0%E4%B8%8E%E5%AF%86%E9%92%A5%E7%94%9F%E6%88%90"><span class="toc-number">4.2.</span> <span class="toc-text">参数与密钥生成</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8A%A0%E8%A7%A3%E5%AF%86%E4%B8%8E%E6%AD%A3%E7%A1%AE%E6%80%A7%E8%AF%81%E6%98%8E"><span class="toc-number">4.3.</span> <span class="toc-text">加&#x2F;解密与正确性证明</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%94%BB%E5%87%BB"><span class="toc-number">4.4.</span> <span class="toc-text">攻击</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%8E%E5%85%AC%E9%92%A5%E6%8E%A8%E5%AF%BC%E7%A7%81%E9%92%A5"><span class="toc-number">4.4.1.</span> <span class="toc-text">从公钥推导私钥</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%98%A5%E6%BB%8B"><span class="toc-number">5.</span> <span class="toc-text">春滋</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9F%AD%E6%A0%BC%E7%9A%84%E7%B2%BE%E5%8D%8E"><span class="toc-number">5.1.</span> <span class="toc-text">“短格”的精华</span></a></li></ol></li></ol>
                     </div>
                 </span>
             </div>
