@@ -152,394 +152,339 @@
           <div id="js-content" class="content-ll">
             
   
-    <article id="post-crypto/lattice2" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-TiaoMeng" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/crypto/lattice2/">翎</a>
+      <a class="article-title" href="/TiaoMeng/">迢梦</a>
     </h1>
   
 
         
-        <a href="/crypto/lattice2/" class="archive-article-date">
-  	<time datetime="2025-10-06T03:10:59.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-10-06</time>
+        <a href="/TiaoMeng/" class="archive-article-date">
+  	<time datetime="2026-03-03T10:52:09.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2026-03-03</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h1 id="望舒">望舒</h1>
-<blockquote>
-<p>构造更高维度的格？</p>
+        <blockquote>
+<p>高性能TCP加密通信服务器。<br />
+High performance TCP encrypted messaging server.</p>
 </blockquote>
-<h2 id="寒芒">寒芒</h2>
-<p>相较较简单的“青天”的格构造，我们还需要将未知元素从单个元素<strong>提升(lift)</strong>为向量乃至矩阵。</p>
-<blockquote>
-<p>有关“青天”的格构造参见<a
-href="/crypto/lattice">格</a>，其中系统介绍了格、部分代数和离散数学中的重要概念，有助于快速入门格密码；本文均假定读者已经具备相关的基础知识<strong>并已理解之</strong>。</p>
-</blockquote>
-<p>"lift"的核心无外三点：</p>
-<ol type="1">
-<li>矩阵的构造（线性组合）必须符合目标环的运算规则；<br />
-</li>
-<li>已知量<strong>嵌入格矩阵<code>L</code>中</strong>，<strong>未知但已知是整数
-<span class="math inline">\(k_{i}\)</span>
-的量放在左侧，未知且已知是整数 <em>小量</em>
-的放在右侧（锚定向量）</strong>；<br />
-</li>
-<li>对格进行<strong>配平</strong>，令锚定向量的各维度尽可能近长。</li>
-</ol>
-<p>如在NTRU中，由于其元素的运算在卷积多项式环上运行，因此将 <span
-class="math inline">\(h\)</span> 应转化为 <span
-class="math inline">\(rot(h) = \begin{bmatrix} h_0 &amp; h_1 &amp;
-\cdots &amp; h_n \\ h_1 &amp; h_2 &amp; \cdots &amp; h_0 \\ \vdots &amp;
-\vdots &amp;&amp; \vdots \\ h_n &amp; h_0 &amp; \cdots &amp; h_n-1
-\end{bmatrix}\)</span>，使其在进行乘法时符合该环的运算规则。</p>
-<p>配平格的要点在于利用好LLL（或BKZ）的特性之一——模长“标定”。</p>
-<h2 id="炽羽">炽羽</h2>
-<p>对CVP问题的求解是此类格构造后利用的重点。<br />
-CVP问题常见的解法有二：将目标向量“嵌入”原格中，使之提升一个维度；或使用Babai's
-Nearest Plane Algorithm。</p>
-<h3 id="babai">Babai</h3>
-<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">Babai</span>(<span class="params">A,v</span>):</span><br><span class="line">    <span class="string">&#x27;&#x27;&#x27;</span></span><br><span class="line"><span class="string">    Babai&#x27;s Nearest Plane Algorithm.  </span></span><br><span class="line"><span class="string">    Finds the closest vector to `v` that&#x27;s on the lattice defined by `A`.  </span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Parameters:</span></span><br><span class="line"><span class="string">    - `A`: Lattice-defining matrix</span></span><br><span class="line"><span class="string">    - `v`: Target vector</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Note that both `A` and `V` has to be defined on Integer Ring.</span></span><br><span class="line"><span class="string">    &#x27;&#x27;&#x27;</span></span><br><span class="line"></span><br><span class="line">    M = A.LLL(delta=<span class="number">0.75</span>)</span><br><span class="line">    G = M.gram_schmidt()[<span class="number">0</span>]</span><br><span class="line"></span><br><span class="line">    t = v <span class="comment"># vector</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">reversed</span>(<span class="built_in">range</span>(A.nrows())):</span><br><span class="line">        c = ((t * G[i]) / (G[i] * G[i])).<span class="built_in">round</span>()</span><br><span class="line">        t -= A[i] * c</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> v - t</span><br></pre></td></tr></table></figure>
-<p>从上述实现中即可一窥Babai's Algorithm的核心：</p>
+<h1 id="关键字">关键字</h1>
 <ul>
-<li>先对之进行格基规约（<strong>注意此方法仅适用于方阵，对于非方阵应使用<code>IntegerLattice</code>，具体原因似乎与
-<em>m&gt;n</em>
-时规约的“崩塌”有关（此时因为向量间必定线性相关的特性，会让规约的最终向量失去意义</strong>）；<br />
+<li>Modern C++(17/20/23)<br />
 </li>
-<li>取规约矩阵正交化后的向量基，在<strong>每个 <em>两两垂直</em>
-的投影方向上</strong>均<strong>减去这些基的
-<em>最近整数倍</em></strong>（因为格运算都在整数上进行，参见<code>.round()</code>）。</li>
+<li>并发、异步<br />
+</li>
+<li>Boost.Asio<br />
+</li>
+<li>Thread-per-core+线程池<br />
+</li>
+<li>Post-Quantum Cryptography</li>
 </ul>
-<h3 id="embedding">Embedding</h3>
-<p><em>Babai's Embedding Technique</em> 的核心思想非常简单：<br />
-假设存在向量 <span class="math inline">\(\mathbb{v}^{N}\)</span> 在
-<span class="math inline">\(\mathbb{L}^{M \times N}\)</span>
-所定义的格上，不妨构造<br />
-<span class="math display">\[\mathbb{L}^{&#39; M+1 \times N+1} =
-\begin{bmatrix} \mathbb{L} \\ \mathbb{v} &amp; -1
-\end{bmatrix}\]</span><br />
-则该格上一定存在一个向量 <span class="math inline">\(\begin{bmatrix}
-0^{N} &amp; -1 \end{bmatrix}\)</span>。</p>
-<blockquote>
-<p>上述推论比较显然——因为 <span class="math inline">\(v\)</span> 就是
-<span class="math inline">\(L\)</span> 的线性组合，其系数取 <span
-class="math inline">\(-1\)</span> 通过行变换就可以构造出这个向量。</p>
-</blockquote>
-<p>显然此时对 <span class="math inline">\(L^{&#39;}\)</span>
-进行规约就可以得到这个向量。<br />
-更进一步地，假设存在一个偏移<del>a.k.a.误差</del>向量 <span
-class="math inline">\(\mathbb{e}^{N}\)</span>，其近似地表征了 <span
-class="math inline">\(\mathbb{dist(v,L)}\)</span>（即该向量和格之间的距离）。</p>
-<p>令 <span class="math inline">\(\mathbb{b = v + e}\)</span>，将 <span
-class="math inline">\(\mathbb{b}\)</span> 嵌入该格中，则向量 <span
-class="math inline">\(\begin{bmatrix} e^{N} &amp; -1
-\end{bmatrix}\)</span> 也在格上。<br />
-此时若 <span class="math inline">\(e\)</span>
-足够短，同时对格进行配平，通过格基规约同样有很大概率找出该向量。</p>
-<p>得到 <span class="math inline">\(\mathbb{e}\)</span>
-后，易得CVP的解即为 <span class="math inline">\(\mathbb{b -
-e}\)</span>。</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">L = <span class="comment">#...</span></span><br><span class="line">b = <span class="comment">#...</span></span><br><span class="line"></span><br><span class="line">C = <span class="number">2</span>**ebits</span><br><span class="line"></span><br><span class="line">mt = matrix.block(ZZ,[[L,<span class="number">0</span>],</span><br><span class="line">                      [b,C]])</span><br><span class="line"></span><br><span class="line">e = IntegerLattice(mt,lll_reduce = <span class="literal">True</span>).reduced_basis[<span class="number">0</span>]</span><br><span class="line"></span><br><span class="line">sol = b - e</span><br><span class="line"><span class="comment"># ...</span></span><br></pre></td></tr></table></figure>
-<h1 id="月舞">月舞</h1>
-<blockquote>
-<p>Delightful的“约减”背后，还有些什么若隐若现...</p>
-</blockquote>
-<h2 id="朝花夕拾">朝花夕拾</h2>
-<h2 id="section"></h2>
-<hr />
-<blockquote>
-<p>纸上得来终觉浅——实践中分析更复杂的密码系统方为正道。</p>
-</blockquote>
-<h1 id="lwe">LWE</h1>
-<h2 id="简述">简述</h2>
-<p>LWE(Learning With Errors)是机器学习领域的难题之一。<br />
-其数学表示形式为：已知 <span class="math inline">\(Z_{q}\)</span> 下
-<span class="math inline">\(A^{M \times N} \cdot s^{N \times 1} + e^{M
-\times 1} = b^{M \times 1}\)</span>，给定 <span
-class="math inline">\(A,b\)</span>，还原 <span
-class="math inline">\(s\)</span>。<br />
-其中 <span class="math inline">\(e\)</span> 是一个小向量。</p>
-<p>更形象地：<br />
-已知两个 <span class="math inline">\(N\)</span> 维向量 <span
-class="math inline">\(a_{i},s\)</span>，计算其<strong>带一定误差</strong>的点积
-<span class="math inline">\(b_{i} \equiv a_{i} \cdot s + e_{i} (\bmod
-q)\)</span>，重复 <span class="math inline">\(M\)</span> 次（<span
-class="math inline">\(M \geq N\)</span>），还原 <span
-class="math inline">\(s\)</span>。</p>
-<h2 id="绮链">绮链</h2>
-<p>若不考虑误差，上述问题显然只是普通的解 <span
-class="math inline">\(Z_{q}\)</span>
-下的线性方程组的问题，可以使用高斯消元法直接求解，或利用线性代数知识，进行行列变换或计算
-<span class="math inline">\(Z_{q}\)</span> 下的 <span
-class="math inline">\(b \cdot A^{-1}\)</span>
-即可（此处需要截断之为方阵）。</p>
-<p>但加入误差后，求解就变得极为困难了——按上述传统思路，必须逐个爆破误差
-<span class="math inline">\(e_{i}\)</span>
-后验证解，可行性极为受限。</p>
-<h2 id="新的方程组与格">新的方程组与格</h2>
-<p>LWE中，格的构造相较以往单元素的方程组更为“精巧”。<br />
-由于 <span class="math inline">\(A \cdot s\)</span> 结果的每个维度对
-<span class="math inline">\(q\)</span> 取模时都可能存在不同的 <span
-class="math inline">\(k_{i}\)</span>（参考上述等式： <span
-class="math inline">\(b_{i} = a_{i} \cdot s + e_{i} +
-k_{i}q\)</span>），因此构造时应当取一个 <span
-class="math inline">\(qI^{M}\)</span>
-的对角阵与之排列。换言之，我们的“理想”向量（在 <span
-class="math inline">\(e\)</span> 不存在时）应该在这个格上：</p>
-<p><span class="math display">\[\begin{bmatrix} qI^{M} \\ A^{T}
-\end{bmatrix}\]</span></p>
-<p>其中 <span class="math inline">\(A\)</span> 因为格矩阵运算（LWE中
-<span class="math inline">\(s\)</span>
-是被右乘的操作数，格的线性组合要求左乘系数）而被转置。</p>
-<p>由于 <span class="math inline">\(e\)</span>
-是小向量，因此其显然就是一个CVP问题，求解思路同样是Babai/Embedding<del>实际上这个Embedding的常用变种之一就是以Babai命名的</del>。<br />
-在使用Babai时，由于原矩阵不是方阵，因此需要使用IntegerLattice并<del>在其构造函数中规约之</del>：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">L = IntegerLattice(mt,lll_reduce = <span class="literal">True</span>)</span><br><span class="line">B = L.reduced_basis <span class="comment"># equivalent to LLL result</span></span><br><span class="line">G = B.gram_schmidt()[<span class="number">0</span>] </span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">reversed</span>(<span class="built_in">range</span>(B.nrows())):</span><br><span class="line">    <span class="comment"># ...</span></span><br></pre></td></tr></table></figure>
-<p>Babai's Embedding的构造矩阵形如：</p>
-<p><span class="math display">\[\begin{bmatrix} v_{k}^{M} &amp; s^{N}
-&amp; 1 \end{bmatrix} \cdot \begin{bmatrix} qI^{M}\\ A^{T}\\ b &amp;
-C_{0} \end{bmatrix} = \begin{bmatrix} e^{M} &amp;
-C_{0}\end{bmatrix}\]</span></p>
-<p>由目标向量可知配平系数 <span class="math inline">\(C_{0}\)</span>
-应与 <span class="math inline">\(e\)</span> 的大小接近，取 <span
-class="math inline">\(2^{ebits}\)</span> 即可。</p>
-<h1 id="ntru">NTRU</h1>
-<h2 id="卷积多项式环">卷积多项式环</h2>
-<p>给定 <span class="math inline">\(N,q \in Z_{+}\)</span>，则模 <span
-class="math inline">\(q\)</span> 下的 <span class="math inline">\(N -
-1\)</span> 次卷积多项式环是一个商环(quotient ring)，记作 <span
-class="math inline">\(R_{q} = \frac{Z_{q}[x]}{x^{N} - 1}\)</span>。</p>
-<blockquote>
-<p>商环的定义为对环(Ring)上，<span class="math inline">\(\forall a \neq
-0 \in R, \exists a^{-1} \in R\)</span>，即除了加法单位元 <span
-class="math inline">\(0\)</span> 外所有元素均存在逆元。</p>
-</blockquote>
-<p><span class="math inline">\(R_{q}\)</span> 下的 <span
-class="math inline">\(n\)</span> 次卷积多项式表示：</p>
-<p><span class="math display">\[z = z_{0}x^{0} + z_{1}x^{1} + \cdots +
-z_{n-1}x^{n-1} = \sum_{i=0}^{n-1} z_{i}x^{i} \in R^{n}_{q}\]</span></p>
-<p>设 <span class="math inline">\(f,g,h \in R^{n}_{q}\)</span>，<span
-class="math inline">\(f \cdot g = h\)</span>，乘法规则形如</p>
-<p><span class="math display">\[ h = \sum_{i=0}^{n-1} h_{i}x^{i} \\
-h_{i} \equiv \sum_{a,b}^{a+b \equiv i \bmod N} f_{a}g_{b} \bmod
-q\]</span></p>
-<blockquote>
-<p>显然其与普通的多项式乘法并无差分，只是对幂数和项数的计算分别放在了
-<span class="math inline">\(Z_{n}\)</span> 和 <span
-class="math inline">\(Z_{q}\)</span> 下进行。</p>
-</blockquote>
-<p>写作 <span class="math inline">\(Z_{q}\)</span> 下 <span
-class="math inline">\(n \times n\)</span> 矩阵乘法的形式，形如：</p>
-<p><span class="math inline">\(\begin{bmatrix} h_0 &amp; h_1 &amp;
-\cdots &amp; h_{n-2} &amp; h_{n-1} \end{bmatrix} ^ {T} = \begin{bmatrix}
-f_0 &amp; f_1 &amp; \cdots &amp; f_{n-2} &amp; f_{n-1} \\ f_1 &amp; f_2
-&amp; \cdots &amp; f_{n-1} &amp; f_0 \\ \vdots &amp; \vdots &amp;&amp;
-\vdots &amp; \vdots \\ f_{n-1} &amp; f_0 &amp; \cdots &amp; f_{n-3}
-&amp; f_{n-2} \end{bmatrix} \cdot \begin{bmatrix} g_0 &amp; g_1 &amp;
-\cdots &amp; g_{n-2} &amp; g_{n-1} \end{bmatrix} ^ {T}\)</span></p>
-<p>称其中表示 <span class="math inline">\(f\)</span>
-的系数矩阵为卷积矩阵(convolution matrix)，常记作 <span
-class="math inline">\(rot(f)\)</span>，其第 <span
-class="math inline">\(i\)</span> 行由 <span
-class="math inline">\(f\)</span> 的系数循环右移 <span
-class="math inline">\(i\)</span> 位排列而成。</p>
-<blockquote>
-<p>若 <span class="math inline">\(q\)</span>
-比较大，为提升可读性，部分实现会将 <span
-class="math inline">\(f_{i}\)</span> 转化到 <span
-class="math inline">\((-\frac{q}{2},\frac{q}{2}]\)</span>
-的区间内（<span class="math inline">\(Z_{q}\)</span> 下等价）。</p>
-</blockquote>
-<h2 id="参数与密钥生成">参数与密钥生成</h2>
-<p>NTRU的关键参数为 <span
-class="math inline">\((N,p,q,d)\)</span>。其中，</p>
+<h1 id="巧夺天工">巧夺天工</h1>
 <ul>
-<li><span class="math inline">\(N,q\)</span>
-越大则格攻击构造格的维度越高，密码系统越安全，但运算效率会大幅下降；一般选择
-<span class="math inline">\(N \in [250,2500]\)</span>。<br />
-</li>
-<li><span class="math inline">\(p,d\)</span> 均为整数，要求 <span
-class="math inline">\(gcd(p,q) = 1\)</span> 且 <span
-class="math inline">\(gcd(q,N) = 1\)</span>，<span
-class="math inline">\(q &gt; (6d + 1)p\)</span>。</li>
+<li><p><label><input
+type="checkbox" />撷之当下，收之未来——Kyber768/KEM</label></p></li>
+<li><p><label><input type="checkbox" />大道至简的状态机</label></p></li>
+<li><p><label><input
+type="checkbox" />阴阳相生：<code>read_header</code>/<code>read_body</code>循环往复</label></p></li>
+<li><p><label><input
+type="checkbox" />Thread-per-core与线程池的共舞</label></p></li>
+<li><p><label><input type="checkbox" /><em>double free</em>
+之奇：<em>data race</em> 暗流再现</label></p></li>
+<li><p><label><input
+type="checkbox" />毫厘千里——debug密钥组合</label></p></li>
+<li><p><label><input
+type="checkbox" /><em>cascade</em>：Coroutine-Strand-Lock“串联”之隐<br />
+</label></p></li>
+<li><p>[ ]</p></li>
 </ul>
-<p>NIST对NTRU的强度-推荐参数组合如下：</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: center;">强度</th>
-<th style="text-align: center;">N</th>
-<th style="text-align: center;">p</th>
-<th style="text-align: center;">q</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: center;">标准</td>
-<td style="text-align: center;">251</td>
-<td style="text-align: center;">3</td>
-<td style="text-align: center;">128</td>
-</tr>
-<tr>
-<td style="text-align: center;">高</td>
-<td style="text-align: center;">347</td>
-<td style="text-align: center;">3</td>
-<td style="text-align: center;">128</td>
-</tr>
-<tr>
-<td style="text-align: center;">最高</td>
-<td style="text-align: center;">503</td>
-<td style="text-align: center;">3</td>
-<td style="text-align: center;">256</td>
-</tr>
-</tbody>
-</table>
-<p>参数 <span class="math inline">\(d\)</span> 可在满足 <span
-class="math inline">\(q &gt; (6d + 1)p\)</span> 下自行决定，一般选择
-<span class="math inline">\(d \approx \frac{N}{3}\)</span>
-来达到较好的安全性。</p>
+<h2 id="阴阳相生">阴阳相生</h2>
+<blockquote>
+<p><em>coroutine</em> 的最大魅力在于优雅地让渡。</p>
+</blockquote>
+<h3
+id="筑基struct-msg及消息结构">筑基：<code>struct Msg</code>及消息结构</h3>
+<h3
+id="read_header和read_body"><code>read_header</code>和<code>read_body</code></h3>
+<h3 id="堆上的栈溢出">堆上的“栈溢出”</h3>
+<blockquote>
+<p><del>你说得对，但是 <em>coroutine</em>
+又不在栈上，怎么栈溢出</del></p>
+</blockquote>
+<h2 id="大道至简">大道至简</h2>
+<blockquote>
+<p>玲珑妙妙屋之基于<code>std::atomic&lt;Connstate&gt;</code>的状态机</p>
+</blockquote>
+<h3 id="connstate设计及转换"><code>ConnState</code>设计及转换</h3>
+<p>每个<code>Connection</code>对象都有一个<code>private</code>成员<code>ConnState</code>，表明该连接当前的所处状态。<br />
+既然在现代C++中，<code>ConnState</code>自然应为<code>enum class</code>，其定义如下：<br />
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">enum class</span> <span class="title class_">ConnState</span>: <span class="type">uint8_t</span></span><br><span class="line">&#123;</span><br><span class="line">    Connected,</span><br><span class="line">    Handshaking,</span><br><span class="line">    Established,</span><br><span class="line">    Authenticated,</span><br><span class="line">    Closing,</span><br><span class="line">    Rekeying,</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<blockquote>
+<p><del>其中<code>Rekeying</code>又是一个挖了之后无限期咕的坑，玲珑传统艺能</del></p>
+</blockquote>
+<p>解析：</p>
+<ul>
+<li>新建立连接都会进入<code>Connected</code>状态；<br />
+</li>
+<li>Client发起第一次Handshake后进入<code>Handshaking</code>状态；<br />
+</li>
+<li>Client发起第二次Handshake后进入<code>Established</code>状态（因为此时会话密钥已经能被导出）；<br />
+</li>
+<li>Client通过身份验证后进入<code>Authenticated</code>状态，亦可主动登出回到<code>Established</code>状态；<br />
+</li>
+<li>出现致命错误/非致命错误数达到上限，Server关闭该连接时进入<code>Closing</code>状态。</li>
+</ul>
+<p>不同阶段的特性如下：</p>
+<ul>
+<li><code>Connected</code>/<code>Handshaking</code>时，双方的信息都是以明文形式传输的（因为此时<strong>安全对称信道尚未建立</strong>，双方只是在进行密钥交换）。<br />
+</li>
+<li>进入<code>Established</code>/<code>Authenticated</code>后，双方信息都会加密后再封装一层进行传输，具体参见<code>struct Msg</code>中消息体结构的实现</li>
+</ul>
+<h2 id="明枪暗箭">明枪暗箭</h2>
+<blockquote>
+<p>明枪尚不易躲，暗箭更为难防。</p>
+</blockquote>
+<p>异常处理的基本思路依然是C/C++的“老三样”：</p>
+<ul>
+<li>C-Style的返回值/函数引用传递错误信息；<br />
+</li>
+<li>C++语言既有的异常处理模型；<br />
+</li>
+<li><code>std::expected</code>为代表的新秀。</li>
+</ul>
+<p><em>TiaoMeng</em></p>
+<h3
+id="普渡众生速通stdexpected">普渡众生——速通<code>std::expected</code></h3>
+<blockquote>
+<p>In case that someone hasn't used, or even hasn't heard of
+<code>std::expected</code> yet</p>
+</blockquote>
+<p><code>std::expected</code>是现代C++中 <em>sum-types</em>
+的代表作之一，其是一个类模板，声明为：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">T</span>, <span class="keyword">class</span> <span class="title class_">E</span>&gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">std</span>::expected&lt;T, E&gt;;</span><br></pre></td></tr></table></figure>
+<p>其中 <code>T</code>是任意 <em>object</em> 类型或 <code>void</code>
+；<code>E</code> 是任意 <em>object</em> 类型。</p>
+<blockquote>
+<p>除引用外，绝大部分变量类型和指针类型都是 <em>object</em>。</p>
+</blockquote>
+<p><code>T</code></p>
+<p>在异常消息发送上，有诸多层面的考量：</p>
+<ul>
+<li>由于“异常”触发时，对称加密信道的建立状态不确定：<code>Established</code>及之后，异常信息是否应加密后发送（仍和其余消息一致，先编码为json格式，形如<code>&#123;"error": "Incorrect schematics"&#125;</code>）？<br />
+</li>
+<li>对于偶发的非致命错误（如部分 <em>parse error</em>、<em>action
+error</em>等）是否应设置有限的容错机制（错误次数大于某阈值后再断开连接）？如何对不同错误按其致命与否进行分类？错误计数器的重置条件如何设置？<br />
+</li>
+<li>若因出错而需断开连接，管道中剩余的消息应如何处理——继续尝试发送还是强行断开连接？若断开连接时还有错误消息，其又应如何发送？</li>
+</ul>
+<p>经数轮迭代后，<em>TiaoMeng</em> 设置的错误处理模型如下。</p>
+<hr />
+<h3 id="上层接口三大-helper">上层接口：三大 <em>helper</em></h3>
+<p>设置了三个 <em>helper</em>
+函数：<code>send_error</code>、<code>send_raw_error</code>和<code>error_close</code>，其签名分别形如：<br />
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">send_raw_error</span><span class="params">(std::string_view err, CloseMode mode = CloseMode::Graceful)</span></span>;</span><br><span class="line">    </span><br><span class="line">[[<span class="built_in">nodiscard</span>(<span class="string">&quot;Do not discard send_error&#x27;s value: caller is responsible for co_return upon this function returning true to prevent connection leakage. Use std::ignore or void cast for explicit schematics.&quot;</span>)]]</span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">send_error</span><span class="params">(std::string_view err, CloseMode mode = CloseMode::Graceful, <span class="type">bool</span> force_close = <span class="literal">false</span>)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">error_and_close</span><span class="params">(std::string_view err_text)</span></span>;</span><br></pre></td></tr></table></figure></p>
+<p>其中，</p>
+<ul>
+<li><p><code>send_raw_error</code>直接发送明文错误消息（<strong>且没有json编码</strong>），同时立即关闭连接（“defaults
+to force close”）；</p></li>
+<li><p><code>send_error</code>发送加密+编码后的错误消息，<code>force_close</code>置<code>false</code>时为非致命错误，此时<code>failure_count</code>调用其成员函数自增，<strong>同时返回<code>bool</code>指示其是否已经到达fail阈值</strong>，该信息通过<code>send_error</code>的返回值继续向上层传递。</p></li>
+</ul>
+<blockquote>
+<p>其亦为此处放了一长串<code>nodiscard("reason")</code>的理由——<code>send_error</code>的调用者<strong>必须保证在底层
+<em>failure_count</em>
+到达上限时主动从当前函数（无论是普通函数还是coroutine）中<code>(co_)return</code></strong>。<br />
+因为<code>send_error</code>在到达上限时会调用<code>close(mode)</code>，此时语义上连接已经失效，若该函数/coroutine未及时退出<del>甚至像<code>read_body</code>/<code>read_header</code>一样还在继续打阴阳相生的太极</del>就会导致<code>std::shared_ptr&lt;Connection&gt;</code>引用计数不归零而继续存在（<code>Connection</code>没有析构）。<br />
+<del>不巧的是</del>此时<code>Server</code>已经将该<code>Connection</code>从<code>std::unordered_map</code>中移除，因此其无法被继续追踪，等于发生了
+<em>Connection Leak</em>。</p>
+</blockquote>
+<blockquote>
+<p>若<code>send_error</code>的调用者能保证调用后立即<code>(co_)return</code>，亦可以<code>static_cast&lt;void&gt;</code>等方法显式忽略之。<br />
+但玲珑显然还是更喜欢<code>std::ignore</code>——其难道不值得推广咩？语义更清晰且更易读，同时其右侧操作数约束了不能为<code>void</code>——至少在
+<em>TiaoMeng</em> 中实践如此：<br />
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">switch</span>(semantic)</span><br><span class="line">&#123;</span><br><span class="line"><span class="comment">//...</span></span><br><span class="line"><span class="keyword">case</span> MsgSemantic::Session:</span><br><span class="line">    std::ignore = <span class="built_in">send_error</span>(<span class="string">&quot;Session management not implemented&quot;</span>);</span><br><span class="line">    <span class="keyword">co_return</span>;</span><br><span class="line"><span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+</blockquote>
+<ul>
+<li><code>error_and_close</code>则是更高一级的接口<del>套娃，又名“代码精简大法”</del>，其<del>一行lambda式的</del>本质就是<code>this-&gt;is_established() ? (void)send_error(err_text,CloseMode::Graceful,true) : send_raw_error(err_text, CloseMode::Graceful);</code></li>
+</ul>
+<h3
+id="异常计数嵌套类connectionfailurecounter">异常计数：嵌套类<code>Connection::FailureCounter</code></h3>
+<p><code>FailureCounter</code>只是简单包装了一个<code>std::atomic_bool&lt;size_t&gt;</code>的计数类，调用其“自增”方法可以返回其当前状态（是否需要</p>
+<h3
+id="close逻辑closeclose_async与closemode">close逻辑：<code>close</code>、<code>close_async</code>与<code>CloseMode</code></h3>
+<p>对于出错断开连接的情况，由发起方调用<code>close</code>函数，其将当前状态置为<code>Closing</code>（通过<code>std::atomic</code>+<code>std::memory_order_seq_cst</code>避免竞争），随后通过<code>net::co_spawn</code>调用<code>close_async</code>异步关闭该连接，避免关闭过程中阻塞该线程（此时该线程仍可以处理其它连接）。</p>
+<p><code>close</code>的实现：<br />
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">Connection::close</span><span class="params">(CloseMode mode)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(<span class="keyword">this</span>-&gt;state.<span class="built_in">exchange</span>(ConnState::Closing) == ConnState::Closing)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    net::<span class="built_in">co_spawn</span>(strand,</span><br><span class="line">        [self = <span class="built_in">shared_from_this</span>(), mode]() -&gt; net::awaitable&lt;<span class="type">void</span>&gt;</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">co_await</span> self-&gt;<span class="built_in">close_async</span>(mode);</span><br><span class="line">        &#125;, net::detached);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>函数中出现了新的常客<code>CloseMode</code>，其为一个只有两个取值的<code>enum class</code><del>反正现在是这样，原来还百花齐放来着</del>，对应<code>close_async</code>中不同的处理逻辑：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">net::awaitable&lt;<span class="type">void</span>&gt; <span class="title">Connection::close_async</span><span class="params">(CloseMode mode)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">switch</span> (mode)</span><br><span class="line">    &#123;</span><br><span class="line">    <span class="keyword">case</span> CloseMode::Graceful:</span><br><span class="line">        <span class="function"><span class="keyword">co_await</span> <span class="title">write</span><span class="params">()</span></span>;</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">case</span> CloseMode::Immediate:</span><br><span class="line">        <span class="built_in">shutdown</span>();</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">        </span><br><span class="line">    server-&gt;<span class="built_in">remove_connection</span>(id);</span><br><span class="line">    <span class="keyword">co_return</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>CloseMode::Graceful</code>会尝试调用<code>write</code>，后者则会根据缓存的消息队列调用<code>net::async_write</code>发送消息，直至消息队列为空；<code>CloseMode::Immediate</code>则会立即通过清空消息队列+调用底层
+<em>socket</em>
+的部分接口函数取消+关闭连接，同时保证了其<code>noexcept(true)</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">Connection::shutdown</span><span class="params">()</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">try</span></span><br><span class="line">    &#123;</span><br><span class="line">        state.<span class="built_in">store</span>(ConnState::Closing);</span><br><span class="line"></span><br><span class="line">        boost::system::error_code ec;</span><br><span class="line">        socket.<span class="built_in">cancel</span>(ec);</span><br><span class="line">        write_queue.<span class="built_in">clear</span>();</span><br><span class="line">        socket.<span class="built_in">close</span>(ec);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">catch</span> (...)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// noexcept - swallow all exceptions</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>实际上<code>write</code>的调用链为<code>Connection::write</code>-&gt;<code>Connection::write_with_timeout</code>-&gt;<code>net::async_write</code>，其中间件的解析下回分晓。</p>
+</blockquote>
+<h3 id="归元的其它原子变量">“归元”的其它原子变量</h3>
+<h2 id="天机道藏">天机道藏</h2>
+<h3 id="kyber768-nist-pqc">Kyber768: NIST-PQC</h3>
+<h3 id="两轮kemdiffle-hellman-plus">两轮KEM：Diffle-Hellman Plus</h3>
+<h1 id="section">？</h1>
+<blockquote>
+<p><code>std::expected</code>等 <em>sum-types</em>
+作为现代C++组件，相较类似的、更传统的实现能实现更清晰的语义、更好的可读性与拓展性。</p>
+</blockquote>
+<h2 id="御守简单而不平凡的实例">御守——简单而不平凡的实例</h2>
+<p><code>bool check_password(std::string_view password);</code></p>
+<p>看似平凡的检查密码合规性函数，其在后续拓展时就经历了遭遇瓶颈-迁移至
+<em>sum-types</em> 的过程。<br />
+具体地，最早的<code>check_password</code>作为一个近似于
+<em>placeholder</em> 的存在，只要求密码长度不小于8位：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">check_password</span><span class="params">(std::string_view password)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> password.<span class="built_in">size</span>() &gt;= <span class="number">8</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>但随之而来的一个问题是，不同的 <em>caller</em> 对其调用返回
+<code>false</code> 后的错误消息生成、处理逻辑可谓
+<strong><em>万象霜天</em></strong>：</p>
+<blockquote>
+<p><del><code>grep</code>实录</del></p>
+</blockquote>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">auth/auth_manager.cpp:    <span class="keyword">if</span> (!auth::<span class="built_in">check_password</span>(password))</span><br><span class="line">auth/auth_manager.cpp-    &#123;</span><br><span class="line">auth/auth_manager.cpp-        <span class="keyword">co_return</span> AuthResult&#123;<span class="literal">false</span>, <span class="literal">false</span>&#125;;</span><br><span class="line">--</span><br><span class="line">auth/auth_manager.cpp:    <span class="keyword">if</span> (!auth::<span class="built_in">check_password</span>(password))</span><br><span class="line">auth/auth_manager.cpp-    &#123;</span><br><span class="line">auth/auth_manager.cpp-        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">--</span><br><span class="line">tools/user_admin.cpp:        <span class="keyword">if</span> (!auth::<span class="built_in">check_password</span>(admin_pass))</span><br><span class="line">tools/user_admin.cpp-        &#123;</span><br><span class="line">tools/user_admin.cpp-            std::<span class="built_in">println</span>(stderr, <span class="string">&quot;Password too short (min 8 chars)&quot;</span>);</span><br><span class="line">--</span><br><span class="line">tools/user_admin.cpp:    <span class="keyword">if</span> (!auth::<span class="built_in">check_password</span>(pass))</span><br><span class="line">tools/user_admin.cpp-    &#123;</span><br><span class="line">tools/user_admin.cpp-        std::<span class="built_in">println</span>(stderr, <span class="string">&quot;Insufficient password length&quot;</span>);</span><br><span class="line">--</span><br><span class="line">tools/user_admin_<span class="number">2.</span>cpp:    <span class="keyword">if</span> (!auth::<span class="built_in">check_password</span>(*admin_pass))</span><br><span class="line">tools/user_admin_<span class="number">2.</span>cpp-    &#123;</span><br><span class="line">tools/user_admin_<span class="number">2.</span>cpp-        <span class="keyword">return</span> std::<span class="built_in">unexpected</span>(<span class="string">&quot;Admin password too short (min 8 chars)&quot;</span>);</span><br></pre></td></tr></table></figure>
+<p>其带来的另一个问题是，若此后希望拓展密码检查的逻辑（添加更多约束、根据约束生成<del>TODO式的</del>自定义信息），由于目前生成错误信息的代码被下移至调用方，其维护开销会非常大<del>或者摆烂，留下望着不明所以错误信息而怅然若失的user</del>。</p>
+<p>而由于密码校验成功时不需要携带额外信息，因此<code>std::expected&lt;void, std::string&gt;</code>便成了最佳选择：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2
+id="镜花水月stdoptional的夭矫空碧">镜花水月——<code>std::optional</code>的夭矫空碧</h2>
+<p><code>std::optional</code></p>
+<h2 id="碧海归元从智能指针看-ownership">碧海归元——从智能指针看
+<em>ownership</em></h2>
+<blockquote>
+<p>使用<code>std::unique_ptr</code>等智能指针的意义不仅在于内存安全，更在于显式地明确所有权(ownership)。</p>
+</blockquote>
+<p>回顾一下RAII原则：一个类的对象应当在其构造函数中申请对应的资源，并在析构函数中予以释放。<br />
+其中蕴含了非常重要的“所有权”逻辑：<br />
+若某资源（文件指针、堆内存等）是被某个对象
+<strong><em>拥有(owned)</em></strong>
+的，那么只有该对象（或共同管理该资源的同类对象）可以释放之，且这个语义应当<strong>得到强化</strong>。</p>
+<p>经文以述难以见明，仍以具况为佳：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun</span><span class="params">(<span class="type">int</span>* ptr)</span></span>;  </span><br></pre></td></tr></table></figure>
+<p>看似平平无奇的<code>fun</code>函数，但此处的<code>ptr</code>难免让人心存顾虑——<code>fun</code>究竟是否“拥有”<code>ptr</code>指向的内存？</p>
+<blockquote>
+<p>这点与<code>const</code>语义仍有差分——而且即使是附加顶层<code>const</code>的<code>const int*</code>，<code>delete ptr;</code>一类释放内存的语句依然是合法的——但显然这不符合“语义约束”之目标。</p>
+</blockquote>
+<p>“所有权”传递有几种方式：</p>
+<ul>
+<li>对于独占资源，依靠移动语义（语言实现上，移动构造/移动赋值函数）转移所有权；<br />
+</li>
+<li>对于共享资源，可以直接复制所有权，但需要底层计数器的支持（以实现RAII）；<br />
+</li>
+<li>亦可仅传递一个不拥有所有权的“观察员”，其可视情况“申请”所有权。</li>
+</ul>
+<p>上述三个例子在智能指针中对应的实践就分别是
+<code>unique_ptr</code>、<code>shared_ptr</code> 和
+<code>weak_ptr</code>。</p>
+<hr />
+<p><code>unique_ptr</code>实现明确语义的原理也非常简单，即禁用复制构造函数来实现纯移动语义，在函数中通过传值引用来约束所有权的转移：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">fun2</span><span class="params">(std::unique_ptr&lt;<span class="type">int</span>&gt; own)</span></span>;  </span><br><span class="line"></span><br><span class="line">std::unique_ptr&lt;<span class="type">int</span>&gt; ptr;</span><br><span class="line"></span><br><span class="line"><span class="comment">//...</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//fun2(ptr); //Not compile: std::unique_ptr&lt;int&gt;&#x27;s copy ctor deleted</span></span><br><span class="line"><span class="built_in">fun2</span>(std::<span class="built_in">move</span>(ptr));  <span class="comment">//OK, ownership transferred explicitly  </span></span><br></pre></td></tr></table></figure>
+<p>第二行过后，<code>ptr</code>管理的的指针所有权就完全交给了<code>fun2</code>，原函数中<code>ptr</code>置空，因而从语义层面同时避免了内存泄漏和
+<em>double free</em> 的问题。</p>
+<blockquote>
+<p>Hint：千万不要写类似于<code>delete ptr.get()</code>之类的语句，若确需中道override，应使用<code>ptr.release()</code>。<br />
+启示之一就是智能指针在兼容C样式api的时候需要考虑语义兼容的问题，注释/断点先置为佳。</p>
+</blockquote>
+<p>而对于<code>shared_ptr</code>，其用处在于多个对象共享一个资源，同时保证该资源可以被正确地释放：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">net::<span class="built_in">co_spawn</span>(strand,</span><br><span class="line">    [self = <span class="built_in">shared_from_this</span>()]() -&gt; net::awaitable&lt;<span class="type">void</span>&gt;</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">co_await</span> self-&gt;<span class="built_in">read_header</span>();</span><br><span class="line">    &#125;,</span><br><span class="line">    net::detached);</span><br></pre></td></tr></table></figure>
+<p>除了<code>read_header</code>以外还有其它函数需要<code>Connection*</code>指针（应用此对象），同时希望所有Coroutines结束后释放掉该<code>Connection</code>的资源，因而选用<code>shared_from_this</code>（封装<code>shared_ptr</code>类）为上策。</p>
+<p>而与<code>shared_ptr</code>相伴的还有<code>weak_ptr</code>，应用上其语义最大的不同在于<strong>是否
+<em>需要</em> “使用”其对应的资源，即是否 <em>需要</em>
+这个所有权</strong>。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3
+id="特辑stddefault_delete">特辑：<code>std::default_delete</code></h3>
+<blockquote>
+<p>此前，玲珑还未尝深入探索过智能指针第二参数的奇妙之境。</p>
+</blockquote>
+<p>不知有多少人留意过，<code>std::unique_ptr</code>还有一个鲜有问津的第二（带默认值的）模板参数，参见<code>unique_ptr</code>的类模板声明：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>, <span class="keyword">class</span> <span class="title class_">Dx</span> = std::default_delete&lt;Ty&gt;&gt;</span><br><span class="line"><span class="keyword">class</span> unique_ptr;</span><br></pre></td></tr></table></figure>
+<p><code>Dx</code>默认值是<code>std::default_delete&lt;Ty&gt;</code>，即<del>恰如其名地</del><code>Ty</code>的<strong>默认析构函数</strong>。<br />
+若<code>Ty</code>不是<code>class</code>/<code>struct</code>，则该默认“析构函数”实际上为空（即<code>free</code>/<code>delete</code>时不会有任何其它行为），否则其对应其析构函数<code>Ty::~Ty()</code>。</p>
+<p>尽管<code>default_delete</code>可以应对绝大多数智能指针的使用场景，但依然有二者被遗忘一隅：</p>
+<blockquote>
+<p>若对于非<code>class</code>/<code>struct</code>的类型，依然希望其能依托智能指针实现类似“析构”的操作（尤其对于很多C-Style的指针等）当如何？<br />
+若希望更改其执行的析构函数（如自定义了内存池<del>或非虚析构函数下的类继承</del>）呢？</p>
+</blockquote>
+<p>其实<code>default_delete</code>的作用机制也不复杂：<br />
+回顾C++<del>的fundamentals</del>，尽管筑基时学过析构函数在对象超出生命周期时被自动调用，但作为类的成员函数之一，任意场景下，其亦可如同一个普通成员函数一样被调用：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">SomeClass</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">SomeClass</span>(<span class="type">int</span> x): <span class="built_in">n</span>(x)&#123;&#125;</span><br><span class="line">    ~<span class="built_in">SomeClass</span>()</span><br><span class="line">    &#123;</span><br><span class="line">        std::<span class="built_in">print</span>(<span class="string">&quot;&#123;&#125; &quot;</span>, n);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> n;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="function">SomeClass <span class="title">c</span><span class="params">(<span class="number">10</span>)</span></span>;</span><br><span class="line">    c.~<span class="built_in">SomeClass</span>(); </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Compiles</span></span><br><span class="line"><span class="comment">// Output: 10 10 </span></span><br></pre></td></tr></table></figure>
 <hr />
 <blockquote>
-<p>定义函数 <span class="math inline">\(T(d_{1},d_{2}) (d_{1} + d_{2}
-&lt; q)\)</span> 表示系数 <span class="math inline">\(\{1,-1\}\)</span>
-<strong>计数</strong>分别为 <span
-class="math inline">\(\{d_{1},d_{2}\}\)</span> 的多项式 <span
-class="math inline">\(f\)</span> 的集合。<br />
-如，<span class="math inline">\(f = x^{6} + x^{3} - x^{2} + x - 1 \in
-T(3,2)\)</span>。</p>
+<p>根本原因是所谓“析构函数”只是另一个会“有条件地触发”的成员函数<del>这也是C++中极不提倡使用<code>goto</code>的原因，scope乱飞警告</del>。</p>
 </blockquote>
-<p>选择两个多项式 <span class="math display">\[f = \sum_{i=0}^{N-1}
-f_{i}x^{i} \in T(d+1,d)，g = \sum_{i=0}^{N-1} g_{i}x^{i} \in
-T(d,d)\]</span></p>
-<p>再计算 <span class="math inline">\(h \equiv f^{-1}g (\bmod
-q)\)</span>，随后将 <span class="math inline">\(g\)</span>
-的记录销毁。<br />
-公钥为 <span class="math inline">\(h\)</span>，私钥为 <span
-class="math inline">\(R_{p}\)</span> 和 <span
-class="math inline">\(R_{q}\)</span> 下的 <span
-class="math inline">\(f^{-1}\)</span>（由于 <span
-class="math inline">\(p,q\)</span> 是既定参数，可以认为私钥就是 <span
-class="math inline">\(f\)</span>）。</p>
+<p>虽然C++中没有类似于Python的显式<code>this</code><del>C++23终于有了deducing
+this,
+好耶</del>，但从编译器实现而言，所有非静态成员函数的“隐式”第一参数本质上都是本类的引用：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">SomeClass</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">fn</span><span class="params">(<span class="type">int</span> x)</span></span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>编译器生成的（仅供参考，原理相同）：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">SomeClass::fn</span><span class="params">(SomeClass&amp; __this,<span class="type">int</span> x)</span></span>;  </span><br></pre></td></tr></table></figure>
 <blockquote>
-<p><span class="math inline">\(g\)</span> 不是公钥或私钥，但知道 <span
-class="math inline">\(g\)</span> 就可以攻破NTRU，其地位类似于RSA中 <span
-class="math inline">\(N\)</span> 的因数分解，故不应保留之。</p>
+<p>感兴趣者可以了解一下C++特有的调用约定
+<em>thiscall</em>，即调用非静态成员函数时将相应对象作为第一参数传入。</p>
 </blockquote>
-<h2 id="加解密与正确性证明">加/解密与正确性证明</h2>
-<p>先将明文编码为一个 <span class="math inline">\(n\)</span> 次多项式
-<span class="math inline">\(m \in \{-1,0,1\}^{N}\)</span>。</p>
-<p>加密时，另随机生成一个多项式 <span class="math inline">\(r \in
-\{-1,0,1\}^{N}\)</span>，计算 <span class="math inline">\(c \equiv ph
-\cdot r + m (\bmod q)\)</span>，输出密文 <span
-class="math inline">\(c\)</span>。</p>
-<p>解密时，计算 <span class="math inline">\(m \equiv f^{-1} \cdot (f
-\cdot c (\bmod q)) (\bmod p)\)</span>，输出明文 <span
-class="math inline">\(m\)</span>。</p>
-<blockquote>
-<p>注意其中涉及到了“换环”，即现在 <span
-class="math inline">\(R_{q}\)</span> 下计算 <span
-class="math inline">\(f \cdot c\)</span>，将结果转到 <span
-class="math inline">\(R_{p}\)</span> 下后再与该环下的 <span
-class="math inline">\(f^{-1}\)</span> 相乘。</p>
-</blockquote>
+<p>这种调用方式其实也能在一些wrapper中初见端倪，比如同时适配普通函数和非静态成员函数<del>还有lambda</del>的<code>std::invoke</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">SomeClass obj;</span><br><span class="line">std::<span class="built_in">invoke</span>(fn, obj, <span class="number">1</span>); <span class="comment">//Equivalent to obj.fn(1); </span></span><br></pre></td></tr></table></figure>
+<p>后一行和<code>obj.fn(1)</code>是等效的。</p>
 <hr />
-<p>正确性证明：</p>
-<p>先在 <span class="math inline">\(R_{q}\)</span> 下计算， <span
-class="math inline">\(f \cdot c = pr \cdot hf + mf \Rightarrow f \cdot c
-= prg + mf\)</span><br />
-随后换环到 <span class="math inline">\(R_{p}\)</span> 上，显然 <span
-class="math inline">\(prg \equiv 0 (\bmod p)\)</span>，因此 <span
-class="math inline">\(R_{p}\)</span> 下 <span class="math inline">\((fc
-\bmod q) \equiv fm\)</span><br />
-进而 <span class="math inline">\(fm \cdot f^{-1} = m\)</span><br />
-解密正确性得证。</p>
-<h2 id="攻击">攻击</h2>
-<h3 id="从公钥推导私钥">从公钥推导私钥</h3>
-<p>作为公钥密码算法，NTRU所依赖的数学难题是格上的SVP问题。<br />
-给定公钥 <span class="math inline">\(h\)</span> ，若维度参数 <span
-class="math inline">\(N\)</span>
-选择过小，则通过格基规约获得SVP问题的近似解是可行的。</p>
-<p>以Sage梳理攻击过程：</p>
-<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">ntru</span>(<span class="params">h,n,q</span>):</span><br><span class="line">    rot_h = matrix(ZZ,[[(i+j)%n <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(n)] <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(n)])</span><br><span class="line">    In = matrix.identity(n)</span><br><span class="line"></span><br><span class="line">    mt = matrix.block(ZZ,[[In,rot_h],[<span class="number">0</span>,q*In]])</span><br><span class="line">    mt = mt.LLL()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> row <span class="keyword">in</span> mt:</span><br><span class="line">        <span class="keyword">if</span> <span class="built_in">all</span>(i <span class="keyword">in</span> (-<span class="number">1</span>,<span class="number">0</span>,<span class="number">1</span>) <span class="keyword">for</span> i <span class="keyword">in</span> row):</span><br><span class="line">            rf = vector(ZZ,row[:n])</span><br><span class="line">            <span class="comment"># rg = vector(ZZ,row[n:])</span></span><br><span class="line">            <span class="keyword">return</span> rf</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="literal">None</span></span><br></pre></td></tr></table></figure>
-<p>关键等式为 <span class="math inline">\(Z_{q}\)</span> 下， <span
-class="math inline">\(f \cdot h \equiv g\)</span>；将之抬升(lift)至
-<span class="math inline">\(Z\)</span> 下，则有 <span
-class="math inline">\(f \cdot h + q \cdot z = g\)</span>，其中 <span
-class="math inline">\(z\)</span> 是 <span
-class="math inline">\(Z^{N}\)</span> 下的某个“制衡”向量( <em>carry-on
-vector</em> )。</p>
-<p>矩阵运算如下：</p>
-<p><span class="math display">\[\begin{bmatrix} f &amp; z \end{bmatrix}
-\cdot \begin{bmatrix} I^{N} &amp; rot(h) \\ &amp; qI^{N} \end{bmatrix} =
-\begin{bmatrix} f &amp; g \end{bmatrix}\]</span></p>
-<p>对构造格进行规约，其预期最短向量就是 <span
-class="math inline">\(\begin{bmatrix} f &amp; g
-\end{bmatrix}\)</span>，注意 <span class="math inline">\(f\)</span> 和
-<span class="math inline">\(g\)</span> 都是 <span
-class="math inline">\(Z^{1 \times N}\)</span> 的向量。<br />
-由于 <span class="math inline">\(f,g\)</span> 每一维度的取值都在 <span
-class="math inline">\(\{-1,0,1\}\)</span> 中（等价地，<span
-class="math inline">\(p=3\)</span> 时的 <span
-class="math inline">\(Z_{p}）\)</span>，其模显然在格中是极短的。</p>
+<p>说远了，回到析构函数的调用：<br />
+无论是栈上还是堆上的变量，无论是在其生命周期内主动调用析构函数，还是故意不调用其析构函数（比如<code>operator new</code>分配的内存使用<code>free</code>释放），这个调用析构函数的行为<strong>本身</strong>不会有任何影响。<br />
+但若析构函数体内涉及资源的释放，则可能存在 <em>double free</em>
+的问题<del>虽然很多带有fail-safe组件的类也不一定，比如非常友善地帮你把<code>ptr</code>置<code>nullptr</code>的<code>std::vector</code></del>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">SomeClass::~<span class="built_in">SomeClass</span>()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">delete</span> ptr;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    SomeClass sc;</span><br><span class="line">    sc.~<span class="built_in">SomeClass</span>();  </span><br><span class="line"></span><br><span class="line">&#125; <span class="comment">//Program aborts here: double free</span></span><br></pre></td></tr></table></figure>
+<p>联立一下RAII原则的本质，其实就是某类分配的资源需要“有个函数”去清理<del>八面玲珑，思维极为跳跃</del>，而<code>Dx</code>这一模板参数即提供了一些“外部函数”执行清理任务的窗口。<br />
+<code>unique_ptr</code>的构造函数中有一个颇为有趣的重载：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> <span class="title class_">Ty</span>,<span class="keyword">class</span> <span class="title class_">Dx</span>&gt;</span><br><span class="line">unique_ptr&lt;Ty,Dx&gt;::<span class="built_in">unique_ptr</span>(Ty* __ptr, Dx&amp;&amp; __fn);  </span><br></pre></td></tr></table></figure>
+<p>只要<code>requires &#123;std::invoke(__fn, __ptr)；&#125;</code>
+为<code>true</code>，这个构造函数就可以成立（即通过编译），效果就是在该<code>unique_ptr</code>析构时，对其管理的指针调用该函数。</p>
 <blockquote>
-<p>构造矩阵以分块矩阵的方式表述（实际上单个元素可被视为1*1的分块矩阵的“特例”），对矩阵的幺元操作在格中体现为单位矩阵，此时锚定向量实际上也是分块矩阵“拼凑”的结果。</p>
+<p>默认该函数是该指针类的析构函数，此处只不过是覆写之。</p>
 </blockquote>
+<p>抛开各种花里胡哨的demo code，直接上一个实用的用法：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">auto</span> ptr = std::<span class="built_in">unique_ptr</span>&lt;FILE, <span class="keyword">decltype</span>(&amp;fclose)&gt;(<span class="built_in">fopen</span>(<span class="string">&quot;a.txt&quot;</span>, <span class="string">&quot;r&quot;</span>), fclose);  </span><br></pre></td></tr></table></figure>
+<p>一行wrapper，直接实现了对<code>FILE*</code>这一让人又爱又恨的C
+Legacy得到了一个RAII wrapper。</p>
+<blockquote>
+<p>由于默认模板参数的存在，声明变量时的两个模板参数都需要手动指定（不能直接丢一个<code>fclose</code>过去让它推导，因为默认参数优先级高于推导<del>hint：可以试试重载wrapper</del>）。</p>
+</blockquote>
+<h2
+id="井井有条stdatomic与stdmemory_order">井井有条——<code>std::atomic</code>与<code>std::memory_order</code></h2>
+<blockquote>
+<p>C++中，<strong>程序合法</strong>（通过编译不会出现UB、栈溢出/
+<em>double free</em>
+/越界等现象导致<code>abort</code>）是一方面；程序的<strong>正确性</strong>（执行流程、结果符合预期）则是另一方面。</p>
+</blockquote>
+<p><code>std::atomic</code>只能保证对变量操作的原子性（即防止了互斥的读写操作同时执行，一般是多个写操作）。<br />
+C++中，编译器和CPU可能会将这些指令顺序进行重排，以达成执行层的优化<del>经典pipeline</del>，但其不保证指令顺序的语义正确（只能保证内存访问合法）。</p>
+<p>具体地：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> x;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">thread_a</span><span class="params">()</span> </span>&#123;x = <span class="number">1</span>;&#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">thread_b</span><span class="params">()</span> </span>&#123;x = <span class="number">2</span>;&#125;</span><br></pre></td></tr></table></figure>
+<p>若<code>thread_a</code>和<code>thread_b</code>并发执行，则由于
+<em>data race</em> 会产生<del>包括但不限于直接abort</del>的UB。<br />
+而若将<code>x</code>的声明改为</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">std::atomic&lt;<span class="type">int</span>&gt; x;</span><br></pre></td></tr></table></figure>
+<p>这也只能保证程序不会出现UB，但<del>众所周知</del>undefined并不等于unexpected，程序的执行结果依然不确定——其是由于并发的本性所致。</p>
 <hr />
-<p>由上述分析，显然规约矩阵的最短向量的前 <span
-class="math inline">\(N\)</span>、后 <span
-class="math inline">\(N\)</span> 个维度即分别为 <span
-class="math inline">\(f^{&#39;}\)</span>、<span
-class="math inline">\(g^{&#39;}\)</span>。由于运算时的卷积操作，严格地，此处解出的私钥
-<span class="math inline">\(f^{&#39;}\)</span> 实际应为 <span
-class="math inline">\(x^{-i}f (i \in (-N,N))\)</span>，<span
-class="math inline">\(g^{&#39;}\)</span> 同理。<br />
-欲破译原私钥 <span class="math inline">\(f\)</span> ，则必须对 <span
-class="math inline">\(f,g\)</span> 的卷积系数分别进行爆破。<br />
-但若目标只是解密数据，参考上述NTRU的解密过程， <span
-class="math inline">\(f\)</span> 的卷积结果 <span
-class="math inline">\(f^{&#39;}\)</span>
-依然可以对密文进行解密（因为解密用到的 <span
-class="math inline">\(f^{&#39;-1} = x^{-i}f^{-1}\)</span> ）。</p>
-<h1 id="春滋">春滋</h1>
-<blockquote>
-<p>方程的潇潇暮雨。</p>
-</blockquote>
-<h2 id="短格的精华">“短格”的精华</h2>
-<p>先考虑整数环 <span class="math inline">\(Z\)</span>
-下一个较简单的方程：</p>
-<p><span class="math display">\[ax + by = c \]</span></p>
-<p>在给定 <span class="math inline">\(a,b,c\)</span>
-时其只是一个平凡的一元二次不定方程；若移去 <span
-class="math inline">\(c\)</span>，则一般而言无法得出 <span
-class="math inline">\(x,y\)</span> 的解。<br />
-但若已知 <span class="math inline">\(x,y,c\)</span>
-都是较小的整数，则可以使用格攻击来获得方程的解：</p>
-<p><span class="math display">\[\begin{bmatrix} x &amp; y \end{bmatrix}
-\cdot \begin{bmatrix} C &amp; a \\ &amp; b \end{bmatrix} =
-\begin{bmatrix} Cx &amp; c \end{bmatrix}\]</span></p>
-<p>其中若目标向量的模长足够小（已知 <span class="math inline">\(c
-&lt;&lt; a,b\)</span> 且配平系数 <span class="math inline">\(C\)</span>
-选择得当），则或可通过格基规约得到目标向量。</p>
-<p>上述放长还可以推广至多变量的情况<del>传说中的多元Coppersmith青春版，只看一次项</del>：</p>
-<p><span class="math display">\[a_1x_1 + a_2x_2 + \cdots + a_nx_n =
-c\]</span></p>
-<p><span class="math display">\[\begin{bmatrix} x_1 &amp; x_2 &amp;
-\cdots &amp; x_n \end{bmatrix} \begin{bmatrix} C_1 &amp;&amp;&amp; a_1
-\\ &amp;C_2 &amp;&amp; a_2 \\ &amp;&amp; \ddots &amp; \vdots \\
-&amp;&amp;&amp; a_n \end{bmatrix} = \begin{bmatrix} C_1x_1 &amp; C_2x_2
-&amp; \cdots &amp; c \end{bmatrix}\]</span></p>
-<p>可以注意到，这个“更一般的”方程在 <span
-class="math inline">\(c\)</span> 已知时就是HLCP(Hidden Linear
-Combination Problem，隐藏线性组合问题)。<br />
-<strong>实际上HLCP也可以“移进”至上述这个方程的形式，并且可以拓展到和<code>sum</code>含有一定误差的情况，即将
-<span class="math inline">\(c\)</span>
-移至等号左侧，右侧以一小量（不一定是0）代替。</strong></p>
+<p>那如果编写的代码“看似”可以完成顺序执行的语义呢？</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">std::atomic&lt;<span class="type">int</span>&gt; x;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">thread_xx</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(x.<span class="built_in">load</span>(std::memory_order_relaxed) == <span class="number">1</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        std::<span class="built_in">println</span>(<span class="string">&quot;x = &#123;&#125;&quot;</span>, x.<span class="built_in">load</span>(std::memory_order_relaxed));  <span class="comment">//?</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>x</code>被<code>load</code>了两次，但第二次load的结果就已经不一定是<code>1</code>了（中途可能有其它变量对其进行了修改），即由于“缓冲”的存在（实际上是由于cache/pipeline优化的指令重排所致），<code>x</code>在其它线程中的修改<strong>不一定立即对本线程可见</strong>，比如编译器可能会生成这样的机器代码：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"></span><br></pre></td></tr></table></figure>
+<p>对于另一个线程，其对<code>x</code>的修改可能会由于inline
+cache的优化而被暂存于某寄存器中，此时其对该变量的修改是（对其它线程）<strong>不透明的</strong>。</p>
+<hr />
+<p><code>std::atomic</code>对多数 <em>trivial types</em>
+的特化都支持一些常用的赋值、运算操作符以供操作便利，但其本质上还是底层一些更有趣函数的wrapper。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
       
 
@@ -548,26 +493,11 @@ Combination Problem，隐藏线性组合问题)。<br />
     <div class="article-info article-info-index">
       
       
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">长文精选</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
       
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/crypto/lattice2/">展开全文 >></a>
+          <a class="article-more-a" href="/TiaoMeng/">展开全文 >></a>
         </p>
       
 
@@ -599,20 +529,20 @@ Combination Problem，隐藏线性组合问题)。<br />
 
 
   
-    <article id="post-crypto/wp/wqb-plus" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-crypto/math" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/crypto/wp/wqb-plus/">2025湾区杯Writeup——再论“逐怨”</a>
+      <a class="article-title" href="/crypto/math/">筑基</a>
     </h1>
   
 
         
-        <a href="/crypto/wp/wqb-plus/" class="archive-article-date">
-  	<time datetime="2025-09-17T02:08:13.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-09-17</time>
+        <a href="/crypto/math/" class="archive-article-date">
+  	<time datetime="2026-01-08T05:20:39.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2026-01-08</time>
 </a>
         
       </header>
@@ -620,67 +550,1079 @@ Combination Problem，隐藏线性组合问题)。<br />
     <div class="article-entry" itemprop="articleBody">
       
         <blockquote>
-<p><del>珠海端茶倒水一日游(bushi)</del></p>
+<p>信安数基，信安筑基。</p>
 </blockquote>
-<p>2025年湾区杯糊出来几道题的Writeup，以及做prng题有感。</p>
 <hr />
-<h1 id="writeup">Writeup</h1>
-<h2 id="prng">prng</h2>
-<h3 id="题目">题目</h3>
-<h3 id="解析">解析</h3>
-<p>题目实现了一个LCG变种的PRNG（伪随机数生成器），其状态间的关系如下：</p>
-<p>$ s_{i+1} s_{i}^{2}a + b ^{512} $</p>
-<p>难点有二：</p>
+<h1 id="离散数学">离散数学</h1>
+<h2 id="集合">集合</h2>
+<h3 id="映射">映射</h3>
+<p>映射 <span class="math inline">\(f\)</span> 是从 <span
+class="math inline">\(e_1 \in S_1\)</span> 到 <span
+class="math inline">\(e_2 \in S_2\)</span> 的一种运算，记作 <span
+class="math inline">\(f: S_1 \rightarrow S_2, f(e_1) =
+e_2\)</span>。</p>
+<blockquote>
+<p>映射的左值（变量）和右值（值）可以有多个，形如 <span
+class="math inline">\(f(x_1,x_2) = y, f(x) = \pm y\)</span> 等。</p>
+</blockquote>
+<h4 id="单射满射双射">单射、满射、双射</h4>
+<p>对于映射 <span class="math inline">\(f: A \rightarrow B, f(x) =
+y\)</span>，<br />
+单射指 <span class="math inline">\(\forall x \in A, \text{有且只有一个}
+y \in B \text{满足} f(x) = y\)</span>；<br />
+满射指 <span class="math inline">\(\forall y \in B, \text{有且只有一个}
+x \in A \text{满足} f(x) = y\)</span>；<br />
+双射指既是单射又是满射的 <span class="math inline">\(f\)</span>。</p>
+<blockquote>
+<p>双射 <span class="math inline">\(f\)</span>
+具有完全且唯一的可逆性，即 <span class="math inline">\(\exists f^{-1}: B
+\rightarrow A\)</span>，其性质与 <span class="math inline">\(f\)</span>
+相同。</p>
+</blockquote>
+<p>以初等数学的方程、函数为例，“映射” <span class="math inline">\(f: Q_x
+\rightarrow Q_y\)</span>：</p>
 <ul>
-<li>其只给出了PRNG的两个状态，要求逆向出seed；<br />
+<li><span class="math inline">\(f_1: y = x^2\)</span> 是单射（每个 <span
+class="math inline">\(x\)</span> 只能对应唯一的 <span
+class="math inline">\(y = x^2\)</span>）但不是满射（<span
+class="math inline">\(y\)</span> 对应的 <span
+class="math inline">\(x\)</span> 数目为 <span
+class="math inline">\(\begin{cases} 2, y &gt; 0 \\ 1, y = 0 \\ 0, y &lt;
+0
+\end{cases}\)</span>。<strong>初等数学中，函数依定义均满足单射。</strong><br />
 </li>
-<li>对于PRNG的每个状态，其都<strong>随机抹去</strong>了0.19倍总位数的信息（此处体现为
-<span class="math inline">\(s_{1}\)</span>、<span
-class="math inline">\(s_{2}\)</span>、<span
-class="math inline">\(a\)</span>、<span class="math inline">\(b\)</span>
-中各97个<code>?</code>。</li>
+<li><span class="math inline">\(f_2: y^2 = x\)</span> 是满射（和 <span
+class="math inline">\(f_1\)</span> 相反），依变量约定，<span
+class="math inline">\(f_2\)</span> 不是 <span
+class="math inline">\(x\)</span> 到 <span
+class="math inline">\(y\)</span> 的函数。<br />
+</li>
+<li><span class="math inline">\(f_3: y = 2 \cdot x\)</span>
+既是满射也是双射，其逆映射为 <span class="math inline">\(f_3^{-1}: x =
+\frac{1}{2} y\)</span>。</li>
 </ul>
-<p>由于被抹去的位数分布不均，因而很难用传统的代数分析方法攻击之<del>包括第一反应的格攻击</del>。</p>
-<p>因此此处需要用到特技“逐怨”处理之——具况见下方exp和解析。<br />
-大致思路：逐未知位爆破，利用位运算的截断特性不断校验、排除“缓存”的可能性。</p>
-<h3 id="exp">exp</h3>
+<h3 id="结合法">结合法</h3>
+<hr />
+<h2 id="群">群</h2>
 <blockquote>
-<p>赛时紧张，exp近乎于缝缝补补能跑就行，至于语言规范什么的看个乐呵就好awa</p>
+<p><del>坐稳扶好.sage</del></p>
 </blockquote>
-<p>一段（Python）：</p>
-<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#python3</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> itertools <span class="keyword">import</span> product</span><br><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> isPrime</span><br><span class="line"><span class="keyword">from</span> Crypto.Cipher <span class="keyword">import</span> AES</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">a = <span class="string">&quot;1100001101001?101111100?01110001010011?1???11???01000011100101010100101??011?01?00?0?000110000?01?01010?10101?1101010100010011?101010010000?10110??10100?000?1?11?10???0?1111?1000100100?1110111010?0?01?00?11?0011?0101101?100000?1??0101010?1?101?1001?0011110??0000000?00100?1010011100001111111001?10?001??0110001111?100110000110011011?111101?1??1010101101?01?0000011?1111001?000111??1??00010?10011001?000110000??10?10100000100?10?1101111?101?001??00?01111???01??1?10100??0101?011?1000?011101?110???0110111011?101?1&quot;</span></span><br><span class="line">b = <span class="string">&quot;1000?11?0111000?1001??11?1100?001?0?0111011011100?0?110?11111?1?0?111100?0111???01?001100?000?001??0110??0?001000000110?0100?01100?001000011?01001000011010100?01110000001??0000111???101101?0100?011??010011?0?100?0?111100?00110000111?10???0?01?100?1100?0111001?11?1110?011?100101101?10?0??00010011?101?111?110001100?0??0?10?11100100111?100100001?0?00000??1101001?010?110000110?0001101000010011001100?010?100000100001?10100101110010000?0111?0001??1?001100000010000?011000??0?10?1001000100???1100111?11?11011010100?&quot;</span></span><br><span class="line">c1 = <span class="string">&quot;1100101001100???1??101100?00101111?000001011?0??0?0?1??11?0001?1?01111?0?1100011101?01011??110011100001100100???000101?1011010100111110?11?010111101?0?0110?0100001?000?1011?111111111000001?100000001011?0110111?11010010100?10011110000?0101??1?00001111010110?00110001111011001?0010110101100011111?01?0000?0?0011?0?101??1111100?11?11100010???1?0?1?11?1100?1100010?1111111011?100100111?11?11?1101?1?1100111?01?01111?11?0??1111?001000?0000?1?010?100111101?01011?1?1?111?01???01?1111?01?????0?001011000111010010?111101&quot;</span></span><br><span class="line">c2 = <span class="string">&quot;00000000011?1000110011?001???10011010?0?01?11010011010??10010111?1111?1000?1??11?1111??111?1010001001111?10?0111001??101?10000000101111110111??11111?0?0??10?0101?111001101000101?00010?111?1100111?0?1110?1111?0110?11010110001100000111101?010010??0??101?1001000?010101?01110?01001010001?0?01?00?0110100100??10?00??1010111010010??1?100110?????01001?001110101111?1?00?0?00101?101?0?101?110011?1?00111100??1?1?00?1110?010?110?00?010011010001101?00110101?1??0010?101111000?11011101011?0010010110000000110110101??1?011?&quot;</span></span><br><span class="line"><span class="comment">#For each modulus</span></span><br><span class="line"></span><br><span class="line">a = a[::-<span class="number">1</span>]</span><br><span class="line">b = b[::-<span class="number">1</span>]</span><br><span class="line">c1 = c1[::-<span class="number">1</span>]</span><br><span class="line">c2 = c2[::-<span class="number">1</span>]</span><br><span class="line"></span><br><span class="line">als = [<span class="number">0</span>]</span><br><span class="line">bls = [<span class="number">0</span>]</span><br><span class="line">c1ls = [<span class="number">0</span>]</span><br><span class="line">c2ls = [<span class="number">0</span>]</span><br><span class="line"></span><br><span class="line">ls = []</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">512</span>):</span><br><span class="line">    tals = []</span><br><span class="line">    tbls = []</span><br><span class="line">    tc1ls = []</span><br><span class="line">    tc2ls = []</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> a_,b_,c1_,c2_ <span class="keyword">in</span> <span class="built_in">zip</span>(als,bls,c1ls,c2ls):</span><br><span class="line">        add_base = <span class="number">2</span>**i</span><br><span class="line">        qmark_idx = []</span><br><span class="line"></span><br><span class="line">        a_ += <span class="built_in">int</span>(a[i])*add_base <span class="keyword">if</span> a[i] <span class="keyword">in</span> (<span class="string">&#x27;0&#x27;</span>,<span class="string">&#x27;1&#x27;</span>) <span class="keyword">else</span> <span class="number">0</span></span><br><span class="line">        b_ += <span class="built_in">int</span>(b[i])*add_base <span class="keyword">if</span> b[i] <span class="keyword">in</span> (<span class="string">&#x27;0&#x27;</span>,<span class="string">&#x27;1&#x27;</span>) <span class="keyword">else</span> <span class="number">0</span></span><br><span class="line">        c1_ += <span class="built_in">int</span>(c1[i])*add_base <span class="keyword">if</span> c1[i] <span class="keyword">in</span> (<span class="string">&#x27;0&#x27;</span>,<span class="string">&#x27;1&#x27;</span>) <span class="keyword">else</span> <span class="number">0</span></span><br><span class="line">        c2_ += <span class="built_in">int</span>(c2[i])*add_base <span class="keyword">if</span> c2[i] <span class="keyword">in</span> (<span class="string">&#x27;0&#x27;</span>,<span class="string">&#x27;1&#x27;</span>) <span class="keyword">else</span> <span class="number">0</span></span><br><span class="line"></span><br><span class="line">        <span class="comment"># Process question marks</span></span><br><span class="line">        <span class="keyword">if</span>(a[i] == <span class="string">&#x27;?&#x27;</span>):</span><br><span class="line">            qmark_idx.append(<span class="number">0</span>)</span><br><span class="line">        <span class="keyword">if</span>(b[i] == <span class="string">&#x27;?&#x27;</span>):</span><br><span class="line">            qmark_idx.append(<span class="number">1</span>)</span><br><span class="line">        <span class="keyword">if</span>(c1[i] == <span class="string">&#x27;?&#x27;</span>):</span><br><span class="line">            qmark_idx.append(<span class="number">2</span>)</span><br><span class="line">        <span class="keyword">if</span>(c2[i] == <span class="string">&#x27;?&#x27;</span>):</span><br><span class="line">            qmark_idx.append(<span class="number">3</span>)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># test equation</span></span><br><span class="line">        <span class="keyword">for</span> tp <span class="keyword">in</span> product([<span class="number">0</span>,<span class="number">1</span>],repeat=<span class="built_in">len</span>(qmark_idx)):</span><br><span class="line">            temp_a = a_</span><br><span class="line">            temp_b = b_</span><br><span class="line">            temp_c1 = c1_</span><br><span class="line">            temp_c2 = c2_</span><br><span class="line"></span><br><span class="line">            mapper = &#123;<span class="number">0</span>:temp_a,<span class="number">1</span>:temp_b,<span class="number">2</span>:temp_c1,<span class="number">3</span>:temp_c2&#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">for</span> t <span class="keyword">in</span> <span class="built_in">range</span>(<span class="built_in">len</span>(qmark_idx)):</span><br><span class="line">                ss = add_base * tp[t]</span><br><span class="line"></span><br><span class="line">                <span class="keyword">if</span> qmark_idx[t] == <span class="number">0</span>:</span><br><span class="line">                    temp_a += ss</span><br><span class="line">                <span class="keyword">elif</span> qmark_idx[t] == <span class="number">1</span>:</span><br><span class="line">                    temp_b += ss</span><br><span class="line">                <span class="keyword">elif</span> qmark_idx[t] == <span class="number">2</span>:</span><br><span class="line">                    temp_c1 += ss</span><br><span class="line">                <span class="keyword">else</span>:</span><br><span class="line">                    temp_c2 += ss</span><br><span class="line"></span><br><span class="line">                <span class="comment"># mapper[qmark_idx[t]] += add_base*tp[t]</span></span><br><span class="line"></span><br><span class="line">            <span class="comment"># breakpoint()</span></span><br><span class="line">            <span class="keyword">if</span> (temp_c1**<span class="number">2</span> * temp_a + temp_b - temp_c2) % <span class="number">2</span>**(i+<span class="number">1</span>) == <span class="number">0</span>:</span><br><span class="line">                tals.append(temp_a)</span><br><span class="line">                tbls.append(temp_b)</span><br><span class="line">                tc1ls.append(temp_c1)</span><br><span class="line">                tc2ls.append(temp_c2)</span><br><span class="line"></span><br><span class="line">    als = tals</span><br><span class="line">    bls = tbls</span><br><span class="line">    c1ls = tc1ls</span><br><span class="line">    c2ls = tc2ls</span><br><span class="line"></span><br><span class="line">res = []</span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="built_in">len</span>(als)): <span class="comment">#256</span></span><br><span class="line">    <span class="keyword">if</span> isPrime(als[i]) <span class="keyword">and</span> isPrime(bls[i]):</span><br><span class="line">        res.append((als[i],bls[i],c1ls[i],c2ls[i]))</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">ssq = []</span><br><span class="line"><span class="keyword">for</span> _a,_b,_c1,_c2 <span class="keyword">in</span> res:</span><br><span class="line">    <span class="keyword">assert</span> (_c2-_b)*<span class="built_in">pow</span>(_a,-<span class="number">1</span>,<span class="number">2</span>**<span class="number">512</span>) % <span class="number">2</span>**<span class="number">512</span> == _c1**<span class="number">2</span> % <span class="number">2</span>**<span class="number">512</span></span><br><span class="line">    ssq.append((_c1-_b)*<span class="built_in">pow</span>(_a,-<span class="number">1</span>,<span class="number">2</span>**<span class="number">512</span>) % <span class="number">2</span>**<span class="number">512</span>)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(ssq)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>二段：</p>
-<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line"><span class="keyword">from</span> Crypto.Cipher <span class="keyword">import</span> AES</span><br><span class="line"><span class="keyword">from</span> hashlib <span class="keyword">import</span> md5</span><br><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line">ls = [<span class="number">23647629859804785244560293652892470724172934807090102727098380892501016027619179662322113914924661220146486108557056592028992097519447371973456440412256195080359251744384181846271425283969058481217011834363510239520880027721434747003304892242351979646514804231247826229510446250261365973495593321908885217092</span>,<span class="number">23647629859804783842807550785248410559147385398160690428443115878862931233560349908609941584951625196188685672556855690842825267539431410518674933270351636038481968317300246435143772977768212518512034769139930128250279198401207154864696876591321300269180310179591686461840167037631726571572294965838719180612</span>, <span class="number">23647629859804785244560293652894960737838541327372270519613976463801490406983616708628525990102165025836193330627109595096298277075465850886971949679968278179590332381415060678735815957255177524540432453452578280204146818578219638369163804925440068630123439555721020512123587273432848386181743393346039799620</span>]</span><br><span class="line"></span><br><span class="line">ff2 = []</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> ls:</span><br><span class="line">    a = Zmod(<span class="number">2</span>^<span class="number">512</span>)(i)</span><br><span class="line">    ff2.extend(a.nth_root(<span class="number">2</span>,<span class="built_in">all</span>=<span class="literal">True</span>))</span><br><span class="line"></span><br><span class="line">enc = <span class="string">b&#x27;\xcb\xe0wY\xe3\\\xf7\xc8\x89/\x1c\xdb^P\xc09\xca\xcf\xe7\xa7\xa4\xb5\xaeQ\xc8K\xabg_\x8e\xfa?\xdc\xce9\xd7\x0en&quot;?\xc0\n\xe0hT+\xc0\x81&#x27;</span></span><br><span class="line">nonce = <span class="string">b&#x27;n\x13\xd1\xdf\xb6]\xb5\xf7&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> ff2:</span><br><span class="line">    key = md5(long_to_bytes(<span class="built_in">int</span>(i))).digest()</span><br><span class="line">    aes = AES.new(key,AES.MODE_CTR,nonce=nonce)</span><br><span class="line"></span><br><span class="line">    <span class="built_in">print</span>(aes.decrypt(enc))</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h1 id="闲谈逐怨">闲谈“逐怨”</h1>
-<h2 id="数学基础">数学基础</h2>
-<p>狭义上（即部分题目的“实例”），若 <span
-class="math inline">\(Z_{2^{p}}\)</span> 下 <span
-class="math inline">\(f(x_{1},x_{2},\cdots,x_{n}) = 0\)</span> 成立，则
-<span class="math inline">\(Z_{2^{q}}\)</span> 下 <span
-class="math inline">\(f(x^{&#39;}_{1},x^{&#39;}_{2},\cdots,x^{&#39;}_{n})
-= 0\)</span> 亦成立，其中 <span class="math inline">\(q &lt;
-p\)</span>，<span class="math inline">\(x^{&#39;}_{1} \equiv x_{1} \bmod
-2^{q}\)</span>。</p>
-<p>广义上，对阶为 <span class="math inline">\(p\)</span> 的群 <span
-class="math inline">\(G\)</span> 下的元素 <span
-class="math inline">\(x_{i} (i \in \[1,n\])\)</span>，考虑将 <span
-class="math inline">\(x_{i} \rightarrow x^{&#39;}_{i}\)</span>
-，即将之映射至另一个群 <span class="math inline">\(G^{&#39;}\)</span>
-上，且 <span class="math inline">\(G^{&#39;}\)</span> 的阶 <span
-class="math inline">\(p^{&#39;} | p\)</span>，使得 <span
-class="math inline">\(ord(x^{&#39;}_{i}) \equiv ord(x_{i}) \bmod
-p^{&#39;}\)</span>。<br />
-假设 <span class="math inline">\(G\)</span> 和 <span
-class="math inline">\(G^{&#39;}\)</span> <strong>对群上运算 <span
-class="math inline">\(f\)</span> 是同构的</strong>，则存在 <span
-class="math inline">\(ord(f(x_{1},x_{2},\cdots,x_{n})) \equiv
-ord(f(x^{&#39;}_{1},x^{&#39;}_{2},\cdots,x^{&#39;}_{n})) \bmod
-p^{&#39;}\)</span>。</p>
+<p>群是近世代数(Modern Algebra)的起点。<br />
+近世代数的哲学在于抽象——其将运算等性质符号化，从更上层的角度研究不同集合的运算特征，宛若OOP语言中的较上层类的函数接口。</p>
+<p>集合与结合法的概念较为宽泛，其共性太过有限而难以利用——迈入近世代数的山门，则是从约束更多、但也有更多共性与研究价值的“群”开始。</p>
+<h3 id="移进从集合到群">“移进”——从集合到群</h3>
 <blockquote>
-<p>虽然推广的结论<del>非常不讲人话</del>，但其为这一攻击的拓展运用提供了理论基础。</p>
+<p>速通流可以直接快进到“群”，但请确保充分理解封闭性、结合性、单位元（幺元）、逆元的概念。</p>
 </blockquote>
-<h2 id="算法实践">算法实践</h2>
-<p>“逐怨”的数学基础各异，但其算法流程上是大同小异的。此处以上述情景为例：</p>
+<p>结合法与集合、半群、广群、独异点和群是包含递进的关系，即后者一定是前者的子集，以附加条件逐级约束之。</p>
+<h4 id="半群">半群</h4>
+<p>对于定义了结合法 <span class="math inline">\(\cdot\)</span> 的集合
+<span class="math inline">\(S\)</span> ：<br />
+若该运算满足封闭性，即 <span class="math inline">\(\forall a,b \in S, a
+\cdot b \in S\)</span>，则该集合成为一个<strong>半群</strong>。</p>
+<blockquote>
+<p>实例：整数集合 <span class="math inline">\(\mathbb{Z}\)</span>
+上的加法运算 <span class="math inline">\(+\)</span> （简记为 <span
+class="math inline">\((\mathbb{Z}, +)\)</span> ）构成一个半群，但 <span
+class="math inline">\((\mathbb{Z},\div)\)</span>
+不构成一个半群（因为其不满足<strong>封闭性</strong>，真分数不在整数集合内）。</p>
+</blockquote>
+<h4 id="广群">广群</h4>
+<p>若对于半群 <span class="math inline">\(G\)</span>，其运算
+<strong><em>还</em></strong> 满足结合性，即 <span
+class="math inline">\(\forall a,b \in G, (a \cdot b) \cdot c = a \cdot
+(b \cdot c)\)</span>，则称之为一个<strong>广群</strong>。</p>
+<blockquote>
+<p>实例：<del>老生常谈的</del> <span
+class="math inline">\((\mathbb{Z},+)\)</span> 也是一个广群。<span
+class="math inline">\((\mathbb{Q},\div)\)</span> 是半群而不是广群（显然
+<span class="math inline">\((a \div b) \div c \neq a \div (b \div
+c)\)</span>）。</p>
+</blockquote>
+<h4 id="独异点又名幺半群">独异点（又名幺半群）</h4>
+<p>若对于广群 <span class="math inline">\(G\)</span>，<span
+class="math inline">\(\exists e \in G, \forall a \in G, a \cdot e = e
+\cdot a =
+a\)</span>，则称之为一个<strong>独异点</strong>（又名<strong>幺半群</strong>）。<br />
+其中 <span class="math inline">\(e\)</span>
+称为<strong>单位元</strong>（或<strong>幺元</strong>）。</p>
+<blockquote>
+<p>严格地，有左/右单位元之差分：若 <span
+class="math inline">\(e\)</span> 满足了 <span class="math inline">\(a
+\cdot e =
+a\)</span>，则其为右单位元；反之则为左单位元，既是右单位元也是左单位元的元素称为单位元。</p>
+</blockquote>
+<blockquote>
+<p>实例：<span class="math inline">\((\mathbb{Z},+)\)</span>
+是一个独异点（<span class="math inline">\(e = 0\)</span>）；<span
+class="math inline">\((\mathbb{Z_{+}},+)\)</span>
+是一个广群（其满足封闭性、结合性），但不是独异点（因为其中不存在单位元）。</p>
+</blockquote>
+<h4 id="群-1">群</h4>
+<p>若对于独异点 <span class="math inline">\(G\)</span>，<span
+class="math inline">\(\forall a \in G, \exists a^{-1} \in G\)</span>
+满足 <span class="math inline">\(a \cdot a^{-1} =
+e\)</span>，则称之为一个<strong>群</strong>。<br />
+其中 <span class="math inline">\(a^{-1}\)</span>
+称为<strong>逆元</strong>。</p>
+<blockquote>
+<p>同样 <span class="math inline">\(a^{-1}\)</span>
+理论上亦有左/右逆元之差分，其理同上。</p>
+</blockquote>
+<blockquote>
+<p>实例：<span class="math inline">\((\mathbb{Z},+)\)</span>
+是群（任意元素的逆元是其相反数）；<span
+class="math inline">\((\mathbb{Q/0},\times)\)</span>（零以外的有理数的乘法运算）是群，而
+<span class="math inline">\((\mathbb{Q},\times)\)</span> 不是（显然
+<span class="math inline">\(\mathbb{0}\)</span> 没有逆元）。</p>
+</blockquote>
+<h4 id="小结">小结</h4>
+<p>集合与群是两个最为重要的数学结构之一。<br />
+群是定义了结合法，且满足<strong>封闭性、结合性、单位元、可逆性</strong>四条件的集合。</p>
+<h3 id="同态与同构">同态与同构</h3>
+<p>同态与同构研究的是两个群之间的关系，其允许我们在几种不同的数学结构之间进行转换。</p>
+<h4 id="同态">同态</h4>
+<p>对 <span class="math inline">\(f: G_{1} \rightarrow
+G_{2}\)</span>，若 <span class="math inline">\(\forall a,b \in
+A\)</span>，<span class="math inline">\(f(a \cdot b) = f(a) \cdot
+f(b)\)</span>，则称 <span class="math inline">\(f\)</span> 是 <span
+class="math inline">\(G_{1}\)</span> 到 <span
+class="math inline">\(G_{2}\)</span> 的一个同态映射。</p>
+<blockquote>
+<p>若两侧的运算是“相同”的，可称之为<strong><em>op</em>同态</strong>。<br />
+如令 <span class="math inline">\(G = Z_{p} \space p \notin \{0,2\}, f: G
+\rightarrow G, f(x) = x \cdot 2 \bmod p\)</span>。此时 <span
+class="math inline">\(\forall a,b \in Z_{p}, f(a) + f(b) = (2 \cdot a +
+2 \cdot b) \equiv f(a + b) = 2 \cdot (a+b) \bmod p\)</span>。可以发现
+<span class="math inline">\(f\)</span>
+满足加法同态（<strong>即“映射”操作 <span
+class="math inline">\(f\)</span> 和该群内的加法操作 <span
+class="math inline">\(+\)</span>
+的顺序可以任意交换，不影响结果</strong>）。</p>
+</blockquote>
+<blockquote>
+<p>上述实例中的 <span class="math inline">\(f\)</span> 满足 <span
+class="math inline">\(G_1 =
+G_2\)</span>，由一个群到自身的映射也被称为<strong>自映射</strong>。<strong>有限群内</strong>，自映射的重要特点是<strong>单射、满射、双射任意一者是另外二者的充要条件</strong>。</p>
+</blockquote>
+<h4 id="同构">同构</h4>
+<p>同构就是满足<strong>双射</strong>的同态 <span
+class="math inline">\(f\)</span>。</p>
+<h3 id="子群系">子群“系”</h3>
+<h4 id="子群">子群</h4>
+<p>对于群 <span class="math inline">\(G\)</span>，若群 <span
+class="math inline">\(H\)</span> 满足 <span
+class="math inline">\(\forall a \in H \Rightarrow a \in G\)</span>，且
+<span class="math inline">\(H\)</span> 拥有和 <span
+class="math inline">\(G\)</span> <strong>相同的结合法</strong>，则称
+<span class="math inline">\(H\)</span> 为 <span
+class="math inline">\(G\)</span> 的子群，记作 <span
+class="math inline">\(H \subseteq G\)</span>。<br />
+显然 <span class="math inline">\(\{e\}\)</span> 和 <span
+class="math inline">\(G\)</span> 一定是 <span
+class="math inline">\(G\)</span> 的子群，它们称作 <span
+class="math inline">\(G\)</span> 的<strong>平凡子群</strong>。若 <span
+class="math inline">\(H \neq G\)</span>，则称之为 <span
+class="math inline">\(G\)</span> 的<strong>非平凡子群</strong>。</p>
+<p>如在普通加法下，对于 <span class="math inline">\(G = Z_{6} =
+\{0,1,2,3,4,5\}\)</span> 而言，<span class="math inline">\(H =
+\{0,2,4\}\)</span> 即为其子群（<span
+class="math inline">\(\{0,3\}\)</span> 等显然也是）。</p>
+<blockquote>
+<p>相同的结合法在部分场景下极为关键：如对于普通加法， <span
+class="math inline">\(2Z \subseteq Z\)</span>，但 <span
+class="math inline">\(Z_{+} \nsubseteq Z\)</span>，因为 <span
+class="math inline">\(Z_{+}\)</span> 不是群（其没有单位元）。</p>
+</blockquote>
+<p>子群的重要定理之一是拉格朗日定理<del>群论版</del>：<span
+class="math inline">\(H \subseteq G, |G| \neq \inf \Rightarrow |H| |
+|G|\)</span>。</p>
+<p>若 <span class="math inline">\(H \subseteq G\)</span>，记 <span
+class="math inline">\([H:G] = \frac{|H|}{|G|}\)</span>，称 <span
+class="math inline">\([H:G] \in Z_{+}\)</span> 为H对G的指标。</p>
+<blockquote>
+<p>其证明需要用到陪集的知识，后置<del>咕</del>一下。</p>
+</blockquote>
+<h4 id="陪集">陪集</h4>
+<p>设 <span class="math inline">\(H \subseteq G, a \in G\)</span>，定义
+<span class="math inline">\(aH = \{ah : h \in H\}\)</span> 为 <span
+class="math inline">\(H\)</span>
+的<strong>左陪集</strong>，类似地可以定义右陪集。显然对于交换群来说左/右陪集是相同的。<br />
+依然以 <span class="math inline">\(G = Z_{6}\)</span>，<span
+class="math inline">\(H = \{0,2,4\}\)</span> 为例，可以计算 <span
+class="math inline">\(0H = \{0,2,4\}, 1H = \{1,3,5\}, 2H =
+\{0,2,4\}\)</span> 等。</p>
+<p>陪集的特殊性在于：</p>
+<ul>
+<li>设 <span class="math inline">\(f: H \rightarrow aH, f(h) =
+ah\)</span>，根据子群定义（相同结合法）可知 <span
+class="math inline">\(f\)</span>
+是一个<strong>同构映射</strong>。对于有限群 <span
+class="math inline">\(G\)</span>，<span class="math inline">\(f\)</span>
+也一定是双射（群中 <span class="math inline">\(a^{-1}\)</span>
+存在，推定存在唯一的单射逆映射 <span class="math inline">\(f^{-1}: aH
+\rightarrow H, f^{-1}(h) = a^{-1}h\)</span>。<br />
+</li>
+<li><span class="math inline">\(|aH| = |H|\)</span>
+成立，即所有陪集的大小都和子群 <span class="math inline">\(H\)</span>
+相同。<br />
+</li>
+<li><span class="math inline">\(\forall g \in G, g \in
+a_{?}H\)</span>，即 <span class="math inline">\(G\)</span>
+中所有元素都会出现在 <em>某个</em> 陪集中。<br />
+</li>
+<li><span class="math inline">\(\forall a_1,a_2 \in G, a_{1}H \Join
+a_{2}H = \emptyset\)</span> 或 $a_{1}H = a_{2}H $ 成立。</li>
+</ul>
+<p>其中第2、3项由 <span class="math inline">\(f\)</span>
+双射的性质可导出。第4项</p>
+<p>依然以上述的 <span class="math inline">\(H\)</span>, <span
+class="math inline">\(G\)</span> 为例：<br />
+<span class="math inline">\(H = \{0,2,4\}, 1H =
+\{1,3,5\}\)</span>，显然有 <span class="math inline">\(|1H| = |0H| =
+|H|\)</span>。<br />
+同时 <span class="math inline">\(\forall g \in G\)</span>，<span
+class="math inline">\(g \in a_{?}H\)</span>，具体地，<span
+class="math inline">\(g \in \begin{cases} 0H, g \equiv 0 \bmod 2 \\ 1H,
+g \equiv 1 \bmod 2 \end{cases}\)</span>。<br />
+另 <span class="math inline">\(\begin{cases} a_1H = a_2H, a_1 \equiv a_2
+\bmod 2 \\ a_1H \Join a_2H = \emptyset, a_1 \nequiv a_2 \bmod
+2\)</span>。</p>
+<hr />
+<h4 id="正规子群">正规子群</h4>
+<p><del>传说中的@正规子群.AI</del></p>
+<p>正规子群(Normal Subgroup)是指陪集满足交换性的子群 <span
+class="math inline">\(H\)</span>， <span class="math inline">\(\forall a
+\in G, H \subseteq G, \{a \cdot H\} = \{H \cdot a\}\)</span>，则称 <span
+class="math inline">\(H\)</span> 为 <span
+class="math inline">\(G\)</span> 的正规子群。</p>
+<blockquote>
+<p>不难证明阿贝尔群的子群都具有正规性。</p>
+</blockquote>
+<p>上述条件可进一步写作：<span class="math inline">\(\forall a \in G, h
+\in H, a \cdot h \cdot a^{-1} \in H\)</span>。</p>
+<blockquote>
+<p>由上式的<strong>对偶性</strong>，同右乘 <span
+class="math inline">\(a\)</span> 后推广 <span
+class="math inline">\(h\)</span> 至 <span
+class="math inline">\(H\)</span> 可推定。</p>
+</blockquote>
+<h4 id="商群">商群</h4>
+<blockquote>
+<p>只有正规子群可以生成一个商群。</p>
+</blockquote>
+<p>设 <span class="math inline">\(H \text{为} G\)</span> 的正规子群，则
+<span class="math inline">\(\{aH :a \in G\}\)</span> 上可定义运算 <span
+class="math inline">\(\cdot\)</span>：<span class="math inline">\((aH)
+\cdot (bH) = (ab)H\)</span>，其亦成为一个群，称之为商群 <span
+class="math inline">\(G/H\)</span>。</p>
+<p>“商群”的概念较为抽象，依然从较为熟悉<del>百听不厌</del>的整群三剑客
+<span class="math inline">\(Z,mZ,Z_m\)</span> 举实例切入：</p>
+<p>对于群 <span class="math inline">\(G = (Z_{35},+)\)</span>，<span
+class="math inline">\(H = \{7k : k \in Z_5\}\)</span> 显然为其子群（省略
+<span class="math inline">\(+\)</span> 运算，下同）。不难验证 <span
+class="math inline">\(H\)</span> 也是 <span
+class="math inline">\(G\)</span> 的正规子群。<br />
+写出 <span class="math inline">\(H\)</span> 的陪集有 <span
+class="math inline">\(0+H,1+H\)</span> 等，即 <span
+class="math inline">\(\{0,7,14,21,28\},\{1,8,15,22,29\}
+\cdots\)</span>；<br />
+故商群 <span class="math inline">\(G/H = \{0+H,1+H,\cdots,k+H : k \in
+Z_5\}\)</span>，其中商群中的每个元素（也就是 <span
+class="math inline">\(H\)</span> 对 <span
+class="math inline">\(G\)</span> 的（左）陪集）宏观体现即为 <span
+class="math inline">\(Z_35\)</span> 内模 <span
+class="math inline">\(7\)</span> 余数相同整数的集合。</p>
+<p>其中商群的运算实例亦是水到渠成：<span class="math inline">\((0+H) +
+(1+H) = (0+1) + H = (1+H)\)</span>；<span class="math inline">\((3+H) +
+(4+H) = (2+H)\)</span> 等，相当于 <span
+class="math inline">\((a_1+H)+(a_2+H) = (a_3+H)\)</span> 中 <span
+class="math inline">\(a_i\)</span> 的运算只在 <span
+class="math inline">\(Z_5\)</span> 下进行，其运算法与 <span
+class="math inline">\(H\)</span> 定义中的 <span
+class="math inline">\(k\)</span> 一致。</p>
+<blockquote>
+<p>商群的重要<strong>判定性质</strong>之一是其良定性(well-defined)，即其运算律
+<span class="math inline">\((aH)(bH) = (ab)H\)</span>
+成立；其交换性蕴含了商群运算不依赖于代表元 <span
+class="math inline">\(a,b\)</span> 的选取。</p>
+</blockquote>
+<p>商群可以理解为一个正规子群对既有群的一个“划分/分区(partition)”。</p>
+<h4 id="循环群">循环群</h4>
+<p>若 <span class="math inline">\(\forall a \in G, \exists i \in
+\mathbb{Z_{+}}, a^{i} = e\)</span>，则称群 <span
+class="math inline">\(G\)</span> 为循环群。<br />
+此时 <span class="math inline">\(\forall a \in G : ord(a) = n\)</span>
+的 <span class="math inline">\(a\)</span>
+都是<strong>生成元</strong>。</p>
+<blockquote>
+<p>实际上</p>
+</blockquote>
+<blockquote>
+<p>设 <span class="math inline">\(|G| = n\)</span>，由拉格朗日定理可知
+<span class="math inline">\(i | n\)</span> 一定成立，进一步地，<span
+class="math inline">\(\forall a \in G, a^{n} = e\)</span>
+亦一定成立。</p>
+</blockquote>
+<p>实例：<span class="math inline">\((\mathbb{Z_{p}},+)\)</span>
+是循环群，<span class="math inline">\(\forall a \neq \mathbb{0}\)</span>
+都是生成元（参考剩余系相关）。</p>
+<p>推论：</p>
+<ul>
+<li>素数阶群一定是循环群。考虑 <span class="math inline">\(\forall a \in
+G \space |G| = n\)</span>，<span class="math inline">\(a\)</span>
+生成的子群为 <span
+class="math inline">\(H\)</span>，根据拉格朗日定理，<span
+class="math inline">\(|H| | n\)</span>，又 <span
+class="math inline">\(n\)</span> 为质数 <span
+class="math inline">\(\Rightarrow\)</span> <span
+class="math inline">\(|H| = 1\)</span> 或 <span
+class="math inline">\(|H| = n\)</span>，其中 <span
+class="math inline">\(a \neq e\)</span> 时 <span
+class="math inline">\(|H| = n \Rightarrow a^{n} = e\)</span>。</li>
+</ul>
+<h4 id="交换群">交换群</h4>
+<p>若群 <span class="math inline">\((G,\cdot)\)</span>，上的运算 <span
+class="math inline">\(\cdot\)</span> 还满足交换性，即 <span
+class="math inline">\(\forall a,b \in G, a \cdot b = b \cdot
+a\)</span>，则称之<strong>为交换群</strong>，又名<strong>阿贝尔(Abel)群</strong>。</p>
+<blockquote>
+<p>实例：<span class="math inline">\(\mathbb{Z}\)</span> 上的 <span
+class="math inline">\(+\)</span> 显然也是一个交换群；但 <span
+class="math inline">\(M_{2 \times 2}\)</span>，即 <span
+class="math inline">\(2 \times 2\)</span>
+矩阵的乘法运算就不是交换群。</p>
+</blockquote>
+<h2 id="环与域">环与域</h2>
+<h3 id="环">环</h3>
+<p>许多时候，对于一个群，我们希望研究其对多种结合法（运算）的特性。<br />
+以 <span class="math inline">\(\mathbb{Z},(+,\cdot)\)</span>
+这个<del>妇孺皆知的</del>运算进行迁移，设对于一个群 <span
+class="math inline">\(G\)</span> 定义了两种运算（一般就表示为加法 <span
+class="math inline">\(+\)</span> 和乘法 <span
+class="math inline">\(\cdot\)</span>），若：</p>
+<ul>
+<li><span class="math inline">\((G,+)\)</span>
+是一个<strong>交换群</strong>；<br />
+</li>
+<li><span class="math inline">\((G,\cdot)\)</span>
+是一个<strong>广群</strong>，即只需满足<strong>封闭性</strong>和<strong>结合性</strong>；<br />
+</li>
+<li><span class="math inline">\(+\)</span> 对 <span
+class="math inline">\(\cdot\)</span> 满足分配律，即 <span
+class="math inline">\(a \cdot (b + c) = a \cdot b + a \cdot
+c\)</span>，</li>
+</ul>
+<p>则称 <span class="math inline">\((G,(+,\cdot))\)</span>
+为一个环(Ring)。</p>
+<p>进一步地，依据运算 <span class="math inline">\(\cdot\)</span>
+是否满足交换性、环中是否存在<strong>乘法单位元</strong> <span
+class="math inline">\(\mathbb{1} \neq \mathbb{0}\)</span>，<br />
+可以细言一个环为 <em>交换/非交换</em> <em>含/不含幺</em> 环。</p>
+<blockquote>
+<p>环中加法单位元一定存在（<span class="math inline">\((G,+)\)</span>
+是群的必要条件），记作为 <span
+class="math inline">\(\mathbb{0}\)</span>；乘法单位元若存在则记作 <span
+class="math inline">\(\mathbb{1}\)</span>。</p>
+</blockquote>
+<p>实例：</p>
+<ul>
+<li><span class="math inline">\((\mathbb{Z},(+,\times))\)</span>
+是一个交换含幺环（环判定：<span
+class="math inline">\((\mathbb{Z},+)\)</span> 是交换群，<span
+class="math inline">\((\mathbb{Z},\times)\)</span> 是广群，<span
+class="math inline">\((a+b)\times c = a \times c + b \times
+c\)</span>；特征判定：存在 <span class="math inline">\(\mathbb{1} = 1
+\neq \mathbb{0} = 0\)</span>；<span
+class="math inline">\((\mathbb{Z},\times)\)</span> 具备交换性）。<br />
+</li>
+<li><span class="math inline">\((\mathbb{M_{2 \times 2} : |M| \neq
+0,(+,\cdot)})\)</span> 是一个非交换含幺环（环判定同上；特征判定：存在
+<span class="math inline">\(\mathbb{1} = \mathbb{I}_{2} \neq \mathbb{0}
+= 0\)</span>，但 <span class="math inline">\(\cdot\)</span>
+不具备交换性。</li>
+</ul>
+<h3 id="整环">整环</h3>
+<p>先介绍零因子(zero divisors)的概念：<br />
+设 <span class="math inline">\(a,b \neq \mathbb{0} \in R\)</span>，若
+<span class="math inline">\(a \cdot b = \mathbb{0}\)</span>，则称 <span
+class="math inline">\(a,b\)</span> 为 <span
+class="math inline">\(R\)</span> 的<strong>零因子</strong>。<br />
+如在 <span class="math inline">\((\mathbb{Z_{6},(+,\cdot)})\)</span>
+中， $2 = 0 $，其中 <span class="math inline">\(2,3\)</span>
+就是零因子。</p>
+<hr />
+<p>整环(Integral Ring)，<del>顾名思义</del>，是 <span
+class="math inline">\((\mathbb{Z},(+,\times))\)</span>
+概念的拓展。<br />
+若一个<strong>交换含幺环没有零因子</strong>，即 <span
+class="math inline">\(\forall a,b \neq \mathbb{0} \in R, a \cdot b \neq
+\mathbb{0}\)</span>，则称之为<strong>整环</strong>。</p>
+<blockquote>
+<p>实例：<span class="math inline">\((\mathbb{Z},(+,\cdot))\)</span>
+是整环<del>废话文学.sage</del>；设 <span
+class="math inline">\(p,m\)</span> 分别为质数与合数，则 <span
+class="math inline">\((\mathbb{Z_{p}},(+,\cdot))\)</span> 也是整环，但
+<span class="math inline">\((\mathbb{Z_{m},(+,\cdot)})\)</span>
+不是。</p>
+</blockquote>
+<p>整环除无零因子外的一个重要特性是<strong>消去律</strong>：<span
+class="math inline">\(\forall a,b,c \neq \mathbb{0} \in R, a \cdot b = a
+\cdot c \rightarrow b = c\)</span>。</p>
+<blockquote>
+<p><del>某种意义上的初等数学老生常谈</del></p>
+</blockquote>
+<h3 id="域理想">域、理想</h3>
+<blockquote>
+<p>域和理想都是环的<strong>同级</strong>延申。</p>
+</blockquote>
+<h4 id="域">域</h4>
+<p>域是更进一步的环。<br />
+若<strong>整环</strong> <span
+class="math inline">\((R,(+,\cdot))\)</span> 下，<span
+class="math inline">\((R,\cdot)\)</span>
+<strong>也满足交换性且具有单位元</strong> <span
+class="math inline">\(\mathbb{1}\)</span>
+，则称之为一个<strong>域</strong>。</p>
+<blockquote>
+<p>域可以认为是可以进行各种数学运算（加减乘除，其中除要求非 <span
+class="math inline">\(\mathbb{0}\)</span>）的代数结构。</p>
+</blockquote>
+<blockquote>
+<p>实例：<span class="math inline">\(\mathbb{Q}\)</span>
+显然是域<del>省略 <span
+class="math inline">\((+,\cdot)\)</span>，下同</del>；设 <span
+class="math inline">\(p,m\)</span> 分别为素数和合数，则 <span
+class="math inline">\(\mathbb{Z_{p}}\)</span> 也是域，而 <span
+class="math inline">\(\mathbb{Z}\)</span> 和 <span
+class="math inline">\(\mathbb{Z_{m}}\)</span> 不是（ <span
+class="math inline">\(\forall a \neq \mathbb{1} \in \mathbb{Z}, \nexists
+a^{-1} \in \mathbb{Z}\)</span>；<span
+class="math inline">\(\mathbb{Z_{m}}\)</span> 不是整环（对 <span
+class="math inline">\(m\)</span>
+的因数分解就是其零因子），同时也不满足可逆性（显然可逆要求 <span
+class="math inline">\((a,m) = 1\)</span>））。</p>
+</blockquote>
+<blockquote>
+<p>由上可以整理出递进关系：<br />
+集合 -&gt; 广群 -&gt; 半群 -&gt; 独异点 -&gt; 群 -&gt; 交换群 ；环 -&gt;
+整环 -&gt; 域。</p>
+</blockquote>
+<h4 id="理想">理想</h4>
+<p>理想(Ideal)是一种特殊的子环。<br />
+若 <span class="math inline">\((I,+) \subseteq (R,+)\)</span>
+满足<strong>吸收性</strong>，即 <span class="math inline">\(\forall r
+\in R, a \in I,  (a \cdot r, r \cdot a) \in
+R\)</span>（对于交换环可简化为 <span class="math inline">\(a \cdot r \in
+R\)</span>），则称 <span class="math inline">\(I\)</span> 为 <span
+class="math inline">\(R\)</span> 的一个<strong>理想</strong>。</p>
+<blockquote>
+<p>“吸收性”作人话之解，即为能通过乘法（<span
+class="math inline">\(\cdot\)</span>）<strong>吸收任意元素</strong>的子集，可视为“原环的倍数”。<br />
+实例：<span class="math inline">\(\mathbb{Z/2Z}\)</span> 是 <span
+class="math inline">\(\mathbb{Z}\)</span>
+的一个理想，因为任意整数乘以一个偶数的结果必为偶数。</p>
+</blockquote>
+<p>特别地，显然 <span class="math inline">\(R\)</span>
+亦为自身的理想，此时称其为 <span class="math inline">\(R\)</span>
+的<strong>平凡理想</strong>，对应满足条件的 <span
+class="math inline">\(\forall I \neq R\)</span> 为 <span
+class="math inline">\(R\)</span> 的非平凡理想。</p>
+<hr />
+<blockquote>
+<p><strong>主理想和素理想要求原环 <span class="math inline">\(R\)</span>
+必须为交换环。</strong></p>
+</blockquote>
+<h4 id="主理想">主理想</h4>
+<p>主理想是由单个元素 <span class="math inline">\(a \in R\)</span>
+生成的理想 <span class="math inline">\(\langle a \rangle = R \cdot a =
+\{r \cdot a | s\forall r \in R\}\)</span>。</p>
+<blockquote>
+<p>实例：<span class="math inline">\(\mathbb{Z/2Z}\)</span> 就是由 <span
+class="math inline">\(2\)</span> 生成的主理想；任意环 <span
+class="math inline">\(R\)</span> 的平凡理想的生成元是乘法单位元 <span
+class="math inline">\(\mathbb{1}\)</span>。</p>
+</blockquote>
+<p>(反例咕咕中)</p>
+<h4 id="素理想">素理想</h4>
+<p>对于环 <span class="math inline">\(R\)</span> 的非平凡理想 <span
+class="math inline">\(I\)</span>，若 <span class="math inline">\(\forall
+a,b \in R, a \cdot b \in I  \Rightarrow a \in I \text{或} b \in
+I\)</span>，则称之为 <span class="math inline">\(R\)</span>
+的素理想。</p>
+<blockquote>
+<p>如 <span class="math inline">\(\mathbb{Z}\)</span> 中的素理想就是
+<span class="math inline">\(\langle p
+\rangle\)</span>，<del>即素数生成的理想</del></p>
+</blockquote>
+<h4 id="最大理想">最大理想</h4>
+<p>对于环 <span class="math inline">\(R\)</span> 的非平凡理想 <span
+class="math inline">\(I\)</span>，若 <span class="math inline">\(\forall
+U \subseteq R, I \subseteq U \subseteq R \Rightarrow U = I \text{或} U =
+R\)</span>，则称之为 <span class="math inline">\(R\)</span>
+的最（极）大理想。</p>
+<h4 id="主理想整环">主理想整环</h4>
+<blockquote>
+<p><del>拼凑而成的概念，字面意义，全是主理想的整环</del></p>
+</blockquote>
+<p>对于整环 <span class="math inline">\(R\)</span>，若其中的理想 <span
+class="math inline">\(I \subseteq R\)</span>
+都是主理想，则称之为<strong>主理想整环</strong>。</p>
+<blockquote>
+<p>主理想整环中，每个素理想都是极大理想。由于主理想整环中，每个理想都可以表示成
+<span class="math inline">\((d) | d \in R\)</span>
+的形式，结合素理想的性质可证明 <span class="math inline">\((p) \subseteq
+(d)\)</span> 时 <span class="math inline">\(d \in
+\{1,p\}\)</span>（相当于 <span class="math inline">\((d) \in
+\{(p),R\}\)</span> ）。</p>
+</blockquote>
+<blockquote>
+<p>常见的主理想整环包括整数环 <span
+class="math inline">\(\mathbb{Z}\)</span> 和多项式环 <span
+class="math inline">\(\mathbb{F_{p}/f}\)</span>（其中 <span
+class="math inline">\(f\)</span> 为 <span
+class="math inline">\(F_{p}\)</span> 下的不可约多项式）。</p>
+</blockquote>
+<h2 id="抽象多项式">抽象多项式</h2>
+<p>常见的 <span class="math inline">\(n \text{次多项式} f(x)\)</span>
+形如 <span class="math display">\[c_nx^n + c_{n-1}x^{n-1} + \cdots +
+c_1x^1 + c_0 = \sum_{i=0}^{n} c_{i}x^{i}\]</span>，其中常有 <span
+class="math inline">\(x \in F_{p}\)</span> 。</p>
+<blockquote>
+<p><span class="math inline">\(F_{p}\)</span> 是模 <span
+class="math inline">\(p\)</span> 整数环形成的域。</p>
+</blockquote>
+<p>回顾常见多项式的运算规则：</p>
+<ul>
+<li>加法是对应项系数在 <span class="math inline">\(Z_{p}\)</span>
+下相加，即相加后对 <span class="math inline">\(p\)</span> 取模；<br />
+</li>
+<li>乘法是普通的多项式乘法，其中系数运算同样在 <span
+class="math inline">\(Z_{p}\)</span> 下进行。</li>
+</ul>
+<p>如 <span class="math inline">\(F_{3}\)</span> 下令 <span
+class="math inline">\(a = x + 2, b = x + 1\)</span>，则 <span
+class="math inline">\(a + b = 2x\)</span>，<span class="math inline">\(a
+\cdot b = x^2 + 2x\)</span>。</p>
+<blockquote>
+<p>注意此时的多项式运算依然不是一个环，因目前其尚未定义除法（乘法逆运算）和模运算。</p>
+</blockquote>
+<hr />
+<blockquote>
+<p>定义一个多项式的度(degree)为其最高变量的幂数，简记作 <span
+class="math inline">\(d(f) = n \forall f = \sum_{i=0}^{n}
+c_{i}x^{i}\)</span>。</p>
+</blockquote>
+<p>为使这个多项式群能拓展为一个环，需要将多项式群对一个度为 <span
+class="math inline">\(n\)</span> 的<strong>不可约多项式</strong> <span
+class="math inline">\(f\)</span> 取模，使之形成一个<strong>商环(Quotient
+Ring)</strong>，记作 <span class="math inline">\(Z_{p} /
+f\)</span>。</p>
+<blockquote>
+<p>不可约多项式具体参阅下一小节，先简记为 <span
+class="math inline">\(F_p\)</span> 下不能再“约分”的多项式即可；<span
+class="math inline">\(f\)</span> 为任意非零多项式时 <span
+class="math inline">\(Z_{p} / f\)</span> 都能称为一个商环，但 <span
+class="math inline">\(f\)</span>
+为不可约多项式时其方为一个<strong>整环</strong>，<del>参考抽象代数中的二级结论：对于交换含幺环
+<span class="math inline">\(R\)</span>，<span
+class="math inline">\(P\)</span> 为素理想的充要条件为 <span
+class="math inline">\(R/P\)</span> 为整环。</del></p>
+</blockquote>
+<blockquote>
+<p>类比 <span class="math inline">\(Z/mZ\)</span>
+给出的相似代数结构有助于理解。<br />
+如 <span class="math inline">\(Z_{m} \subseteq Z \text{，定义} f: Z
+\rightarrow Z_{m}, f(x) = x \bmod m, ker(f) = mZ\)</span>，则这个商群和
+<span class="math inline">\(im(f)\)</span>，即 <span
+class="math inline">\(Z_{m}\)</span> 同构。<br />
+同样地，<span class="math inline">\(F_{f}\)</span> （即模 <span
+class="math inline">\(f\)</span> 的多项式）亦可进行类似的定义。</p>
+</blockquote>
+<p>对于加法和乘法，每次运算完成后要求对 <span
+class="math inline">\(f\)</span>
+取模，模运算依<strong>长除法</strong>进行；<br />
+除法相当于乘以乘法逆元，乘法逆元可由扩展欧几里得除法(gcdext)获得。</p>
+<blockquote>
+<p>由于 <span class="math inline">\(Z_{p}/f\)</span>
+为整环，因而其没有零因子，<span class="math inline">\((f^{&#39;},f) =
+1\)</span>必定成立；类比 <span class="math inline">\(Z_{p}\)</span>
+可知环上的多项式<strong>都存在乘法逆元</strong>。<br />
+对多项式的gcdext和对整数的gcdext本质无异（从抽象运算而言），注意此处多项式除法的结果、余数均为多项式，且通过长除法给出（此时并未进入到
+<span class="math inline">\(F_{f}\)</span> 中）。</p>
+</blockquote>
+<p>举例：设 <span class="math inline">\(f_i \in F_2 / (x^2 + x + 1), f_0
+= x, f_1 = x^2 + 1,f_2 = x^2 + x\)</span>。<br />
+运算示例：<span class="math display">\[f_0 \cdot f_1 = (x^3 + x) \bmod
+(x^2 + x + 1) = x + 1\]</span></p>
+<h3 id="不可约多项式">不可约多项式</h3>
+<p>效仿 <span class="math inline">\(Z\)</span>
+中素数的概念，引入“不可约多项式”：<br />
+若 <span class="math inline">\(f,f_a,f_b \in Z_p  d(f_a),d(f_b) \leq
+d(f),\forall f_a \cdot f_b = f \Rightarrow f_a = f \text{或} f_b =
+f\)</span>（且显然另一者为 <span
+class="math inline">\(1\)</span>），则称 <span
+class="math inline">\(f\)</span> 为不可约多项式。<br />
+与素数<del>a.k.a.不可约数</del>的差分在于，<span
+class="math inline">\(f\)</span> 是否为不可约亦取决于 <span
+class="math inline">\(x\)</span> 的所在环（域），如 <span
+class="math inline">\(x^2 + 1 \in F_{3}\)</span> 是不可约多项式，但
+<span class="math inline">\(x^2 + 1 \in F_{2} = (x+1)^{2}\)</span>。</p>
+<p>不可约多项式的测试法与素数判断类似：满足以下条件的 <span
+class="math inline">\(d(f) = n\)</span> 的多项式 <span
+class="math inline">\(f\)</span> 为 <span class="math inline">\(F_{p}
+\text{下的 } n\)</span> 次不可约多项式：</p>
+<ul>
+<li>其不能被所有 <span class="math inline">\(d(f^{&#39;}) \leq \lfloor
+\frac{n}{2} \rfloor \text{的不可约多项式} f^{&#39;}\)</span>
+整除，<br />
+</li>
+<li>其在 <span class="math inline">\(F_{p}\)</span>
+内没有根（此项不适用于 <span class="math inline">\(n = 1\)</span>，故
+<span class="math inline">\(\forall k \in F_p, x + k\)</span> 均为 <span
+class="math inline">\(F_p\)</span> 下的不可约多项式）。</li>
+</ul>
+<p>//???</p>
+<p>举例： 判断 <span class="math inline">\(f = x^3 + x + 1 \in
+F_{3}\)</span> 是否为不可约多项式？注意到 <span
+class="math inline">\(f\)</span> 有一个根 <span class="math inline">\(x
+= 1\)</span> （满足 <span class="math inline">\(f(x) =
+0\)</span>），故其不是不可约多项式。<br />
+若将之转移至 <span
+class="math inline">\(F_{2}\)</span>：首先确定其没有根，随后检验 <span
+class="math display">\[\begin{cases} f \bmod x = 1 \neq 0 \\ f \bmod
+(x+1) = 1 \neq 0 \end{cases}\]</span>
+，检验通过，确定其为不可约多项式。</p>
+<h3 id="环阶与本原多项式">环阶与本原多项式</h3>
+<p>若 <span class="math inline">\(d(f) = n\)</span>，则商环 <span
+class="math inline">\(F_{p}/f\)</span> 的<strong>最大阶</strong>为 <span
+class="math inline">\(p^n - 1\)</span>。</p>
+<blockquote>
+<p>“最大阶”的理解：<span class="math inline">\(x\)</span> 的阶显然为
+<span class="math inline">\(p\)</span>；<span
+class="math inline">\(n\)</span> 次项之间相互独立，因而 <span
+class="math inline">\(n\)</span> 次多项式的取值个数不会超过 <span
+class="math inline">\(p^{n}\)</span>，即其阶数<strong>上界</strong>为
+<span class="math inline">\(p^{n} - 1\)</span>（因为阶数定义为满足 <span
+class="math inline">\(f^{n} = \mathbb{0}\text{（单位元）} = 1\)</span>
+的最小整数 <span class="math inline">\(n\)</span>）。</p>
+</blockquote>
+<p>而商环的实际阶数 <span class="math inline">\(n\)</span> 定义为满足
+<span class="math inline">\(f^n = x^{}\)</span></p>
+<h3 id="定义拓展">定义拓展</h3>
+<p>进一步地，由于域中元素可以进行各类数学运算，故 <span
+class="math inline">\(x\)</span> 亦可被定义在任何域 <span
+class="math inline">\(F\)</span> 中。</p>
+<p>现记定义在域 <span class="math inline">\(F\)</span> 中的“自变量”
+<span class="math inline">\(x\)</span> 构成的多项式 <span
+class="math inline">\(f \in F[X]\)</span>。<span
+class="math inline">\(F[X]\)</span> 构成一个<strong>多项式环(Polynomial
+Ring)</strong>，<span class="math inline">\(F[X]\)</span>
+中的元素个数显然是无限的。<br />
+同样引入抽象的模不可约多项式 <span
+class="math inline">\(f_q\)</span>，构建商环 <span
+class="math inline">\(F[X]/f_q\)</span>，若 <strong>域 <span
+class="math inline">\(F\)</span> 的阶为 <span
+class="math inline">\(p\)</span>，，则 <span
+class="math inline">\(F/f_q\)</span> 的最大阶数为 <span
+class="math inline">\(p^{n} - 1\)</span></strong>。</p>
+<h2 id="格">格</h2>
+<p>格(Lattice)是指一个拥有最大上界和最小下界的<strong>偏序关系集</strong>。</p>
+<h1 id="数论">数论</h1>
+<blockquote>
+<p>笔者学习信安数基、密码学等相关知识时，多数教材均选择将数论先全盘托出，随后再讲解离散数学（抽象代数）相关内容。<br />
+但数论中部分关键概念（如中国剩余定理、模n整数的原根等）本质上是<strong>抽象代数在模n整数下的实例</strong>；通过调整部分内容，可以将之置于代数之后，作为其实例之一进行理解，对抽象代数的消化吸收和数论相关分析、推导的接受度均大有裨益。</p>
+</blockquote>
+<h2 id="模n高次同余式">模n高次同余式</h2>
+<h3 id="指数与原根">指数与原根</h3>
+<p>设 <span class="math inline">\(p\)</span> 为质数，<span
+class="math inline">\((a,p) = 1\)</span>，<span
+class="math inline">\(a\)</span> 在 <span
+class="math inline">\(Z_p\)</span> 下的指数定义为满足 <span
+class="math inline">\(a^{k} \equiv 1 (\bmod p)\)</span> 的最小正整数
+<span class="math inline">\(k\)</span>，记作 <span
+class="math inline">\(ord_p(a)\)</span>（亦可简记作 <span
+class="math inline">\(ord(a)\)</span>）。<br />
+若 <span class="math inline">\(ord_p(a) = \varphi(p) =
+p-1\)</span>，则称之为 <span class="math inline">\(Z_m\)</span>
+下的<strong>原根</strong>。</p>
+<blockquote>
+<p>本质上其就是群 <span
+class="math inline">\((Z_m,\times)\)</span>，原根即 <span
+class="math inline">\(Z_m\)</span>
+下乘法群的<strong>生成元</strong>。</p>
+</blockquote>
+<blockquote>
+<p>根据费马小定理，<span class="math inline">\(\forall (a,p) = 1,
+a^{p-1} \equiv 1 (\bmod p)\)</span> 必定成立，因此“原根”只是 <span
+class="math inline">\(ord(a)\)</span>
+达到了其上界。同时数论分析和拉格朗日定理都可以给出，<span
+class="math inline">\(\forall (a,p) = 1, ord(a) | p-1\)</span>
+同样成立。</p>
+</blockquote>
+<p>同时对任意一个原根 <span class="math inline">\(g\)</span>，<span
+class="math inline">\(\forall i \in \{c_i\}, g^{i}\)</span>
+亦为其原根，其中 <span class="math inline">\(\{c_{i}\}\)</span> 为 <span
+class="math inline">\(p-1\)</span> 的简化剩余系。<br />
+由同余相关分析可以导出检验 <span class="math inline">\(a\)</span> 是否为
+<span class="math inline">\(Z_p\)</span> 原根的快捷方法：设 <span
+class="math display">\[p-1 = 2 \times
+\prod_{i=1}^{n}p_{i}^{e_{i}}\]</span><br />
+其中 <span class="math inline">\(p_i\)</span> 为奇质数，若 <span
+class="math display">\[\forall k = \prod_{i=1}^{n} p_{i}^{s_{i}}, 0 \leq
+s_{i} \leq e_{i}, k &lt; \frac{p-1}{2}, a^{k} \neq \pm 1 (\bmod
+p)\]</span><br />
+则 <span class="math inline">\(a\)</span> 为其原根。<br />
+同时此步可用于计算 <span class="math inline">\(a\)</span>
+的指数：将测试的 <span class="math inline">\(k\)</span>
+升序排序，得到最小的满足条件 <span class="math inline">\(k\)</span>，则
+<span class="math display">\[ord_m(a) = \begin{cases} k, a^k \equiv 1
+\bmod p \\ 2k, a^k \equiv -1 \bmod p \end{cases}\]</span></p>
+<blockquote>
+<p><span class="math inline">\(a^{p-1} \equiv 1 \bmod p \Rightarrow
+a^{\frac{p-1}{2}} \equiv \pm 1 \bmod
+p\)</span>，此为余-1的“截断”依据。</p>
+</blockquote>
+<p>若 <span class="math inline">\(ord(a) = m\)</span>，则 <span
+class="math inline">\(ord(a^i) =
+\frac{m}{gcd(i,m)}\)</span>，具体原因仍然可以参考剩余系相关——构造一个同态映射
+<span class="math inline">\(f: Z_{p-1} \rightarrow Z_{p}, f(x) =
+g^{x}\)</span>，观察其“逆映射”的指数即可。</p>
+<blockquote>
+<p>可推导出 <span class="math inline">\(Z_{p}\)</span> 下的原根个数为
+<span
+class="math inline">\(\varphi{\varphi{N}}\)</span>，同时从任一原根可推出其全部原根——对于任意群亦是如此，已知单个生成元和群阶，即可推出其全部的生成元<del>前提是群的阶不被打造成RSA一般的极难分解的大整数</del></p>
+</blockquote>
+<h4 id="运算示例">运算示例</h4>
+<p>以 <span class="math inline">\(Z_{43}\)</span> 下的运算为例。</p>
+<p>求 <span class="math inline">\(ord(2)\)</span>：<br />
+存在 <span class="math inline">\(\varphi{43} = 43 - 1 = 42 = 2 \times 3
+\times 7\)</span>；计算 <span class="math inline">\(Z_{43}\)</span> 下
+<span class="math inline">\(2^3 = 8, 2^7 = 42 = -1\)</span>，因而 <span
+class="math inline">\(ord_43(2) = 7 \times 2 = 14\)</span>。<br />
+再试求 <span class="math inline">\(Z_{43}\)</span> 下的所有原根：<br />
+已知 <span class="math inline">\(2\)</span> 不是其原根，再尝试 <span
+class="math inline">\(3\)</span>：<br />
+<span class="math inline">\(3^3 = 27, 3^7 = 37\)</span>，说明 <span
+class="math inline">\(3\)</span> 是 <span
+class="math inline">\(Z_{43}\)</span> 的原根（检验：<span
+class="math inline">\(3^{21} \equiv -1 \bmod 43 \rightarrow 3^{42}
+\equiv 1 \bmod 43\)</span>）。</p>
+<p>再列出 <span class="math inline">\(42\)</span> 的简化剩余系：<br />
+<span class="math inline">\(\{c_i\} =
+\{1,5,11,13,17,19,23,25,29,31,37,41\}\)</span>，计算得 <span
+class="math inline">\(Z_{43}\)</span> 原根有 <span
+class="math inline">\(3,28,30,12,26,19,34,5,18,33,20,29\)</span>。</p>
+<h1 id="密码学实例">密码学实例</h1>
+<h2 id="rsa">RSA</h2>
+<p>RSA的基础知识不再赘述，详见<a href="/crypto/rsa">RSA</a>。<br />
+其部分<del>“联动”</del>的性质如下：</p>
+<ul>
+<li>RSA的加密 <span class="math inline">\(e\)</span> 和解密 <span
+class="math inline">\(d\)</span> 都是 <span class="math inline">\(Z_N
+\rightarrow Z_N\)</span>
+的映射，且均满足<strong>乘法同态</strong>；RSA运算在一个<strong>交换含幺环</strong>上进行，其零因子为
+<span class="math inline">\(N\)</span> 的因数分解 <span
+class="math inline">\(p,q\)</span>，故其不是整环。<br />
+</li>
+<li>RSA中，<span class="math inline">\(Z_{N}\)</span>
+下<strong>原根</strong>构成的乘法群的阶是 <span
+class="math inline">\(\varphi{N}\)</span>，而根据拉格朗日定理，任意元素构成的乘法群阶一定能整除
+<span
+class="math inline">\(\varphi{N}\)</span>。此点是RSA正确解密的基础，因为
+<span class="math inline">\(ed \equiv 1 \bmod
+\varphi{N}\)</span>，其保证了 <span class="math inline">\(\forall c \in
+Z_{N}, m^{k \cdot \varphi{N} + 1} = c^d \equiv m \bmod N\)</span>。</li>
+</ul>
+<h2 id="dlp">DLP</h2>
+<p>尽管DLP(Discrete Logorithm
+Problem,离散对数问题)极少被直接用于加密等，但其思想及在各种域(<span
+class="math inline">\(Z_p,E,F_p[X]/f\)</span>
+等)中的应用，依然是大量现代密码学算法的安全性的基石之一。</p>
+<p>其核心思想为：</p>
+<ul>
+<li>给定一个群 <span class="math inline">\((G,\cdot)\)</span> 和 <span
+class="math inline">\(P \in G\)</span><br />
+</li>
+<li>给定 <span class="math inline">\(n \in
+Z\)</span>，正向数乘计算，即计算 <span class="math inline">\(Q =
+nP\)</span> 非常高效（可以通过快速幂/乘拓展来实现，即将 <span
+class="math inline">\(nP\)</span> 中的 <span
+class="math inline">\(n\)</span> 转化为二进制）<br />
+</li>
+<li>但给定 <span class="math inline">\((Q,P)\)</span>，找到 <span
+class="math inline">\(n\)</span> 满足 <span class="math inline">\(nP =
+Q\)</span> 是非常困难的</li>
+</ul>
+<p>典型的群实例包括 <span class="math inline">\((Z_{p},\times)\)</span>
+和 <span class="math inline">\((E,+)\)</span>，后者亦被称为ECDLP。<br />
+计算难度的单向性使其可被用于设计陷门函数(trapdoor
+function)，即加密等操作时可以将关键信息隐藏于 <span
+class="math inline">\(n\)</span> 中，攻击者即使知道 <span
+class="math inline">\((P,Q)\)</span> 也无法倒推出 <span
+class="math inline">\(n\)</span>，<strong>同时 <span
+class="math inline">\(Q\)</span> 数学上携带了 <span
+class="math inline">\(n\)</span> 的信息且可传递</strong>。</p>
+<h3 id="dh">DH</h3>
+<p>DLP最著名的应用实例之一当属Diffle-Hellman密钥交换：<br />
+对于一个安全的群 <span class="math inline">\((G,\cdot), |G| =
+n\)</span>，通信双方选择 <span class="math inline">\(a,b \in
+Z_{n}\)</span> 作为私钥，选择 <span class="math inline">\(G\)</span>
+的一个生成元 <span class="math inline">\(P\)</span>，计算 <span
+class="math inline">\(A = aP, B = bP\)</span> 并发送给对方。<br />
+对方接收到 <span class="math inline">\(A\)</span> 或 <span
+class="math inline">\(B\)</span> 后将之与自己的私钥再相乘：<br />
+<span class="math inline">\(aB = a(bP) = (ab)P, bA = b(aP) =
+(ba)P\)</span>，又 <span class="math inline">\(Z\)</span>
+下的乘法满足交换性，显然由此双方获得了相同的点 <span
+class="math inline">\(S = abP\)</span>。<br />
+而全程双方传递的信息只有 <span
+class="math inline">\((A,B,P)\)</span>，攻击者即使截获之，因计算 <span
+class="math inline">\(n\)</span> 的困难性，亦无法计算出 <span
+class="math inline">\(S\)</span>。</p>
+<h3 id="安全群与攻击">安全群与攻击</h3>
+<p>对于DLP的攻击，在Brute-force（逐个尝试 <span
+class="math inline">\(n\)</span>
+直至命中）以外亦有些许技巧；相应地，为了保证DLP问题的应用安全性，其对群的设计也提出了一些要求。</p>
+<h4 id="pohlig-hellman">Pohlig-Hellman</h4>
+<p>Pohlig-Hellman攻击又名“子群攻击”，其核心就是拉格朗日定理的“拓展版”。</p>
+<p>由拉格朗日定理，设 <span class="math inline">\(|G| = n\)</span>，则
+<span class="math inline">\(\exists H \subseteq G, H = n^{&#39;} \forall
+n^{&#39;} | n\)</span>。进一步地，设 <span
+class="math inline">\(G\)</span> 的生成元为 <span
+class="math inline">\(g\)</span>，则 <span
+class="math inline">\(|\langle k \cdot \rangle| =
+\frac{n}{gcd(n,k)}\)</span>，其表明了可以通过控制 <span
+class="math inline">\(k\)</span> 来生成不同大小的子群—— <span
+class="math inline">\(gcd(n,k) = 1\)</span> 时其转化为 <span
+class="math inline">\(\frac{n}{k}\)</span>。</p>
+<p>而 <span class="math inline">\(f: G \rightarrow H, f(x) = k \cdot
+x\)</span> 是一个同态映射，因此若 <span class="math inline">\(Q =
+xP\)</span>，则 <span class="math inline">\(f(Q) =
+x^{&#39;}&#39;f(P)\)</span> 且 <span class="math inline">\(x^{&#39;}
+\equiv x \bmod \frac{n}{k}\)</span>。</p>
+<p>解出大量如此的 <span class="math inline">\(x^{&#39;} \equiv x \bmod
+\frac{n}{k}\)</span> 后，根据中国剩余定理即可解出 <span
+class="math inline">\(x\)</span>。<br />
+结合CRT对于模数互质的要求，设 <span class="math inline">\(n =
+\prod_{i=1}^{n} p_{i}^{e_{i}}\)</span>，推定其宏观上的时间复杂度会由
+<span class="math inline">\(O(n)\)</span> 降低至 <span
+class="math inline">\(O(\sum_{i=1}^{n} p_{i})\)</span>。</p>
+<blockquote>
+<p><del>不要问指数 <span class="math inline">\(e_{i}\)</span>
+去哪了，问就是在模 <span class="math inline">\(p\)</span>
+下拿同余式解后直接lift</del></p>
+</blockquote>
+<p>故对于任意群 <span class="math inline">\(G\)</span>
+上的离散对数问题，其难解性是与其最大素因子 <span
+class="math inline">\(p_{i}\)</span> 紧密相关的——若 <span
+class="math inline">\(\max{p_{i}}\)</span>
+过小，则攻击者通过在小阶子群上解DLP即可“拼凑”出原问题的解，此所谓Pohlig-Hellman攻击（亦称小子群攻击）。<br />
+另外若一个群阶的小因子过多，只要其积大于（或略小于）<span
+class="math inline">\(x\)</span>
+的上界，由CRT可知其较小模的“既有通解”就是特解。</p>
+<p>由于DLP问题在密码学应用的广泛性，在不同群上的DLP为抵抗该攻击均需精心设计参数：</p>
+<ul>
+<li><span class="math inline">\(Z_{p}\)</span> 要求 <span
+class="math inline">\(p\)</span> 为强质数，即 <span
+class="math inline">\(p-1\)</span> <del>其实还有 <span
+class="math inline">\(p+1\)</span>
+必须至少有一个大因子</del>（其一定有一个因子 <span
+class="math inline">\(2\)</span>，不过此点无伤大雅，较简易的生成强质数的方式之一就是随机选取素数
+<span class="math inline">\(p\)</span> 并检验 <span
+class="math inline">\(2p+1\)</span>
+是否为质数）。<del>补档：好像这个是防RSA的光滑数攻击的</del></li>
+<li><span class="math inline">\(E\)</span> 要求计算得曲线的阶 <span
+class="math inline">\(|E|\)</span> 为质数，防止构造子群攻击。</li>
+</ul>
+<blockquote>
+<p>对于EC-DLP亦需在应用时增加<strong>点的校验</strong>来防止无效曲线攻击，即检验待加密的点是否在给定的曲线上。<br />
+简化的椭圆曲线点运算系统（尤其在计算资源有限的小型设备上），为追求效率最大化会常会<strong>直接利用传入的点参数</strong>进行计算。参考椭圆曲线的点加规则，可以发现其群性质只依赖于参数
+<span class="math inline">\((x,y,a,p)\)</span>，而附加常数 <span
+class="math inline">\(b\)</span> 本质上被“隐藏”于 <span
+class="math inline">\((x,y)\)</span> 中。<br />
+改变 <span class="math inline">\(b\)</span>
+<strong>不会影响点加计算的逻辑</strong>，<a
+href="#ecc"></a>，相当于原设备会在另一条（<span
+class="math inline">\(a,p\)</span> 相同，<span
+class="math inline">\(b\)</span> 不同）的曲线上进行点的计算。<br />
+但通过更改 <span
+class="math inline">\(b\)</span>，攻击者可以将这个点<strong>转移至更弱的椭圆曲线上</strong>，并进行涉及私钥（离散对数解）的点乘计算，在子群下得到足够多的
+<span class="math inline">\(x^{&#39;} \bmod
+p_{i}\)</span>，最终通过CRT即可解出原解 <span
+class="math inline">\(x\)</span>。<br />
+本质上，上述过程即为<del>诱导</del>拓展的Pohlig-Hellman攻击。</p>
+</blockquote>
+<h4 id="bsgs">BSGS</h4>
+<p>若 <span class="math inline">\(|G| = n\)</span>，则直接爆破 <span
+class="math inline">\(G\)</span> 上的DLP问题的时间复杂度为 <span
+class="math inline">\(O(n)\)</span>，而其空间复杂度为 <span
+class="math inline">\(O(1)\)</span>。<br />
+BSGS(Baby Step Giant
+Step，小步大步法)则是一种“分摊”时间和空间复杂度的方法：<br />
+将待求式转化至 <span class="math inline">\(Q = x \cdot P \space{3} 0
+\leq x &lt; n\)</span>。则</p>
+<ul>
+<li><span class="math inline">\(x = x_1 \cdot \lfloor \sqrt{n} \rfloor +
+x_0 \space{3} x_1,x_2 \leq \lceil \sqrt{n} \rceil\)</span><br />
+</li>
+<li>计算 <span class="math inline">\(\{P^{&#39;}_{i}\} = \{x_0 \cdot P
+\forall x_{0} \leq \lceil \sqrt{n} \rceil\}\)</span><br />
+</li>
+<li>再 <span class="math inline">\(\forall x_1 \leq \lceil \sqrt{n}
+\rceil\)</span>，计算 <span class="math inline">\(Q^{&#39;} = x_{1}
+\cdot Q^{-1}\)</span>，若 <span class="math inline">\(Q^{&#39;} \in
+\{P^{&#39;}_{i}\}\)</span>，则命中解 <span class="math inline">\(x = x_1
+\cdot \lfloor \sqrt{n} \rfloor + x_0\)</span>。</li>
+</ul>
+<p>其中第三步“命中”校验可以采用访问时间复杂度为 <span
+class="math inline">\(O(1)\)</span> 的数据结构进行（散列表等）。<br />
+可以看出其通过将空间复杂度提高为 <span
+class="math inline">\(O(\sqrt{n})\)</span> 来将时间复杂度降低为 <span
+class="math inline">\(O(\sqrt{n})\)</span>。</p>
+<h2 id="椭圆曲线">椭圆曲线</h2>
+<p>满足方程 <span class="math display">\[y^2 = x^3 + ax +
+b  \space{5}  (x,y \in F, 4a^3 + 27b^2 \neq 0)\]</span>
+的点集合为<strong>椭圆曲线</strong>，通常选取 <span
+class="math inline">\(x,y \in F_p\)</span>。</p>
+<blockquote>
+<p>理论上 <span class="math inline">\(x,y\)</span>
+亦可被定义在任意域中（密码学应用要求其为有限域）。</p>
+</blockquote>
+<p>定义点集合 <span class="math inline">\(E\)</span> 上的结合法 <span
+class="math inline">\(+\)</span>，<span
+class="math inline">\((E,+)\)</span> 是一个交换群（Abel群）。</p>
+<ul>
+<li><span class="math inline">\(\forall a,b \in E\)</span>，<span
+class="math inline">\((a + b) + c = a + (b +
+c)\)</span>（结合律），<span class="math inline">\(a + b = b +
+a\)</span>（交换性）<br />
+</li>
+<li>单位元 <span class="math inline">\(e =
+\mathbb{O}\)</span>，其是无穷远的一个点，<span
+class="math inline">\(\forall P \in E, P + \mathbb{O} = P\)</span><br />
+</li>
+<li>逆元 <span class="math inline">\(a^{-1} = \begin{cases} \mathbb{O},
+a = \mathbb{O} \\ (x,-y), a = (x,y) \neq \mathbb{O}
+\end{cases}\)</span><br />
+</li>
+<li>加法规则：设 <span class="math inline">\(A = (x_1,y_1), B =
+(x_2,y,2) \in E\)</span>，满足 <span class="math display">\[A + B =
+\begin{cases} \mathbb{O}, y_1 + y_2 = 0 \\ (k^2 - (x_1 + x_2), k \cdot
+(x_1 - x_3) - y_1), y_1 + y_2 \neq 0 \end{cases} \text{其中}k =
+\begin{cases}\frac{y_2-y_1}{x_2-x_1}, A \neq B \\ \frac{3x_1^2 +
+a}{2y_1}, A=B  \end{cases} \]</span><br />
+</li>
+<li>点只能进行数乘，<span class="math inline">\(kP\)</span> 即为 <span
+class="math inline">\(k\)</span> 个点之和，<span
+class="math inline">\(P\)</span> 在 <span
+class="math inline">\(E\)</span> 上的阶定义为使得 <span
+class="math inline">\(nP = \mathbb{O}\)</span> 最小正整数 <span
+class="math inline">\(n\)</span>，同样有 <span class="math inline">\(n |
+ord(E)\)</span><br />
+</li>
+<li><span class="math inline">\(E\)</span> 还是一个循环群，<span
+class="math inline">\(\forall P \in E, nP =
+\mathbb{O}\)</span><del>不仔细看还以为这是环的表达式</del></li>
+</ul>
+<h2 id="aes">AES</h2>
+<p>AES 的“字节”运算全部在<strong>有限域</strong><span
+class="math inline">\(F_{2^8}= \mathbb{F}_2[x]/(m(x))\)</span>
+下进行，其中 <span class="math inline">\(m(x)=x^8+x^4+x^3+x+1\)</span>
+是 8 次<strong>不可约</strong>（也是本原）多项式。</p>
+<blockquote>
+<p>注意形若 <span class="math inline">\(F_{p^{n}}\)</span>
+的计算都不是对 <span class="math inline">\(p^{n}\)</span> 取模，事实上
+<span class="math inline">\(Z_{p^{n}}\)</span> 亦无法构成一个域。<br />
+本质上，其是在<strong>模degree为8的多项式 <span
+class="math inline">\(f\)</span> 构成的商环 <span
+class="math inline">\(F_{2}[X]/f\)</span> 环下进行运算</strong>。<br />
+宏观上的“字节”由其对应多项式的系数“拼凑”而成（<span
+class="math inline">\(p\)</span> 进制转化），即：<span
+class="math display">\[a_{i} = \sum_{i=0}^{7} s_{i}2^{i} \in F_{2^{8}}
+\Leftrightarrow \sum_{i=0}^{7} s_{i}x^{i} \in F_{2}[X] /
+(m(x))\]</span><br />
+如，<span class="math inline">\(\text{0xab} = 171 = 2^7 + 2^5 + 2^3 + 2
++ 1\)</span>，对应多项式 <span
+class="math inline">\(a(x)=x^7+x^5+x^3+x+1\)</span>。</p>
+</blockquote>
+<p>AES的商环诱导的代数运算结构：<br />
+对于加法，两个字节直接异或即可：对应多项式系数在 <span
+class="math inline">\(\mathbb{F}_2\)</span> 上相加—— <span
+class="math inline">\(F_{2}\)</span> 的优雅之处即在此，无进/借位。<br />
+对于乘法，转化为多项式乘法后对 <span class="math inline">\(m(x)\)</span>
+取模。转化为宏观“字节”的计算，可以采用快速乘的思想，溢出时的“魔数”模数为
+<span class="math inline">\(\text{0x1b} = 27\)</span>。<br />
+实现形如：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Byte</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">using</span> <span class="type">value_t</span> = <span class="type">unsigned</span> <span class="type">char</span>;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="type">static</span> <span class="keyword">constexpr</span> <span class="type">void</span> _gf256_mul(<span class="type">value_t</span>&amp; x, <span class="type">unsigned</span> <span class="type">long</span> <span class="type">long</span> y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="type">value_t</span> res = <span class="number">1</span>, mul = x;</span><br><span class="line">        <span class="keyword">while</span>(y)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">if</span>(y&amp;<span class="number">1</span>)</span><br><span class="line">            &#123;</span><br><span class="line">                res *= mul;</span><br><span class="line">                res ^= (res &gt;&gt; <span class="number">2</span> ? <span class="number">0x1b</span> : <span class="number">0x00</span>);</span><br><span class="line">                res &amp;= <span class="number">0xff</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            mul *= mul;</span><br><span class="line">            mul ^= (mul &gt;&gt; <span class="number">2</span> ? <span class="number">0x1b</span> : <span class="number">0x00</span>);</span><br><span class="line">            mul &amp;= <span class="number">0xff</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        x = res;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">friend</span> <span class="keyword">constexpr</span> Byte <span class="keyword">operator</span>+(Byte x,Byte y)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">Byte</span>(x.value^y.value);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">value_t</span> value;</span><br><span class="line"></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p><span class="math inline">\(\forall a \neq e, \exists a^{-1} \in
+GF(2^{8}), a \cdot a^{-1} =
+1\)</span>，即对于<code>0x00</code>外的元素，乘法逆元存在且唯一（为保证兼容，AES定义了<code>0x00</code>的逆元为其自身，进而其在S-Box内的映射为<code>0x63</code>，推导见下）。<br />
+同时由于定义域和值域很小，因此实际的AES实现中常会<strong>预计算乘法表</strong>以加快运行速率。</p>
+</blockquote>
+<p>AES的几个组件都依赖于<strong>元素在 <span
+class="math inline">\(GF(2^{8})\)</span>
+上的矩阵/向量运算</strong>，其中元素对应的向量是 <span
+class="math inline">\(GF(2)\)</span> 上定义的 <span
+class="math inline">\(8 \times 8\)</span>
+矩阵，一般按低位优先(LSB)顺序排列。<br />
+三种表示方式（字节值、多项式、向量）的转化示例：<span
+class="math display">\[ 232 = 2^{3} + 2^{5} + 2^{6} + 2^{7} \in
+GF(2^{8}) \leftrightarrow x^{3} + x^{5} + x^{6} + x^{7} \in F_{2}[x] /
+(x^8 + x^4 + x^3 + x + 1) \leftrightarrow \begin{bmatrix} 0 &amp; 0
+&amp; 0 &amp; 1 &amp; 0 &amp; 1 &amp; 1 &amp; 1
+\end{bmatrix}^{T}\]</span><br />
+如记S-Box的双射为 <span class="math inline">\(f: GF(2^{8}) \rightarrow
+GF(2^{8})\)</span>，则 <span class="math inline">\(f(x) = x^{-4} +
+x^{-3} + x^{-2} + x^{-1} + 63\)</span><del>不先替换一下逆元就直接表达be
+like</del><br />
+其对应的矩阵乘法形式为：<span class="math display">\[\begin{bmatrix} 1
+&amp; 0 &amp; 0 &amp; 0 &amp; 1 &amp; 1 &amp; 1 &amp; 1 \\ 1 &amp; 1
+&amp; 0 &amp; 0 &amp; 0 &amp; 1 &amp; 1 &amp; 1 \\ 1 &amp; 1 &amp; 1
+&amp; 0 &amp; 0 &amp; 0 &amp; 1 &amp; 1 \\ 1 &amp; 1 &amp; 1 &amp; 1
+&amp; 0 &amp; 0 &amp; 0 &amp; 1 \\ 1 &amp; 1 &amp; 1 &amp; 1 &amp; 1
+&amp; 0 &amp; 0 &amp; 0 \\ 0 &amp; 1 &amp; 1 &amp; 1 &amp; 1 &amp; 1
+&amp; 0 &amp; 0 \\ 0 &amp; 0 &amp; 1 &amp; 1 &amp; 1 &amp; 1 &amp; 1
+&amp; 0 \\ 0 &amp; 0 &amp; 0 &amp; 1 &amp; 1 &amp; 1 &amp; 1 &amp; 1
+\end{bmatrix} \cdot \begin{bmatrix} b_0 \\ b_1 \\ b_2 \\ b_3 \\ b_4 \\
+b_5 \\ b_6 \\ b_7 \end{bmatrix} + \begin{bmatrix} 1 \\ 1 \\ 0 \\ 0 \\ 0
+\\ 1 \\ 1 \\ 0 \end{bmatrix}\]</span></p>
+<h2 id="lfsr">LFSR</h2>
+<p>LFSR，Linear Feedback Shift
+Register，线性反馈移位寄存器，其广泛应用于流密码序列的生成。<br />
+整个LFSR可以视为在 <span class="math inline">\(F_{2}[X]/f_q\)</span>
+下运行的多项式商环（其和另一种解析LFSR的方式，即 <span
+class="math inline">\(F_{2}\)</span> 下的矩阵运算是同构的）。</p>
+<p>具体地，假设反馈值 <span class="math display">\[s_{n} =
+\sum_{i=0}^{n-1} f_{i}s_{i} \bmod 2\]</span><br />
+矩阵形式下，其亦可表示作 <span class="math display">\[s_{n} =
+\begin{bmatrix} f_{n-1} &amp; f_{n-2} &amp; \cdots &amp; f_{0}
+\end{bmatrix} \cdot \begin{bmatrix} s_{n-1} &amp; s_{n-2} &amp; \cdots
+&amp; s_{0} \end{bmatrix}^{T} \]</span></p>
+<p>若从 <span class="math inline">\(F_{2}[X]/f_q\)</span>
+的角度出发，每个状态下的多项式可以表示为 <span
+class="math display">\[f_{k} = \sum_{i=0}^{n-1}
+s_{i}x^{i}\]</span><br />
+令 <span class="math display">\[f_q = \sum_{i=0}^{n-1}
+f_{i}x^{i}\]</span><br />
+推导多项式为 <span class="math display">\[f_{k+1} = x \cdot f_{k} \bmod
+f_q\]</span></p>
+<p>其和多项式环相关知识的关联：</p>
+<blockquote>
+<p>欲令该生成器的数列（即结果多项式）的周期最大，<span
+class="math inline">\(f_q\)</span>
+应为<strong>本原多项式</strong>，理论最大周期与该多项式环的阶一致，为
+<span class="math inline">\(2^{n} -
+1\)</span>（从矩阵亦可推导之，相互校验）<br />
+若 <span class="math inline">\(f_q\)</span>
+是可约的，则其周期与其因式的阶有关，可以根据中国剩余定理推导之<br />
+即使多项式是本原的，若起始的多项式 <span
+class="math inline">\(f_{0}\)</span> 选择不当（即其不是 <span
+class="math inline">\(F_{2}/f_q\)</span>
+的生成元），其生成序列的周期依然小于 <span
+class="math inline">\(|F_{2}/f_q|\)</span></p>
+</blockquote>
 
       
 
@@ -694,32 +1636,21 @@ p^{&#39;}\)</span>。</p>
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">长文精选</a>
         		</li>
       		 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">wp</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">crypto</a>
         		</li>
       		
 		</ul>
 	</div>
 
       
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/CTF-Writeups//" class="article-tag-list-link color3">CTF-Writeups</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/crypto/wp/wqb-plus/">展开全文 >></a>
+          <a class="article-more-a" href="/crypto/math/">展开全文 >></a>
         </p>
       
 
@@ -753,7 +1684,7 @@ p^{&#39;}\)</span>。</p>
   
   
     <nav id="page-nav">
-      <a class="extend prev" rel="prev" href="/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><span class="space">&hellip;</span><a class="page-number" href="/page/17/">17</a><a class="extend next" rel="next" href="/page/3/">Next &raquo;</a>
+      <a class="extend prev" rel="prev" href="/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><span class="space">&hellip;</span><a class="page-number" href="/page/18/">18</a><a class="extend next" rel="next" href="/page/3/">Next &raquo;</a>
     </nav>
   
 
@@ -770,7 +1701,7 @@ p^{&#39;}\)</span>。</p>
   <div class="outer">
     <div id="footer-info">
       <div class="footer-left">
-        &copy; 2025 Hibiscus
+        &copy; 2026 Hibiscus
       </div>
       <div class="footer-left">
         <a
@@ -919,14 +1850,6 @@ MathJax.Hub.Queue(function() {
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">C#</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">wp</a>
-              </li>
-             
-              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color1">Modern C++</a>
               </li>
              
@@ -944,6 +1867,18 @@ MathJax.Hub.Queue(function() {
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color2">C Libraries</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color2">crypto</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">wp</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">C#</a>
               </li>
             
             <div class="clearfix"></div>
