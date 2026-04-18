@@ -15,8 +15,8 @@
 <meta property="og:site_name" content="玲珑">
 <meta property="og:description" content="Prerequisite NVM(Node Version Manager) Linux: 12sudo apt install curlcurl -o- https:&#x2F;&#x2F;raw.githubusercontent.com&#x2F;nvm-sh&#x2F;nvm&#x2F;v0.40.4&#x2F;install.sh | bash Windows Powershell: 1iwr -useb https:&#x2F;&#x2F;raw.git">
 <meta property="og:locale" content="en_US">
-<meta property="article:published_time" content="2026-03-11T15:40:08.405Z">
-<meta property="article:modified_time" content="2026-03-11T15:40:08.405Z">
+<meta property="article:published_time" content="2026-03-18T21:18:14.071Z">
+<meta property="article:modified_time" content="2026-03-18T21:18:14.071Z">
 <meta property="article:author" content="Hibiscus">
 <meta name="twitter:card" content="summary">
   
@@ -206,11 +206,28 @@ issues</a></p>
 <h1 id="intriguing-instructions">Intriguing instructions</h1>
 <h2 id="larkfeishu">Lark(FeiShu)</h2>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd ~/.openclaw/extensions/feishu</span><br><span class="line">pnpm install</span><br></pre></td></tr></table></figure>
+<p><em>Incomplete, to be added</em></p>
 <h1 id="removal">Removal</h1>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">npm uninstall -g openclaw</span><br><span class="line">pnpm remove -g openclaw</span><br><span class="line">rm -rf ~/.openclaw</span><br></pre></td></tr></table></figure>
 <h1 id="key">Key</h1>
 <p>Kimi Coding:
 <code>sk-kimi-I1wFckhB4l8LsglsHx1SWC6EHmExLPtXNTvvwgjuwWrKjfl8nQfSmYPyS4Hl4ZDK</code></p>
+<h1 id="some-qrh">Some QRH</h1>
+<h2 id="emergency-stop">Emergency stop</h2>
+<ul>
+<li>Soft landing: <code>/stop</code>(in openclaw tui),
+<code>openclaw gateway stop</code><br />
+</li>
+<li>Hard landing: <code>ps -aux | grep openclaw</code> +
+<code>kill -9</code></li>
+</ul>
+<blockquote>
+<p>Use system snapshot for rollback(better in VM - preserves data)</p>
+</blockquote>
+<h2 id="session-cleanup">Session cleanup</h2>
+<ul>
+<li>Key files:</li>
+</ul>
 
       
 
@@ -304,7 +321,7 @@ issues</a></p>
                 </span>
                 <span class="tooltip-content">
                     <div class="toc-article">
-                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#prerequisite"><span class="toc-number">1.</span> <span class="toc-text">Prerequisite</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#nvmnode-version-manager"><span class="toc-number">1.1.</span> <span class="toc-text">NVM(Node Version Manager)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#git"><span class="toc-number">1.2.</span> <span class="toc-text">Git</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#installation"><span class="toc-number">2.</span> <span class="toc-text">Installation</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#linux-one-key"><span class="toc-number">2.1.</span> <span class="toc-text">Linux One-key(?)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#windows"><span class="toc-number">2.2.</span> <span class="toc-text">Windows</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#npm-based"><span class="toc-number">2.3.</span> <span class="toc-text">npm-based</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#docker"><span class="toc-number">2.4.</span> <span class="toc-text">Docker</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#begin"><span class="toc-number">3.</span> <span class="toc-text">Begin</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#net-config"><span class="toc-number">4.</span> <span class="toc-text">Net Config</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#intriguing-instructions"><span class="toc-number">5.</span> <span class="toc-text">Intriguing instructions</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#larkfeishu"><span class="toc-number">5.1.</span> <span class="toc-text">Lark(FeiShu)</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#removal"><span class="toc-number">6.</span> <span class="toc-text">Removal</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#key"><span class="toc-number">7.</span> <span class="toc-text">Key</span></a></li></ol>
+                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#prerequisite"><span class="toc-number">1.</span> <span class="toc-text">Prerequisite</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#nvmnode-version-manager"><span class="toc-number">1.1.</span> <span class="toc-text">NVM(Node Version Manager)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#git"><span class="toc-number">1.2.</span> <span class="toc-text">Git</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#installation"><span class="toc-number">2.</span> <span class="toc-text">Installation</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#linux-one-key"><span class="toc-number">2.1.</span> <span class="toc-text">Linux One-key(?)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#windows"><span class="toc-number">2.2.</span> <span class="toc-text">Windows</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#npm-based"><span class="toc-number">2.3.</span> <span class="toc-text">npm-based</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#docker"><span class="toc-number">2.4.</span> <span class="toc-text">Docker</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#begin"><span class="toc-number">3.</span> <span class="toc-text">Begin</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#net-config"><span class="toc-number">4.</span> <span class="toc-text">Net Config</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#intriguing-instructions"><span class="toc-number">5.</span> <span class="toc-text">Intriguing instructions</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#larkfeishu"><span class="toc-number">5.1.</span> <span class="toc-text">Lark(FeiShu)</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#removal"><span class="toc-number">6.</span> <span class="toc-text">Removal</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#key"><span class="toc-number">7.</span> <span class="toc-text">Key</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#some-qrh"><span class="toc-number">8.</span> <span class="toc-text">Some QRH</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#emergency-stop"><span class="toc-number">8.1.</span> <span class="toc-text">Emergency stop</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#session-cleanup"><span class="toc-number">8.2.</span> <span class="toc-text">Session cleanup</span></a></li></ol></li></ol>
                     </div>
                 </span>
             </div>
@@ -514,10 +531,6 @@ MathJax.Hub.Queue(function() {
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color3">wp</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">C#</a>
               </li>
             
             <div class="clearfix"></div>

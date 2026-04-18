@@ -152,95 +152,6 @@
           <div id="js-content" class="content-ll">
             
   
-    <article id="post-lattice3" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/lattice3/">鸾</a>
-    </h1>
-  
-
-        
-        <a href="/lattice3/" class="archive-article-date">
-  	<time datetime="2025-10-08T14:40:57.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-10-08</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <blockquote>
-<p>西楼月荡青鸾散。</p>
-</blockquote>
-<p>格间的秘密，未必需求诸万象，亦可生之于心。</p>
-<h1 id="正交格">正交格</h1>
-<p>正交格(Orthogonal
-Lattice)，即OL，是格分析、格攻击中极为重要的课题之一。</p>
-<h2 id="内核kernel">内核(kernel)</h2>
-<p>对于一个非满秩矩阵 <span class="math inline">\(M\)</span>，</p>
-<h1 id="云屋">云屋</h1>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">长文精选</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/lattice3/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-  <div>
-</article>
-
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
     <article id="post-crypto/lattice2" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -688,9 +599,161 @@ Combination Problem，隐藏线性组合问题)。<br />
 
 
   
+    <article id="post-crypto/wp/wqb-plus" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/crypto/wp/wqb-plus/">2025湾区杯Writeup——再论“逐怨”</a>
+    </h1>
+  
+
+        
+        <a href="/crypto/wp/wqb-plus/" class="archive-article-date">
+  	<time datetime="2025-09-17T02:08:13.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2025-09-17</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <blockquote>
+<p><del>珠海端茶倒水一日游(bushi)</del></p>
+</blockquote>
+<p>2025年湾区杯糊出来几道题的Writeup，以及做prng题有感。</p>
+<hr />
+<h1 id="writeup">Writeup</h1>
+<h2 id="prng">prng</h2>
+<h3 id="题目">题目</h3>
+<h3 id="解析">解析</h3>
+<p>题目实现了一个LCG变种的PRNG（伪随机数生成器），其状态间的关系如下：</p>
+<p>$ s_{i+1} s_{i}^{2}a + b ^{512} $</p>
+<p>难点有二：</p>
+<ul>
+<li>其只给出了PRNG的两个状态，要求逆向出seed；<br />
+</li>
+<li>对于PRNG的每个状态，其都<strong>随机抹去</strong>了0.19倍总位数的信息（此处体现为
+<span class="math inline">\(s_{1}\)</span>、<span
+class="math inline">\(s_{2}\)</span>、<span
+class="math inline">\(a\)</span>、<span class="math inline">\(b\)</span>
+中各97个<code>?</code>。</li>
+</ul>
+<p>由于被抹去的位数分布不均，因而很难用传统的代数分析方法攻击之<del>包括第一反应的格攻击</del>。</p>
+<p>因此此处需要用到特技“逐怨”处理之——具况见下方exp和解析。<br />
+大致思路：逐未知位爆破，利用位运算的截断特性不断校验、排除“缓存”的可能性。</p>
+<h3 id="exp">exp</h3>
+<blockquote>
+<p>赛时紧张，exp近乎于缝缝补补能跑就行，至于语言规范什么的看个乐呵就好awa</p>
+</blockquote>
+<p>一段（Python）：</p>
+<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#python3</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> itertools <span class="keyword">import</span> product</span><br><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> isPrime</span><br><span class="line"><span class="keyword">from</span> Crypto.Cipher <span class="keyword">import</span> AES</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">a = <span class="string">&quot;1100001101001?101111100?01110001010011?1???11???01000011100101010100101??011?01?00?0?000110000?01?01010?10101?1101010100010011?101010010000?10110??10100?000?1?11?10???0?1111?1000100100?1110111010?0?01?00?11?0011?0101101?100000?1??0101010?1?101?1001?0011110??0000000?00100?1010011100001111111001?10?001??0110001111?100110000110011011?111101?1??1010101101?01?0000011?1111001?000111??1??00010?10011001?000110000??10?10100000100?10?1101111?101?001??00?01111???01??1?10100??0101?011?1000?011101?110???0110111011?101?1&quot;</span></span><br><span class="line">b = <span class="string">&quot;1000?11?0111000?1001??11?1100?001?0?0111011011100?0?110?11111?1?0?111100?0111???01?001100?000?001??0110??0?001000000110?0100?01100?001000011?01001000011010100?01110000001??0000111???101101?0100?011??010011?0?100?0?111100?00110000111?10???0?01?100?1100?0111001?11?1110?011?100101101?10?0??00010011?101?111?110001100?0??0?10?11100100111?100100001?0?00000??1101001?010?110000110?0001101000010011001100?010?100000100001?10100101110010000?0111?0001??1?001100000010000?011000??0?10?1001000100???1100111?11?11011010100?&quot;</span></span><br><span class="line">c1 = <span class="string">&quot;1100101001100???1??101100?00101111?000001011?0??0?0?1??11?0001?1?01111?0?1100011101?01011??110011100001100100???000101?1011010100111110?11?010111101?0?0110?0100001?000?1011?111111111000001?100000001011?0110111?11010010100?10011110000?0101??1?00001111010110?00110001111011001?0010110101100011111?01?0000?0?0011?0?101??1111100?11?11100010???1?0?1?11?1100?1100010?1111111011?100100111?11?11?1101?1?1100111?01?01111?11?0??1111?001000?0000?1?010?100111101?01011?1?1?111?01???01?1111?01?????0?001011000111010010?111101&quot;</span></span><br><span class="line">c2 = <span class="string">&quot;00000000011?1000110011?001???10011010?0?01?11010011010??10010111?1111?1000?1??11?1111??111?1010001001111?10?0111001??101?10000000101111110111??11111?0?0??10?0101?111001101000101?00010?111?1100111?0?1110?1111?0110?11010110001100000111101?010010??0??101?1001000?010101?01110?01001010001?0?01?00?0110100100??10?00??1010111010010??1?100110?????01001?001110101111?1?00?0?00101?101?0?101?110011?1?00111100??1?1?00?1110?010?110?00?010011010001101?00110101?1??0010?101111000?11011101011?0010010110000000110110101??1?011?&quot;</span></span><br><span class="line"><span class="comment">#For each modulus</span></span><br><span class="line"></span><br><span class="line">a = a[::-<span class="number">1</span>]</span><br><span class="line">b = b[::-<span class="number">1</span>]</span><br><span class="line">c1 = c1[::-<span class="number">1</span>]</span><br><span class="line">c2 = c2[::-<span class="number">1</span>]</span><br><span class="line"></span><br><span class="line">als = [<span class="number">0</span>]</span><br><span class="line">bls = [<span class="number">0</span>]</span><br><span class="line">c1ls = [<span class="number">0</span>]</span><br><span class="line">c2ls = [<span class="number">0</span>]</span><br><span class="line"></span><br><span class="line">ls = []</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">512</span>):</span><br><span class="line">    tals = []</span><br><span class="line">    tbls = []</span><br><span class="line">    tc1ls = []</span><br><span class="line">    tc2ls = []</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> a_,b_,c1_,c2_ <span class="keyword">in</span> <span class="built_in">zip</span>(als,bls,c1ls,c2ls):</span><br><span class="line">        add_base = <span class="number">2</span>**i</span><br><span class="line">        qmark_idx = []</span><br><span class="line"></span><br><span class="line">        a_ += <span class="built_in">int</span>(a[i])*add_base <span class="keyword">if</span> a[i] <span class="keyword">in</span> (<span class="string">&#x27;0&#x27;</span>,<span class="string">&#x27;1&#x27;</span>) <span class="keyword">else</span> <span class="number">0</span></span><br><span class="line">        b_ += <span class="built_in">int</span>(b[i])*add_base <span class="keyword">if</span> b[i] <span class="keyword">in</span> (<span class="string">&#x27;0&#x27;</span>,<span class="string">&#x27;1&#x27;</span>) <span class="keyword">else</span> <span class="number">0</span></span><br><span class="line">        c1_ += <span class="built_in">int</span>(c1[i])*add_base <span class="keyword">if</span> c1[i] <span class="keyword">in</span> (<span class="string">&#x27;0&#x27;</span>,<span class="string">&#x27;1&#x27;</span>) <span class="keyword">else</span> <span class="number">0</span></span><br><span class="line">        c2_ += <span class="built_in">int</span>(c2[i])*add_base <span class="keyword">if</span> c2[i] <span class="keyword">in</span> (<span class="string">&#x27;0&#x27;</span>,<span class="string">&#x27;1&#x27;</span>) <span class="keyword">else</span> <span class="number">0</span></span><br><span class="line"></span><br><span class="line">        <span class="comment"># Process question marks</span></span><br><span class="line">        <span class="keyword">if</span>(a[i] == <span class="string">&#x27;?&#x27;</span>):</span><br><span class="line">            qmark_idx.append(<span class="number">0</span>)</span><br><span class="line">        <span class="keyword">if</span>(b[i] == <span class="string">&#x27;?&#x27;</span>):</span><br><span class="line">            qmark_idx.append(<span class="number">1</span>)</span><br><span class="line">        <span class="keyword">if</span>(c1[i] == <span class="string">&#x27;?&#x27;</span>):</span><br><span class="line">            qmark_idx.append(<span class="number">2</span>)</span><br><span class="line">        <span class="keyword">if</span>(c2[i] == <span class="string">&#x27;?&#x27;</span>):</span><br><span class="line">            qmark_idx.append(<span class="number">3</span>)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># test equation</span></span><br><span class="line">        <span class="keyword">for</span> tp <span class="keyword">in</span> product([<span class="number">0</span>,<span class="number">1</span>],repeat=<span class="built_in">len</span>(qmark_idx)):</span><br><span class="line">            temp_a = a_</span><br><span class="line">            temp_b = b_</span><br><span class="line">            temp_c1 = c1_</span><br><span class="line">            temp_c2 = c2_</span><br><span class="line"></span><br><span class="line">            mapper = &#123;<span class="number">0</span>:temp_a,<span class="number">1</span>:temp_b,<span class="number">2</span>:temp_c1,<span class="number">3</span>:temp_c2&#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">for</span> t <span class="keyword">in</span> <span class="built_in">range</span>(<span class="built_in">len</span>(qmark_idx)):</span><br><span class="line">                ss = add_base * tp[t]</span><br><span class="line"></span><br><span class="line">                <span class="keyword">if</span> qmark_idx[t] == <span class="number">0</span>:</span><br><span class="line">                    temp_a += ss</span><br><span class="line">                <span class="keyword">elif</span> qmark_idx[t] == <span class="number">1</span>:</span><br><span class="line">                    temp_b += ss</span><br><span class="line">                <span class="keyword">elif</span> qmark_idx[t] == <span class="number">2</span>:</span><br><span class="line">                    temp_c1 += ss</span><br><span class="line">                <span class="keyword">else</span>:</span><br><span class="line">                    temp_c2 += ss</span><br><span class="line"></span><br><span class="line">                <span class="comment"># mapper[qmark_idx[t]] += add_base*tp[t]</span></span><br><span class="line"></span><br><span class="line">            <span class="comment"># breakpoint()</span></span><br><span class="line">            <span class="keyword">if</span> (temp_c1**<span class="number">2</span> * temp_a + temp_b - temp_c2) % <span class="number">2</span>**(i+<span class="number">1</span>) == <span class="number">0</span>:</span><br><span class="line">                tals.append(temp_a)</span><br><span class="line">                tbls.append(temp_b)</span><br><span class="line">                tc1ls.append(temp_c1)</span><br><span class="line">                tc2ls.append(temp_c2)</span><br><span class="line"></span><br><span class="line">    als = tals</span><br><span class="line">    bls = tbls</span><br><span class="line">    c1ls = tc1ls</span><br><span class="line">    c2ls = tc2ls</span><br><span class="line"></span><br><span class="line">res = []</span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="built_in">len</span>(als)): <span class="comment">#256</span></span><br><span class="line">    <span class="keyword">if</span> isPrime(als[i]) <span class="keyword">and</span> isPrime(bls[i]):</span><br><span class="line">        res.append((als[i],bls[i],c1ls[i],c2ls[i]))</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">ssq = []</span><br><span class="line"><span class="keyword">for</span> _a,_b,_c1,_c2 <span class="keyword">in</span> res:</span><br><span class="line">    <span class="keyword">assert</span> (_c2-_b)*<span class="built_in">pow</span>(_a,-<span class="number">1</span>,<span class="number">2</span>**<span class="number">512</span>) % <span class="number">2</span>**<span class="number">512</span> == _c1**<span class="number">2</span> % <span class="number">2</span>**<span class="number">512</span></span><br><span class="line">    ssq.append((_c1-_b)*<span class="built_in">pow</span>(_a,-<span class="number">1</span>,<span class="number">2</span>**<span class="number">512</span>) % <span class="number">2</span>**<span class="number">512</span>)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(ssq)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>二段：</p>
+<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#sage</span></span><br><span class="line"><span class="keyword">from</span> Crypto.Cipher <span class="keyword">import</span> AES</span><br><span class="line"><span class="keyword">from</span> hashlib <span class="keyword">import</span> md5</span><br><span class="line"><span class="keyword">from</span> Crypto.Util.number <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line">ls = [<span class="number">23647629859804785244560293652892470724172934807090102727098380892501016027619179662322113914924661220146486108557056592028992097519447371973456440412256195080359251744384181846271425283969058481217011834363510239520880027721434747003304892242351979646514804231247826229510446250261365973495593321908885217092</span>,<span class="number">23647629859804783842807550785248410559147385398160690428443115878862931233560349908609941584951625196188685672556855690842825267539431410518674933270351636038481968317300246435143772977768212518512034769139930128250279198401207154864696876591321300269180310179591686461840167037631726571572294965838719180612</span>, <span class="number">23647629859804785244560293652894960737838541327372270519613976463801490406983616708628525990102165025836193330627109595096298277075465850886971949679968278179590332381415060678735815957255177524540432453452578280204146818578219638369163804925440068630123439555721020512123587273432848386181743393346039799620</span>]</span><br><span class="line"></span><br><span class="line">ff2 = []</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> ls:</span><br><span class="line">    a = Zmod(<span class="number">2</span>^<span class="number">512</span>)(i)</span><br><span class="line">    ff2.extend(a.nth_root(<span class="number">2</span>,<span class="built_in">all</span>=<span class="literal">True</span>))</span><br><span class="line"></span><br><span class="line">enc = <span class="string">b&#x27;\xcb\xe0wY\xe3\\\xf7\xc8\x89/\x1c\xdb^P\xc09\xca\xcf\xe7\xa7\xa4\xb5\xaeQ\xc8K\xabg_\x8e\xfa?\xdc\xce9\xd7\x0en&quot;?\xc0\n\xe0hT+\xc0\x81&#x27;</span></span><br><span class="line">nonce = <span class="string">b&#x27;n\x13\xd1\xdf\xb6]\xb5\xf7&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> ff2:</span><br><span class="line">    key = md5(long_to_bytes(<span class="built_in">int</span>(i))).digest()</span><br><span class="line">    aes = AES.new(key,AES.MODE_CTR,nonce=nonce)</span><br><span class="line"></span><br><span class="line">    <span class="built_in">print</span>(aes.decrypt(enc))</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h1 id="闲谈逐怨">闲谈“逐怨”</h1>
+<h2 id="数学基础">数学基础</h2>
+<p>狭义上（即部分题目的“实例”），若 <span
+class="math inline">\(Z_{2^{p}}\)</span> 下 <span
+class="math inline">\(f(x_{1},x_{2},\cdots,x_{n}) = 0\)</span> 成立，则
+<span class="math inline">\(Z_{2^{q}}\)</span> 下 <span
+class="math inline">\(f(x^{&#39;}_{1},x^{&#39;}_{2},\cdots,x^{&#39;}_{n})
+= 0\)</span> 亦成立，其中 <span class="math inline">\(q &lt;
+p\)</span>，<span class="math inline">\(x^{&#39;}_{1} \equiv x_{1} \bmod
+2^{q}\)</span>。</p>
+<p>广义上，对阶为 <span class="math inline">\(p\)</span> 的群 <span
+class="math inline">\(G\)</span> 下的元素 <span
+class="math inline">\(x_{i} (i \in \[1,n\])\)</span>，考虑将 <span
+class="math inline">\(x_{i} \rightarrow x^{&#39;}_{i}\)</span>
+，即将之映射至另一个群 <span class="math inline">\(G^{&#39;}\)</span>
+上，且 <span class="math inline">\(G^{&#39;}\)</span> 的阶 <span
+class="math inline">\(p^{&#39;} | p\)</span>，使得 <span
+class="math inline">\(ord(x^{&#39;}_{i}) \equiv ord(x_{i}) \bmod
+p^{&#39;}\)</span>。<br />
+假设 <span class="math inline">\(G\)</span> 和 <span
+class="math inline">\(G^{&#39;}\)</span> <strong>对群上运算 <span
+class="math inline">\(f\)</span> 是同构的</strong>，则存在 <span
+class="math inline">\(ord(f(x_{1},x_{2},\cdots,x_{n})) \equiv
+ord(f(x^{&#39;}_{1},x^{&#39;}_{2},\cdots,x^{&#39;}_{n})) \bmod
+p^{&#39;}\)</span>。</p>
+<blockquote>
+<p>虽然推广的结论<del>非常不讲人话</del>，但其为这一攻击的拓展运用提供了理论基础。</p>
+</blockquote>
+<h2 id="算法实践">算法实践</h2>
+<p>“逐怨”的数学基础各异，但其算法流程上是大同小异的。此处以上述情景为例：</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Crypto</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">wp</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/CTF-Writeups//" class="article-tag-list-link color3">CTF-Writeups</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/crypto/wp/wqb-plus/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+  <div>
+</article>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
   
     <nav id="page-nav">
-      <a class="extend prev" rel="prev" href="/page/2/">&laquo; Prev</a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/">4</a><a class="page-number" href="/page/5/">5</a><span class="space">&hellip;</span><a class="page-number" href="/page/18/">18</a><a class="extend next" rel="next" href="/page/4/">Next &raquo;</a>
+      <a class="extend prev" rel="prev" href="/page/2/">&laquo; Prev</a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/">4</a><a class="page-number" href="/page/5/">5</a><span class="space">&hellip;</span><a class="page-number" href="/page/17/">17</a><a class="extend next" rel="next" href="/page/4/">Next &raquo;</a>
     </nav>
   
 
@@ -881,10 +944,6 @@ MathJax.Hub.Queue(function() {
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color3">wp</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">C#</a>
               </li>
             
             <div class="clearfix"></div>
